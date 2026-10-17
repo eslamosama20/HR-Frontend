@@ -1,0 +1,371 @@
+﻿<div class="container-fluid">
+
+   <!-- Action Buttons -->
+   <div class="flex justify-between items-center m-5">
+    <a *ngIf="hasPermission(PERMISSIONS.PurchaseReturn.Create)" class="btn btn-primary" (click)="addReturn()">
+      {{"RETURN.ADDRETURN" | translate}}
+    </a>
+    <div *ngIf="selectedReturns.length >= 1" class="flex gap-2">
+      <button *ngIf="hasPermission(PERMISSIONS.PurchaseReturn.Delete)" class="btn btn-danger" (click)="deleteAll()">
+        <i class="bi bi-trash"></i> حذف الكل
+      </button>
+      <button *ngIf="hasPermission(PERMISSIONS.PurchaseReturn.Create)" class="btn btn-success" (click)="createTransactionForAll()">
+        <i class="bi bi-plus-circle"></i> إنشاء قيد للكل
+      </button>
+    </div>
+  </div>
+
+  <!-- Return Table -->
+
+  <p-table #dt1 [(selection)]="selectedReturns" [value]="filteredReturns" [columns]="columns"
+    [resizableColumns]="true" columnResizeMode="expand" dataKey="id" [rows]="10" [sortField]="'issueDate'"
+         [sortOrder]="-1"
+    styleClass="p-datatable-gridlines scroller custom-paginator-table" [rowsPerPageOptions]="[10, 25, 50]" [loading]="loading"
+    [paginator]="purchaseReturns.length > 0" [paginatorLocale]="activeLanguage === 'en' ? 'en-US' : 'ar-SA'"
+    [showCurrentPageReport]="true"
+    currentPageReportTemplate="اجمالي {{ purchaseReturns?.length ? (purchaseReturns.length) : '' }}"
+    paginatorTemplate="CurrentPageReport PrevPageLink PageLinks NextPageLink RowsPerPageDropdown">
+    <ng-template pTemplate="caption">
+      <div class="flex rtl:flex-row-reverse justify-between gap-2">
+        <div class="flex gap-2">
+
+          <p-button styleClass="rounded-md w-auto text-nowrap	" [label]="translate.instant('FINANCE.CLEAR_FILTERS')"
+            [outlined]="true" icon="pi pi-filter-slash" (onClick)="clear(dt1)" />
+        </div>
+        <p-toast></p-toast>
+
+        <div class="flex justify-between gap-2">
+          <div class="flex flex-wrap gap-3">
+            <div class="flex align-items-center">
+              <p-radioButton name="all" value="all" [(ngModel)]="transactionsFilterType" inputId="all" id="all" />
+              <label for="all" class="ml-2">
+                كل المعاملات
+              </label>
+            </div>
+
+            <div class="flex align-items-center">
+              <p-radioButton name="connected" value="connected" [(ngModel)]="transactionsFilterType" inputId="connected"
+                id="connected" />
+              <label for="connected" class="ml-2">
+                المعاملات المرحلة
+              </label>
+            </div>
+            <div class="flex align-items-center">
+              <p-radioButton name="notconnected" value="notconnected" [(ngModel)]="transactionsFilterType"
+                inputId="notconnected" id="notconnected" />
+              <label for="notconnected" class="ml-2">
+                المعاملات الغير مرحلة
+              </label>
+            </div>
+
+          </div>
+          <span class="p-input-icon-left ml-auto">
+            <i class="pi pi-search"></i>
+            <input pInputText type="text" [(ngModel)]="searchValue" (input)="filter(dt1, $event)"
+              [placeholder]="translate.instant('FINANCE.SEARCH')" />
+          </span>
+        </div>
+
+      </div>
+    </ng-template>
+    <ng-template pTemplate="header" let-columns>
+      <tr>
+        <th style="width: 3rem"></th>
+        <th style="width: 0.5rem">
+          <div class="flex align-items-center text-base">
+            #
+          </div>
+        </th>
+
+        <th style="min-width: fit-content" *ngFor="let column of columns" pResizableColumn
+          [pSortableColumn]="column.field">
+          <div class="flex align-items-center">
+            {{ column.header }}
+            <p-sortIcon [field]="column.field" class="mx-1 "></p-sortIcon>
+            <p-columnFilter *ngIf="column.filter" [type]="column.filterType" [field]="column.field" display="menu" />
+          </div>
+        </th>
+        <th style="min-width: fit-content">
+          <div class="flex align-items-center text-base">
+            {{ "FINANCE.ACTIONS" | translate }}
+          </div>
+        </th>
+      </tr>
+    </ng-template>
+    <ng-template pTemplate="body" let-Entry let-rowIndex="rowIndex">
+      <tr *ngIf="purchaseReturns.length > 0"
+    (contextmenu)="openOverlayReturn($event, Entry)"
+    class="cursor-pointer hover:bg-gray-100"
+        >
+        <td>
+          <p-tableCheckbox [value]="Entry"></p-tableCheckbox>
+        </td>
+        <td class="rtl:text-right">
+          {{ rowIndex + 1 }}
+        </td>
+        <td class="text-lg rtl:text-right">
+          {{ Entry.returnNo }}
+        </td>
+        <td class="text-lg rtl:text-right">
+          {{ Entry.supplierDetailsName }}
+        </td>
+        <td class="text-lg rtl:text-right">
+            {{ Entry.description?.length > 20 ? (Entry.description | slice:0:20) + '...' : Entry.description }}
+        <td class="text-lg rtl:text-right">
+          {{
+          Entry.issueDate ? (Entry.issueDate | customDate : "yyyy/MM/dd" : "": "ar-SA"): '-'
+          }}
+        </td>
+        <td class="text-lg rtl:text-right">
+          {{ Entry.totalAmount.toFixed(2) }}
+        </td>
+        <td class="text-lg rtl:text-right">
+          {{ Entry.totalAmountAfterTax.toFixed(2) }}
+        </td>
+
+        <td class="text-lg rtl:text-right flex gap-2"
+            (click)="$event.stopPropagation()">
+          <!-- Overlay panel that holds the buttons -->
+
+
+          <!-- Button to toggle the overlay panel -->
+          <p-button
+            [text]="true"
+      (onClick)="openOverlayReturn($event, Entry); $event.stopPropagation()"
+            severity="secondary"
+            styleClass="p-button-outlined rounded-xl"
+          >
+            <ng-template pTemplate="icon">
+              <i class="pi pi-cog text-xl"></i>
+            </ng-template>
+          </p-button>
+        </td>
+
+
+      </tr>
+    </ng-template>
+  </p-table>
+  <!-- Empty State Message -->
+  <div *ngIf="purchaseReturns.length === 0 && !loading" class="empty-state-container">
+    <div class="empty-state-content">
+      <div class="empty-state-icon">
+      </div>
+      <h3 class="empty-state-title">{{ "RETURN.NO_RETURNS" | translate }}</h3>
+      <p class="empty-state-description">
+        {{ "RETURN.NO_RETURNS_DESCRIPTION" | translate }}
+      </p>
+      <button class="btn btn-primary mt-3" (click)="addReturn()">
+        <i class="pi pi-plus me-2"></i>
+        {{ "RETURN.ADDRETURN" | translate }}
+      </button>
+    </div>
+  </div>
+
+<p-overlayPanel #opReturn [autoZIndex]="false" [baseZIndex]="80">
+  <div class="flex flex-column gap-3 w-auto p-1">
+    <p-button
+      icon="bi bi-printer"
+      class="p-button-secondary"
+      [label]="'طباعة'"
+      styleClass="rounded-lg p-button-secondary w-full"
+      (onClick)="printReturn(selectedReturn.id)">
+    </p-button>
+
+    <p-button
+      *ngIf="selectedReturn?.transactionId === null && hasPermission(PERMISSIONS.PurchaseReturn.Create)"
+      icon="pi pi-plus-circle"
+      class="p-button-success"
+      [label]="'RETURN.CREATE_TRANSACTION' | translate"
+      styleClass="rounded-lg p-button-success w-full"
+      (onClick)="createTransaction(selectedReturn.id)">
+    </p-button>
+    <p-button
+      *ngIf="selectedReturn?.transactionId != null"
+      icon="pi pi-external-link"
+      class="p-button-info"
+      [label]="'فتح المعاملة'"
+      styleClass="rounded-lg p-button-info w-full"
+      [routerLink]="'/accounting/journal-transactions/transaction/' + selectedReturn.transactionId"
+      target="_blank">
+    </p-button>
+
+    <p-button
+      *ngIf="hasPermission(PERMISSIONS.PurchaseReturn.Update)"
+      icon="pi pi-pencil"
+      class="p-button-warning"
+      [label]="'تعديل'"
+      styleClass="rounded-lg p-button-warning w-full"
+      (onClick)="editReturn(selectedReturn.id)">
+    </p-button>
+
+    <p-button
+      icon="pi pi-eye"
+      class="p-button-info"
+      [label]="'RETURN.VIEW' | translate"
+      styleClass="rounded-lg p-button-info w-full"
+      (onClick)="viewReturn(selectedReturn.id)">
+    </p-button>
+
+    <p-button
+      *ngIf="hasPermission(PERMISSIONS.PurchaseReturn.Delete)"
+      [disabled]="loadingStates[selectedReturn?.id]"
+      icon="pi pi-trash"
+      class="p-button-danger"
+      [label]="'RETURN.DELETE' | translate"
+      styleClass="rounded-lg p-button-danger w-full"
+      (onClick)="deleteReturn(selectedReturn.id)">
+    </p-button>
+  </div>
+</p-overlayPanel>
+
+</div>
+
+
+<ng-container>
+  <div  id="printContent" class="absolute top-0 left-[-100%] " *ngIf="docData && docColumns.length > 0">
+    <app-print-document #printComponent [headerTemplate]="headerTemplate" [footerTemplate]="footerTemplate"
+      [summaryTemplate]="summaryTemplate" [data]="docData" [columns]="docColumns">
+    </app-print-document>
+
+    <!-- Header Template -->
+    <ng-template #headerTemplate>
+      <div class="w-full flex flex-col">
+        @if (companyDetails) {
+        <ng-container class="container m-0 p-0">
+          <div class="py-1 px-1 flex justify-between ">
+            <div class="w-full ltr:text-left text-right">
+              <p class="font-semibold text-lg m-0 p-0">
+                {{companyDetails?.arabicName}}
+              </p>
+              <p class="font-semibold text-lg m-0 p-0" *ngIf="companyDetails?.city">
+                {{companyDetails.city}}
+              </p>
+              <p class="font-semibold text-lg m-0 p-0">
+                {{companyDetails?.phone}}
+              </p>
+              <p class="font-semibold text-lg m-0 p-0">
+                {{ "RETURN.TAXNUMBER"| translate}}: {{companyDetails?.taxNumber}}
+              </p>
+            </div>
+            <div class="flex w-full justify-center items-center">
+              <img [src]="companyDetails?.logoUrl || ''"
+                   alt="company-logo" width="100" height="100">
+            </div>
+            <div class="w-full ltr:text-right text-left">
+              <p class="font-semibold text-lg m-0 p-0">
+                {{companyDetails?.englishName}}
+              </p>
+              <p class="font-semibold text-lg m-0 p-0" *ngIf="companyDetails?.city">
+                {{companyDetails?.city}}
+              </p>
+              <p class="font-semibold text-lg m-0 p-0">
+                {{companyDetails?.phone}}
+              </p>
+              <p class="font-semibold text-lg m-0 p-0">
+                TAX No: {{companyDetails?.taxNumber}}
+              </p>
+            </div>
+          </div>
+
+        </ng-container>
+        }
+        <div class="flex justify-between items-center w-full text-center border border-slate-900">
+          <div class="w-full text-end ltr:text-start">
+            <p class="font-semibold text-lg m-0">{{"RETURN.DATE"| translate}}: {{purchaseReturn.issueDate | customDate: 'yyyy-MM-dd'}}</p>
+          </div>
+          <div class="w-full flex justify-center">
+            <h2 class="text-2xl font-bold">{{ "RETURN.PURCHASE_RETURN" | translate}}</h2>
+          </div>
+          <div class="w-full">
+            <p class="font-semibold text-lg m-0 text-start ltr:text-end">
+              {{"RETURN.RETURNNO"|translate}}: {{purchaseReturn.returnNo}}
+            </p>
+          </div>
+        </div>
+
+        <div class="flex justify-between py-4 items-center">
+          <p class="m-0 p-0">{{"RETURN.SUPPLIERNAME"|translate}}:
+            {{activeLanguage=="en"?purchaseReturn.supplierDetails.englishName:purchaseReturn.supplierDetails?.arabicName}}</p>
+          <p *ngIf="purchaseReturn.supplierDetails.taxNumber" class="m-0 p-0"> {{ "RETURN.TAXNUMBER"| translate}}:
+            {{purchaseReturn.supplierDetails.taxNumber}}</p>
+        </div>
+      </div>
+    </ng-template>
+
+    <!-- Summery Template -->
+    <ng-template #summaryTemplate>
+      <div class="w-full">
+        <table class="w-full border border-gray-900">
+          <tbody>
+            <tr>
+              <td class="p-2 border border-gray-900">
+                <strong class=" text-dark">{{"RETURN.TOTAL"|translate}}</strong>
+              </td>
+              <td class="p-2 text-center border border-gray-900">{{getNetPrice()| formatDecimal}}</td>
+            </tr>
+            <tr>
+              <td class="p-2 border border-gray-900">
+                <strong class="text-dark"> {{"RETURN.ADDEDTAX"|translate}}</strong>
+              </td>
+              <td class="p-2 text-center border border-gray-900">{{getTaxAmount()| formatDecimal}}</td>
+            </tr>
+            <tr>
+              <td class="p-2 border border-gray-900">
+                <strong class="text-dark"> {{"RETURN.TOTALWITHTAX"|translate}}</strong>
+              </td>
+              <td class="p-2 text-center border border-gray-900">
+                <strong class="text-dark">{{getTotalPrice()| formatDecimal}}</strong>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+    </ng-template>
+    <!-- Footer Template -->
+    <ng-template #footerTemplate>
+      <div class="w-full border border-slate-900 rounded-2xl flex justify-between">
+        <div class="h-auto w-[100%] text-center font-semibold text-lg flex flex-row-reverse justify-between gap-8 items-center">
+
+          <div class="m-0 p-0 w-full text-end ltr:text-start flex flex-col justify-center items-center">
+            <p class="m-0 p-0">
+              {{ "INVOICE.EXPENSES_MANAGER_SIGNATURE" | translate}}:
+            </p>
+            <p class="text-sm font-light">..................................</p>
+          </div>
+          <div class="m-0 p-0 w-full text-end ltr:text-start flex flex-col justify-center items-center">
+            <p class="m-0 p-0">
+              {{ "INVOICE.SECTION_MANAGER_SIGNATURE" | translate}}:
+            </p>
+            <p class="text-sm font-light">..................................</p>
+          </div>
+          <div class="m-0 p-0 w-full text-end ltr:text-start flex flex-col justify-center items-center">
+            <p class="m-0 p-0">
+              {{ "INVOICE.TREASURY_KEEPER_SIGNATURE" | translate}}:
+            </p>
+            <p class="text-sm font-light">..................................</p>
+          </div>
+          <div class="m-0 p-0 w-full text-end ltr:text-start flex flex-col justify-center items-center">
+            <p class="m-0 p-0">
+              {{ "INVOICE.RECIPIENT_EMPLOYEE_SIGNATURE" | translate}}:
+            </p>
+            <p class="text-sm font-light">..................................</p>
+          </div>
+        </div>
+
+      </div>
+      <div class="w-full flex flex-row-reverse justify-between gap-8 items-center mt-2" *ngIf="companyDetails?.stampUrl">
+        <div class="w-full flex justify-center">
+          <img [src]="companyDetails?.stampUrl || ''" alt="company-stamp" width="120" height="120">
+        </div>
+        <div class="w-full"></div>
+        <div class="w-full"></div>
+        <div class="w-full"></div>
+      </div>
+      <div class="w-full border-t border-slate-900 rounded-2xl flex justify-center border absolute" style="bottom: 0;">
+        {{companyDetails?.getFullAddress()}}
+      </div>
+    </ng-template>
+
+  </div>
+</ng-container>

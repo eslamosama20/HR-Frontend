@@ -1,0 +1,203 @@
+.btn-primary {
+    background-color: #007bff;
+    border-color: #007bff;
+    color: white;
+}
+
+.btn-primary:hover {
+    background-color: #0056b3;
+    border-color: #004085;
+}
+
+:host {
+  display: block;
+  margin-top: 5px !important;
+}
+
+/* Hide company details in normal (non-print) view */
+.company-details {
+    display: none;
+}
+
+.sales-header-bg {
+  background-color: #42acff !important;
+}
+
+.sales-header-bg th,
+.sales-header-bg th.text-white {
+  background-color: #42acff !important;
+  color: white !important;
+}
+
+@media print {
+  .no-print {
+    display: none !important;
+  }
+
+  body {
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
+    margin-bottom: 60px;
+  }
+
+  .print-address-footer {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    text-align: center;
+    padding: 4px 0;
+    border-top: 1px solid #0f172a;
+    font-size: 11px;
+    background: #fff;
+    page-break-inside: avoid;
+  }
+
+  .page-break {
+    page-break-before: always;
+    break-before: page;
+    page-break-inside: avoid;
+  }
+}
+
+@media screen {
+  .print-address-footer {
+    display: none;
+  }
+}
+
+.qr-code-fixed-container {
+  width: 100px;
+  height: 100px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #fff;
+  padding: 5px;
+  box-sizing: border-box;
+  overflow: hidden;
+}
+
+.qr-code-fixed-container ::ng-deep img {
+  max-width: 100% !important;
+  max-height: 100% !important;
+  width: auto !important;
+  height: auto !important;
+  display: block;
+}
+
+/* Premium Design Improvements */
+.card {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  background: #ffffff;
+  border: 1px solid #f1f5f9;
+}
+
+.premium-back-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.2s ease, opacity 0.2s ease;
+  
+  &:hover {
+    transform: translateX(-2px);
+    opacity: 0.95;
+  }
+  
+  &:active {
+    transform: scale(0.97);
+  }
+}
+
+/* Custom shadow tokens */
+.shadow-sm {
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.05), 0 1px 2px -1px rgba(0, 0, 0, 0.05) !important;
+}
+
+/* Animate settings panel fade-in */
+.animate-fade-in {
+  animation: fadeIn 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Override actions menu buttons size to match reservations page */
+:host ::ng-deep {
+  .detail-actions-menu {
+    box-shadow: none !important;
+    padding: 0 !important;
+    background: transparent !important;
+    
+    .action-btn {
+      min-height: 28px !important;
+      height: 28px !important;
+      font-size: 0.8rem !important;
+      padding: 0 0.75rem !important;
+      border-radius: 6px !important;
+      font-weight: 600 !important;
+    }
+
+    .navigation-controls {
+      .nav-btn {
+        min-width: 28px !important;
+        height: 28px !important;
+        border-radius: 6px !important;
+        background: #3b82f6 !important;
+        padding: 0 !important;
+        display: inline-flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+
+        i {
+          font-size: 0.8rem !important;
+        }
+      }
+
+      .page-indicator {
+        background: #3b82f6 !important;
+        padding: 0 0.5rem !important;
+        height: 28px !important;
+        line-height: 28px !important;
+        border-radius: 6px !important;
+        font-size: 0.8rem !important;
+        min-width: 60px !important;
+        display: inline-flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+      }
+    }
+  }
+
+  app-back-button {
+    .p-button {
+      height: 28px !important;
+      font-size: 0.8rem !important;
+      padding: 0 0.75rem !important;
+      border-radius: 6px !important;
+      font-weight: 600 !important;
+    }
+  }
+}
+
+.fast-spinner {
+  animation: fastSpin 0.7s linear infinite !important;
+  display: inline-block !important;
+}
+
+@keyframes fastSpin {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}

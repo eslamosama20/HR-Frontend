@@ -1,0 +1,1230 @@
+﻿<p-toast></p-toast>
+<p-confirmDialog styleClass="custom-confirm-dialog" [style]="{ width: '520px', maxWidth: '95vw' }" appendTo="body"></p-confirmDialog>
+
+<div class="container-fluid px-3 py-1" *ngIf="!showPurchaseDialog()">
+  <!-- Page Header with bg-yellow -->
+  <div class="page-header mb-2">
+    <div class="page-header-text">
+      <h2>{{ "RESERVATION_PURCHASE.PAGE_TITLE" | translate }}</h2>
+      <p>{{ "RESERVATION_PURCHASE.PAGE_SUBTITLE" | translate }}</p>
+    </div>
+    <div class="page-header-actions">
+      <button pButton type="button" [label]="'RESERVATION_PURCHASE.VIEW_INVOICES' | translate" icon="pi pi-eye" class="p-button-info p-button-lg add-button header-action-btn" (click)="openViewDialog()"></button>
+      <button *ngIf="hasPermission(PERMISSIONS.ReservationPurchases.Create)" pButton type="button" [label]="'RESERVATION_PURCHASE.ADD_INVOICE' | translate" icon="pi pi-plus" class="p-button-primary p-button-lg add-button header-action-btn" (click)="openPurchaseDialog()"></button>
+    </div>
+  </div>
+
+  <!-- Action buttons row -->
+  <div class="flex justify-between items-center gap-1 flex-wrap mb-1">
+    <div class="flex items-center gap-2 flex-wrap">
+      <button pButton type="button" [label]="'RESERVATION_PURCHASE.DOWNLOAD_ALL' | translate" icon="pi pi-download" class="p-button-outlined p-button-sm" (click)="downloadAllInvoicesPdf()"></button>
+      <button pButton type="button" [label]="'RESERVATION_PURCHASE.DOWNLOAD_ALL_MERGED' | translate" icon="pi pi-file-pdf" class="p-button-outlined p-button-sm" (click)="downloadAllMergedInvoicesPdf()"></button>
+      <ng-container *ngIf="selectedInvoices.length >= 1">
+        <span class="text-gray-300 mx-1">|</span>
+        <button pButton type="button" [label]="'RESERVATION_PURCHASE.PRINT_SELECTED' | translate" icon="pi pi-print" class="p-button-success p-button-sm" (click)="printSelectedServerInvoices()"></button>
+        <button pButton type="button" [label]="'RESERVATION_PURCHASE.DOWNLOAD_SELECTED' | translate" icon="pi pi-download" class="p-button-info p-button-sm" (click)="downloadSelectedServerInvoices()"></button>
+        <button pButton type="button" [label]="'RESERVATION_PURCHASE.PRINT_MERGED' | translate" icon="pi pi-print" class="p-button-help p-button-sm" (click)="printMergedSelected()"></button>
+        <button pButton type="button" [label]="'RESERVATION_PURCHASE.DOWNLOAD_MERGED' | translate" icon="pi pi-file-pdf" class="p-button-warning p-button-sm" (click)="downloadMergedSelected()"></button>
+        <button pButton type="button" [label]="'RESERVATION_PURCHASE.CLEAR_SELECTION' | translate" icon="pi pi-times" class="p-button-text p-button-sm" (click)="clearSelection()"></button>
+      </ng-container>
+    </div>
+  </div>
+
+  <!-- Preview Table -->
+  <div class="empty-state-container">
+    <div class="preview-content">
+      <div class="form-section preview-section">
+        <div class="excel-table-wrapper purchase-preview-wrapper">
+          <table class="excel-table basic-info-table purchase-preview-table">
+            <thead class="bg-yellow">
+              <tr>
+                <th class="col-checkbox" style="width: 40px; min-width: 40px;">
+                  <input type="checkbox" [checked]="allPageSelected" (change)="selectAllInvoices($any($event.target).checked)" style="cursor: pointer;" />
+                </th>
+                <th class="col-sn">{{ "RESERVATION_PURCHASE.SN" | translate }}</th>
+                <th class="col-notes">{{ "RESERVATION_PURCHASE.DESCRIPTION" | translate }}</th>
+                <th class="col-entry">{{ "RESERVATION_PURCHASE.HOTEL" | translate }}</th>
+                <th class="col-entry">{{ "RESERVATION_PURCHASE.ACCOUNT" | translate }}</th>
+                <th class="col-rooms">{{ "RESERVATION_PURCHASE.CURRENCY" | translate }}</th>
+                <th class="col-date">{{ "RESERVATION_PURCHASE.ISSUE_DATE" | translate }}</th>
+                <th class="col-date">{{ "RESERVATION_PURCHASE.DUE_DATE" | translate }}</th>
+                <th class="col-amount">{{ "RESERVATION_PURCHASE.TOTAL" | translate }}</th>
+                <th class="col-entry">{{ "RESERVATION_PURCHASE.ENTRY_NO" | translate }}</th>
+                <th class="col-actions">{{ "RESERVATION_PURCHASE.ACTIONS" | translate }}</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let invoice of (previewInvoices() | slice: previewPage * previewRows : previewPage * previewRows + previewRows); let i = index"
+                class="table-row basic-info-row"
+                [class.cancelled-invoice-row]="invoice?.isCanceled"
+                (click)="openViewDialog(invoice)"
+                (contextmenu)="onInvoiceMenuClick($event, invoiceOverlay, invoice)">
+                <td class="text-center col-checkbox" style="width: 40px; min-width: 40px;">
+                  <input type="checkbox" [checked]="isSelected(invoice)" (change)="onSelectionChange(invoice)" (click)="$event.stopPropagation()" style="cursor: pointer;" />
+                </td>
+                <td class="text-center col-sn">{{ previewPage * previewRows + i + 1 }}</td>
+                <td class="text-center col-notes">{{ invoice.description || '-' }}</td>
+                <td class="text-center col-entry">{{ getHotelName(invoice.hotelId) }}</td>
+                <td class="text-center col-entry">{{ getAccountName(invoice.mainAccountId || invoice.accountId) }}</td>
+                <td class="text-center col-rooms">{{ invoice.currency || '-' }}</td>
+                <td class="text-center col-date">{{ invoice.issueDate ? (invoice.issueDate | customDate: 'dd/MM/yyyy') : '-' }}</td>
+                <td class="text-center col-date">{{ invoice.dueDate ? (invoice.dueDate | customDate: 'dd/MM/yyyy') : '-' }}</td>
+                <td class="text-center col-amount">{{ getInvoiceFinalTotal(invoice) == null ? '-' : (getInvoiceFinalTotal(invoice) | number:'1.2-2') + ' ' + (invoice.currency || '') }}</td>
+                <td class="text-center col-entry">
+                  <a *ngIf="invoice.transactionId" [routerLink]="['/accounting/journal-transactions/transaction', invoice.transactionId]" target="_blank" (click)="$event.stopPropagation()" class="transaction-link" [pTooltip]="'RESERVATION_PURCHASE.VIEW_ENTRY' | translate">
+                    <i class="pi pi-external-link"></i> {{ invoice.entryNo || invoice.transactionId?.substring(0, 8) || '-' }}
+                  </a>
+                  <span *ngIf="!invoice.transactionId" class="text-gray-400">-</span>
+                </td>
+                <td class="text-center col-actions" (click)="$event.stopPropagation()">
+                  <button pButton type="button" class="p-button-rounded p-button-text p-button-sm" icon="pi pi-ellipsis-v" (click)="onInvoiceMenuClick($event, invoiceOverlay, invoice)"></button>
+                </td>
+              </tr>
+              <tr *ngIf="previewInvoices().length === 0">
+                <td colspan="11" class="text-center py-4 text-gray-500">{{ "RESERVATION_PURCHASE.NO_INVOICES" | translate }}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="custom-paginator-table">
+          <p-paginator
+            class="preview-paginator"
+            [rows]="previewRows"
+            [first]="previewPage * previewRows"
+            [totalRecords]="previewInvoices().length"
+            [rowsPerPageOptions]="[10, 25, 50]"
+            [showCurrentPageReport]="true"
+            [currentPageReportTemplate]="'RESERVATION_PURCHASE.TOTAL_RECORDS' | translate:{count: previewInvoices().length}"
+            template="CurrentPageReport PrevPageLink PageLinks NextPageLink RowsPerPageDropdown"
+            (onPageChange)="onPreviewPageChange($event)"
+          ></p-paginator>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <p-overlayPanel #invoiceOverlay [showCloseIcon]="false" [dismissable]="true" [baseZIndex]="11000" appendTo="body" styleClass="invoice-overlay">
+    <div class="op-grid">
+      <button pButton type="button" class="pill full-width" icon="pi pi-eye" [label]="'RESERVATION_PURCHASE.VIEW' | translate" (click)="invoiceOverlay.hide(); openViewDialog(selectedInvoiceForMenu, true)"></button>
+      <button pButton type="button" class="pill" icon="pi pi-print" [label]="'RESERVATION_PURCHASE.PRINT_CLIENT' | translate" (click)="invoiceOverlay.hide(); printPurchaseInvoice(selectedInvoiceForMenu)"></button>
+      <button pButton type="button" class="pill" icon="pi pi-print" [label]="'RESERVATION_PURCHASE.PRINT_PDF' | translate" (click)="invoiceOverlay.hide(); printServerInvoice(selectedInvoiceForMenu)"></button>
+      <button pButton type="button" class="pill" icon="pi pi-download" [label]="'RESERVATION_PURCHASE.DOWNLOAD_PDF' | translate" (click)="invoiceOverlay.hide(); downloadServerInvoice(selectedInvoiceForMenu)"></button>
+      <button *ngIf="hasPermission(PERMISSIONS.ReservationPurchases.Update)" pButton type="button" class="pill" icon="pi pi-pencil" [label]="'RESERVATION_PURCHASE.EDIT' | translate" (click)="invoiceOverlay.hide(); openEditDialog(selectedInvoiceForMenu)"></button>
+      <button *ngIf="!selectedInvoiceForMenu?.transactionId" pButton type="button" class="pill full-width" icon="pi pi-book" [label]="'RESERVATION_PURCHASE.CREATE_TRANSACTION' | translate" (click)="invoiceOverlay.hide(); createTransactionForInvoice(selectedInvoiceForMenu)"></button>
+    </div>
+  </p-overlayPanel>
+
+</div>
+
+  <!-- Print Type Selection Dialog -->
+  <p-dialog [(visible)]="printOrientationDialogVisible" [header]="'RESERVATION_PURCHASE.SELECT_PRINT_TYPE' | translate" [style]="{ width: '500px' }" [modal]="true" [draggable]="false" [resizable]="false" appendTo="body" [autoZIndex]="false" styleClass="print-orientation-dialog">
+    <div class="flex flex-col gap-4 p-4">
+      <div class="flex flex-col gap-3">
+        <div class="flex items-center gap-3 cursor-pointer p-3 border rounded hover:bg-gray-50" (click)="selectedPrintType = 'A4Portrait'">
+          <input type="radio" name="printType" [checked]="selectedPrintType === 'A4Portrait'" (change)="selectedPrintType = 'A4Portrait'" class="cursor-pointer">
+          <label class="cursor-pointer flex items-center gap-3">
+            <i class="pi pi-file" style="font-size: 1.8rem; color: #3b82f6;"></i>
+            <div>
+              <div class="font-semibold text-base">{{ "RESERVATION_PURCHASE.A4_PORTRAIT" | translate }}</div>
+              <div class="text-sm text-gray-600">{{ "RESERVATION_PURCHASE.A4_PORTRAIT_DESC" | translate }}</div>
+            </div>
+          </label>
+        </div>
+        <div class="flex items-center gap-3 cursor-pointer p-3 border rounded hover:bg-gray-50" (click)="selectedPrintType = 'A4Landscape'">
+          <input type="radio" name="printType" [checked]="selectedPrintType === 'A4Landscape'" (change)="selectedPrintType = 'A4Landscape'" class="cursor-pointer">
+          <label class="cursor-pointer flex items-center gap-3">
+            <i class="pi pi-file" style="font-size: 1.8rem; transform: rotate(90deg); color: #3b82f6;"></i>
+            <div>
+              <div class="font-semibold text-base">{{ "RESERVATION_PURCHASE.A4_LANDSCAPE" | translate }}</div>
+              <div class="text-sm text-gray-600">{{ "RESERVATION_PURCHASE.A4_LANDSCAPE_DESC" | translate }}</div>
+            </div>
+          </label>
+        </div>
+      </div>
+    </div>
+    <ng-template pTemplate="footer">
+      <div class="flex justify-end gap-2">
+        <button pButton type="button" [label]="'RESERVATION_PURCHASE.CANCEL' | translate" class="p-button-text" (click)="printOrientationDialogVisible = false"></button>
+        <button pButton type="button" [label]="(pendingIsPrint ? 'RESERVATION_PURCHASE.PRINT' : 'RESERVATION_PURCHASE.DOWNLOAD') | translate" class="p-button-primary" (click)="confirmPrintOrientation()"></button>
+      </div>
+    </ng-template>
+  </p-dialog>
+
+<!-- Add Purchase Invoice Page -->
+<!-- Add Purchase Invoice Page -->
+<div class="purchase-page" *ngIf="showPurchaseDialog()">
+  <div class="page-header-bar">
+    <div class="header-content">
+      <button
+        pButton
+        type="button"
+        icon="pi pi-arrow-right"
+        class="p-button-text p-button-secondary back-button"
+        (click)="closePurchaseDialog()"
+        [disabled]="loading()"
+      ></button>
+
+     <h2 class="page-title">
+  {{ isViewMode() ? 'عرض فاتورة مشتريات' : 'إضافة فاتورة مشتريات' }}
+
+  <!-- ✅ Badge تظهر فقط لو الفاتورة ملغاة وفي وضع العرض -->
+ <span *ngIf="isViewMode() && isCurrentInvoiceCanceled()" class="invoice-cancelled-badge">
+  فاتورة ملغاة
+</span>
+</h2>
+
+      <div *ngIf="isViewMode() && !viewSingleInvoice()" class="invoice-navigation">
+        <span class="invoice-counter">{{ getCurrentInvoiceNumber() }}</span>
+        <button
+          pButton
+          type="button"
+          icon="pi pi-chevron-right"
+          class="p-button-text p-button-sm nav-btn"
+          (click)="previousInvoice()"
+          [disabled]="!canGoPrevious() || loading()"
+          pTooltip="السابق"
+        ></button>
+        <button
+          pButton
+          type="button"
+          icon="pi pi-chevron-left"
+          class="p-button-text p-button-sm nav-btn"
+          (click)="nextInvoice()"
+          [disabled]="!canGoNext() || loading()"
+          pTooltip="التالي"
+        ></button>
+      </div>
+    </div>
+
+    <div class="header-actions">
+      <!-- Print button - rightmost in RTL -->
+      <button
+        *ngIf="currentInvoice?.id"
+        pButton
+        type="button"
+        [label]="'RESERVATION_PURCHASE.PRINT_PDF' | translate"
+        icon="pi pi-print"
+        class="p-button-primary p-button-sm header-btn"
+        (click)="printServerInvoice(currentInvoice)"
+        [disabled]="loading()"
+      ></button>
+
+      <!-- Edit button when in View mode -->
+      <button
+        *ngIf="isViewMode() && currentInvoice?.id"
+        pButton
+        type="button"
+        [label]="'RESERVATION_PURCHASE.EDIT' | translate"
+        icon="pi pi-pencil"
+        class="p-button-warning p-button-sm header-btn"
+        (click)="openEditDialog(currentInvoice)"
+        [disabled]="loading()"
+      ></button>
+      <!-- Create Transaction button when no transaction exists -->
+      <button
+        *ngIf="!isViewMode() && currentInvoice?.id && !currentInvoice?.transactionId"
+        pButton
+        type="button"
+        [label]="'FINANCE.CREATE_TRANSACTION' | translate"
+        icon="pi pi-book"
+        class="p-button-info p-button-sm header-btn"
+        (click)="createTransactionForInvoice(currentInvoice)"
+        [disabled]="loading()"
+      ></button>
+
+      <!-- View Transaction Link Button when transaction exists -->
+      <a
+        *ngIf="currentInvoice?.id && currentInvoice?.transactionId"
+        [routerLink]="['/accounting/journal-transactions/transaction', currentInvoice.transactionId]"
+        target="_blank"
+        class="p-button p-button-success p-button-sm header-btn transaction-header-btn"
+        [pTooltip]="'RESERVATION_PURCHASE.VIEW_ENTRY' | translate"
+      >
+        <i class="pi pi-external-link text-white"></i>
+        <span class="text-white font-semibold me-1">{{ 'RESERVATION_PURCHASE.VIEW_ENTRY' | translate }}</span>
+      </a>
+      <button
+        *ngIf="!isViewMode()"
+        pButton
+        type="button"
+        label="حفظ الفاتورة"
+        icon="pi pi-check"
+        class="p-button-primary p-button-sm header-btn"
+        (click)="onSavePurchase()"
+        [loading]="loading()"
+        [disabled]="loading()"
+      ></button>
+
+      <button
+        *ngIf="!isViewMode()"
+        pButton
+        type="button"
+        label="إلغاء"
+        icon="pi pi-times"
+        class="p-button-secondary p-button-sm header-btn"
+        (click)="closePurchaseDialog()"
+        [disabled]="loading()"
+      ></button>
+    </div>
+  </div>
+
+  <div class="page-content">
+    <form [formGroup]="purchaseForm" class="purchase-form">
+      <!-- Header Section -->
+      <div class="form-section">
+        <h4 class="section-title">
+          <i class="pi pi-info-circle"></i>
+          البيانات الأساسية
+        </h4>
+
+        <div class="form-grid">
+          <!-- Description -->
+          <div class="form-field description-field">
+            <label class="field-label">الوصف</label>
+          <input
+  type="text"
+  pInputText
+  formControlName="description"
+  class="w-full"
+  [disabled]="isViewMode()"
+/>
+          </div>
+
+          <!-- Hotel -->
+          <div class="form-field hotel-field">
+            <label class="field-label required">الفندق</label>
+            <p-dropdown
+              formControlName="hotelId"
+              [options]="hotelsOptions()"
+              optionLabel="label"
+              optionValue="value"
+              placeholder="اختر الفندق"
+              [filter]="true"
+              filterBy="label"
+              styleClass="w-full"
+              [showClear]="true"
+             [disabled]="isViewMode()"
+            ></p-dropdown>
+            <small 
+              *ngIf="purchaseForm.get('hotelId')?.invalid && (purchaseForm.get('hotelId')?.touched || purchaseForm.get('hotelId')?.dirty)" 
+              class="p-error block mt-1">
+              <span *ngIf="purchaseForm.get('hotelId')?.hasError('required')">
+                الفندق مطلوب | Hotel is required
+              </span>
+            </small>
+          </div>
+
+          <!-- Account -->
+          <div class="form-field account-field">
+            <label class="field-label required">الحساب</label>
+            <p-dropdown
+              formControlName="mainAccountId"
+              [options]="accountsOptions()"
+              optionLabel="label"
+              optionValue="value"
+              placeholder="اختر الحساب من شجرة الحسابات"
+              [filter]="true"
+              filterBy="label"
+              styleClass="w-full"
+              [showClear]="true"
+              [disabled]="isViewMode()"
+            ></p-dropdown>
+            <small 
+              *ngIf="purchaseForm.get('mainAccountId')?.invalid && (purchaseForm.get('mainAccountId')?.touched || purchaseForm.get('mainAccountId')?.dirty)" 
+              class="p-error block mt-1">
+              <span *ngIf="purchaseForm.get('mainAccountId')?.hasError('required')">
+                الحساب مطلوب | Account is required
+              </span>
+            </small>
+          </div>
+
+          <!-- Currency -->
+          <div class="form-field currency-field">
+            <label class="field-label required">العملة</label>
+            <p-dropdown
+              formControlName="currency"
+              [options]="currenciesOptions()"
+              optionLabel="label"
+              optionValue="value"
+              styleClass="w-full"
+              [disabled]="isViewMode()"
+            ></p-dropdown>
+          </div>
+
+          <!-- Issue Date -->
+          <div class="form-field issue-date-field">
+            <label class="field-label required">تاريخ الإصدار</label>
+            <app-custom-date-picker
+              formControlName="issueDate"
+              dateFormat="dd/mm/yy"
+              [showIcon]="true"
+              styleClass="w-full"
+              [disabled]="isViewMode()"
+            ></app-custom-date-picker>
+            <small 
+              *ngIf="purchaseForm.get('issueDate')?.invalid && (purchaseForm.get('issueDate')?.touched || purchaseForm.get('issueDate')?.dirty)" 
+              class="p-error block mt-1">
+              <span *ngIf="purchaseForm.get('issueDate')?.hasError('required')">
+                تاريخ الإصدار مطلوب | Issue Date is required
+              </span>
+            </small>
+          </div>
+
+          <!-- Due Date -->
+          <div class="form-field due-date-field">
+            <label class="field-label required">تاريخ الاستحقاق</label>
+            <app-custom-date-picker
+              formControlName="dueDate"
+              dateFormat="dd/mm/yy"
+              [showIcon]="true"
+              styleClass="w-full"
+              [disabled]="isViewMode()"
+            ></app-custom-date-picker>
+            <small 
+              *ngIf="purchaseForm.get('dueDate')?.invalid && (purchaseForm.get('dueDate')?.touched || purchaseForm.get('dueDate')?.dirty)" 
+              class="p-error block mt-1">
+              <span *ngIf="purchaseForm.get('dueDate')?.hasError('required')">
+                تاريخ الاستحقاق مطلوب | Due Date is required
+              </span>
+            </small>
+          </div>
+
+          <!-- Tax Rate -->
+          <div class="form-field tax-field">
+            <label class="field-label">نسبة الضريبة (%)</label>
+            <p-inputNumber
+              formControlName="taxRate"
+              [min]="0"
+              [max]="100"
+              mode="decimal"
+              [maxFractionDigits]="2"
+              suffix="%"
+              styleClass="w-full"
+              inputStyleClass="text-center"
+              
+             [disabled]="isViewMode() && !canEditHeader()"
+              (onInput)="fillRoomsCostTable()"
+            ></p-inputNumber>
+          </div>
+
+          <!-- Discount -->
+          <div class="form-field discount-field">
+            <label class="field-label">الخصم</label>
+            <p-inputNumber
+              formControlName="discount"
+              [min]="0"
+              mode="decimal"
+              [maxFractionDigits]="2"
+              styleClass="w-full"
+              inputStyleClass="text-center"
+              
+            [disabled]="isViewMode() && !canEditHeader()"
+            ></p-inputNumber>
+          </div>
+        </div>
+      </div>
+
+      <!-- Table Section with Tabs -->
+      <div class="form-section">
+        <p-tabView styleClass="custom-tabview">
+          <!-- Rooms Type -->
+          <p-tabPanel header="Rooms Type - أنواع الغرف">
+            <div class="flex justify-start items-center mb-2">
+              <button
+                *ngIf="!isViewMode()"
+                pButton
+                type="button"
+                label="إضافة صف"
+                icon="pi pi-plus"
+                class="p-button-success p-button-sm header-btn"
+                (click)="$event.stopPropagation(); addRow()"
+                [disabled]="loading()"
+              ></button>
+            </div>
+            <div class="excel-table-wrapper">
+              <table class="excel-table">
+                <thead class="bg-yellow">
+                  <tr>
+                    <th class="col-sn">م</th>
+                    <th class="col-date">التاريخ من</th>
+                    <th class="col-days">عدد الأيام</th>
+                    <th class="col-date">التاريخ إلى</th>
+                    <th class="col-rooms">عدد الغرف</th>
+                    <th class="col-room">نوع الغرفة</th>
+                    <th class="col-meal">الوجبة</th>
+                    <th class="col-cost">تكلفة الوجبة</th>
+                    <th class="col-view">الإطلالة</th>
+                    <th class="col-cost">تكلفة الإطلالة</th>
+                    <th class="col-day">سعر السبت</th>
+                    <th class="col-day">سعر الأحد</th>
+                    <th class="col-day">سعر الإثنين</th>
+                    <th class="col-day">سعر الثلاثاء</th>
+                    <th class="col-day">سعر الأربعاء</th>
+                    <th class="col-day">سعر الخميس</th>
+                    <th class="col-day">سعر الجمعة</th>
+                    <th class="col-day-count">عدد الغرف السبت</th>
+                    <th class="col-day-count">عدد الغرف الأحد</th>
+                    <th class="col-day-count">عدد الغرف الإثنين</th>
+                    <th class="col-day-count">عدد الغرف الثلاثاء</th>
+                    <th class="col-day-count">عدد الغرف الأربعاء</th>
+                    <th class="col-day-count">عدد الغرف الخميس</th>
+                    <th class="col-day-count">عدد الغرف الجمعة</th>
+                    
+                    <th class="col-total">الإجمالي</th>
+                    <th class="col-action">حذف</th>
+                  </tr>
+                </thead>
+
+                <tbody>
+                  <tr *ngFor="let row of purchaseRows; let i = index" class="table-row">
+                    <td class="text-center col-sn">{{ i + 1 }}</td>
+
+                    <td class="col-date">
+                      <app-custom-date-picker
+                        [(ngModel)]="row.fromDate"
+                        [ngModelOptions]="{standalone: true}"
+                        dateFormat="dd/mm/yy"
+                        [showIcon]="true"
+                        appendTo="body"
+                        [baseZIndex]="10000"
+                        (onSelect)="onDateChange(row)"
+                        styleClass="w-full excel-input"
+                        inputStyleClass="excel-cell-input"
+                        [disabled]="isViewMode()"
+                      ></app-custom-date-picker>
+                    </td>
+
+                    <td class="col-days">
+                      <input
+                        type="number"
+                        [ngModel]="row.numberOfDays && row.numberOfDays > 0 ? row.numberOfDays : null"
+                        (ngModelChange)="row.numberOfDays = $event || 0; onNumberOfDaysChange(row)"
+                        [ngModelOptions]="{standalone: true}"
+                        min="0"
+                        max="999"
+                        class="excel-cell-input w-full text-center"
+                        [disabled]="isViewMode()"
+                      />
+                    </td>
+
+                    <td class="col-date">
+                      <app-custom-date-picker
+                        [(ngModel)]="row.toDate"
+                        [ngModelOptions]="{standalone: true}"
+                        dateFormat="dd/mm/yy"
+                        [showIcon]="true"
+                        appendTo="body"
+                        [baseZIndex]="10000"
+                        (onSelect)="onDateChange(row)"
+                        styleClass="w-full excel-input"
+                        inputStyleClass="excel-cell-input"
+                        [disabled]="isViewMode()"
+                      ></app-custom-date-picker>
+                    </td>
+
+                    <td class="col-rooms">
+                      <input
+                        type="number"
+                        [(ngModel)]="row.numberOfRooms"
+                        [ngModelOptions]="{standalone: true}"
+                        min="1"
+                        max="999"
+                        class="excel-cell-input w-full"
+                        (input)="onCostChange(row)"
+                        (blur)="validateNumberOfRooms(row)"
+                        [disabled]="isViewMode()"
+                      />
+                    </td>
+
+                    <td class="col-room">
+                      <p-dropdown
+                        [(ngModel)]="row.roomTypeId"
+                        [ngModelOptions]="{standalone: true}"
+                        [options]="roomTypesOptions()"
+                        optionLabel="label"
+                        optionValue="value"
+                        placeholder=""
+                        styleClass="w-full excel-dropdown"
+                        [showClear]="true"
+                        [disabled]="isViewMode()"
+                        appendTo="body"
+                      ></p-dropdown>
+                    </td>
+
+                    <td class="col-meal">
+                      <p-dropdown
+                        [(ngModel)]="row.mealId"
+                        [ngModelOptions]="{standalone: true}"
+                        [options]="mealsOptions()"
+                        optionLabel="label"
+                        optionValue="value"
+                        placeholder=""
+                        styleClass="w-full excel-dropdown"
+                        [showClear]="true"
+                        (onChange)="onMealChange(row)"
+                        [disabled]="isViewMode()"
+                        appendTo="body"
+                      ></p-dropdown>
+                    </td>
+
+                    <td class="col-cost">
+                      <p-inputNumber
+                        [(ngModel)]="row.mealCost"
+                        [ngModelOptions]="{standalone: true}"
+                        [min]="0"
+                        mode="decimal"
+                        [maxFractionDigits]="2"
+                        styleClass="w-full excel-input"
+                        inputStyleClass="excel-cell-input"
+                        
+                        [disabled]="!row.mealId || isViewMode()"
+                        (onInput)="onCostChange(row)"
+                      ></p-inputNumber>
+                    </td>
+
+                    <td class="col-view">
+                      <p-dropdown
+                        [(ngModel)]="row.viewId"
+                        [ngModelOptions]="{standalone: true}"
+                        [options]="viewsOptions()"
+                        optionLabel="label"
+                        optionValue="value"
+                        placeholder=""
+                        styleClass="w-full excel-dropdown"
+                        [showClear]="true"
+                        [disabled]="isViewMode()"
+                        appendTo="body"
+                      ></p-dropdown>
+                    </td>
+
+                    <td class="col-cost">
+                      <p-inputNumber
+                        [(ngModel)]="row.viewCost"
+                        [ngModelOptions]="{standalone: true}"
+                        [min]="0"
+                        mode="decimal"
+                        [maxFractionDigits]="2"
+                        styleClass="w-full excel-input"
+                        inputStyleClass="excel-cell-input"
+                        
+                        (onInput)="onCostChange(row)"
+                        [disabled]="isViewMode()"
+                      ></p-inputNumber>
+                    </td>
+
+                    
+
+                    <td class="col-day">
+                      <p-inputNumber
+                        [(ngModel)]="row.satCost"
+                        [ngModelOptions]="{standalone: true}"
+                        [min]="0"
+                        mode="decimal"
+                        [maxFractionDigits]="2"
+                        styleClass="w-full excel-input"
+                        inputStyleClass="excel-cell-input"
+                        
+                        (onInput)="onCostChange(row)"
+                        [disabled]="isViewMode()"
+                      ></p-inputNumber>
+                    </td>
+
+                    <td class="col-day">
+                      <p-inputNumber
+                        [(ngModel)]="row.sunCost"
+                        [ngModelOptions]="{standalone: true}"
+                        [min]="0"
+                        mode="decimal"
+                        [maxFractionDigits]="2"
+                        styleClass="w-full excel-input"
+                        inputStyleClass="excel-cell-input"
+                        
+                        (onInput)="onCostChange(row)"
+                        [disabled]="isViewMode()"
+                      ></p-inputNumber>
+                    </td>
+
+                    <td class="col-day">
+                      <p-inputNumber
+                        [(ngModel)]="row.monCost"
+                        [ngModelOptions]="{standalone: true}"
+                        [min]="0"
+                        mode="decimal"
+                        [maxFractionDigits]="2"
+                        styleClass="w-full excel-input"
+                        inputStyleClass="excel-cell-input"
+                        
+                        (onInput)="onCostChange(row)"
+                        [disabled]="isViewMode()"
+                      ></p-inputNumber>
+                    </td>
+
+                    <td class="col-day">
+                      <p-inputNumber
+                        [(ngModel)]="row.tueCost"
+                        [ngModelOptions]="{standalone: true}"
+                        [min]="0"
+                        mode="decimal"
+                        [maxFractionDigits]="2"
+                        styleClass="w-full excel-input"
+                        inputStyleClass="excel-cell-input"
+                        
+                        (onInput)="onCostChange(row)"
+                        [disabled]="isViewMode()"
+                      ></p-inputNumber>
+                    </td>
+
+                    <td class="col-day">
+                      <p-inputNumber
+                        [(ngModel)]="row.wedCost"
+                        [ngModelOptions]="{standalone: true}"
+                        [min]="0"
+                        mode="decimal"
+                        [maxFractionDigits]="2"
+                        styleClass="w-full excel-input"
+                        inputStyleClass="excel-cell-input"
+                        
+                        (onInput)="onCostChange(row)"
+                        [disabled]="isViewMode()"
+                      ></p-inputNumber>
+                    </td>
+
+                    <td class="col-day">
+                      <p-inputNumber
+                        [(ngModel)]="row.thuCost"
+                        [ngModelOptions]="{standalone: true}"
+                        [min]="0"
+                        mode="decimal"
+                        [maxFractionDigits]="2"
+                        styleClass="w-full excel-input"
+                        inputStyleClass="excel-cell-input"
+                        
+                        (onInput)="onCostChange(row)"
+                        [disabled]="isViewMode()"
+                      ></p-inputNumber>
+                    </td>
+
+                    <td class="col-day">
+                      <p-inputNumber
+                        [(ngModel)]="row.friCost"
+                        [ngModelOptions]="{standalone: true}"
+                        [min]="0"
+                        mode="decimal"
+                        [maxFractionDigits]="2"
+                        styleClass="w-full excel-input"
+                        inputStyleClass="excel-cell-input"
+                        
+                        (onInput)="onCostChange(row)"
+                        [disabled]="isViewMode()"
+                      ></p-inputNumber>
+                    </td>
+                           <td class="text-center col-day-count readonly-cell">
+                      <span class="day-count-value">{{ row.satCount }}</span>
+                    </td>
+                    <td class="text-center col-day-count readonly-cell">
+                      <span class="day-count-value">{{ row.sunCount }}</span>
+                    </td>
+                    <td class="text-center col-day-count readonly-cell">
+                      <span class="day-count-value">{{ row.monCount }}</span>
+                    </td>
+                    <td class="text-center col-day-count readonly-cell">
+                      <span class="day-count-value">{{ row.tueCount }}</span>
+                    </td>
+                    <td class="text-center col-day-count readonly-cell">
+                      <span class="day-count-value">{{ row.wedCount }}</span>
+                    </td>
+                    <td class="text-center col-day-count readonly-cell">
+                      <span class="day-count-value">{{ row.thuCount }}</span>
+                    </td>
+                    <td class="text-center col-day-count readonly-cell">
+                      <span class="day-count-value">{{ row.friCount }}</span>
+                    </td>
+                    <td class="text-center font-bold col-total total-cell">
+                      {{ row.totalCost | number:'1.2-2' }}
+                    </td>
+
+                    <td class="text-center col-action" *ngIf="!isViewMode()">
+                      <button
+                        pButton
+                        type="button"
+                        icon="pi pi-trash"
+                        class="p-button-rounded p-button-danger p-button-text p-button-sm delete-btn"
+                        (click)="removeRow(row.id)"
+                        pTooltip="حذف الصف"
+                        tooltipPosition="top"
+                      ></button>
+                    </td>
+                    <td class="text-center col-action" *ngIf="isViewMode()"></td>
+                  </tr>
+
+                  <tr *ngIf="purchaseRows.length === 0">
+                    <td colspan="26" class="text-center py-8 empty-row">
+                      <i class="pi pi-inbox text-2xl text-gray-400 mb-2"></i>
+                      <p class="text-gray-500">لا توجد بيانات. اضغط "إضافة صف" لبدء الإدخال</p>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </p-tabPanel>
+
+          <!-- Rooms Cost -->
+          <p-tabPanel header="Rooms Cost - تكلفة الغرف">
+            <div class="excel-table-wrapper">
+              <table class="excel-table">
+                <thead class="bg-yellow">
+                  <tr>
+                    <th class="col-sn">م</th>
+                    <th class="col-room-type">نوع الغرفة</th>
+                    <th class="col-meal">خطة الوجبة</th>
+                    <th class="col-view">الإطلالة</th>
+                    <th class="col-date">التاريخ</th>
+                    <th class="col-day">اليوم</th>
+                    <th class="col-cost">سعر الغرفة</th>
+                    <th class="col-cost">تكلفة الوجبة</th>
+                    <th class="col-cost">تكلفة الإطلالة</th>
+                    <th class="col-cost">التكلفة</th>
+                    <th class="col-rooms">عدد الغرف</th>
+                    <th class="col-total">إجمالي التكلفة قبل الضريبة</th>
+                    <th class="col-total">إجمالي الضريبة</th>
+                    <th class="col-total">إجمالي التكلفة</th>
+                  </tr>
+                </thead>
+
+                <tbody>
+                  <tr *ngFor="let day of roomsCostDays; let i = index" class="table-row">
+                    <td class="text-center col-sn">{{ i + 1 }}</td>
+                    <td class="text-center col-room-type">{{ day.roomType }}</td>
+                    <td class="text-center col-meal">{{ day.mealPlan }}</td>
+                    <td class="text-center col-view">{{ day.view }}</td>
+                    <td class="text-center col-date">{{ formatDate(day.date) }}</td>
+                    <td class="text-center col-day">{{ day.dayName }}</td>
+                    <td class="text-center col-cost">{{ day.roomCost | number:'1.2-2' }}</td>
+                    <td class="text-center col-cost">{{ day.mpCost | number:'1.2-2' }}</td>
+                    <td class="text-center col-cost">{{ day.viewCost | number:'1.2-2' }}</td>
+                    <td class="text-center col-cost">{{ day.cost | number:'1.2-2' }}</td>
+                    <td class="text-center col-rooms">{{ day.numberOfRooms }}</td>
+                    <td class="text-center col-total">{{ day.totalCostBeforeVat | number:'1.2-2' }}</td>
+                    <td class="text-center col-total">{{ day.totalVat | number:'1.2-2' }}</td>
+                    <td class="text-center font-bold col-total total-cell">{{ day.totalCost | number:'1.2-2' }}</td>
+                  </tr>
+
+                  <tr *ngIf="roomsCostDays.length === 0">
+                    <td colspan="14" class="text-center py-8 empty-row">
+                      <i class="pi pi-inbox text-2xl text-gray-400 mb-2"></i>
+                      <p class="text-gray-500">لا توجد بيانات</p>
+                    </td>
+                  </tr>
+
+                  <tr *ngIf="roomsCostDays.length > 0" class="table-row">
+                    <td colspan="11" class="text-center font-bold"></td>
+                    <td class="text-center font-bold col-total total-cell">{{ getRoomsCostTotalBeforeVat() | number:'1.2-2' }}</td>
+                    <td class="text-center font-bold col-total total-cell">{{ getRoomsCostTotalVat() | number:'1.2-2' }}</td>
+                    <td class="text-center font-bold col-total total-cell">{{ getRoomsCostTotalCost() | number:'1.2-2' }}</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </p-tabPanel>
+
+          <!-- Payment Schedule -->
+          <p-tabPanel header="Payment Schedule - جدول الدفعات">
+            <div class="flex justify-start items-center mb-2 gap-2">
+              <button
+                *ngIf="!isViewMode()"
+                pButton
+                type="button"
+                label="إضافة دفعة"
+                icon="pi pi-plus"
+                class="p-button-success p-button-sm header-btn"
+                (click)="$event.stopPropagation(); addPaymentRow()"
+                [disabled]="loading()"
+              ></button>
+              <button
+                *ngIf="!isViewMode() && currentInvoice?.id && hasUnsavedPayments()"
+                pButton
+                type="button"
+                label="حفظ الدفعات المضافة"
+                icon="pi pi-save"
+                class="p-button-primary p-button-sm header-btn"
+                (click)="$event.stopPropagation(); saveUnsavedPayments()"
+                [disabled]="loading()"
+              ></button>
+            </div>
+            <div class="excel-table-wrapper">
+              <table class="excel-table">
+                <thead class="bg-yellow">
+                  <tr>
+                    <th class="col-sn">م</th>
+                    <th class="col-date">التاريخ</th>
+                    <th class="col-day">اليوم</th>
+                    <th class="col-amount">المبلغ</th>
+                    <th class="col-vat">الضريبة</th>
+                    <th class="col-notes">ملاحظات</th>
+                    <th class="col-status">الحالة</th>
+                    <th class="col-receipt">سند الصرف</th>
+                    <th class="col-actions">إجراءات</th>
+                  </tr>
+                </thead>
+
+                <tbody>
+                  <tr *ngFor="let row of paymentScheduleRows; let i = index" class="table-row">
+                    <td class="col-sn text-center">{{ i + 1 }}</td>
+                    <td class="col-date">
+                      <app-custom-date-picker
+                        [(ngModel)]="row.paymentDate"
+                        [ngModelOptions]="{standalone: true}"
+                        [showIcon]="true"
+                        dateFormat="dd/mm/yy"
+                        appendTo="body"
+                        (onSelect)="onPaymentDateChange(row)"
+                        [disabled]="row.isSaved"
+                        styleClass="w-full excel-input"
+                        inputStyleClass="excel-cell-input text-center"
+                      ></app-custom-date-picker>
+                    </td>
+                    <td class="col-day">
+                      <input
+                        type="text"
+                        pInputText
+                        [(ngModel)]="row.dayName"
+                        [ngModelOptions]="{standalone: true}"
+                        readonly
+                        [disabled]="row.isSaved"
+                        class="excel-cell-input w-full text-center"
+                      />
+                    </td>
+                    <td class="col-amount">
+                      <p-inputNumber
+                        [(ngModel)]="row.amount"
+                        [ngModelOptions]="{standalone: true}"
+                        mode="decimal"
+                        [maxFractionDigits]="2"
+                        [disabled]="row.isSaved"
+                        styleClass="w-full excel-input"
+                        inputStyleClass="excel-cell-input text-center"
+                      ></p-inputNumber>
+                    </td>
+                    <td class="col-vat">
+                      <p-inputNumber
+                        [(ngModel)]="row.vat"
+                        [ngModelOptions]="{standalone: true}"
+                        mode="decimal"
+                        [maxFractionDigits]="2"
+                        [disabled]="row.isSaved"
+                        styleClass="w-full excel-input"
+                        inputStyleClass="excel-cell-input text-center"
+                      ></p-inputNumber>
+                    </td>
+                    <td class="col-notes">
+                      <input
+                        type="text"
+                        pInputText
+                        [(ngModel)]="row.notes"
+                        [ngModelOptions]="{standalone: true}"
+                        [disabled]="row.isSaved"
+                        class="excel-cell-input w-full"
+                      />
+                    </td>
+                    <!-- Status Column -->
+                    <td class="col-status text-center" *ngIf="row.isSaved && !row.isPaid">
+                      <div class="payment-saved-indicator">
+                        <i class="pi pi-clock text-blue-500 me-1"></i>
+                        <span class="text-blue-600 font-semibold" style="font-size: 0.85rem;">مجدولة</span>
+                      </div>
+                    </td>
+                    <td class="col-status text-center" *ngIf="row.isSaved && row.isPaid">
+                      <div class="payment-paid-indicator">
+                        <i class="pi pi-check-circle text-green-600 me-1"></i>
+                        <span class="text-green-600 font-bold" style="font-size: 0.85rem;">تم الصرف</span>
+                      </div>
+                    </td>
+                    <td class="col-status" *ngIf="!row.isSaved"></td>
+
+                    <!-- Receipt Column -->
+                    <td class="col-receipt text-center">
+                      <!-- Pay Button - For saved payments -->
+                      <ng-container *ngIf="row.isSaved">
+                        <!-- Button when not yet linked -->
+                        <button
+                          *ngIf="!row.isPaid"
+                          pButton
+                          type="button"
+                          [label]="'RESERVATION_PURCHASE.CREATE_RECEIPT' | translate"
+                          icon="pi pi-plus-circle"
+                          class="p-button-sm create-receipt-btn"
+                          (click)="$event.stopPropagation(); createPaymentVoucher(row)"
+                          [pTooltip]="'RESERVATION_PURCHASE.CREATE_RECEIPT_TOOLTIP' | translate"
+                        ></button>
+                        <!-- Display receipt number when linked -->
+                        <a *ngIf="row.isPaid" 
+                           class="receipt-link-btn" 
+                           [routerLink]="['/receipts/paycheck-receipts', row.paycheckReceiptId || row.receiptNo]" 
+                           [pTooltip]="'فتح سند الصرف رقم ' + (row.receiptNo || '')"
+                           tooltipPosition="top">
+                          <i class="pi pi-file-check me-1"></i>
+                          {{ row.receiptNo || 'عرض السند' }}
+                        </a>
+                      </ng-container>
+                    </td>
+
+                    <!-- Actions Column -->
+                    <td class="col-actions text-center">
+                      <!-- Remove Button - For all rows in edit mode, disabled if paid -->
+                      <button
+                        *ngIf="!isViewMode()"
+                        pButton
+                        type="button"
+                        icon="pi pi-trash"
+                        class="p-button-danger p-button-sm p-button-text"
+                        (click)="removePaymentRow(row.id)"
+                        [disabled]="row.isSaved && row.isPaid"
+                        [pTooltip]="(row.isSaved && row.isPaid) ? 'لا يمكن الحذف لورود سند صرف' : 'حذف الدفعة'"
+                      ></button>
+                    </td>
+                  </tr>
+
+                  <tr *ngIf="paymentScheduleRows.length === 0">
+                      <td [attr.colspan]="isViewMode() ? 9 : 9" class="text-center py-8 empty-row">
+                      <i class="pi pi-inbox text-2xl text-gray-400 mb-2"></i>
+                      <p class="text-gray-500">لا توجد دفعات. اضغط "إضافة دفعة" لبدء الإدخال</p>
+                    </td>
+                  </tr>
+
+                  <tr *ngIf="paymentScheduleRows.length > 0" class="table-row total-row">
+                    <td colspan="3" class="text-end font-bold">الإجمالي:</td>
+                    <td class="text-center font-bold col-amount total-cell">{{ getPaymentScheduleAmountTotal() | number:'1.2-2' }}</td>
+                    <td class="text-center font-bold col-vat total-cell">{{ getPaymentScheduleVatTotal() | number:'1.2-2' }}</td>
+                    <td colspan="4"></td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            <div class="payment-summary mt-4 p-3 bg-gray-50 border-round" *ngIf="currentInvoice?.id">
+              <div class="flex justify-between items-center flex-wrap gap-3" style="display: flex; justify-content: space-between;">
+                <div class="summary-item">
+                  <span class="text-gray-600">إجمالي الفاتورة:</span>
+                  <span class="font-bold text-lg text-primary ms-2">{{ getFinalTotal() | number:'1.2-2' }}</span>
+                </div>
+                <div class="summary-item">
+                  <span class="text-gray-600" pTooltip="إجمالي كل الدفعات المسجلة في الجدول" tooltipPosition="top">إجمالي الجدولة:</span>
+                  <span class="font-bold text-lg text-blue-600 ms-2">{{ getPaymentScheduleTotal() | number:'1.2-2' }}</span>
+                </div>
+                <div class="summary-item">
+                  <span class="text-gray-600" pTooltip="الدفعات التي تم إنشاء سندات صرف لها" tooltipPosition="top">إجمالي المسدد:</span>
+                  <span class="font-bold text-lg text-green-600 ms-2">{{ getPaymentSchedulePaidTotal() | number:'1.2-2' }}</span>
+                </div>
+                <div class="summary-item">
+                  <span class="text-gray-600" pTooltip="الدفعات المجدولة ولكن لم تُسدد بعد" tooltipPosition="top">المتبقي للسداد:</span>
+                  <span class="font-bold text-lg text-orange-500 ms-2">{{ getPaymentScheduleUnpaidTotal() | number:'1.2-2' }}</span>
+                </div>
+                <div class="summary-item">
+                  <span class="text-gray-600" pTooltip="المبلغ المتبقي من الفاتورة ولم يتم جدولته" tooltipPosition="top">غير مجدول:</span>
+                  <span class="font-bold text-lg text-red-600 ms-2" [class.text-green-600]="getRemainingToSchedule() === 0">
+                    {{ getRemainingToSchedule() | number:'1.2-2' }}
+                  </span>
+                </div>
+              </div>
+            </div>
+          </p-tabPanel>
+        </p-tabView>
+      </div>
+
+      <!-- Summary Section -->
+      <div class="form-section summary-section" *ngIf="purchaseRows.length > 0">
+        <h4 class="section-title">
+          <i class="pi pi-calculator"></i>
+          ملخص الفاتورة
+        </h4>
+        <div class="summary-grid">
+          <div class="summary-item">
+            <span class="summary-label">اجمالي المبلغ قبل الضريبة:</span>
+            <span class="summary-value">{{ getGrandTotal() | number:'1.2-2' }} {{ purchaseForm.get('currency')?.value || 'SAR' }}</span>
+          </div>
+          <div class="summary-item">
+            <span class="summary-label">الضريبة:</span>
+            <span class="summary-value tax">{{ getTaxAmount() | number:'1.2-2' }} {{ purchaseForm.get('currency')?.value || 'SAR' }}</span>
+          </div>
+          <div class="summary-item">
+            <span class="summary-label">الخصم:</span>
+            <span class="summary-value discount">{{ getDiscountAmount() | number:'1.2-2' }} {{ purchaseForm.get('currency')?.value || 'SAR' }}</span>
+          </div>
+          <div class="summary-item total">
+            <span class="summary-label">الإجمالي النهائي:</span>
+            <span class="summary-value">{{ getFinalTotal() | number:'1.2-2' }} {{ purchaseForm.get('currency')?.value || 'SAR' }}</span>
+          </div>
+          
+          <!-- Payment Summary Cards - Only show in view mode -->
+          <ng-container *ngIf="isViewMode()">
+            <div class="summary-item">
+              <span class="summary-label">إجمالي المدفوع:</span>
+              <span class="summary-value paid">{{ getTotalPaid() | number:'1.2-2' }} {{ purchaseForm.get('currency')?.value || 'SAR' }}</span>
+            </div>
+            <div class="summary-item remaining">
+              <span class="summary-label">المتبقي:</span>
+              <span class="summary-value">{{ getRemainingBalance() | number:'1.2-2' }} {{ purchaseForm.get('currency')?.value || 'SAR' }}</span>
+            </div>
+            <div class="summary-item status">
+              <span class="summary-label">حالة الدفع:</span>
+              <span class="payment-status-badge" [ngClass]="getPaymentStatusClass()">
+                {{ getPaymentStatusLabel() }}
+              </span>
+            </div>
+          </ng-container>
+        </div>
+      </div>
+    </form>
+  </div>
+</div>
+
+
+<!-- Print Template (Hidden on screen, only for printing) -->
+<div class="absolute top-0 left-[-100%]">
+  <app-print-document #printComponent *ngIf="currentInvoice" 
+    [headerTemplate]="headerTemplate" 
+    [footerTemplate]="footerTemplate"
+    [summaryTemplate]="summaryTemplate" 
+    [data]="roomsCostDays" 
+    [columns]="printColumns">
+  </app-print-document>
+
+  <!-- Header Template -->
+  <ng-template #headerTemplate>
+    <div class="w-full flex flex-col">
+      <div class="py-1 px-1 flex justify-between">
+        <div class="w-full text-center">
+          <p class="font-semibold text-2xl m-0 p-0">فاتورة مشتريات حجز</p>
+          <p class="font-semibold text-xl m-0 p-0">Reservation Purchase Invoice</p>
+          <p class="text-sm mt-2">رقم الفاتورة: {{ currentInvoice.invoiceNo || 'N/A' }}</p>
+          <p class="text-sm" *ngIf="currentInvoice.issueDate">تاريخ الإصدار: {{ formatDate(currentInvoice.issueDate) }}</p>
+        </div>
+      </div>
+      
+      <div class="py-2 px-1 flex justify-between border-t border-gray-300">
+        <div class="w-1/2">
+          <p class="font-semibold text-sm">الفندق / Hotel:</p>
+          <p class="text-sm">{{ getHotelName(currentInvoice.hotelId) }}</p>
+        </div>
+        <div class="w-1/2 text-right">
+          <p class="font-semibold text-sm">الحساب / Account:</p>
+          <p class="text-sm">{{ getAccountName(currentInvoice.mainAccountId) }}</p>
+        </div>
+      </div>
+    </div>
+  </ng-template>
+
+  <!-- Footer Template -->
+  <ng-template #footerTemplate>
+    <div class="w-full py-2 px-1 text-center border-t border-gray-300">
+      <p class="text-xs">Thank you for your business | شكراً لتعاملكم معنا</p>
+    </div>
+  </ng-template>
+
+  <!-- Summary Template -->
+  <ng-template #summaryTemplate>
+    <div class="w-full py-2 px-1">
+      <div class="flex justify-end">
+        <div style="min-width: 400px; max-width: 50%;">
+          <div class="flex justify-between py-1" style="gap: 20px;">
+            <span class="font-semibold whitespace-nowrap">اجمالي المبلغ قبل الضريبة / Total Before Tax:</span>
+            <span class="whitespace-nowrap">{{ getGrandTotal() | number:'1.2-2' }} {{ currentInvoice.currency }}</span>
+          </div>
+          <div class="flex justify-between py-1" style="gap: 20px;">
+            <span class="font-semibold whitespace-nowrap">الضريبة / Tax:</span>
+            <span class="whitespace-nowrap">{{ getTaxAmount() | number:'1.2-2' }} {{ currentInvoice.currency }}</span>
+          </div>
+          <div class="flex justify-between py-1" style="gap: 20px;" *ngIf="getDiscountAmount() > 0">
+            <span class="font-semibold whitespace-nowrap">الخصم / Discount:</span>
+            <span class="whitespace-nowrap">{{ getDiscountAmount() | number:'1.2-2' }} {{ currentInvoice.currency }}</span>
+          </div>
+          <div class="flex justify-between py-1 border-t-2 border-gray-800 font-bold text-lg" style="gap: 20px;">
+            <span class="whitespace-nowrap">الإجمالي النهائي / Total:</span>
+            <span class="whitespace-nowrap">{{ getFinalTotal() | number:'1.2-2' }} {{ currentInvoice.currency }}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </ng-template>
+
+  <!-- Reservation Print Settings Section (Signature + Stamp + Policies + Banks) -->
+  <ng-template #reservationPrintSettingsTemplate>
+    <div *ngIf="showReservationCompanySignature || showReservationCustomerSignature || showReservationStamp || reservationSelectedPolicies.length || reservationSelectedBanks.length"
+         class="w-full mt-4" style="page-break-inside: avoid; break-inside: avoid;">
+      
+      <!-- Signature Section -->
+      <div *ngIf="showReservationCompanySignature || showReservationCustomerSignature" 
+           class="w-full border border-slate-900 rounded-2xl p-2 mb-4">
+        <table class="w-full" style="border-collapse: collapse; table-layout: fixed;">
+          <tr>
+            <!-- Company Signature -->
+            <td *ngIf="showReservationCompanySignature" 
+                [style.width]="showReservationCustomerSignature ? '30%' : '100%'" 
+                [style.text-align]="activeLanguage === 'en' ? 'left' : 'right'" 
+                style="padding: 10px 40px; vertical-align: top;" class="font-semibold text-xs text-slate-800">
+              <p class="m-0 p-0" style="font-size: 0.85rem; white-space: nowrap;">
+                {{ activeLanguage === 'en' ? companyDetailsForPrint?.englishName : companyDetailsForPrint?.arabicName }}
+              </p>
+              <p class="m-0 p-0 w-full text-[10px] text-slate-600" style="margin-top: 6px;">
+                {{ activeLanguage === 'ar' ? 'التوقيع' : 'Signature' }}: <span class="font-light">..................................................</span>
+              </p>
+              <!-- Stamp -->
+              <div *ngIf="showReservationStamp && companyDetailsForPrint?.stampUrl" 
+                   [style.text-align]="activeLanguage === 'en' ? 'left' : 'right'"
+                   style="margin-top: 6px; display: inline-block; width: 100%;">
+                <img [src]="companyDetailsForPrint?.stampUrl || ''" alt="company-stamp" width="70" height="70" 
+                     [style.margin-right]="activeLanguage === 'ar' ? '40px' : '0'"
+                     [style.margin-left]="activeLanguage === 'en' ? '40px' : '0'"
+                     style="opacity: 0.95; display: inline-block;">
+              </div>
+            </td>
+            <!-- Spacer Column -->
+            <td *ngIf="showReservationCompanySignature && showReservationCustomerSignature" style="width: 40%;"></td>
+            <!-- Customer Signature -->
+            <td *ngIf="showReservationCustomerSignature" 
+                [style.width]="showReservationCompanySignature ? '30%' : '100%'" 
+                [style.text-align]="activeLanguage === 'en' ? 'left' : 'right'" 
+                style="padding: 10px 40px; vertical-align: top;" class="font-semibold text-xs text-slate-800">
+              <p class="m-0 p-0" style="font-size: 0.85rem; white-space: nowrap;">
+                {{ currentInvoice?.reservationClientCompany?.englishName || currentInvoice?.reservationClientCompany?.arabicName }}
+              </p>
+              <p class="m-0 p-0 w-full text-[10px] text-slate-600" style="margin-top: 6px;">
+                {{ activeLanguage === 'ar' ? 'التوقيع' : 'Signature' }}: <span class="font-light">..................................................</span>
+              </p>
+            </td>
+          </tr>
+        </table>
+      </div>
+
+      <!-- Policies & Banks Section -->
+      <div *ngIf="reservationSelectedPolicies.length || reservationSelectedBanks.length" 
+           class="w-full border border-slate-900 rounded-2xl p-3 mb-4">
+        <div class="grid grid-cols-2 gap-4">
+          <!-- Policies (Terms & Conditions) -->
+          <div *ngIf="reservationSelectedPolicies.length > 0">
+            <p class="font-bold text-xs text-slate-800 mb-2">
+              {{ activeLanguage === 'ar' ? 'الشروط والأحكام' : 'Terms & Conditions' }}
+            </p>
+            <div class="text-[10px] text-slate-600 space-y-1">
+              <p *ngFor="let policy of reservationSelectedPolicies" class="m-0 p-0">
+                {{ policy.name }}
+              </p>
+            </div>
+          </div>
+          <!-- Bank Accounts -->
+          <div *ngIf="reservationSelectedBanks.length > 0">
+            <p class="font-bold text-xs text-slate-800 mb-2">
+              {{ activeLanguage === 'ar' ? 'الحسابات البنكية' : 'Bank Accounts' }}
+            </p>
+            <div class="text-[10px] text-slate-600 space-y-1">
+              <div *ngFor="let bank of reservationSelectedBanks" class="m-0 p-0">
+                <p class="m-0 font-semibold">{{ bank.bankName }}</p>
+                <p class="m-0">{{ activeLanguage === 'ar' ? 'رقم الحساب' : 'Account' }}: {{ bank.accountNumber }}</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </ng-template>
+</div>

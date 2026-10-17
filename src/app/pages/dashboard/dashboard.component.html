@@ -1,0 +1,193 @@
+<div class="dashboard" dir="rtl">
+  <!-- Top Hero Banner -->
+  <div class="dashboard-hero">
+    <div class="hero-content">
+      <div class="d-flex align-items-center justify-content-between flex-wrap gap-3 mb-4">
+        <div>
+          <h1 class="text-white fw-bold fs-2 mb-1">نظام إدارة الموارد البشرية</h1>
+          <p class="text-white-50 fs-6 mb-0">لوحة المتابعة الشاملة لشؤون الموظفين، الحضور والانصراف، الورديات، والرواتب</p>
+        </div>
+      </div>
+
+      <!-- Quick Action Buttons -->
+      <div class="hero-actions">
+        <button type="button" class="hero-btn" (click)="navigateToEmployees()">
+          <i class="pi pi-users"></i>
+          دليل الموظفين
+        </button>
+        <button type="button" class="hero-btn" (click)="navigateToAttendances()">
+          <i class="pi pi-calendar-check"></i>
+          سجل الحضور
+        </button>
+        <button type="button" class="hero-btn" (click)="navigateToLogs()">
+          <i class="pi pi-book"></i>
+          حركات البصمة
+        </button>
+        <button type="button" class="hero-btn" (click)="navigateToPaymentCalculator()">
+          <i class="pi pi-wallet"></i>
+          حساب المرتبات
+        </button>
+        <button type="button" class="hero-btn" (click)="navigateToLeaves()">
+          <i class="pi pi-file"></i>
+          طلبات الإجازة
+        </button>
+        <button type="button" class="hero-btn" (click)="navigateToDevices()">
+          <i class="pi pi-cog"></i>
+          أجهزة البصمة
+        </button>
+      </div>
+    </div>
+
+    <!-- Quick Stats in Hero -->
+    <div class="hero-metrics">
+      <div class="hero-metric cursor-pointer" (click)="navigateToEmployees()">
+        <span>إجمالي الموظفين</span>
+        <strong>{{ totalEmployees | number: '1.0-0' }}</strong>
+      </div>
+      <div class="hero-metric cursor-pointer" (click)="navigateToJobTitles()">
+        <span>المسميات الوظيفية</span>
+        <strong>{{ totalJobTitles | number: '1.0-0' }}</strong>
+      </div>
+      <div class="hero-metric cursor-pointer" (click)="navigateToShifts()">
+        <span>ورديات العمل</span>
+        <strong>{{ totalShifts | number: '1.0-0' }}</strong>
+      </div>
+      <div class="hero-metric cursor-pointer" (click)="navigateToDevices()">
+        <span>أجهزة البصمة</span>
+        <strong>{{ totalDevices | number: '1.0-0' }}</strong>
+      </div>
+    </div>
+  </div>
+
+  <!-- KPI Cards Grid -->
+  <div class="kpi-grid mb-6">
+    <ng-container *ngFor="let kpi of kpis; trackBy: trackByKpi">
+      <div class="kpi-card cursor-pointer" [ngClass]="'tone-' + kpi.tone" (click)="router.navigate([kpi.route])">
+        <div class="kpi-icon">
+          <i [ngClass]="kpi.icon"></i>
+        </div>
+        <div class="kpi-body">
+          <div class="kpi-label">{{ kpi.title }}</div>
+          <div class="kpi-value">
+            <span>{{ kpi.value | number: kpi.isCurrency ? '1.2-2' : '1.0-0' }}</span>
+            <span class="kpi-currency" *ngIf="kpi.isCurrency">{{ currencyCode }}</span>
+          </div>
+        </div>
+      </div>
+    </ng-container>
+  </div>
+
+  <!-- HR Analytics Section -->
+  <div class="row g-4 mb-6">
+    <!-- Chart: Attendance Distribution -->
+    <div class="col-12 col-lg-6">
+      <div class="card h-100 shadow-sm border-0 p-4" style="background: var(--dash-card-bg, #ffffff); border-radius: 16px;">
+        <div class="d-flex align-items-center justify-content-between mb-3">
+          <h4 class="fw-bold mb-0 text-gray-800">
+            <i class="pi pi-chart-pie text-primary me-2"></i>
+            توزيع الحضور والانصراف
+          </h4>
+          <span class="badge bg-light-primary text-primary px-3 py-2">اليوم</span>
+        </div>
+        <div class="d-flex justify-content-center align-items-center" style="min-height: 280px;">
+          <apx-chart
+            *ngIf="attendancePieChart?.series"
+            [series]="attendancePieChart.series"
+            [chart]="attendancePieChart.chart"
+            [labels]="attendancePieChart.labels"
+            [colors]="attendancePieChart.colors"
+            [dataLabels]="attendancePieChart.dataLabels"
+            [legend]="attendancePieChart.legend"
+            [tooltip]="attendancePieChart.tooltip"
+            style="width: 100%;">
+          </apx-chart>
+        </div>
+      </div>
+    </div>
+
+    <!-- Chart: Employees by Shift -->
+    <div class="col-12 col-lg-6">
+      <div class="card h-100 shadow-sm border-0 p-4" style="background: var(--dash-card-bg, #ffffff); border-radius: 16px;">
+        <div class="d-flex align-items-center justify-content-between mb-3">
+          <h4 class="fw-bold mb-0 text-gray-800">
+            <i class="pi pi-chart-bar text-info me-2"></i>
+            توزيع الموظفين حسب وردية العمل
+          </h4>
+          <span class="badge bg-light-info text-info px-3 py-2">الموظفين</span>
+        </div>
+        <div style="min-height: 280px;">
+          <apx-chart
+            *ngIf="employeesByShiftChart?.series"
+            [series]="employeesByShiftChart.series"
+            [chart]="employeesByShiftChart.chart"
+            [xaxis]="employeesByShiftChart.xaxis"
+            [yaxis]="employeesByShiftChart.yaxis"
+            [colors]="employeesByShiftChart.colors"
+            [plotOptions]="employeesByShiftChart.plotOptions"
+            [grid]="employeesByShiftChart.grid"
+            style="width: 100%;">
+          </apx-chart>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Quick HR Navigation Modules -->
+  <div class="row g-4">
+    <div class="col-12 col-md-6 col-xl-3">
+      <div class="card p-4 border-0 shadow-sm h-100 cursor-pointer" style="border-radius: 14px;" (click)="navigateToEmployees()">
+        <div class="d-flex align-items-center gap-3">
+          <div class="symbol symbol-50px bg-light-success p-3 rounded-circle">
+            <i class="pi pi-id-card text-success fs-2"></i>
+          </div>
+          <div>
+            <div class="fw-bold fs-5 text-gray-800">شؤون الموظفين</div>
+            <div class="text-muted fs-7">إدارة العقود، الوظائف، والبيانات الشخصية</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-12 col-md-6 col-xl-3">
+      <div class="card p-4 border-0 shadow-sm h-100 cursor-pointer" style="border-radius: 14px;" (click)="navigateToAttendances()">
+        <div class="d-flex align-items-center gap-3">
+          <div class="symbol symbol-50px bg-light-primary p-3 rounded-circle">
+            <i class="pi pi-calendar-check text-primary fs-2"></i>
+          </div>
+          <div>
+            <div class="fw-bold fs-5 text-gray-800">الحضور والانصراف</div>
+            <div class="text-muted fs-7">سجلات البصمة، التأخيرات، والغياب</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-12 col-md-6 col-xl-3">
+      <div class="card p-4 border-0 shadow-sm h-100 cursor-pointer" style="border-radius: 14px;" (click)="navigateToPaymentCalculator()">
+        <div class="d-flex align-items-center gap-3">
+          <div class="symbol symbol-50px bg-light-warning p-3 rounded-circle">
+            <i class="pi pi-wallet text-warning fs-2"></i>
+          </div>
+          <div>
+            <div class="fw-bold fs-5 text-gray-800">الرواتب والبدلات</div>
+            <div class="text-muted fs-7">احتساب الرواتب، السُلف، والخصومات</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-12 col-md-6 col-xl-3">
+      <div class="card p-4 border-0 shadow-sm h-100 cursor-pointer" style="border-radius: 14px;" (click)="navigateToLeaves()">
+        <div class="d-flex align-items-center gap-3">
+          <div class="symbol symbol-50px bg-light-info p-3 rounded-circle">
+            <i class="pi pi-folder text-info fs-2"></i>
+          </div>
+          <div>
+            <div class="fw-bold fs-5 text-gray-800">الوثائق والطلبات</div>
+            <div class="text-muted fs-7">طلبات الإجازات، الاستقالات، والأمانات</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

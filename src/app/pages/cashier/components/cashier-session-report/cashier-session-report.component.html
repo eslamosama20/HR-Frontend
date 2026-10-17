@@ -1,0 +1,204 @@
+<p-toast></p-toast>
+
+<div class="session-report" *ngIf="!loading && report">
+  <!-- Header with actions -->
+  <div class="report-header">
+    <div class="flex justify-content-between align-items-center mb-4">
+      <h2 class="text-2xl font-bold">تقرير الوردية - {{ report.session.sessionNumber }}</h2>
+      <div class="flex gap-2">
+        <p-button 
+          icon="pi pi-arrow-right" 
+          label="رجوع" 
+          severity="secondary" 
+          (click)="goBack()"
+          [outlined]="true"
+        ></p-button>
+      </div>
+    </div>
+
+    <!-- Action Buttons -->
+    <div class="flex gap-2 mb-4 print-hide">
+      <p-button 
+        icon="pi pi-print" 
+        label="طباعة" 
+        severity="primary"
+        (click)="print()"
+      ></p-button>
+      <p-button 
+        icon="pi pi-file-excel" 
+        label="تصدير Excel" 
+        severity="success"
+        (click)="exportExcel()"
+      ></p-button>
+      <p-button 
+        icon="pi pi-file-pdf" 
+        label="تنزيل PDF" 
+        severity="danger"
+        (click)="exportPDF()"
+      ></p-button>
+    </div>
+  </div>
+
+  <!-- Session Info Summary -->
+  <div class="grid mb-4">
+    <div class="col-12 md:col-3">
+      <div class="info-item">
+        <label>الكاشير:</label>
+        <span class="font-bold">{{ report.session.cashierName }}</span>
+      </div>
+    </div>
+    <div class="col-12 md:col-3">
+      <div class="info-item">
+        <label>وقت الفتح:</label>
+        <span>{{ report.session.openingDate | customDate }}</span>
+      </div>
+    </div>
+    <div class="col-12 md:col-3">
+      <div class="info-item">
+        <label>وقت الإغلاق:</label>
+        <span *ngIf="report.session.closingDate">{{ report.session.closingDate | customDate }}</span>
+        <p-tag *ngIf="!report.session.closingDate" value="مفتوحة" severity="success"></p-tag>
+      </div>
+    </div>
+    <div class="col-12 md:col-3">
+      <div class="info-item">
+        <label>الحالة:</label>
+        <p-tag 
+          [value]="report.session.statusName" 
+          [severity]="report.session.status === 0 ? 'success' : 'danger'"
+        ></p-tag>
+      </div>
+    </div>
+  </div>
+
+  <!-- Financial Summary Cards -->
+  <div class="grid mb-4 print-hide">
+    <div class="col-12 md:col-3">
+      <div class="card p-3 shadow-1 flex flex-column gap-2" style="border-radius: 8px; background-color: var(--surface-card); border-right: 4px solid var(--primary-color);">
+        <span class="text-500 font-medium">إجمالي المبيعات</span>
+        <span class="text-900 font-bold text-xl">{{ report.statistics.totalSalesAmount | number:'1.2-2' }} ريال</span>
+      </div>
+    </div>
+    <div class="col-12 md:col-3">
+      <div class="card p-3 shadow-1 flex flex-column gap-2" style="border-radius: 8px; background-color: var(--surface-card); border-right: 4px solid #10b981;">
+        <span class="text-500 font-medium">صافي المبيعات</span>
+        <span class="text-900 font-bold text-xl text-green-600">{{ report.statistics.netSales | number:'1.2-2' }} ريال</span>
+      </div>
+    </div>
+    <div class="col-12 md:col-3">
+      <div class="card p-3 shadow-1 flex flex-column gap-2" style="border-radius: 8px; background-color: var(--surface-card); border-right: 4px solid #ef4444;">
+        <span class="text-500 font-medium">إجمالي المرتجعات</span>
+        <span class="text-900 font-bold text-xl text-red-600">{{ report.statistics.totalRefundsAmount | number:'1.2-2' }} ريال</span>
+      </div>
+    </div>
+    <div class="col-12 md:col-3">
+      <div class="card p-3 shadow-1 flex flex-column gap-2" style="border-radius: 8px; background-color: var(--surface-card); border-right: 4px solid #8b5cf6;">
+        <span class="text-500 font-medium">عدد المعاملات</span>
+        <span class="text-900 font-bold text-xl">{{ report.statistics.totalTransactions }}</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="grid mb-4 print-hide">
+    <div class="col-12 md:col-3">
+      <div class="card p-3 shadow-1 flex flex-column gap-2" style="border-radius: 8px; background-color: var(--surface-card);">
+        <span class="text-500 font-medium">المبيعات النقدية</span>
+        <span class="text-900 font-bold text-xl text-teal-600">{{ report.statistics.totalCash | number:'1.2-2' }} ريال</span>
+      </div>
+    </div>
+    <div class="col-12 md:col-3">
+      <div class="card p-3 shadow-1 flex flex-column gap-2" style="border-radius: 8px; background-color: var(--surface-card);">
+        <span class="text-500 font-medium">مبيعات البطاقة</span>
+        <span class="text-900 font-bold text-xl text-blue-600">{{ report.statistics.totalCard | number:'1.2-2' }} ريال</span>
+      </div>
+    </div>
+    <div class="col-12 md:col-3">
+      <div class="card p-3 shadow-1 flex flex-column gap-2" style="border-radius: 8px; background-color: var(--surface-card);">
+        <span class="text-500 font-medium">المبيعات الآجلة</span>
+        <span class="text-900 font-bold text-xl text-orange-600">{{ report.statistics.totalCredit | number:'1.2-2' }} ريال</span>
+      </div>
+    </div>
+    <div class="col-12 md:col-3">
+      <div class="card p-3 shadow-1 flex flex-column gap-2" style="border-radius: 8px; background-color: var(--surface-card);">
+        <span class="text-500 font-medium">متوسط المعاملة</span>
+        <span class="text-900 font-bold text-xl">{{ report.statistics.averageTransactionValue | number:'1.2-2' }} ريال</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="grid mb-4 print-hide" *ngIf="report.session.closingDate">
+    <div class="col-12 md:col-3">
+      <div class="card p-3 shadow-1 flex flex-column gap-2" style="border-radius: 8px; background-color: var(--surface-card);">
+        <span class="text-500 font-medium">رصيد الافتتاح</span>
+        <span class="text-900 font-bold text-xl">{{ report.session.openingBalance | number:'1.2-2' }} ريال</span>
+      </div>
+    </div>
+    <div class="col-12 md:col-3">
+      <div class="card p-3 shadow-1 flex flex-column gap-2" style="border-radius: 8px; background-color: var(--surface-card);">
+        <span class="text-500 font-medium">الرصيد المتوقع</span>
+        <span class="text-900 font-bold text-xl">{{ report.session.expectedBalance || 0 | number:'1.2-2' }} ريال</span>
+      </div>
+    </div>
+    <div class="col-12 md:col-3">
+      <div class="card p-3 shadow-1 flex flex-column gap-2" style="border-radius: 8px; background-color: var(--surface-card);">
+        <span class="text-500 font-medium">الرصيد الفعلي</span>
+        <span class="text-900 font-bold text-xl">{{ report.session.actualBalance || 0 | number:'1.2-2' }} ريال</span>
+      </div>
+    </div>
+    <div class="col-12 md:col-3">
+      <div class="card p-3 shadow-1 flex flex-column gap-2" style="border-radius: 8px; background-color: var(--surface-card);"
+           [style.border-right]="(report.session.difference || 0) < 0 ? '4px solid #ef4444' : '4px solid #10b981'">
+        <span class="text-500 font-medium">الفارق (عجز / زيادة)</span>
+        <span class="text-900 font-bold text-xl" [class.text-red-600]="(report.session.difference || 0) < 0" [class.text-green-600]="(report.session.difference || 0) >= 0">
+          {{ report.session.difference || 0 | number:'1.2-2' }} ريال
+        </span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Invoices Table -->
+  <p-card header="الفواتير" class="mb-4">
+    <p-table 
+      [value]="report.invoices" 
+      [paginator]="true" 
+      [rows]="10" 
+      [rowsPerPageOptions]="[10, 20, 50]"
+      [responsive]="true"
+      styleClass="p-datatable-sm"
+    >
+      <ng-template pTemplate="header">
+        <tr>
+          <th>رقم الفاتورة</th>
+          <th>التاريخ</th>
+          <th>العميل</th>
+          <th>المبلغ</th>
+          <th>طريقة الدفع</th>
+          <th>المدفوع</th>
+          <th>الباقي</th>
+        </tr>
+      </ng-template>
+      <ng-template pTemplate="body" let-invoice>
+        <tr>
+          <td>{{ invoice.invoiceNo }}</td>
+          <td>{{ invoice.invoiceDate | customDate }}</td>
+          <td>{{ invoice.customerName }}</td>
+          <td>{{ invoice.totalAmount | number:'1.2-2' }} ريال</td>
+          <td>{{ invoice.paymentMethodName }}</td>
+          <td>{{ invoice.paidAmount | number:'1.2-2' }} ريال</td>
+          <td>{{ invoice.changeAmount | number:'1.2-2' }} ريال</td>
+        </tr>
+      </ng-template>
+      <ng-template pTemplate="emptymessage">
+        <tr>
+          <td colspan="7" class="text-center">لا توجد فواتير</td>
+        </tr>
+      </ng-template>
+    </p-table>
+  </p-card>
+</div>
+
+<!-- Loading State -->
+<div *ngIf="loading" class="flex justify-content-center align-items-center" style="height: 400px;">
+  <i class="pi pi-spin pi-spinner" style="font-size: 3rem;"></i>
+  <span class="ml-3">جاري تحميل التقرير...</span>
+</div>

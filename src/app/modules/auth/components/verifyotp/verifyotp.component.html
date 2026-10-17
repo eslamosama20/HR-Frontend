@@ -1,0 +1,48 @@
+<div
+  class="container"
+  [style]="{ 'background-color': theme === 'dark' ? '#1e1e1e' : '#ffffff' }"
+>
+  <header>
+    <i class="bi bi-shield-lock text-light" style="font-size: 2rem"></i>
+  </header>
+  <div
+    class="mb-3 alert alert-danger"
+    id="otpMessage"
+    style="padding: 10px; display: none"
+  >
+    <div class="alert-text font-weight-bold">Invalid OTP</div>
+  </div>
+  <div
+    class="mb-3 alert alert-success"
+    id="resendOtpMessage"
+    style="padding: 10px; display: none"
+  >
+    <div
+      class="alert-text font-weight-bold"
+      [style]="{ color: theme === 'dark' ? '#ffffff' : '#000000' }"
+    >
+      OTP has been resent successfully
+    </div>
+  </div>
+
+  <h4 [style]="{ color: theme === 'dark' ? '#ffffff' : '#000000' }"></h4>
+  <form (submit)="onSubmit()">
+    <p-inputOtp
+      [(ngModel)]="otp"
+      [integerOnly]="true"
+      [length]="6"
+      inputId="otpInput"
+      name="otpInput"
+      placeholder="Enter OTP"
+      dir="ltr"
+      style="direction: ltr"
+    ></p-inputOtp>
+    <button [disabled]="!isButtonActive">Verify OTP</button>
+  </form>
+  <p>
+    OTP not received?
+    <button type="button" (click)="resendOtp()" class="link-button">
+      Resend
+    </button>
+  </p>
+</div>

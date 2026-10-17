@@ -1,0 +1,450 @@
+<p-panel  [header]="isEditMode ? 'تعديل موظف': 'إضافة موظف'">
+  <div class="fixed inset-0 bg-gray-500 bg-opacity-75 flex items-center justify-center z-50 no-print" *ngIf="loading">
+    <i class="pi pi-spin pi-spinner" style="font-size: 2rem"></i>
+  </div>
+  <div *ngIf="!loading"  class="w-full flex flex-col shadow-lg" >
+    <form
+      *ngIf="!loading"
+      [formGroup]="employeeFormGroup"
+      class="flex flex-col w-full justify-center items-center gap-4 p-2 py-4  border-l-1 border-gray-300"
+      novalidate
+    >
+      <div class="w-full h-full flex justify-center items-center gap-8">
+        <div class="flex flex-col h-full justify-center items-center">
+          <i class="pi pi-user  text-8xl text-sky-600"></i>
+          <p class="text-3xl font-semibold text-sky-600">
+            {{ currentEmployee?.deviceId ? ('كود: ' + currentEmployee?.deviceId) : (currentEmployee?.referenceNumber || '') }}
+          </p>
+          <span class="text-sm text-gray-500" *ngIf="currentEmployee?.deviceId && currentEmployee?.referenceNumber">
+            {{ currentEmployee?.referenceNumber }}
+          </span>
+        </div>
+        <p-card header="المتبقي من رصيد الاجازات">
+          <div class="flex flex-col gap-4 w-full">
+            <p class="text-xl font-semibold">
+              {{currentEmployee?.remainingLeaveBalance | number}}
+            </p>
+          </div>
+        </p-card>
+      </div>
+      <div class="flex gap-4 flex-col w-full">
+        <div class="field w-full">
+          <label for="name" class="block">
+            الاسم
+          </label>
+          <input
+            pInputText
+            type="text"
+            id="name"
+            formControlName="name"
+            class="w-full"
+          />
+          <small
+            class="text-red-500 p-error block"
+            *ngIf="
+            employeeFormGroup.get('name').invalid &&
+            (employeeFormGroup.get('name').touched || isSubmitted)
+          "
+          >
+            الاسم مطلوب
+          </small>
+        </div>
+        <div class="flex gap-4 w-full justify-between">
+          <div class="field w-full">
+            <label for="phone" class="block">
+              رقم الهاتف
+            </label>
+            <input
+              pInputText
+              type="text"
+              id="phone"
+              formControlName="phone"
+              class="w-full"
+            />
+
+          </div>
+          <div class="field w-full">
+            <label for="employmentTypeId" class="block">
+              الوظيفة
+            </label>
+            <p-dropdown
+              id="employmentTypeId"
+              formControlName="employmentTypeId"
+              [options]="employmentTypesOptions"
+              optionLabel="label"
+              optionValue="value"
+              [placeholder]="translate.instant('FINANCE.SELECT')"
+              [showClear]="true"
+              [filter]="true"
+              filterBy="label"
+              styleClass="w-full flex rtl:flex-row-reverse"
+              class="w-full"
+              appendTo="body"
+            >
+            </p-dropdown>
+            <small
+              class="text-red-500 p-error block"
+              *ngIf="
+            employeeFormGroup.get('employmentTypeId').invalid &&
+            (employeeFormGroup.get('employmentTypeId').touched || isSubmitted)
+          "
+            >
+              الوظيفة مطلوبة
+            </small>
+          </div>
+          <div class="field w-full">
+            <label for="shiftId" class="block">
+              الدوام
+            </label>
+            <p-dropdown
+              id="shiftId"
+              formControlName="shiftId"
+              [options]="shiftsOptions"
+              optionLabel="label"
+              optionValue="value"
+              [placeholder]="translate.instant('FINANCE.SELECT')"
+              [showClear]="true"
+              [filter]="true"
+              filterBy="label"
+              styleClass="w-full flex rtl:flex-row-reverse"
+              class="w-full"
+              appendTo="body"
+            >
+            </p-dropdown>
+            <small
+              class="text-red-500 p-error block"
+              *ngIf="
+            employeeFormGroup.get('shiftId').invalid &&
+            (employeeFormGroup.get('shiftId').touched || isSubmitted)
+          "
+            >
+              الدوام مطلوب
+            </small>
+          </div>
+        </div>
+        <div class="flex gap-4 w-full justify-between">
+          <div class="field w-full">
+            <label for="startDate" class="block">
+              وقت البدء
+            </label>
+            <p-calendar
+              id="startDate"
+              inputId="startDate"
+              [showButtonBar]="true"
+              variant="filled"
+              formControlName="startDate"
+              [showIcon]="true"
+              [iconDisplay]="'input'"
+              [dateFormat]="'d/m/yy'"
+              appendTo="body"
+              styleClass="w-full"
+            >
+              <ng-template pTemplate="inputicon">
+                <i class="pi pi-calendar "></i>
+              </ng-template>
+
+            </p-calendar>
+            <small
+              class="text-red-500 p-error block"
+              *ngIf="
+            employeeFormGroup.get('startDate').invalid &&
+            (employeeFormGroup.get('startDate').touched || isSubmitted)
+          "
+            >
+              وقت البدء مطلوب
+            </small>
+          </div>
+          <div class="field w-full">
+            <label for="endDate" class="block">
+              وقت الانتهاء
+            </label>
+            <p-calendar
+              id="endDate"
+              inputId="endDate"
+              [showButtonBar]="true"
+              variant="filled"
+              formControlName="endDate"
+              [showIcon]="true"
+              [iconDisplay]="'input'"
+              [dateFormat]="'d/m/yy'"
+              appendTo="body"
+              styleClass="w-full"
+            >
+              <ng-template pTemplate="inputicon">
+                <i class="pi pi-calendar "></i>
+              </ng-template>
+            </p-calendar>
+          </div>
+          <div class="field w-full">
+            <label for="deviceId" class="block font-medium">
+              كود الموظف <span class="text-red-500 font-bold">*</span>
+            </label>
+            <input
+              pInputText
+              type="text"
+              id="deviceId"
+              formControlName="deviceId"
+              class="w-full"
+              [class.ng-invalid]="isDuplicateCode || (employeeFormGroup.get('deviceId').invalid && (employeeFormGroup.get('deviceId').touched || isSubmitted))"
+              [class.ng-dirty]="isDuplicateCode"
+            />
+            <small
+              class="text-red-500 p-error block mt-1 text-sm font-semibold"
+              *ngIf="isDuplicateCode"
+            >
+              <i class="pi pi-exclamation-triangle mx-1"></i>
+              {{ duplicateEmployeeInfo }}
+            </small>
+            <small
+              class="text-red-500 p-error block mt-1 text-sm font-semibold"
+              *ngIf="
+                employeeFormGroup.get('deviceId').invalid &&
+                (employeeFormGroup.get('deviceId').touched || isSubmitted) &&
+                !isDuplicateCode
+              "
+            >
+              كود الموظف مطلوب
+            </small>
+          </div>
+        </div>
+        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 xl:grid-cols-7 gap-3 w-full items-start">
+          <div class="field w-full">
+            <label for="monthlyRate" class="block font-medium mb-1 text-sm">
+              المرتب الشهري
+            </label>
+            <p-inputNumber
+              minFractionDigits="0"
+              maxFractionDigits="2"
+              min="0"
+              id="monthlyRate"
+              formControlName="monthlyRate"
+              styleClass="w-full"
+              class="w-full"
+              inputStyleClass="w-full"
+              [inputStyle]="{ width: '100%' }"
+            />
+          </div>
+          <div class="field w-full">
+            <label for="supplementaryRate" class="block font-medium mb-1 text-sm">
+              المرتب التكميلي
+            </label>
+            <p-inputNumber
+              minFractionDigits="0"
+              maxFractionDigits="2"
+              min="0"
+              id="supplementaryRate"
+              formControlName="supplementaryRate"
+              styleClass="w-full"
+              class="w-full"
+              inputStyleClass="w-full"
+              [inputStyle]="{ width: '100%' }"
+            />
+          </div>
+          <div class="field w-full">
+            <label for="monthlyInsurance" class="block font-medium mb-1 text-sm">
+              التأمينات
+            </label>
+            <p-inputNumber
+              minFractionDigits="0"
+              maxFractionDigits="2"
+              min="0"
+              id="monthlyInsurance"
+              formControlName="monthlyInsurance"
+              styleClass="w-full"
+              class="w-full"
+              inputStyleClass="w-full"
+              [inputStyle]="{ width: '100%' }"
+            />
+          </div>
+
+          <div class="field w-full">
+            <label for="leaveBalance" class="block font-medium mb-1 text-sm">
+              رصيد الاجازات
+            </label>
+            <p-inputNumber
+              minFractionDigits="0"
+              maxFractionDigits="2"
+              min="0"
+              id="leaveBalance"
+              formControlName="leaveBalance"
+              styleClass="w-full"
+              class="w-full"
+              inputStyleClass="w-full"
+              [inputStyle]="{ width: '100%' }"
+            />
+          </div>
+
+          <div class="field w-full">
+            <label for="overtimeRateMultiplier" class="block font-semibold mb-1 text-sm" title="معامل الساعة الإضافية (ساعة = ؟)">
+              معامل الساعة الإضافية
+            </label>
+            <p-inputNumber
+              minFractionDigits="1"
+              maxFractionDigits="2"
+              [min]="0.5"
+              [step]="0.5"
+              [showButtons]="true"
+              id="overtimeRateMultiplier"
+              formControlName="overtimeRateMultiplier"
+              styleClass="w-full"
+              class="w-full"
+              inputStyleClass="w-full"
+              [inputStyle]="{ width: '100%' }"
+            />
+            <small class="text-gray-500 block text-xs mt-1">الافتراضي: 1.5</small>
+          </div>
+
+          <div class="field w-full">
+            <label for="absentRateMultiplier" class="block font-semibold mb-1 text-sm" title="معامل الغياب بدون إذن (يوم = ؟)">
+              معامل الغياب بدون إذن
+            </label>
+            <p-inputNumber
+              minFractionDigits="1"
+              maxFractionDigits="2"
+              [min]="1.0"
+              [step]="0.5"
+              [showButtons]="true"
+              id="absentRateMultiplier"
+              formControlName="absentRateMultiplier"
+              styleClass="w-full"
+              class="w-full"
+              inputStyleClass="w-full"
+              [inputStyle]="{ width: '100%' }"
+            />
+            <small class="text-gray-500 block text-xs mt-1">الافتراضي: 1.5</small>
+          </div>
+
+          <div class="field w-full">
+            <label for="lateRateMultiplier" class="block font-semibold mb-1 text-sm" title="معامل التأخير بدون إذن (ساعة = ؟)">
+              معامل التأخير بدون إذن
+            </label>
+            <p-inputNumber
+              minFractionDigits="1"
+              maxFractionDigits="2"
+              [min]="1.0"
+              [step]="0.5"
+              [showButtons]="true"
+              id="lateRateMultiplier"
+              formControlName="lateRateMultiplier"
+              styleClass="w-full"
+              class="w-full"
+              inputStyleClass="w-full"
+              [inputStyle]="{ width: '100%' }"
+            />
+            <small class="text-gray-500 block text-xs mt-1">الافتراضي: 1.5</small>
+          </div>
+        </div>
+      </div>
+      <div class="field w-full">
+        <label for="factoryType" class="block">
+          المصنع
+        </label>
+        <p-dropdown
+          id="factoryType"
+          formControlName="factoryType"
+          [options]="[{label: 'المصنع الأول', value: 'Factory1'}, {label: 'المصنع الثاني', value: 'Factory2'}, {label: 'المصنع الثالث', value: 'Factory3'}]"
+          optionLabel="label"
+          optionValue="value"
+          [placeholder]="translate.instant('FINANCE.SELECT')"
+          [showClear]="true"
+          [filter]="true"
+          styleClass="w-full flex rtl:flex-row-reverse"
+          class="w-full"
+          appendTo="body"
+        >
+        </p-dropdown>
+        <small
+          class="text-red-500 p-error block"
+          *ngIf="
+            employeeFormGroup.get('factoryType').invalid &&
+            (employeeFormGroup.get('factoryType').touched || isSubmitted)
+          "
+        >
+          المصنع مطلوب
+        </small>
+      </div>
+    </form>
+    <div class="flex justify-content-end gap-2 no-print">
+      <p-button
+        styleClass="rounded-md"
+        [label]="translate.instant('FINANCE.CANCEL')"
+        severity="secondary"
+        (onClick)="navigateToEmployeesPage()"
+      />
+      <p-button
+        styleClass="rounded-md"
+        [label]="translate.instant('FINANCE.SAVE')"
+        (onClick)="saveEmployee()"
+        [disabled]="isReadOnly"
+      />
+    </div>
+
+    <div *ngIf="!loading" class="w-full flex flex-col gap-1 justify-center items-center">
+      <p-calendar [(ngModel)]="selectedDate"
+                  [inline]="true"
+                  [showWeek]="true"
+                  showButtonBar="true"
+                  class="max-w-full"
+                  styleClass="reverse-calendar-header"
+      >
+        <ng-template pTemplate="date" let-date>
+          <span
+            [ngStyle]="{
+              backgroundColor: getHighlightColor(date) || 'inherit',
+              borderRadius: getHighlightColor(date) ? '50%' : '',
+              display: 'inline-block',
+              width: '2em',
+              height: '2em',
+              lineHeight: '2em',
+              textAlign: 'center'
+            }"
+
+          >
+            {{ date.day }}
+          </span>
+        </ng-template>
+      </p-calendar>
+      <!-- Colors indicator -->
+      <p-card>
+        <div class="legend">
+          <div class="legend-item">
+            <span class="legend-color" style="background: #4CAF50;"></span>
+            حاضر
+          </div>
+          <div class="legend-item">
+            <span class="legend-color" style="background: #FFC107;"></span>
+            دخول متأخر
+          </div>
+          <div class="legend-item">
+            <span class="legend-color" style="background: #03A9F4;"></span>
+            خروج متأخر
+          </div>
+          <div class="legend-item">
+            <span class="legend-color" style="background: #F44336;"></span>
+            غائب
+          </div>
+          <div class="legend-item">
+            <span class="legend-color" style="background: #9C27B0;"></span>
+            عطلة
+          </div>
+          <div class="legend-item">
+            <span class="legend-color" style="background: #FF9800;"></span>
+            اجازة بإذن
+          </div>
+          <div class="legend-item">
+            <span class="legend-color" style="background: #ff9864;"></span>
+            اجازة بدون إذن
+          </div>
+          <div class="legend-item">
+            <span class="legend-color" style="background: #c5c5c5;"></span>
+            اجازة أسبوعية
+          </div>
+          <div class="legend-item">
+            <span class="legend-color" style="background: #737373;"></span>
+            نصف يوم
+          </div>
+        </div>
+      </p-card>
+    </div>
+  </div>
+</p-panel>

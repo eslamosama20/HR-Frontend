@@ -1,0 +1,55 @@
+.iconPicker {
+  div {
+    box-sizing: border-box;
+  }
+
+  &__popoverContainer {
+    width: 320px;
+    height: 100%;
+    min-height: 200px;
+    display: flex;
+    flex-direction: column;
+    color: #333;
+    font-size: 1rem;
+  }
+
+  &__paper {
+    margin-top: 10px;
+    overflow: visible;
+  }
+
+  &__popoverHeader {
+    padding: 1rem;
+  }
+
+  &__iconsContainer {
+    width: 100%;
+    flex: 1 1 auto;
+    overflow-y: auto;
+    overflow-x: hidden;
+    padding: 0.50rem;
+    display: flex;
+    flex-wrap: wrap;
+    align-content: flex-start;
+  }
+
+  &__iconWrapper {
+    min-width: calc(100% / 6);
+    padding: 0.20rem;
+  }
+
+  &__iconItem {
+    &.selected {
+      color: #fff;
+      background-color: #556ee6;
+    }
+  }
+}
+
+.button-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 10px; /* Adjust the spacing between buttons */
+  max-height: 300px; /* Adjust to fit your design */
+  overflow-y: auto; /* Enable vertical scrolling */
+}

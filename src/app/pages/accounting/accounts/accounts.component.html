@@ -1,0 +1,440 @@
+<div class="flex compact-page--xs">
+  <div class="w-full">
+    <div class="flex justify-center items-start gap-1 flex-col w-full px-2 md:px-3">
+
+      <div class="fixed inset-0 bg-gray-500 bg-opacity-75 flex items-center justify-center z-50" *ngIf="loading">
+        <i class="pi pi-spin pi-spinner" style="font-size: 2rem"></i>
+      </div>
+
+      <!-- TOOLBAR -->
+      <div class="toolbar-row w-full flex flex-col md:flex-row md:items-center md:justify-between gap-2 mt-2">
+        <!-- Left: Buttons -->
+        <div class="flex flex-wrap items-center gap-2">
+          <p-button
+            *ngIf="hasPermission(PERMISSIONS.Account.Create)"
+            [label]="translate.instant('FINANCE.ADD_ROOT_ACCOUNT')"
+            icon="pi pi-plus"
+            styleClass="rounded-md p-button-primary"
+            (onClick)="showRootAccountDialog(); $event.stopPropagation()"
+          ></p-button>
+
+          <p-button
+            [label]="translate.instant('COMMON.EXPAND_ALL') || 'Expand All'"
+            icon="pi pi-angle-double-down"
+            styleClass="rounded-md btn-expand-all"
+            [style]="{ 'margin-inline-start': '1rem' }"
+            (onClick)="expandAll()"
+          ></p-button>
+
+          <p-button
+            [label]="translate.instant('COMMON.COLLAPSE_ALL') || 'Collapse All'"
+            icon="pi pi-angle-double-up"
+            styleClass="rounded-md btn-collapse-all"
+            (onClick)="collapseAll()"
+          ></p-button>
+        </div>
+
+        <!-- Right: Search -->
+        <div class="search-wrap w-full md:w-80">
+          <span class="p-input-icon-left w-full search-input">
+            <i class="pi pi-search"></i>
+            <input
+              #searchInput
+              pInputText
+              type="text"
+              class="w-full"
+              [placeholder]="translate.instant('DATA.SEARCH') || 'Search...'"
+              (input)="onSearch(searchInput.value)"
+            />
+          </span>
+        </div>
+      </div>
+
+      <!-- ✅ Tree + Side Editor (جنب بعض) -->
+      <div class="tree-editor-wrap w-full"
+           [class.rtl]="activeLanguage === 'ar'"
+           *ngIf="!loading">
+
+        <!-- ======================
+             RIGHT: EDITOR (Side Panel)
+             ====================== -->
+        <div class="editor-col" [class.is-collapsed]="!sidePanelVisible">
+          <div class="editor-card">
+
+            <div class="editor-header">
+              <div class="editor-title">
+                {{
+                  selectedNodeType === 'rootAccount' ? (translate.instant('FINANCE.EDIT_ROOT_ACCOUNT') || 'Edit Root') :
+                  selectedNodeType === 'headerAccount' ? (translate.instant('FINANCE.EDIT_HEADER_ACCOUNT') || 'Edit Header') :
+                  selectedNodeType === 'detailAccount' ? (translate.instant('FINANCE.EDIT_DETAIL_ACCOUNT') || 'Edit Detail') :
+                  selectedNodeType === 'mainAccount' ? (translate.instant('FINANCE.EDIT_MAIN_ACCOUNT') || 'Edit Main') :
+                  'Edit'
+                }}
+              </div>
+
+              <button
+                type="button"
+                class="p-button p-component p-button-text p-button-secondary"
+                (click)="cancelSidePanel()"
+              >
+                <span class="p-button-icon pi pi-times"></span>
+              </button>
+            </div>
+
+            <div class="editor-content">
+
+              <!-- ROOT FORM -->
+              <form *ngIf="selectedNodeType === 'rootAccount'"
+                    [formGroup]="rootAccountFormGroup"
+                    class="flex flex-col gap-3"
+                    novalidate>
+                <div class="field">
+                  <label class="block">{{ translate.instant("FINANCE.ACCOUNT_ENGLISH_NAME") }}</label>
+                  <input pInputText type="text" formControlName="englishName" class="w-full" />
+                </div>
+                <div class="field">
+                  <label class="block">{{ translate.instant("FINANCE.ACCOUNT_ARABIC_NAME") }}</label>
+                  <input pInputText type="text" formControlName="arabicName" class="w-full" />
+                </div>
+                <div class="flex justify-content-end gap-2">
+                  <p-button [label]="'FINANCE.CANCEL' | translate" severity="secondary"
+                            (onClick)="cancelSidePanel(); $event.stopPropagation()"></p-button>
+                  <p-button *ngIf="hasPermission(PERMISSIONS.Account.Update)"
+                            [label]="'FINANCE.SAVE' | translate"
+                            (onClick)="saveFromSidePanel(); $event.stopPropagation()"
+                            [disabled]="rootAccountFormGroup.invalid"></p-button>
+                </div>
+              </form>
+
+              <!-- HEADER FORM -->
+              <form *ngIf="selectedNodeType === 'headerAccount'"
+                    [formGroup]="headerAccountFormGroup"
+                    class="flex flex-col gap-3"
+                    novalidate>
+                <div class="field">
+                  <label class="block">{{ translate.instant("FINANCE.ACCOUNT_ENGLISH_NAME") }}</label>
+                  <input pInputText type="text" formControlName="englishName" class="w-full" />
+                </div>
+                <div class="field">
+                  <label class="block">{{ translate.instant("FINANCE.ACCOUNT_ARABIC_NAME") }}</label>
+                  <input pInputText type="text" formControlName="arabicName" class="w-full" />
+                </div>
+                <div class="flex justify-content-end gap-2">
+                  <p-button [label]="'FINANCE.CANCEL' | translate" severity="secondary"
+                            (onClick)="cancelSidePanel(); $event.stopPropagation()"></p-button>
+                  <p-button *ngIf="hasPermission(PERMISSIONS.Account.Update)"
+                            [label]="'FINANCE.SAVE' | translate"
+                            (onClick)="saveFromSidePanel(); $event.stopPropagation()"
+                            [disabled]="headerAccountFormGroup.invalid"></p-button>
+                </div>
+              </form>
+
+              <!-- DETAIL FORM -->
+              <form *ngIf="selectedNodeType === 'detailAccount'"
+                    [formGroup]="detailAccountFormGroup"
+                    class="flex flex-col gap-3"
+                    novalidate>
+                <div class="field">
+                  <label class="block">{{ translate.instant("FINANCE.ACCOUNT_ENGLISH_NAME") }}</label>
+                  <input pInputText type="text" formControlName="englishName" class="w-full" />
+                </div>
+                <div class="field">
+                  <label class="block">{{ translate.instant("FINANCE.ACCOUNT_ARABIC_NAME") }}</label>
+                  <input pInputText type="text" formControlName="arabicName" class="w-full" />
+                </div>
+                <div class="flex justify-content-end gap-2">
+                  <p-button [label]="'FINANCE.CANCEL' | translate" severity="secondary"
+                            (onClick)="cancelSidePanel(); $event.stopPropagation()"></p-button>
+                  <p-button *ngIf="hasPermission(PERMISSIONS.Account.Update)"
+                            [label]="'FINANCE.SAVE' | translate"
+                            (onClick)="saveFromSidePanel(); $event.stopPropagation()"
+                            [disabled]="detailAccountFormGroup.invalid"></p-button>
+                </div>
+              </form>
+
+              <!-- MAIN FORM -->
+              <form *ngIf="selectedNodeType === 'mainAccount'"
+                    [formGroup]="mainAccountFormGroup"
+                    class="flex flex-col gap-3"
+                    novalidate>
+                <div class="field">
+                  <label class="block">{{ translate.instant("FINANCE.ACCOUNT_ENGLISH_NAME") }}</label>
+                  <input pInputText type="text" formControlName="englishName" class="w-full" />
+                </div>
+                <div class="field">
+                  <label class="block">{{ translate.instant("FINANCE.ACCOUNT_ARABIC_NAME") }}</label>
+                  <input pInputText type="text" formControlName="arabicName" class="w-full" />
+                </div>
+                <div class="flex justify-content-end gap-2">
+                  <p-button [label]="'FINANCE.CANCEL' | translate" severity="secondary"
+                            (onClick)="cancelSidePanel(); $event.stopPropagation()"></p-button>
+                  <p-button *ngIf="hasPermission(PERMISSIONS.Account.Update)"
+                            [label]="'FINANCE.SAVE' | translate"
+                            (onClick)="saveFromSidePanel(); $event.stopPropagation()"
+                            [disabled]="mainAccountFormGroup.invalid"></p-button>
+                </div>
+              </form>
+
+            </div>
+          </div>
+        </div>
+
+        <!-- ======================
+             LEFT: TREE
+             ====================== -->
+        <div class="tree-col">
+          <!-- Custom Accordion Cards Grid -->
+          <div class="custom-accordion-grid items-tree--xxs w-full flex flex-col gap-4">
+            
+            <!-- Root Card (Level 1) -->
+            <div *ngFor="let root of filteredFiles" class="root-card border rounded-xl overflow-hidden mb-4 shadow-sm bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800">
+              
+              <!-- Root Header -->
+              <div class="root-header flex justify-between items-center p-3 cursor-pointer bg-slate-50 dark:bg-slate-800/50 border-b border-slate-200 dark:border-slate-800" [class.is-selected]="selectedNodeType === 'rootAccount' && selectedNodeData?.id === root.data?.id" (click)="openEditorFromNode(root, 'rootAccount'); root.expanded = !root.expanded; $event.stopPropagation()">
+                <div class="flex items-center gap-3 flex-1">
+                  <div class="expand-chevron text-slate-400">
+                    <i class="pi" [ngClass]="root.expanded ? 'pi-chevron-down' : (activeLanguage === 'ar' ? 'pi-chevron-left' : 'pi-chevron-right')"></i>
+                  </div>
+                  
+                  <div class="flex items-center gap-2 flex-nowrap">
+                    <span class="node-code root-badge" style="font-size: 1.15rem !important; font-weight: bold !important; padding: 0.2rem 0.6rem !important; flex-shrink: 0;">{{ root.data.referenceCode }}</span>
+                    <span class="node-name root-title font-bold text-slate-800 dark:text-slate-100" style="white-space: nowrap !important;">{{ activeLanguage === 'en' ? root.data.englishName : root.data.arabicName }}</span>
+                  </div>
+                </div>
+
+                <div class="flex items-center gap-2" (click)="$event.stopPropagation()">
+                  <!-- ADD HEADER -->
+                  <p-button
+                    *ngIf="hasPermission(PERMISSIONS.Account.Create)"
+                    icon="pi pi-plus"
+                    class="p-button-contrast"
+                    styleClass="rounded-lg p-button-contrast"
+                    (onClick)="showHeaderAccountDialog(root.data); $event.stopPropagation()"
+                  ></p-button>
+
+                  <p-overlayPanel #opRootAccount [autoZIndex]="false" [baseZIndex]="80">
+                    <div class="flex flex-column gap-3 w-auto p-1">
+                      <p-button
+                        *ngIf="hasPermission(PERMISSIONS.Account.Update)"
+                        icon="pi pi-pencil"
+                        class="p-button-secondary"
+                        [label]="translate.instant('FINANCE.EDIT')"
+                        styleClass="rounded-lg p-button-secondary w-full"
+                        (onClick)="openEditorFromNode(root, 'rootAccount'); opRootAccount.hide(); $event.stopPropagation()"
+                      ></p-button>
+                      <p-button
+                        *ngIf="hasPermission(PERMISSIONS.Account.Delete)"
+                        icon="pi pi-trash"
+                        class="p-button-danger"
+                        [label]="translate.instant('FINANCE.DELETE')"
+                        styleClass="rounded-lg p-button-danger w-full"
+                        (onClick)="confirmRootAccountDeletion($event, root.data); opRootAccount.hide(); $event.stopPropagation()"
+                      ></p-button>
+                    </div>
+                  </p-overlayPanel>
+
+                  <p-button
+                    *ngIf="hasPermission(PERMISSIONS.Account.Update) || hasPermission(PERMISSIONS.Account.Delete)"
+                    [text]="true"
+                    (onClick)="opRootAccount.toggle($event); $event.stopPropagation()"
+                    severity="secondary"
+                    styleClass="p-button-secondary rounded-xl"
+                  >
+                    <ng-template pTemplate="icon">
+                      <i class="pi pi-ellipsis-v text-xl"></i>
+                    </ng-template>
+                  </p-button>
+                </div>
+              </div>
+
+              <!-- Root Body (Level 2: Header Accordions) -->
+              <div *ngIf="root.expanded" class="root-body p-3 flex flex-col gap-3">
+                <div *ngFor="let header of root.children" class="header-item">
+                  
+                  <!-- Header Row -->
+                  <div class="header-row flex justify-between items-center p-2.5 rounded-lg cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800/30" [class.is-selected]="selectedNodeType === 'headerAccount' && selectedNodeData?.id === header.data?.id" (click)="openEditorFromNode(header, 'headerAccount'); header.expanded = !header.expanded; $event.stopPropagation()">
+                    <div class="flex items-center gap-3 flex-1">
+                      <div class="expand-chevron text-slate-400">
+                        <i class="pi" [ngClass]="header.expanded ? 'pi-chevron-down' : (activeLanguage === 'ar' ? 'pi-chevron-left' : 'pi-chevron-right')"></i>
+                      </div>
+                      
+                      <div class="flex items-center gap-2 flex-nowrap">
+                        <span class="node-code header-badge" style="font-size: 1.1rem !important; font-weight: bold !important; padding: 0.2rem 0.5rem !important; flex-shrink: 0;">{{ header.data.referenceCode }}</span>
+                        <span class="node-name header-title font-semibold text-slate-700 dark:text-slate-200" style="white-space: nowrap !important;">{{ activeLanguage === 'en' ? header.data.englishName : header.data.arabicName }}</span>
+                      </div>
+                    </div>
+
+                    <div class="flex items-center gap-2" (click)="$event.stopPropagation()">
+                      <!-- ADD DETAIL -->
+                      <p-button
+                        *ngIf="hasPermission(PERMISSIONS.Account.Create)"
+                        icon="pi pi-plus"
+                        class="p-button-contrast"
+                        styleClass="rounded-lg p-button-contrast"
+                        (onClick)="showDetailAccountDialog(header.data); $event.stopPropagation()"
+                      ></p-button>
+
+                      <p-overlayPanel #opHeaderAccount [autoZIndex]="false" [baseZIndex]="80">
+                        <div class="flex flex-column gap-3 w-auto p-1">
+                          <p-button
+                            *ngIf="hasPermission(PERMISSIONS.Account.Update)"
+                            icon="pi pi-pencil"
+                            class="p-button-secondary"
+                            [label]="translate.instant('FINANCE.EDIT')"
+                            styleClass="rounded-lg p-button-secondary w-full"
+                            (onClick)="openEditorFromNode(header, 'headerAccount'); opHeaderAccount.hide(); $event.stopPropagation()"
+                          ></p-button>
+                          <p-button
+                            *ngIf="hasPermission(PERMISSIONS.Account.Delete)"
+                            icon="pi pi-trash"
+                            class="p-button-danger"
+                            [label]="translate.instant('FINANCE.DELETE')"
+                            styleClass="rounded-lg p-button-danger w-full"
+                            (onClick)="confirmHeaderAccountDeletion($event, header.data); opHeaderAccount.hide(); $event.stopPropagation()"
+                          ></p-button>
+                        </div>
+                      </p-overlayPanel>
+
+                      <p-button
+                        *ngIf="hasPermission(PERMISSIONS.Account.Update) || hasPermission(PERMISSIONS.Account.Delete)"
+                        [text]="true"
+                        (onClick)="opHeaderAccount.toggle($event); $event.stopPropagation()"
+                        severity="secondary"
+                        styleClass="p-button-secondary rounded-xl"
+                      >
+                        <ng-template pTemplate="icon">
+                          <i class="pi pi-ellipsis-v text-lg"></i>
+                        </ng-template>
+                      </p-button>
+                    </div>
+                  </div>
+
+                  <!-- Header Body (Level 3: Detail Accordions) -->
+                  <div *ngIf="header.expanded" class="header-body">
+                    <div *ngFor="let detail of header.children" class="detail-item">
+                      
+                      <!-- Detail Row -->
+                      <div class="detail-row flex justify-between items-center p-2 rounded-md cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800/30" [class.is-selected]="selectedNodeType === 'detailAccount' && selectedNodeData?.id === detail.data?.id" (click)="openEditorFromNode(detail, 'detailAccount'); detail.expanded = !detail.expanded; $event.stopPropagation()">
+                        <div class="flex items-center gap-3 flex-1">
+                          <div class="expand-chevron text-slate-400">
+                            <i class="pi" [ngClass]="detail.expanded ? 'pi-chevron-down' : (activeLanguage === 'ar' ? 'pi-chevron-left' : 'pi-chevron-right')"></i>
+                          </div>
+                          
+                          <div class="flex items-center gap-2 flex-nowrap">
+                            <span class="node-code detail-badge" style="font-size: 1.05rem !important; font-weight: bold !important; padding: 0.15rem 0.45rem !important; flex-shrink: 0;">{{ detail.data.referenceCode }}</span>
+                            <span class="node-name detail-title text-slate-600 dark:text-slate-300" style="white-space: nowrap !important;">{{ activeLanguage === 'en' ? detail.data.englishName : detail.data.arabicName }}</span>
+                          </div>
+                        </div>
+
+                        <div class="flex items-center gap-2" (click)="$event.stopPropagation()">
+                          <!-- ADD MAIN -->
+                          <p-button
+                            *ngIf="hasPermission(PERMISSIONS.Account.Create)"
+                            icon="pi pi-plus"
+                            class="p-button-contrast"
+                            styleClass="rounded-lg p-button-contrast"
+                            (onClick)="showMainAccountDialog(detail.data); $event.stopPropagation()"
+                          ></p-button>
+
+                          <p-overlayPanel #opDetailAccount [autoZIndex]="false" [baseZIndex]="80">
+                            <div class="flex flex-column gap-3 w-auto p-1">
+                              <p-button
+                                *ngIf="hasPermission(PERMISSIONS.Account.Update)"
+                                icon="pi pi-pencil"
+                                class="p-button-secondary"
+                                [label]="translate.instant('FINANCE.EDIT')"
+                                styleClass="rounded-lg p-button-secondary w-full"
+                                (onClick)="openEditorFromNode(detail, 'detailAccount'); opDetailAccount.hide(); $event.stopPropagation()"
+                              ></p-button>
+                              <p-button
+                                *ngIf="hasPermission(PERMISSIONS.Account.Delete)"
+                                icon="pi pi-trash"
+                                class="p-button-danger"
+                                [label]="translate.instant('FINANCE.DELETE')"
+                                styleClass="rounded-lg p-button-danger w-full"
+                                (onClick)="confirmDetailAccountDeletion($event, detail.data); opDetailAccount.hide(); $event.stopPropagation()"
+                              ></p-button>
+                            </div>
+                          </p-overlayPanel>
+
+                          <p-button
+                            *ngIf="hasPermission(PERMISSIONS.Account.Update) || hasPermission(PERMISSIONS.Account.Delete)"
+                            [text]="true"
+                            (onClick)="opDetailAccount.toggle($event); $event.stopPropagation()"
+                            severity="secondary"
+                            styleClass="p-button-secondary rounded-xl"
+                          >
+                            <ng-template pTemplate="icon">
+                              <i class="pi pi-ellipsis-v text-base"></i>
+                            </ng-template>
+                          </p-button>
+                        </div>
+                      </div>
+
+                      <!-- Detail Body (Level 4: Main Items) -->
+                      <div *ngIf="detail.expanded" class="detail-body">
+                        <div *ngFor="let main of detail.children" class="main-item flex justify-between items-center p-2 rounded-md hover:bg-slate-50 dark:hover:bg-slate-800/40 cursor-pointer" [class.is-selected]="selectedNodeType === 'mainAccount' && selectedNodeData?.id === main.data?.id" (click)="openEditorFromNode(main, 'mainAccount'); $event.stopPropagation()">
+                          <div class="flex items-center gap-3 flex-1">
+                            <i class="pi pi-circle text-[6px] text-slate-400"></i>
+                            
+                            <div class="flex items-center gap-2 flex-nowrap">
+                              <span class="node-code main-badge" style="font-size: 1.05rem !important; font-weight: bold !important; padding: 0.15rem 0.45rem !important; flex-shrink: 0;">{{ main.data.referenceCode }}</span>
+                              <span class="node-name main-title text-slate-700 dark:text-slate-200 font-semibold" style="white-space: nowrap !important;">{{ activeLanguage === 'en' ? main.data.englishName : main.data.arabicName }}</span>
+                            </div>
+                          </div>
+
+                          <div class="flex items-center gap-2" (click)="$event.stopPropagation()">
+                            <p-overlayPanel #opMainAccount [autoZIndex]="false" [baseZIndex]="80">
+                              <div class="flex flex-column gap-3 w-auto p-1">
+                                <p-button
+                                  *ngIf="hasPermission(PERMISSIONS.Account.Update)"
+                                  icon="pi pi-pencil"
+                                  class="p-button-secondary"
+                                  [label]="translate.instant('FINANCE.EDIT')"
+                                  styleClass="rounded-lg p-button-secondary w-full"
+                                  (onClick)="openEditorFromNode(main, 'mainAccount'); opMainAccount.hide(); $event.stopPropagation()"
+                                ></p-button>
+                                <p-button
+                                  *ngIf="hasPermission(PERMISSIONS.Account.Delete)"
+                                  icon="pi pi-trash"
+                                  class="p-button-danger"
+                                  [label]="translate.instant('FINANCE.DELETE')"
+                                  styleClass="rounded-lg p-button-danger w-full"
+                                  (onClick)="confirmMainAccountDeletion($event, main.data); opMainAccount.hide(); $event.stopPropagation()"
+                                ></p-button>
+                              </div>
+                            </p-overlayPanel>
+
+                            <p-button
+                              *ngIf="hasPermission(PERMISSIONS.Account.Update) || hasPermission(PERMISSIONS.Account.Delete)"
+                              [text]="true"
+                              (onClick)="opMainAccount.toggle($event); $event.stopPropagation()"
+                              severity="secondary"
+                              styleClass="p-button-secondary rounded-xl"
+                            >
+                              <ng-template pTemplate="icon">
+                                <i class="pi pi-ellipsis-v text-base"></i>
+                              </ng-template>
+                            </p-button>
+                          </div>
+                        </div>
+                      </div>
+
+                    </div>
+                  </div>
+
+                </div>
+              </div>
+
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<p-confirmDialog></p-confirmDialog>
+<p-toast></p-toast>

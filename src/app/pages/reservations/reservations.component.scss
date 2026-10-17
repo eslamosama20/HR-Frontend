@@ -1,0 +1,1935 @@
+:host {
+  display: block;
+  padding: 1rem 1.5rem;
+}
+
+.p-column-resizer {
+  border-left: 3.5px solid #d9d9d9 !important;
+  opacity: 0.5 !important;
+}
+
+:dir(rtl) .p-column-resizer {
+  border-left: 3.5px solid #d9d9d9 !important;
+  opacity: 0.5 !important;
+  right : unset !important; left : 0 !important;
+}
+
+.toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1.5rem;
+  padding: 1rem;
+  background: #f8f9fa;
+  border-radius: 8px;
+  margin-bottom: 1rem;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.search-filters-section {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  flex: 1;
+  max-width: 800px;
+}
+
+.search {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+
+  > i {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #9ca3af;
+    font-size: 0.95rem;
+    z-index: 2;
+    pointer-events: none;
+    inset-inline-start: 0.85rem;
+    inset-inline-end: auto;
+  }
+}
+
+.search-input {
+  min-width: 300px;
+  height: 38px;
+  border-radius: 6px;
+  border: 1px solid #d1d5db;
+  font-size: 14px;
+  padding-top: 0.5rem;
+  padding-bottom: 0.5rem;
+  padding-inline-start: 2.5rem !important;
+  padding-inline-end: 1rem !important;
+  background-color: #fff;
+  color: #374151;
+  transition: all 0.2s ease-in-out;
+
+  &:focus {
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.15);
+    outline: none;
+  }
+}
+
+.clear-filters-btn {
+  white-space: nowrap !important;
+  flex-shrink: 0 !important;
+}
+
+.toolbar-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-shrink: 0;
+}
+
+.view-toggle {
+  margin-inline-start: 0.5rem;
+}
+
+@media (max-width: 768px) {
+  .toolbar {
+    flex-direction: column;
+    gap: 1rem;
+    align-items: stretch;
+  }
+  
+  .search-filters-section {
+    max-width: none;
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+  
+  .search-input {
+    min-width: auto;
+    width: 100%;
+  }
+  
+  .toolbar-actions {
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+}
+::ng-deep .p-overlaypanel .op-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  max-width: 520px;
+  padding: 0.5rem;
+}
+
+::ng-deep .p-overlaypanel .pill {
+  background: #e6f4ff !important;
+  color: #245f8c !important;
+  border: 1px solid #cfe8ff !important;
+  border-radius: 20px !important;
+  height: 34px !important;
+  padding: 0 0.9rem !important;
+  font-weight: 600;
+  transition: 0.3s ease-in-out;
+}
+
+::ng-deep .p-overlaypanel .pill:hover {
+  background-color: #d4f2ff !important;
+  color: #185a8b !important;
+}
+
+::ng-deep .p-overlaypanel .pill.danger {
+  background: #ffe8e8 !important;
+  color: #b91c1c !important;
+  border-color: #ffc6c6 !important;
+}
+
+::ng-deep .p-overlaypanel .pill.danger:hover {
+  background-color: #ffdbdb !important;
+  color: #9e1b1b !important;
+}
+
+::ng-deep .p-columnfilter-overlay {
+  min-width: 250px !important;
+  z-index: 1000 !important;
+}
+
+::ng-deep .p-columnfilter-overlay .p-columnfilter-menu {
+  padding: 1rem !important;
+  background: white !important;
+  border: 1px solid #e5e7eb !important;
+  border-radius: 8px !important;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1) !important;
+}
+
+::ng-deep .p-columnfilter-overlay .p-columnfilter-menu .p-columnfilter-menu-button {
+  width: 100% !important;
+  margin-bottom: 0.75rem !important;
+  padding: 0.5rem 0.75rem !important;
+  border-radius: 6px !important;
+  font-size: 0.875rem !important;
+}
+
+::ng-deep .p-columnfilter-overlay .p-columnfilter-menu .p-columnfilter-menu-button.p-button-outlined {
+  border-color: #d1d5db !important;
+  color: #374151 !important;
+  background: white !important;
+}
+
+::ng-deep .p-columnfilter-overlay .p-columnfilter-menu .p-columnfilter-menu-button.p-button-outlined:hover {
+  background-color: #f3f4f6 !important;
+  border-color: #9ca3af !important;
+}
+
+::ng-deep .p-columnfilter-overlay .p-columnfilter-menu .p-columnfilter-date {
+  margin-bottom: 1rem !important;
+}
+
+::ng-deep .p-columnfilter-overlay .p-columnfilter-menu .p-columnfilter-date .p-calendar {
+  width: 100% !important;
+}
+
+::ng-deep .p-columnfilter-overlay .p-columnfilter-menu .p-columnfilter-date .p-calendar .p-inputtext {
+  width: 100% !important;
+  padding: 0.5rem 0.75rem !important;
+  border: 1px solid #d1d5db !important;
+  border-radius: 6px !important;
+  font-size: 0.875rem !important;
+}
+
+::ng-deep .p-columnfilter-overlay .p-columnfilter-menu .p-columnfilter-date .p-calendar .p-inputtext:focus {
+  border-color: #3b82f6 !important;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1) !important;
+}
+
+::ng-deep .p-columnfilter-overlay .p-columnfilter-menu .p-columnfilter-menu-buttonbar {
+  display: flex !important;
+  gap: 0.75rem !important;
+  margin-top: 1rem !important;
+  padding-top: 0.75rem !important;
+  border-top: 1px solid #e5e7eb !important;
+}
+
+::ng-deep .p-columnfilter-overlay .p-columnfilter-menu .p-columnfilter-menu-buttonbar .p-button {
+  flex: 1 !important;
+  padding: 0.5rem 0.75rem !important;
+  font-size: 0.875rem !important;
+  border-radius: 6px !important;
+}
+
+::ng-deep .p-columnfilter-overlay .p-columnfilter-menu .p-columnfilter-menu-buttonbar .p-button.p-button-outlined {
+  border-color: #d1d5db !important;
+  color: #374151 !important;
+}
+
+::ng-deep .p-columnfilter-overlay .p-columnfilter-menu .p-columnfilter-menu-buttonbar .p-button.p-button-outlined:hover {
+  background-color: #f3f4f6 !important;
+  border-color: #9ca3af !important;
+}
+
+::ng-deep .p-datatable .p-datatable-tbody > tr > td {
+  padding: 0.75rem 0.5rem !important;
+  vertical-align: middle !important;
+  white-space: nowrap !important;
+  text-align: center !important;
+}
+
+::ng-deep .p-datatable .p-datatable-thead > tr > th {
+  padding: 0.75rem 0.5rem !important;
+  vertical-align: middle !important;
+  white-space: nowrap !important;
+  text-align: center !important;
+  font-weight: 600 !important;
+}
+
+::ng-deep .p-datatable.p-datatable-gridlines {
+  .p-datatable-thead > tr > th {
+    border: 1px solid #e5e7eb !important;
+    border-bottom: 2px solid #d1d5db !important;
+  }
+}
+
+::ng-deep .p-datatable .p-datatable-tbody > tr > td:first-child {
+  text-align: center !important;
+  font-weight: 600 !important;
+  color: #6b7280 !important;
+}
+
+.state-dot {
+  width: 28px !important;
+  height: 28px !important;
+  border-radius: 50% !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  font-size: 0.875rem !important;
+}
+
+.state-dot.ok {
+  background: #dcfce7 !important;
+  color: #16a34a !important;
+  border: 1px solid #bbf7d0 !important;
+}
+
+.state-dot.bad {
+  background: #fef2f2 !important;
+  color: #dc2626 !important;
+  border: 1px solid #fecaca !important;
+}
+
+::ng-deep .p-datatable .p-datatable-tbody > tr > td:last-child {
+  text-align: center !important;
+}
+
+::ng-deep .p-datatable .p-datatable-tbody > tr > td:last-child .flex {
+  justify-content: center !important;
+  gap: 0.5rem !important;
+}
+
+::ng-deep .p-datatable.p-datatable-gridlines .p-datatable-tbody > tr > td {
+  border: 1px solid #e5e7eb !important;
+}
+
+::ng-deep .p-datatable.p-datatable-gridlines .p-datatable-thead > tr > th {
+  border: 1px solid #e5e7eb !important;
+  background: #f9fafb !important;
+  color: #374151 !important;
+}
+
+::ng-deep .p-datatable .p-datatable-tbody > tr:hover > td {
+  background: #f3f4f6 !important;
+}
+
+::ng-deep .p-datatable .p-datatable-tbody > tr:nth-child(even) > td {
+  background: #fafafa !important;
+}
+
+::ng-deep .p-datatable .p-datatable-tbody > tr > td {
+  font-size: 1rem !important;
+  line-height: 1.25rem !important;
+}
+
+::ng-deep .p-datatable .p-datatable-tbody > tr > td {
+  font-family: 'Inter', sans-serif !important;
+}
+
+::ng-deep .p-datatable .p-datatable-tbody > tr > td.text-center {
+  font-weight: 500 !important;
+}
+
+::ng-deep .p-datatable .p-datatable-tbody > tr > td:contains("-") {
+  color: #9ca3af !important;
+  font-style: italic !important;
+}
+
+/* Match sales invoice list table font sizes on different screen widths */
+@media (max-width: 1200px) {
+  ::ng-deep .p-datatable .p-datatable-tbody > tr > td {
+    font-size: 0.8125rem !important;
+  }
+}
+
+@media (max-width: 992px) {
+  ::ng-deep .p-datatable .p-datatable-tbody > tr > td {
+    font-size: 0.75rem !important;
+  }
+}
+
+@media (max-width: 768px) {
+  ::ng-deep .p-datatable .p-datatable-tbody > tr > td {
+    font-size: 0.7rem !important;
+  }
+}
+
+@media (max-width: 576px) {
+  ::ng-deep .p-datatable .p-datatable-tbody > tr > td {
+    font-size: 0.65rem !important;
+  }
+}
+ .rtl {
+    direction: rtl;
+  }
+
+  .p-column-resizer {
+    border-left: 3.5px solid #d9d9d9 !important;
+    opacity: 0.5 !important;
+  }
+  :dir(rtl) .p-column-resizer {
+    border-left: 3.5px solid #d9d9d9 !important;
+    opacity: 0.5 !important;
+    right: unset !important;
+    left: 0 !important;
+  }
+
+  /* ===== شريط الأدوات ===== */
+  .toolbar {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 0.25rem 0.25rem 1rem;
+    justify-content: space-between;
+  }
+
+  .toolbar-left {
+    display: flex;
+    gap: 0.5rem;
+    margin-inline-start: auto;
+    align-items: center;
+  }
+  .btn,
+  ::ng-deep button.btn.p-button,
+  ::ng-deep .clear-filters-btn.p-button,
+  ::ng-deep .toggle-btn.p-button {
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    height: 38px !important;
+    min-height: 38px !important;
+    padding: 0 1rem !important;
+    border-radius: 0.5rem !important;
+    font-size: 14px !important;
+    font-weight: 600 !important;
+    line-height: 1 !important;
+    vertical-align: middle !important;
+    box-sizing: border-box !important;
+    white-space: nowrap !important;
+    cursor: pointer !important;
+    transition: all 0.2s ease-in-out !important;
+
+    .p-button-icon {
+      display: inline-flex !important;
+      align-items: center !important;
+      justify-content: center !important;
+      line-height: 1 !important;
+      font-size: 0.95rem !important;
+      margin: 0 !important;
+      margin-inline-end: 0.45rem !important;
+      vertical-align: middle !important;
+    }
+
+    .p-button-label {
+      display: inline-flex !important;
+      align-items: center !important;
+      justify-content: center !important;
+      line-height: 1 !important;
+      flex: 0 1 auto !important;
+      vertical-align: middle !important;
+    }
+  }
+
+  .btn-primary {
+    background: #2563eb !important;
+    border: 1px solid #2563eb !important;
+    color: #fff !important;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05) !important;
+
+    &:hover {
+      background: #1d4ed8 !important;
+      border-color: #1d4ed8 !important;
+      color: #fff !important;
+    }
+  }
+
+  .btn-outline {
+    background: #fff !important;
+    border: 1px solid #cfe8ff !important;
+    color: #2b6cb0 !important;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05) !important;
+
+    &:hover {
+      background: #f0f7ff !important;
+      border-color: #93c5fd !important;
+      color: #1d4ed8 !important;
+    }
+  }
+
+  /* 🔀 زر العرض */
+  .view-toggle {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding-inline-start: 0.75rem;
+    margin-inline-start: 0.5rem;
+    border-inline-start: 1px dashed #e5e7eb;
+  }
+  .toggle-btn {
+    height: 38px !important;
+    border-radius: 0.6rem !important;
+    font-weight: 600 !important;
+  }
+
+  /* ===== الشبكة ===== */
+  .cards-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 1rem;
+  }
+  @media (max-width: 1200px) {
+    .cards-grid {
+      grid-template-columns: repeat(2, 1fr);
+    }
+  }
+  @media (max-width: 700px) {
+    .cards-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  .res-card {
+    position: relative;
+    border: 1px solid #cfe8ff;
+    border-radius: 14px;
+    padding: 14px;
+    background: #fff;
+    color: #374151;
+  }
+
+  .menu-btn {
+    position: absolute;
+    inset-inline-end: 0.5rem;
+    inset-block-start: 0.5rem;
+    width: 36px;
+    height: 36px;
+    border-radius: 18px;
+    background: #eaf5ff;
+    color: #2b6cb0;
+    border: 1px solid #cfe8ff;
+  }
+  .menu-btn i {
+    color: currentColor;
+  }
+
+  .open-tx {
+    position: absolute;
+    inset-inline-start: 0.5rem;
+    inset-block-start: 0.5rem;
+    width: 34px;
+    height: 34px;
+    border-radius: 10px;
+    background: #f0fff6;
+    color: #16a34a;
+    border: 1px solid #b9f0c8;
+  }
+  .open-tx i {
+    color: currentColor;
+  }
+
+  .rows {
+    margin-top: 1.2rem;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .row {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    align-items: center;
+    background: #f9fafb;
+    border-radius: 10px;
+    padding: 8px 10px;
+  }
+  .cell {
+    display: flex;
+    align-items: center;
+    gap: 0.55rem;
+    padding: 0.35rem 0.6rem;
+  }
+  .row > .cell:first-child {
+    border-inline-end: 1px solid #e5e7eb;
+  }
+
+  .label {
+    color: #1f2937;
+    font-weight: 600;
+  }
+  .value {
+    color: #374151;
+    font-weight: 600;
+  }
+  .ico {
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    display: grid;
+    place-items: center;
+    background: #43a1df;
+    color: #fff;
+    flex: 0 0 34px;
+  }
+
+  .state-dot {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    display: grid;
+    place-items: center;
+    border: 1px solid transparent;
+    font-size: 1rem;
+  }
+  .state-dot.ok {
+    background: #e7f8ed;
+    color: #16a34a;
+    border-color: #b9f0c8;
+  }
+  .state-dot.bad {
+    background: #ffe8e8;
+    color: #b91c1c;
+    border-color: #ffc6c6;
+  }
+  .state-dot i {
+    color: inherit;
+  }
+
+  .pager {
+    display: flex;
+    justify-content: center;
+    margin-top: 1rem;
+  }
+  .no-data {
+    margin-top: 1rem;
+    padding: 1rem;
+    text-align: center;
+    font-weight: 600;
+    color: #4b5563;
+    background: #fafafa;
+    border: 1px dashed #ddd;
+    border-radius: 8px;
+  }
+
+  /* ===== OverlayPanel pills (افتراضي) ===== */
+  ::ng-deep .p-overlaypanel .op-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0.5rem;
+    max-width: 520px;
+    padding: 0.5rem;
+  }
+  ::ng-deep .p-overlaypanel .op-grid .full-width {
+    grid-column: span 2; /* يمتد على العمودين */
+  }
+  ::ng-deep .p-overlaypanel .pill {
+    background: #e6f4ff !important;
+    color: #245f8c !important;
+    border: 1px solid #cfe8ff !important;
+    border-radius: 20px !important;
+    height: 34px !important;
+    padding: 0 0.9rem !important;
+    font-weight: 600;
+    transition: 0.3s ease-in-out;
+  }
+  ::ng-deep .p-overlaypanel .pill:hover {
+    background-color: #d4f2ff !important;
+    color: #185a8b !important;
+  }
+  ::ng-deep .p-overlaypanel .pill.danger {
+    background: #ffe8e8 !important;
+    color: #b91c1c !important;
+    border-color: #ffc6c6 !important;
+  }
+  ::ng-deep .p-overlaypanel .pill.danger:hover {
+    background-color: #ffdbdb !important;
+    color: #9e1b1b !important;
+  }
+
+  /* 🔥 Dark mode */
+  :host-context(.dark-theme) .res-card {
+    background: #0f172a !important;
+    color: #cbd5e1 !important;
+    border-color: #334155 !important;
+  }
+  :host-context(.dark-theme) .res-card .label {
+    color: #e5e7eb !important;
+  }
+  :host-context(.dark-theme) .res-card .value {
+    color: #cbd5e1 !important;
+  }
+  :host-context(.dark-theme) .row {
+    background: #111827 !important;
+  }
+  :host-context(.dark-theme) .row > .cell:first-child {
+    border-left-color: #1f2937 !important;
+  }
+
+  :host-context([data-theme="dark"]) .res-card,
+  :host-context([data-bs-theme="dark"]) .res-card,
+  :host-context(html.dark) .res-card {
+    background: #0f172a !important;
+    color: #cbd5e1 !important;
+    border-color: #334155 !important;
+  }
+  :host-context([data-theme="dark"]) .res-card .label,
+  :host-context([data-bs-theme="dark"]) .res-card .label,
+  :host-context(html.dark) .res-card .label {
+    color: #e5e7eb !important;
+  }
+  :host-context([data-theme="dark"]) .res-card .value,
+  :host-context([data-bs-theme="dark"]) .res-card .value,
+  :host-context(html.dark) .res-card .value {
+    color: #cbd5e1 !important;
+  }
+  :host-context([data-theme="dark"]) .row,
+  :host-context([data-bs-theme="dark"]) .row,
+  :host-context(html.dark) .row {
+    background: #111827 !important;
+  }
+  :host-context([data-theme="dark"]) .row > .cell:first-child,
+  :host-context([data-bs-theme="dark"]) .row > .cell:first-child,
+  :host-context(html.dark) .row > .cell:first-child {
+    border-left-color: #1f2937 !important;
+  }
+
+  /* 🌿 Light-Green Mode (صفحة محددة فقط) */
+  :host-context(.light-green-mode) .btn-primary,
+  :host-context([data-bs-theme="light-green"]) .btn-primary,
+  :host-context(body.light-green) .btn-primary {
+    background: #018897 !important;
+    border-color: #018897 !important;
+    color: #ffffff !important;
+  }
+  :host-context(.light-green-mode) .btn-outline,
+  :host-context([data-bs-theme="light-green"]) .btn-outline,
+  :host-context(body.light-green) .btn-outline {
+    background: #fff !important;
+    border-color: #018897 !important;
+    color: #092c4c !important;
+  }
+  :host-context(.light-green-mode) .view-toggle,
+  :host-context([data-bs-theme="light-green"]) .view-toggle,
+  :host-context(body.light-green) .view-toggle {
+    border-inline-start: 1px dashed #93d5d1 !important;
+  }
+
+  :host-context(.light-green-mode) .res-card,
+  :host-context([data-bs-theme="light-green"]) .res-card,
+  :host-context(body.light-green) .res-card {
+    background: #f9fffe !important;
+    color: #0f172a !important;
+    border-color: #93d5d1 !important;
+  }
+  :host-context(.light-green-mode) .menu-btn,
+  :host-context([data-bs-theme="light-green"]) .menu-btn,
+  :host-context(body.light-green) .menu-btn {
+    background: #e4f6ff !important;
+    color: #092c4c !important;
+    border-color: #93d5d1 !important;
+  }
+  :host-context(.light-green-mode) .row,
+  :host-context([data-bs-theme="light-green"]) .row,
+  :host-context(body.light-green) .row {
+    background: #f3fdff !important;
+  }
+  :host-context(.light-green-mode) .row > .cell:first-child,
+  :host-context([data-bs-theme="light-green"]) .row > .cell:first-child,
+  :host-context(body.light-green) .row > .cell:first-child {
+    border-left-color: #93d5d1 !important;
+  }
+  :host-context(.light-green-mode) .label,
+  :host-context([data-bs-theme="light-green"]) .label,
+  :host-context(body.light-green) .label {
+    color: #092c4c !important;
+  }
+  :host-context(.light-green-mode) .value,
+  :host-context([data-bs-theme="light-green"]) .value,
+  :host-context(body.light-green) .value {
+    color: #2e2a40 !important;
+  }
+  :host-context(.light-green-mode) .ico,
+  :host-context([data-bs-theme="light-green"]) .ico,
+  :host-context(body.light-green) .ico {
+    background: #018897 !important;
+    color: #fff !important;
+  }
+
+  /* Light-Green: OverlayPanel pills */
+  :host-context(.light-green-mode) ::ng-deep .p-overlaypanel .pill,
+  :host-context([data-bs-theme="light-green"]) ::ng-deep .p-overlaypanel .pill,
+  :host-context(body.light-green) ::ng-deep .p-overlaypanel .pill {
+    background: #e4f6ff !important;
+    color: #092c4c !important;
+    border-color: #93d5d1 !important;
+  }
+  :host-context(.light-green-mode) ::ng-deep .p-overlaypanel .pill:hover,
+  :host-context([data-bs-theme="light-green"])
+    ::ng-deep
+    .p-overlaypanel
+    .pill:hover,
+  :host-context(body.light-green) ::ng-deep .p-overlaypanel .pill:hover {
+    background: #ddf7f6 !important;
+    color: #0a2d3e !important;
+  }
+
+  /* Light-Green: جدول ومرقّم */
+  :host-context(.light-green-mode)
+    ::ng-deep
+    .p-datatable
+    .p-datatable-thead
+    > tr
+    > th,
+  :host-context([data-bs-theme="light-green"])
+    ::ng-deep
+    .p-datatable
+    .p-datatable-thead
+    > tr
+    > th,
+  :host-context(body.light-green)
+    ::ng-deep
+    .p-datatable
+    .p-datatable-thead
+    > tr
+    > th {
+    background: #c6ecea !important;
+    color: #2e2a40 !important;
+    border-color: #93d5d1 !important;
+  }
+  :host-context(.light-green-mode)
+    ::ng-deep
+    .p-datatable
+    .p-datatable-tbody
+    > tr
+    > td,
+  :host-context([data-bs-theme="light-green"])
+    ::ng-deep
+    .p-datatable
+    .p-datatable-tbody
+    > tr
+    > td,
+  :host-context(body.light-green)
+    ::ng-deep
+    .p-datatable
+    .p-datatable-tbody
+    > tr
+    > td {
+    background: #ffffff !important;
+    color: #2e2a40 !important;
+    border-color: #e4f6ff !important;
+  }
+  :host-context(.light-green-mode)
+    ::ng-deep
+    .p-datatable
+    .p-datatable-tbody
+    > tr:hover
+    > td,
+  :host-context([data-bs-theme="light-green"])
+    ::ng-deep
+    .p-datatable
+    .p-datatable-tbody
+    > tr:hover
+    > td,
+  :host-context(body.light-green)
+    ::ng-deep
+    .p-datatable
+    .p-datatable-tbody
+    > tr:hover
+    > td {
+    background: #f3fdff !important;
+  }
+
+  :host-context(.light-green-mode) ::ng-deep .p-paginator,
+  :host-context([data-bs-theme="light-green"]) ::ng-deep .p-paginator,
+  :host-context(body.light-green) ::ng-deep .p-paginator {
+    background: #f5fbfa !important;
+    border-top: 1px solid #93d5d1 !important;
+  }
+  :host-context(.light-green-mode)
+    ::ng-deep
+    .p-paginator
+    .p-paginator-pages
+    .p-paginator-page.p-highlight,
+  :host-context([data-bs-theme="light-green"])
+    ::ng-deep
+    .p-paginator
+    .p-paginator-pages
+    .p-paginator-page.p-highlight,
+  :host-context(body.light-green)
+    ::ng-deep
+    .p-paginator
+    .p-paginator-pages
+    .p-paginator-page.p-highlight {
+    background: #018897 !important;
+    border-color: #018897 !important;
+    color: #fff !important;
+  }
+  /* 🌊 Light-DarkBlue Mode */
+  :host-context(.light-darkblue-mode) .btn-primary,
+  :host-context([data-bs-theme="light-darkblue"]) .btn-primary,
+  :host-context(body.light-darkblue) .btn-primary {
+    background: #191d29 !important;
+    border-color: #191d29 !important;
+    color: #ffffff !important;
+  }
+  :host-context(.light-darkblue-mode) .btn-outline,
+  :host-context([data-bs-theme="light-darkblue"]) .btn-outline,
+  :host-context(body.light-darkblue) .btn-outline {
+    background: #fff !important;
+    border-color: #191d29 !important;
+    color: #191d29 !important;
+  }
+  :host-context(.light-darkblue-mode) .view-toggle,
+  :host-context([data-bs-theme="light-darkblue"]) .view-toggle,
+  :host-context(body.light-darkblue) .view-toggle {
+    border-inline-start: 1px dashed #dad7ff !important;
+  }
+
+  :host-context(.light-darkblue-mode) .res-card,
+  :host-context([data-bs-theme="light-darkblue"]) .res-card,
+  :host-context(body.light-darkblue) .res-card {
+    background: #f7f7f7 !important;
+    color: #191d29 !important;
+    border-color: #191d29 !important;
+  }
+  :host-context(.light-darkblue-mode) .menu-btn,
+  :host-context([data-bs-theme="light-darkblue"]) .menu-btn,
+  :host-context(body.light-darkblue) .menu-btn {
+    background: #eeedff !important;
+    color: #191d29 !important;
+    border-color: #191d29 !important;
+  }
+  :host-context(.light-darkblue-mode) .row,
+  :host-context([data-bs-theme="light-darkblue"]) .row,
+  :host-context(body.light-darkblue) .row {
+    background: #eeedff !important;
+  }
+  :host-context(.light-darkblue-mode) .row > .cell:first-child,
+  :host-context([data-bs-theme="light-darkblue"]) .row > .cell:first-child,
+  :host-context(body.light-darkblue) .row > .cell:first-child {
+    border-left-color: #191d29 !important;
+  }
+  :host-context(.light-darkblue-mode) .label,
+  :host-context([data-bs-theme="light-darkblue"]) .label,
+  :host-context(body.light-darkblue) .label {
+    color: #191d29 !important;
+  }
+  :host-context(.light-darkblue-mode) .value,
+  :host-context([data-bs-theme="light-darkblue"]) .value,
+  :host-context(body.light-darkblue) .value {
+    color: #191d29 !important;
+  }
+  :host-context(.light-darkblue-mode) .ico,
+  :host-context([data-bs-theme="light-darkblue"]) .ico,
+  :host-context(body.light-darkblue) .ico {
+    background: #191d29 !important;
+    color: #fff !important;
+  }
+
+  /* Light-DarkBlue: OverlayPanel pills */
+  :host-context(.light-darkblue-mode) ::ng-deep .p-overlaypanel .pill,
+  :host-context([data-bs-theme="light-darkblue"])
+    ::ng-deep
+    .p-overlaypanel
+    .pill,
+  :host-context(body.light-darkblue) ::ng-deep .p-overlaypanel .pill {
+    background: #eeedff !important;
+    color: #191d29 !important;
+    border-color: #191d29 !important;
+  }
+  :host-context(.light-darkblue-mode) ::ng-deep .p-overlaypanel .pill:hover,
+  :host-context([data-bs-theme="light-darkblue"])
+    ::ng-deep
+    .p-overlaypanel
+    .pill:hover,
+  :host-context(body.light-darkblue) ::ng-deep .p-overlaypanel .pill:hover {
+    background: #e3e0ff !important;
+    color: #191d29 !important;
+  }
+
+  /* Light-DarkBlue: جدول ومرقّم */
+  :host-context(.light-darkblue-mode)
+    ::ng-deep
+    .p-datatable
+    .p-datatable-thead
+    > tr
+    > th,
+  :host-context([data-bs-theme="light-darkblue"])
+    ::ng-deep
+    .p-datatable
+    .p-datatable-thead
+    > tr
+    > th,
+  :host-context(body.light-darkblue)
+    ::ng-deep
+    .p-datatable
+    .p-datatable-thead
+    > tr
+    > th {
+    background: #dad7ff !important;
+    color: #191d29 !important;
+    border-color: #dad7ff !important;
+  }
+  :host-context(.light-darkblue-mode)
+    ::ng-deep
+    .p-datatable
+    .p-datatable-tbody
+    > tr
+    > td,
+  :host-context([data-bs-theme="light-darkblue"])
+    ::ng-deep
+    .p-datatable
+    .p-datatable-tbody
+    > tr
+    > td,
+  :host-context(body.light-darkblue)
+    ::ng-deep
+    .p-datatable
+    .p-datatable-tbody
+    > tr
+    > td {
+    background: #ffffff !important;
+    color: #191d29 !important;
+    border-color: #eeedff !important;
+  }
+  :host-context(.light-darkblue-mode)
+    ::ng-deep
+    .p-datatable
+    .p-datatable-tbody
+    > tr:hover
+    > td,
+  :host-context([data-bs-theme="light-darkblue"])
+    ::ng-deep
+    .p-datatable
+    .p-datatable-tbody
+    > tr:hover
+    > td,
+  :host-context(body.light-darkblue)
+    ::ng-deep
+    .p-datatable
+    .p-datatable-tbody
+    > tr:hover
+    > td {
+    background: #eeedff !important;
+  }
+  :host-context(.light-darkblue-mode) ::ng-deep .p-paginator,
+  :host-context([data-bs-theme="light-darkblue"]) ::ng-deep .p-paginator,
+  :host-context(body.light-darkblue) ::ng-deep .p-paginator {
+    background: #f7f7f7 !important;
+    border-top: 1px solid #dad7ff !important;
+  }
+  :host-context(.light-darkblue-mode)
+    ::ng-deep
+    .p-paginator
+    .p-paginator-pages
+    .p-paginator-page.p-highlight,
+  :host-context([data-bs-theme="light-darkblue"])
+    ::ng-deep
+    .p-paginator
+    .p-paginator-pages
+    .p-paginator-page.p-highlight,
+  :host-context(body.light-darkblue)
+    ::ng-deep
+    .p-paginator
+    .p-paginator-pages
+    .p-paginator-page.p-highlight {
+    background: #191d29 !important;
+    border-color: #191d29 !important;
+    color: #fff !important;
+  }
+
+  /* 💜 Light-Indigo Mode */
+  :host-context(.light-indigo-mode) .btn-primary,
+  :host-context([data-bs-theme="light-indigo"]) .btn-primary,
+  :host-context(body.light-indigo) .btn-primary {
+    background: #3e4981 !important;
+    border-color: #3e4981 !important;
+    color: #ffffff !important;
+  }
+  :host-context(.light-indigo-mode) .btn-outline,
+  :host-context([data-bs-theme="light-indigo"]) .btn-outline,
+  :host-context(body.light-indigo) .btn-outline {
+    background: #fff !important;
+    border-color: #3e4981 !important;
+    color: #3e4981 !important;
+  }
+  :host-context(.light-indigo-mode) .view-toggle,
+  :host-context([data-bs-theme="light-indigo"]) .view-toggle,
+  :host-context(body.light-indigo) .view-toggle {
+    border-inline-start: 1px dashed #c9d0f5 !important;
+  }
+
+  :host-context(.light-indigo-mode) .res-card,
+  :host-context([data-bs-theme="light-indigo"]) .res-card,
+  :host-context(body.light-indigo) .res-card {
+    background: #f7f7f7 !important;
+    color: #2e2a40 !important;
+    border-color: #3e4981 !important;
+  }
+  :host-context(.light-indigo-mode) .menu-btn,
+  :host-context([data-bs-theme="light-indigo"]) .menu-btn,
+  :host-context(body.light-indigo) .menu-btn {
+    background: #e4e9ff !important;
+    color: #3e4981 !important;
+    border-color: #3e4981 !important;
+  }
+  :host-context(.light-indigo-mode) .row,
+  :host-context([data-bs-theme="light-indigo"]) .row,
+  :host-context(body.light-indigo) .row {
+    background: #e4e9ff !important;
+  }
+  :host-context(.light-indigo-mode) .row > .cell:first-child,
+  :host-context([data-bs-theme="light-indigo"]) .row > .cell:first-child,
+  :host-context(body.light-indigo) .row > .cell:first-child {
+    border-left-color: #3e4981 !important;
+  }
+  :host-context(.light-indigo-mode) .label,
+  :host-context([data-bs-theme="light-indigo"]) .label,
+  :host-context(body.light-indigo) .label {
+    color: #2e2a40 !important;
+  }
+  :host-context(.light-indigo-mode) .value,
+  :host-context([data-bs-theme="light-indigo"]) .value,
+  :host-context(body.light-indigo) .value {
+    color: #2e2a40 !important;
+  }
+  :host-context(.light-indigo-mode) .ico,
+  :host-context([data-bs-theme="light-indigo"]) .ico,
+  :host-context(body.light-indigo) .ico {
+    background: #3e4981 !important;
+    color: #fff !important;
+  }
+
+  /* Light-Indigo: OverlayPanel pills */
+  :host-context(.light-indigo-mode) ::ng-deep .p-overlaypanel .pill,
+  :host-context([data-bs-theme="light-indigo"]) ::ng-deep .p-overlaypanel .pill,
+  :host-context(body.light-indigo) ::ng-deep .p-overlaypanel .pill {
+    background: #e4e9ff !important;
+    color: #3e4981 !important;
+    border-color: #3e4981 !important;
+  }
+  :host-context(.light-indigo-mode) ::ng-deep .p-overlaypanel .pill:hover,
+  :host-context([data-bs-theme="light-indigo"])
+    ::ng-deep
+    .p-overlaypanel
+    .pill:hover,
+  :host-context(body.light-indigo) ::ng-deep .p-overlaypanel .pill:hover {
+    background: #d9e0ff !important;
+    color: #2c3560 !important; /* uses primary-active */
+  }
+
+  /* Light-Indigo: جدول ومرقّم */
+  :host-context(.light-indigo-mode)
+    ::ng-deep
+    .p-datatable
+    .p-datatable-thead
+    > tr
+    > th,
+  :host-context([data-bs-theme="light-indigo"])
+    ::ng-deep
+    .p-datatable
+    .p-datatable-thead
+    > tr
+    > th,
+  :host-context(body.light-indigo)
+    ::ng-deep
+    .p-datatable
+    .p-datatable-thead
+    > tr
+    > th {
+    background: #c9d0f5 !important;
+    color: #2e2a40 !important;
+    border-color: #c9d0f5 !important;
+  }
+  :host-context(.light-indigo-mode)
+    ::ng-deep
+    .p-datatable
+    .p-datatable-tbody
+    > tr
+    > td,
+  :host-context([data-bs-theme="light-indigo"])
+    ::ng-deep
+    .p-datatable
+    .p-datatable-tbody
+    > tr
+    > td,
+  :host-context(body.light-indigo)
+    ::ng-deep
+    .p-datatable
+    .p-datatable-tbody
+    > tr
+    > td {
+    background: #ffffff !important;
+    color: #2e2a40 !important;
+    border-color: #e4e9ff !important;
+  }
+  :host-context(.light-indigo-mode)
+    ::ng-deep
+    .p-datatable
+    .p-datatable-tbody
+    > tr:hover
+    > td,
+  :host-context([data-bs-theme="light-indigo"])
+    ::ng-deep
+    .p-datatable
+    .p-datatable-tbody
+    > tr:hover
+    > td,
+  :host-context(body.light-indigo)
+    ::ng-deep
+    .p-datatable
+    .p-datatable-tbody
+    > tr:hover
+    > td {
+    background: #e4e9ff !important;
+  }
+  :host-context(.light-indigo-mode) ::ng-deep .p-paginator,
+  :host-context([data-bs-theme="light-indigo"]) ::ng-deep .p-paginator,
+  :host-context(body.light-indigo) ::ng-deep .p-paginator {
+    background: #f7f7f7 !important;
+    border-top: 1px solid #c9d0f5 !important;
+  }
+  :host-context(.light-indigo-mode)
+    ::ng-deep
+    .p-paginator
+    .p-paginator-pages
+    .p-paginator-page.p-highlight,
+  :host-context([data-bs-theme="light-indigo"])
+    ::ng-deep
+    .p-paginator
+    .p-paginator-pages
+    .p-paginator-page.p-highlight,
+  :host-context(body.light-indigo)
+    ::ng-deep
+    .p-paginator
+    .p-paginator-pages
+    .p-paginator-page.p-highlight {
+    background: #3e4981 !important;
+    border-color: #3e4981 !important;
+    color: #fff !important;
+  }
+  /* ✅ Bulk actions bar */
+  .bulk-actions {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    padding: 0.6rem 0.8rem;
+    margin: 0.5rem 0 1rem;
+    background: #f5f9ff;
+    border: 1px solid #cfe8ff;
+    border-radius: 10px;
+  }
+  .bulk-actions .info {
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+  }
+  .bulk-actions .selected-pill {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.25rem 0.65rem;
+    background: #e0f2fe;
+    color: #0369a1;
+    font-weight: 700;
+    font-size: 0.85rem;
+    border-radius: 20px;
+    border: 1px solid #bae6fd;
+    white-space: nowrap;
+  }
+  .bulk-actions .clear-btn-icon {
+    width: 28px !important;
+    height: 28px !important;
+    padding: 0 !important;
+    color: #ef4444 !important;
+  }
+  .bulk-actions .clear-btn-icon:hover {
+    background: #fee2e2 !important;
+  }
+  .bulk-actions .actions {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+  }
+  .bulk-actions .sep {
+    width: 1px;
+    height: 22px;
+    background: #dbeafe;
+    margin-inline: 0.25rem;
+    opacity: 0.7;
+  }
+
+  /* 🌿 Light-Green */
+  :host-context(.light-green-mode) .bulk-actions,
+  :host-context([data-bs-theme="light-green"]) .bulk-actions,
+  :host-context(body.light-green) .bulk-actions {
+    background: #f3fdff !important;
+    border-color: #93d5d1 !important;
+    color: #092c4c !important;
+  }
+  :host-context(.light-green-mode) .bulk-actions .sep,
+  :host-context([data-bs-theme="light-green"]) .bulk-actions .sep,
+  :host-context(body.light-green) .bulk-actions .sep {
+    background: #93d5d1 !important;
+  }
+  :host-context(.light-green-mode) .bulk-actions .info {
+    color: #092c4c !important;
+  }
+
+  /* 🌊 Light-DarkBlue */
+  :host-context(.light-darkblue-mode) .bulk-actions,
+  :host-context([data-bs-theme="light-darkblue"]) .bulk-actions,
+  :host-context(body.light-darkblue) .bulk-actions {
+    background: #f7f7f7 !important;
+    border-color: #191d29 !important;
+    color: #191d29 !important;
+  }
+  :host-context(.light-darkblue-mode) .bulk-actions .sep,
+  :host-context([data-bs-theme="light-darkblue"]) .bulk-actions .sep,
+  :host-context(body.light-darkblue) .bulk-actions .sep {
+    background: #dad7ff !important;
+  }
+  :host-context(.light-darkblue-mode) .bulk-actions .info {
+    color: #191d29 !important;
+  }
+
+  /* 💜 Light-Indigo */
+  :host-context(.light-indigo-mode) .bulk-actions,
+  :host-context([data-bs-theme="light-indigo"]) .bulk-actions,
+  :host-context(body.light-indigo) .bulk-actions {
+    background: #f7f7f7 !important;
+    border-color: #3e4981 !important;
+    color: #2e2a40 !important;
+  }
+  :host-context(.light-indigo-mode) .bulk-actions .sep,
+  :host-context([data-bs-theme="light-indigo"]) .bulk-actions .sep,
+  :host-context(body.light-indigo) .bulk-actions .sep {
+    background: #c9d0f5 !important;
+  }
+  :host-context(.light-indigo-mode) .bulk-actions .info {
+    color: #2e2a40 !important;
+  }
+  /* ===== Bulk actions buttons: default palette ===== */
+  .bulk-actions .actions .p-button.p-button-sm {
+    border-radius: 8px;
+  }
+
+  .bulk-actions
+    .actions
+    .p-button:not(.p-button-outlined):not(.p-button-danger):not(
+      .p-button-help
+    ):not(.p-button-success) {
+    background: #2b87d1 !important;
+    border-color: #2b87d1 !important;
+    color: #fff !important;
+  }
+  .bulk-actions
+    .actions
+    .p-button:not(.p-button-outlined):not(.p-button-danger):not(
+      .p-button-help
+    ):not(.p-button-success):hover {
+    filter: brightness(0.95);
+  }
+
+  .bulk-actions .actions .p-button-outlined {
+    color: #2b6cb0 !important;
+    border-color: #cfe8ff !important;
+    background: #fff !important;
+  }
+  .bulk-actions .actions .p-button-outlined:hover {
+    background: #f3f9ff !important;
+  }
+
+  .bulk-actions .actions .p-button-success {
+    background: #16a34a !important;
+    border-color: #16a34a !important;
+    color: #fff !important;
+  }
+  .bulk-actions .actions .p-button-success:hover {
+    filter: brightness(0.95);
+  }
+
+  .bulk-actions .actions .p-button-help {
+    background: #2b87d1 !important;
+    border-color: #2b87d1 !important;
+    color: #fff !important;
+  }
+  .bulk-actions .actions .p-button-help:hover {
+    filter: brightness(0.95);
+  }
+
+  .bulk-actions .actions .p-button-danger {
+    background: #dc2626 !important;
+    border-color: #dc2626 !important;
+    color: #fff !important;
+  }
+  .bulk-actions .actions .p-button-danger:hover {
+    filter: brightness(0.95);
+  }
+
+  /* 🌿 Light-Green theme */
+  :host-context(.light-green-mode)
+    .bulk-actions
+    .actions
+    .p-button:not(.p-button-outlined):not(.p-button-danger):not(
+      .p-button-help
+    ):not(.p-button-success),
+  :host-context([data-bs-theme="light-green"])
+    .bulk-actions
+    .actions
+    .p-button:not(.p-button-outlined):not(.p-button-danger):not(
+      .p-button-help
+    ):not(.p-button-success),
+  :host-context(body.light-green)
+    .bulk-actions
+    .actions
+    .p-button:not(.p-button-outlined):not(.p-button-danger):not(
+      .p-button-help
+    ):not(.p-button-success) {
+    background: #018897 !important;
+    border-color: #018897 !important;
+    color: #fff !important;
+  }
+  :host-context(.light-green-mode) .bulk-actions .actions .p-button-outlined,
+  :host-context([data-bs-theme="light-green"])
+    .bulk-actions
+    .actions
+    .p-button-outlined,
+  :host-context(body.light-green) .bulk-actions .actions .p-button-outlined {
+    color: #018897 !important;
+    border-color: #93d5d1 !important;
+    background: #fff !important;
+  }
+  :host-context(.light-green-mode) .bulk-actions .actions .p-button-success,
+  :host-context([data-bs-theme="light-green"])
+    .bulk-actions
+    .actions
+    .p-button-success,
+  :host-context(body.light-green) .bulk-actions .actions .p-button-success {
+    background: #018897 !important;
+    border-color: #018897 !important;
+  }
+  :host-context(.light-green-mode) .bulk-actions .actions .p-button-help,
+  :host-context([data-bs-theme="light-green"])
+    .bulk-actions
+    .actions
+    .p-button-help,
+  :host-context(body.light-green) .bulk-actions .actions .p-button-help {
+    background: #018897 !important;
+    border-color: #018897 !important;
+  }
+
+  /* 🌊 Light-DarkBlue theme */
+  :host-context(.light-darkblue-mode)
+    .bulk-actions
+    .actions
+    .p-button:not(.p-button-outlined):not(.p-button-danger):not(
+      .p-button-help
+    ):not(.p-button-success),
+  :host-context([data-bs-theme="light-darkblue"])
+    .bulk-actions
+    .actions
+    .p-button:not(.p-button-outlined):not(.p-button-danger):not(
+      .p-button-help
+    ):not(.p-button-success),
+  :host-context(body.light-darkblue)
+    .bulk-actions
+    .actions
+    .p-button:not(.p-button-outlined):not(.p-button-danger):not(
+      .p-button-help
+    ):not(.p-button-success) {
+    background: #191d29 !important;
+    border-color: #191d29 !important;
+    color: #fff !important;
+  }
+  :host-context(.light-darkblue-mode) .bulk-actions .actions .p-button-outlined,
+  :host-context([data-bs-theme="light-darkblue"])
+    .bulk-actions
+    .actions
+    .p-button-outlined,
+  :host-context(body.light-darkblue) .bulk-actions .actions .p-button-outlined {
+    color: #191d29 !important;
+    border-color: #dad7ff !important;
+    background: #fff !important;
+  }
+  :host-context(.light-darkblue-mode) .bulk-actions .actions .p-button-success,
+  :host-context([data-bs-theme="light-darkblue"])
+    .bulk-actions
+    .actions
+    .p-button-success,
+  :host-context(body.light-darkblue) .bulk-actions .actions .p-button-success {
+    background: #191d29 !important;
+    border-color: #191d29 !important;
+  }
+  :host-context(.light-darkblue-mode) .bulk-actions .actions .p-button-help,
+  :host-context([data-bs-theme="light-darkblue"])
+    .bulk-actions
+    .actions
+    .p-button-help,
+  :host-context(body.light-darkblue) .bulk-actions .actions .p-button-help {
+    background: #191d29 !important;
+    border-color: #191d29 !important;
+  }
+
+  /* 💜 Light-Indigo theme */
+  :host-context(.light-indigo-mode)
+    .bulk-actions
+    .actions
+    .p-button:not(.p-button-outlined):not(.p-button-danger):not(
+      .p-button-help
+    ):not(.p-button-success),
+  :host-context([data-bs-theme="light-indigo"])
+    .bulk-actions
+    .actions
+    .p-button:not(.p-button-outlined):not(.p-button-danger):not(
+      .p-button-help
+    ):not(.p-button-success),
+  :host-context(body.light-indigo)
+    .bulk-actions
+    .actions
+    .p-button:not(.p-button-outlined):not(.p-button-danger):not(
+      .p-button-help
+    ):not(.p-button-success) {
+    background: #3e4981 !important;
+    border-color: #3e4981 !important;
+    color: #fff !important;
+  }
+  :host-context(.light-indigo-mode) .bulk-actions .actions .p-button-outlined,
+  :host-context([data-bs-theme="light-indigo"])
+    .bulk-actions
+    .actions
+    .p-button-outlined,
+  :host-context(body.light-indigo) .bulk-actions .actions .p-button-outlined {
+    color: #3e4981 !important;
+    border-color: #c9d0f5 !important;
+    background: #fff !important;
+  }
+  :host-context(.light-indigo-mode) .bulk-actions .actions .p-button-success,
+  :host-context([data-bs-theme="light-indigo"])
+    .bulk-actions
+    .actions
+    .p-button-success,
+  :host-context(body.light-indigo) .bulk-actions .actions .p-button-success {
+    background: #3e4981 !important;
+    border-color: #3e4981 !important;
+  }
+  :host-context(.light-indigo-mode) .bulk-actions .actions .p-button-help,
+  :host-context([data-bs-theme="light-indigo"])
+    .bulk-actions
+    .actions
+    .p-button-help,
+  :host-context(body.light-indigo) .bulk-actions .actions .p-button-help {
+    background: #3e4981 !important;
+    border-color: #3e4981 !important;
+  }
+  /* ===== Share Dialog Styles ===== */
+  .share-header {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+  }
+  .share-header .icon-chip {
+    width: 40px;
+    height: 40px;
+    border-radius: 12px;
+    background: #eaf5ff;
+    color: #2b6cb0;
+    display: grid;
+    place-items: center;
+    font-size: 1.1rem;
+    border: 1px solid #cfe8ff;
+  }
+  .share-header .title .title-main {
+    font-weight: 800;
+    font-size: 1.05rem;
+  }
+  .share-header .title .title-sub {
+    font-size: 0.85rem;
+    color: #6b7280;
+    margin-top: 2px;
+  }
+
+  .share-dialog .p-dialog-content {
+    padding-top: 0 !important;
+  }
+
+  .share-tab {
+    display: grid;
+    gap: 1rem;
+  }
+  .share-tab .media {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+  }
+  .share-tab .chip {
+    width: 42px;
+    height: 42px;
+    border-radius: 14px;
+    display: grid;
+    place-items: center;
+    font-size: 1.2rem;
+    border: 1px solid transparent;
+  }
+  .share-tab .chip-email {
+    background: #e6f4ff;
+    color: #245f8c;
+    border-color: #cfe8ff;
+  }
+  .share-tab .chip-whatsapp {
+    background: #e7f8ed;
+    color: #16a34a;
+    border-color: #b9f0c8;
+  }
+  .share-tab .media-body .media-title {
+    font-weight: 700;
+  }
+  .share-tab .media-body .media-sub {
+    color: #6b7280;
+    font-size: 0.9rem;
+  }
+  .share-tab .form-row {
+    display: grid;
+    gap: 0.4rem;
+  }
+  .share-tab .form-row label {
+    font-weight: 700;
+    color: #1f2937;
+  }
+  .share-tab .form-row .err {
+    color: #b91c1c;
+  }
+  .share-tab .actions {
+    display: flex;
+    gap: 0.5rem;
+    justify-content: flex-end;
+  }
+
+  /* Dark / Themed variations للتناسق مع أنماطك */
+  :host-context(.dark-theme) .share-tab .form-row label {
+    color: #e5e7eb !important;
+  }
+  :host-context(.dark-theme) .share-header .title .title-sub {
+    color: #9ca3af !important;
+  }
+  /* ✅ بادج "حجز ملغي" (في الكروت والجدول) */
+.badge-cancelled {
+  display: inline-block;
+  padding: 0.05rem 0.35rem;
+  border-radius: 999px;
+  background: #ffe8e8;
+  color: #b91c1c;
+  font-size: 0.7rem;
+  font-weight: 700;
+}
+/* ====== Table: cancelled row ====== */
+::ng-deep .p-datatable .cancelled-row > td {
+  background: #ffe8e8 !important;
+  color: #7f1d1d !important;
+}
+
+::ng-deep .p-datatable .cancelled-row:hover > td {
+  background: #ffd6d6 !important;
+}
+
+/* ====== Cards: cancelled card ====== */
+.res-card.cancelled-card {
+  border-color: #fca5a5 !important;
+  background: #fff1f2 !important;
+}
+
+.res-card.cancelled-card .row {
+  background: #ffe8e8 !important;
+}
+
+.res-card.cancelled-card .label,
+.res-card.cancelled-card .value {
+  color: #7f1d1d !important;
+}
+/* ✅ أعلى Specificity لمجاراة قواعد الثيم */
+:host ::ng-deep .p-datatable .p-datatable-tbody > tr.cancelled-row > td {
+  background: #ffe8e8 !important;
+  color: #7f1d1d !important;
+}
+
+/* Hover */
+:host ::ng-deep .p-datatable .p-datatable-tbody > tr.cancelled-row:hover > td {
+  background: #ffd6d6 !important;
+}
+
+/* (اختياري) لو عندك حالة تحديد/Selection بتغطي اللون */
+:host ::ng-deep .p-datatable .p-datatable-tbody > tr.cancelled-row.p-highlight > td {
+  background: #ffe8e8 !important;
+  color: #7f1d1d !important;
+}
+:host ::ng-deep .p-datatable-wrapper .p-datatable-tbody > tr.cancelled-row > td {
+  background: #ffe8e8 !important;
+  color: #7f1d1d !important;
+}
+/* ============================= */
+/* ✅ FINAL & GUARANTEED SOLUTION */
+/* ============================= */
+
+/* نلوّن الـ TR نفسه */
+:host ::ng-deep tr.cancelled-row {
+  background-color: #ffe8e8 !important;
+}
+
+/* نخلّي كل الخلايا تورّث اللون */
+:host ::ng-deep tr.cancelled-row > td {
+  background-color: transparent !important;
+  color: #7f1d1d !important;
+}
+
+/* Hover */
+:host ::ng-deep tr.cancelled-row:hover {
+  background-color: #ffd6d6 !important;
+}
+
+/* Selected row (checkbox selection) */
+:host ::ng-deep tr.cancelled-row.p-highlight {
+  background-color: #ffe8e8 !important;
+}
+/* ===========================
+   ✅ CANCELLED ROW (PUT LAST)
+   =========================== */
+
+:host ::ng-deep .p-datatable .p-datatable-tbody > tr.cancelled-row > td,
+:host ::ng-deep .p-datatable .p-datatable-tbody > tr.cancelled-row:nth-child(even) > td {
+  background: #ffe8e8 !important;
+  color: #7f1d1d !important;
+}
+
+/* hover لازم يتغلب على hover العام */
+:host ::ng-deep .p-datatable .p-datatable-tbody > tr.cancelled-row:hover > td {
+  background: #ffd6d6 !important;
+}
+
+/* selection (p-highlight) لازم يتغلب على ستايل PrimeNG */
+:host ::ng-deep .p-datatable .p-datatable-tbody > tr.cancelled-row.p-highlight > td {
+  background: #ffe8e8 !important;
+  color: #7f1d1d !important;
+}
+/* ==========================
+   ✅ Make Actions column small
+   ========================== */
+
+:host ::ng-deep .p-datatable .p-datatable-thead > tr > th.actions-col,
+:host ::ng-deep .p-datatable .p-datatable-tbody > tr > td.actions-col {
+  width: 70px !important;
+  min-width: 70px !important;
+  max-width: 70px !important;
+  padding-left: 0.25rem !important;
+  padding-right: 0.25rem !important;
+}
+
+/* لو حاب تقلل عمود الفاتورة كمان */
+:host ::ng-deep .p-datatable .p-datatable-thead > tr > th.invoice-col,
+:host ::ng-deep .p-datatable .p-datatable-tbody > tr > td.invoice-col {
+  width: 120px !important;
+  min-width: 120px !important;
+  max-width: 120px !important;
+}
+
+/* خلي محتوى عمود الإجراءات يتجمع في سطر واحد ويكون أيقونات فقط */
+:host ::ng-deep .p-datatable .p-datatable-tbody > tr > td.actions-col .flex {
+  flex-wrap: nowrap !important;
+  justify-content: center !important;
+  gap: 0.25rem !important;
+}
+
+/* صغّر زر الثلاث نقاط */
+:host ::ng-deep .p-datatable .p-datatable-tbody > tr > td.actions-col .p-button {
+  width: 32px !important;
+  height: 32px !important;
+  padding: 0 !important;
+}
+
+/* مهم: عمود الإجراءات مايتأثرش بـ nowrap العام، خليه يلف لو اضطر */
+:host ::ng-deep .p-datatable .p-datatable-tbody > tr > td.actions-col {
+  white-space: normal !important;
+}
+/* ✅ صغّر عمود عدد الليالي */
+:host ::ng-deep .p-datatable .p-datatable-thead > tr > th.nights-col,
+:host ::ng-deep .p-datatable .p-datatable-tbody > tr > td.nights-col {
+  width: 70px !important;        /* عدّل الرقم حسب اللي يعجبك (60-90) */
+  min-width: 70px !important;
+  max-width: 70px !important;
+  white-space: nowrap;
+  text-align: center;
+  padding-left: 0.5rem;
+  padding-right: 0.5rem;
+}
+
+/* ✅ امنع أي تداخل بين الأعمدة */
+:host ::ng-deep .p-datatable .p-datatable-thead > tr > th {
+  overflow: hidden; /* مهم جدًا */
+}
+
+/* ✅ عمود عدد الليالي */
+:host ::ng-deep .p-datatable .p-datatable-thead > tr > th.nights-col {
+  width: 80px !important;      /* جرّب 80 أو 90 حسب الشكل */
+  min-width: 80px !important;
+  max-width: 80px !important;
+  padding-left: .4rem;
+  padding-right: .4rem;
+  white-space: nowrap;
+}
+
+/* ✅ رتّب محتوى الهيدر داخل العمود */
+:host ::ng-deep th.nights-col .th-flex{
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: .25rem;
+  min-width: 0;
+}
+
+:host ::ng-deep th.nights-col .th-text{
+  font-size: 12px;            /* صغّر العنوان */
+  white-space: nowrap;
+}
+
+:host ::ng-deep th.nights-col .th-ico{
+  flex: 0 0 auto;
+}
+
+/* ✅ صغّر الأيقونات شوية عشان ما تزحم */
+:host ::ng-deep th.nights-col .p-sortable-column-icon,
+:host ::ng-deep th.nights-col .p-sortIcon {
+  font-size: 12px;
+}
+
+/* =========================
+   New centered pagination (Total + pages + page/rows) all centered
+   ========================= */
+::ng-deep .custom-paginator-table .p-paginator {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.5rem 0.75rem;
+  border-top: 1px solid #e5e7eb;
+  background: #fff;
+  flex-wrap: wrap;
+}
+
+::ng-deep .custom-paginator-table .p-paginator .p-paginator-current {
+  color: #111827;
+  font-weight: 600;
+  white-space: nowrap;
+  margin: 0;
+}
+
+::ng-deep .custom-paginator-table .p-paginator .p-paginator-pages {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.25rem;
+  direction: ltr;
+  margin: 0;
+}
+
+::ng-deep .custom-paginator-table .p-paginator .p-paginator-page {
+  min-width: 34px;
+  height: 34px;
+  border-radius: 8px;
+  border: 1px solid transparent;
+  color: #374151;
+}
+
+::ng-deep .custom-paginator-table .p-paginator .p-paginator-page:not(.p-highlight):hover {
+  background: #f3f4f6;
+  border-color: #e5e7eb;
+}
+
+::ng-deep .custom-paginator-table .p-paginator .p-paginator-page.p-highlight {
+  background: #eaf2ff;
+  border-color: #93c5fd;
+  color: #1d4ed8;
+  font-weight: 600;
+}
+
+::ng-deep .custom-paginator-table .p-paginator .p-paginator-prev,
+::ng-deep .custom-paginator-table .p-paginator .p-paginator-next {
+  width: 34px;
+  height: 34px;
+  border-radius: 8px;
+}
+
+::ng-deep .custom-paginator-table .p-paginator .p-paginator-prev:hover,
+::ng-deep .custom-paginator-table .p-paginator .p-paginator-next:hover {
+  background: #f3f4f6;
+}
+
+::ng-deep .custom-paginator-table .p-paginator .p-paginator-rpp-options {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  margin: 0;
+}
+
+::ng-deep .custom-paginator-table .p-paginator .p-paginator-rpp-options::before {
+  content: "page /";
+  color: #6b7280;
+  font-size: 14px;
+  white-space: nowrap;
+}
+
+::ng-deep .custom-paginator-table .p-paginator .p-dropdown {
+  min-width: 80px;
+}
+
+::ng-deep .custom-paginator-table .p-paginator .p-paginator-ellipsis {
+  color: #6b7280;
+  padding: 0 0.25rem;
+}
+
+@media (max-width: 576px) {
+  ::ng-deep .p-paginator {
+    flex-direction: row !important;
+    flex-wrap: wrap !important;
+    gap: 0.5rem;
+    padding: 0.5rem;
+    font-size: 0.75rem;
+    justify-content: center;
+  }
+  ::ng-deep .p-paginator .p-paginator-pages {
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+  ::ng-deep .p-paginator .p-paginator-page,
+  ::ng-deep .p-paginator .p-paginator-prev,
+  ::ng-deep .p-paginator .p-paginator-next {
+    min-width: 28px;
+    height: 28px;
+  }
+  ::ng-deep .p-paginator .p-dropdown {
+    min-width: 70px;
+  }
+}
+
+/* Larger table text (1.125rem) as requested */
+:host ::ng-deep .p-datatable .p-datatable-thead > tr > th,
+:host ::ng-deep .p-datatable .p-datatable-tbody > tr > td {
+  font-size: 1.125rem !important;
+}
+
+.search-field-select {
+  padding: 8px 12px;
+  border-radius: 6px;
+  border: 1px solid #d1d5db;
+  background-color: white;
+  font-family: inherit;
+  font-size: 14px;
+  color: #374151;
+  outline: none;
+  cursor: pointer;
+  transition: all 0.2s ease-in-out;
+  margin-inline-end: 8px;
+}
+.search-field-select:focus {
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.15);
+}
+
+::ng-deep .search-date-picker {
+  display: inline-block;
+  width: 300px;
+}
+::ng-deep .search-date-picker .p-calendar {
+  width: 100%;
+}
+::ng-deep .search-date-picker .p-calendar .p-inputtext {
+  width: 100%;
+  padding: 0.75rem 1rem;
+  border-radius: 6px;
+  border: 1px solid #d1d5db;
+  font-size: 14px;
+}
+
+

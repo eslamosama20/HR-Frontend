@@ -1,0 +1,131 @@
+<div class="live-shell">
+  <p-toast></p-toast>
+  
+  <header class="live-header">
+    <div class="header-brand">
+      <div class="icon"><i class="pi pi-bolt"></i></div>
+      <div>
+        <h1>{{ 'CASHIER_LIVE_ORDERS.PAGE_TITLE' | translate }}</h1>
+        <p>{{ 'CASHIER_LIVE_ORDERS.PAGE_SUBTITLE' | translate }}</p>
+      </div>
+    </div>
+
+    <div class="header-actions">
+      <button pButton type="button" icon="pi pi-map" [label]="'CASHIER_LIVE_ORDERS.TABLE_MAP' | translate" class="header-btn soft"
+        routerLink="/cashier/floor"></button>
+      <button pButton type="button" icon="pi pi-desktop" label="شاشة المطبخ (KDS)" class="header-btn soft"
+        routerLink="/cashier/kds"></button>
+      <button pButton type="button" icon="pi pi-shopping-bag" [label]="'CASHIER_LIVE_ORDERS.CASHIER_SCREEN' | translate" class="header-btn soft"
+        routerLink="/cashier/pos"></button>
+      <button *ngIf="orders().length > 0" pButton type="button" icon="pi pi-trash" label="مسح كافة الطلبات" class="header-btn danger-soft"
+        (click)="clearAllOrders()" pTooltip="مسح وتصفية جميع الطلبات السابقة"></button>
+    </div>
+  </header>
+
+  <section class="metrics-row">
+    <div class="metric-card new">
+      <span>{{ 'CASHIER_LIVE_ORDERS.NEW_ORDERS' | translate }}</span>
+      <strong>{{ newOrdersCount }}</strong>
+    </div>
+    <div class="metric-card preparing">
+      <span>{{ 'CASHIER_LIVE_ORDERS.PREPARING' | translate }}</span>
+      <strong>{{ preparingOrdersCount }}</strong>
+    </div>
+    <div class="metric-card ready">
+      <span>{{ 'CASHIER_LIVE_ORDERS.READY' | translate }}</span>
+      <strong>{{ readyOrdersCount }}</strong>
+    </div>
+    <div class="metric-card amount">
+      <span>{{ 'CASHIER_LIVE_ORDERS.OPEN_ORDERS_VALUE' | translate }}</span>
+      <strong>{{ openOrdersAmount | number:'1.2-2' }} {{ 'CASHIER_Z_REPORT.SAR' | translate }}</strong>
+    </div>
+  </section>
+
+  <section class="filters-row">
+    <div class="search-wrap">
+      <i class="pi pi-search"></i>
+      <input type="text" [(ngModel)]="searchTerm" [placeholder]="'CASHIER_LIVE_ORDERS.SEARCH_PLACEHOLDER' | translate">
+    </div>
+    <p-dropdown [options]="statusOptions" optionLabel="label" optionValue="value" [(ngModel)]="selectedStatus" scrollHeight="260px" appendTo="body" styleClass="w-full"></p-dropdown>
+    <p-dropdown [options]="sourceOptions" optionLabel="label" optionValue="value" [(ngModel)]="selectedSource" scrollHeight="260px" appendTo="body" styleClass="w-full"></p-dropdown>
+  </section>
+
+  <section class="orders-board">
+    <div *ngFor="let order of filteredOrders; trackBy: trackByOrder" class="order-card"
+         [class.new]="order.status === orderStatus.New"
+         [class.preparing]="order.status === orderStatus.Preparing"
+         [class.ready]="order.status === orderStatus.Ready"
+         [class.served]="order.status === orderStatus.Served">
+      
+      <div class="order-head">
+        <div>
+          <h2>#{{ order.orderNo }}</h2>
+          <p>{{ getSourceLabel(order.source) }}</p>
+        </div>
+        <span class="status-pill">{{ getStatusLabel(order.status) }}</span>
+      </div>
+
+      <div class="order-meta">
+        <span><i class="pi" [ngClass]="order.tableNumber ? 'pi-users' : 'pi-user'"></i>
+          {{ order.tableNumber ? ('CASHIER_LIVE_ORDERS.TABLE_LABEL' | translate) + ' ' + order.tableNumber : ('CASHIER_LIVE_ORDERS.DIRECT_CUSTOMER' | translate) }}
+        </span>
+        <strong>{{ order.totalAmount | number:'1.2-2' }} {{ 'CASHIER_Z_REPORT.SAR' | translate }}</strong>
+      </div>
+
+      <div class="items-list">
+        <div *ngFor="let item of order.items" class="item-row">
+          <span>{{ item.itemName }}</span>
+          <strong>x{{ item.quantity }}</strong>
+        </div>
+      </div>
+      
+      <div class="prep-tools">
+        <div class="prep-status">
+          <i class="pi pi-clock"></i>
+          {{ getPreparationStatus(order) }}
+        </div>
+        
+        <div *ngIf="order.status === orderStatus.New" class="prep-input">
+          <p-inputNumber 
+             [ngModel]="getPreparationMinutes(order)" 
+             (onInput)="onPreparationMinutesChange(order, $event.value)"
+             [showButtons]="true" 
+             buttonLayout="horizontal" 
+             spinnerMode="horizontal"
+             inputId="prep-min-{{order.id}}"
+             [min]="1" [max]="180"
+             suffix=" {{ 'CASHIER_LIVE_ORDERS.MINUTES' | translate }}"
+             decrementButtonClass="p-button-secondary p-button-text" incrementButtonClass="p-button-secondary p-button-text"
+             incrementButtonIcon="pi pi-plus" decrementButtonIcon="pi pi-minus">
+          </p-inputNumber>
+        </div>
+      </div>
+
+      <div class="order-actions">
+        <button *ngIf="order.status === orderStatus.New" pButton icon="pi pi-play" 
+          [label]="'CASHIER_LIVE_ORDERS.PREPARE_BTN' | translate" class="p-button-sm p-button-success" (click)="setPreparing(order)"></button>
+        
+        <button *ngIf="order.status === orderStatus.Preparing" pButton icon="pi pi-check" 
+          [label]="'CASHIER_LIVE_ORDERS.READY_BTN' | translate" class="p-button-sm p-button-warning" (click)="setReady(order)"></button>
+          
+        <button *ngIf="order.status === orderStatus.Ready" pButton icon="pi pi-send" 
+          [label]="'CASHIER_LIVE_ORDERS.SERVED_BTN' | translate" class="p-button-sm p-button-success" (click)="setServed(order)"></button>
+          
+        <button *ngIf="order.status === orderStatus.Served" pButton icon="pi pi-money-bill" 
+          [label]="'CASHIER_LIVE_ORDERS.COLLECT_BTN' | translate" class="p-button-sm p-button-primary" (click)="markPaid(order)"></button>
+
+        <button *ngIf="order.status === orderStatus.Preparing" pButton icon="pi pi-clock" 
+          [pTooltip]="'CASHIER_LIVE_ORDERS.SET_TIME_BTN' | translate" class="p-button-sm p-button-text p-button-secondary" (click)="setPreparationTime(order)"></button>
+      </div>
+    </div>
+  </section>
+
+  <!-- Empty State -->
+  <div *ngIf="filteredOrders.length === 0" class="empty-state">
+    <div class="empty-icon"><i class="pi pi-inbox"></i></div>
+    <div>
+      <h2>{{ 'CASHIER_LIVE_ORDERS.NO_MATCHING_ORDERS' | translate }}</h2>
+      <p>{{ 'CASHIER_LIVE_ORDERS.NEW_ORDER_MSG' | translate }}</p>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,606 @@
+/* =========================================
+   Host Layout & Base Styles
+   ========================================= */
+
+:host {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  height: 100%;
+}
+
+/* Base transparent navbar container */
+.navbar {
+  width: auto;
+  height: 100%;
+  background: transparent !important;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  flex-wrap: nowrap;
+  padding: 0;
+  box-shadow: none !important;
+  border-bottom: none !important;
+  backdrop-filter: none !important;
+  color: var(--kt-text-gray-800);
+}
+
+/* User Info Container (Pill-shaped clickable element) */
+.user-info-container {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: #f8fafc; /* Sleek light slate background */
+  padding: 4px 10px;
+  border-radius: 20px;
+  border: 1px solid #e2e8f0;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  min-width: 0;
+}
+
+.user-info-container:hover {
+  background: #e2e8f0;
+  border-color: #cbd5e1;
+  transform: translateY(-0.5px);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.04);
+}
+
+.user-avatar {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.user-name,
+.username-text {
+  font-weight: 700;
+  color: #1e293b; /* Slate 800 */
+}
+
+.user-name {
+  font-size: 0.85rem;
+  max-width: 32ch; /* Increased width to prevent early truncation */
+  min-width: 0;
+}
+
+.username-text {
+  margin: 0;
+  display: block;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.circle-avatar {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #3b82f6, #2563eb);
+  color: #ffffff;
+  font-weight: bold;
+  font-size: 0.8rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+}
+
+:host ::ng-deep .app-navbar .btn.btn-icon {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  transition: background-color 160ms ease, color 160ms ease;
+}
+
+:host ::ng-deep .app-navbar .btn.btn-icon:hover {
+  background-color: #f1f5f9 !important;
+}
+
+:host-context([data-bs-theme="dark"]) {
+  .user-info-container {
+    background: rgba(255, 255, 255, 0.05);
+    border-color: rgba(255, 255, 255, 0.1);
+  }
+
+  .user-info-container:hover {
+    background: rgba(255, 255, 255, 0.1);
+    border-color: rgba(255, 255, 255, 0.15);
+  }
+
+  .user-name,
+  .username-text {
+    color: #f1f5f9;
+  }
+
+  :host ::ng-deep .app-navbar .btn.btn-icon:hover {
+    background-color: rgba(255, 255, 255, 0.05) !important;
+  }
+}
+
+/* Custom language switcher toggle button */
+.lang-switch-toggle {
+  background: #f1f5f9; /* Slate 100 */
+  border: 1px solid #cbd5e1; /* Slate 300 */
+  border-radius: 15px;
+  padding: 2px;
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  user-select: none;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  height: 26px;
+}
+
+.lang-switch-toggle:hover {
+  border-color: #94a3b8;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.lang-option {
+  font-size: 0.725rem;
+  font-weight: 700;
+  color: #64748b; /* Slate 500 */
+  padding: 1px 8px;
+  border-radius: 12px;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 20px;
+}
+
+.lang-option.active {
+  background: #3b82f6; /* Blue 500 */
+  color: #ffffff !important;
+  box-shadow: 0 1px 2px rgba(59, 130, 246, 0.2);
+}
+
+.lang-divider {
+  width: 1px;
+  height: 10px;
+  background: #cbd5e1;
+  margin: 0 2px;
+}
+
+:host-context([data-bs-theme="dark"]) {
+  .lang-switch-toggle {
+    background: rgba(255, 255, 255, 0.05);
+    border-color: rgba(255, 255, 255, 0.1);
+  }
+  .lang-switch-toggle:hover {
+    border-color: rgba(255, 255, 255, 0.2);
+  }
+  .lang-option {
+    color: #94a3b8;
+  }
+  .lang-option.active {
+    background: #3b82f6;
+    color: #ffffff !important;
+  }
+  .lang-divider {
+    background: rgba(255, 255, 255, 0.1);
+  }
+}
+
+/* Responsive */
+@media (max-width: 767px) {
+  .navbar {
+    height: auto;
+    min-height: 56px;
+    padding: 6px 10px;
+  }
+
+  .app-navbar-item {
+    margin-inline: 2px;
+    flex: 0 0 auto;
+  }
+
+  .user-info-container {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    max-width: 55vw;
+    padding: 3px 6px;
+    background: rgba(255, 255, 255, 0.12);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+  }
+
+  .badge {
+    transform: translate(0, -2px);
+    min-width: 16px !important;
+    height: 16px !important;
+    font-size: 10px !important;
+  }
+
+  :host ::ng-deep .app-navbar .btn.btn-icon {
+    width: 36px;
+    height: 36px;
+    border-radius: 12px;
+  }
+
+  .user-name { max-width: 32vw; }
+  .username-text { font-size: .78rem; line-height: 1; }
+  .circle-avatar { width: 26px; height: 26px; font-size: .75rem; }
+}
+
+
+@media (min-width: 768px) and (max-width: 1023px) {
+  .navbar {
+    height: 58px;
+    padding: 6px 14px;
+  }
+  .user-info-container {
+    padding: 6px 12px;
+  }
+  .user-name {
+    max-width: 14ch;
+  }
+}
+
+:host-context([data-bs-theme="dark"]) .user-info-container {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.18);
+}
+
+/* =========================================
+   THEME OVERRIDES (Transparent inside themes)
+   — في الثيمات التالية نخلي النافبار شفاف —
+   لكي يظهر لون الهيدر من الكمبوننت الجامع
+   ========================================= */
+
+$darkblue-sels: ".light-darkblue-mode", '[data-bs-theme="light-darkblue"]',
+  "body.light-darkblue";
+$indigo-sels: ".light-indigo-mode", '[data-bs-theme="light-indigo"]',
+  "body.light-indigo";
+$green-sels: ".light-green-mode", '[data-bs-theme="light-green"]',
+  "body.light-green";
+
+/* مزيج شفاف */
+/* مزيج شفاف */
+@mixin make-navbar-transparent($dropdown-bg: #ffffff, $text: inherit) {
+  // الناف بار نفسه يفضل شفاف
+  .navbar {
+    background: transparent !important;
+    box-shadow: none !important;
+    color: $text !important;
+  }
+
+  .user-info-container {
+    background: transparent !important;
+    border: 0 !important;
+  }
+
+  .user-name,
+  .username-text {
+    color: $text !important;
+  }
+
+  // القوائم المنسدلة فقط اللي تاخد خلفية
+  :host ::ng-deep .menu-sub-dropdown {
+    background: $dropdown-bg !important;
+    border: 1px solid rgba(0, 0, 0, 0.1) !important;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.15) !important;
+
+    // النصوص جوة الليست
+    .menu-item,
+    .menu-link,
+    .menu-link a,
+    a {
+      color: #000000 !important; // أسود
+    }
+
+    // hover
+    .menu-link:hover,
+    .menu-item:hover {
+      background: rgba(0, 0, 0, 0.05) !important;
+      color: #000000 !important;
+    }
+  }
+}
+/* Notifications dropdown placement & badge */
+.notif-wrapper {
+  position: relative;
+
+  .notif-dropdown {
+    position: absolute;
+    top: 100%;
+    inset-inline-end: 0; /* RTL-aware */
+    z-index: 1050;
+    background: #fff;
+    border: 1px solid #e5e5e5;
+    border-radius: 10px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+    overflow: hidden;
+
+    /* حجم البانل الداخلي من app-notifications،
+       لكن نضمن حد أدنى لعرض القائمة */
+    min-width: 380px;
+  }
+
+  .badge {
+    position: absolute !important;
+    top: 5px !important;       /* نزّل الرقم قليلاً للأسفل */
+    right: 15px !important;    /* أبعده شوي لليمين (أقرب لجانب الجرس) */
+    min-width: 18px !important;
+    height: 18px !important;
+    font-size: 11px !important;
+    font-weight: 600 !important;
+    color: #fff !important;
+    background-color: #f44336 !important;
+    border-radius: 50% !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    box-shadow: 0 0 4px rgba(0, 0, 0, 0.3) !important;
+    z-index: 10 !important;
+  }
+}
+
+@each $sel in $darkblue-sels {
+  :host-context(#{$sel}) {
+    // dropdown = نفس جراديانت الثيم, النص جوّا الليست أسود
+    @include make-navbar-transparent(
+      linear-gradient(90deg, #dad0f7, #e2bfd9),
+      #000000
+    );
+  }
+}
+
+@each $sel in $indigo-sels {
+  :host-context(#{$sel}) {
+    @include make-navbar-transparent(
+      linear-gradient(90deg, #c9d0f5, #ffd5d1),
+      #000000
+    );
+  }
+}
+
+@each $sel in $green-sels {
+  :host-context(#{$sel}) {
+    @include make-navbar-transparent(
+      linear-gradient(90deg, #b8e9ee, #fffad8),
+      #000000
+    );
+  }
+}
+/* اسماء حاويات Metronic الشائعة: اسمح بخروج المحتوى خارجها */
+:host ::ng-deep .app-header,
+:host ::ng-deep .app-header-wrapper,
+:host ::ng-deep .app-header-container,
+:host ::ng-deep .app-navbar,
+:host ::ng-deep .app-navbar-item {
+  overflow: visible !important;
+}
+
+/* تموضع وزي-اندكس للمنسدل */
+.notif-wrapper {
+  position: relative;
+  z-index: 3000; /* لو لسه مختفي اعليها لـ 9999 */
+
+  .notif-dropdown {
+    position: absolute;
+    top: 100%;
+    inset-inline-end: 0; /* RTL-aware */
+    z-index: 3001; /* أعلى من الرابر */
+    background: #fff;
+    border: 1px solid #e5e5e5;
+    border-radius: 10px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+    overflow: hidden;
+    min-width: 380px;
+
+    /* لو محتاج تقهر ستايلات Metronic القديمة */
+    display: block !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+    transform: none !important;
+  }
+
+}
+
+/* اجبر زر الثيم يكون شفاف في كل الحالات */
+:host ::ng-deep app-theme-mode-switcher .btn.btn-icon,
+:host ::ng-deep app-theme-mode-switcher .btn.btn-icon:hover,
+:host ::ng-deep app-theme-mode-switcher .btn.btn-icon:focus,
+:host ::ng-deep app-theme-mode-switcher .btn.btn-icon:active,
+:host ::ng-deep app-theme-mode-switcher .btn.btn-icon.active,
+:host ::ng-deep app-theme-mode-switcher .show > .btn.btn-icon,
+:host ::ng-deep .app-navbar .btn.btn-icon,
+:host ::ng-deep .app-navbar .btn.btn-icon:hover,
+:host ::ng-deep .app-navbar .btn.btn-icon:focus,
+:host ::ng-deep .app-navbar .btn.btn-icon:active,
+:host ::ng-deep .app-navbar .btn.btn-icon.active,
+:host ::ng-deep .app-navbar .show > .btn.btn-icon {
+  background-color: transparent !important;
+  box-shadow: none !important;
+  --bs-btn-bg: transparent;
+  --bs-btn-hover-bg: transparent;
+  --bs-btn-active-bg: transparent;
+}
+
+/* لو الزر عليه كلاس بيغير اللون عند الهوفر (Metronic) */
+:host ::ng-deep app-theme-mode-switcher .btn.btn-active-color-primary:hover,
+:host ::ng-deep app-theme-mode-switcher .btn.btn-active-color-primary:focus,
+:host ::ng-deep app-theme-mode-switcher .btn.btn-active-color-primary:active,
+:host ::ng-deep app-theme-mode-switcher .btn.btn-active-color-primary.active,
+:host ::ng-deep app-theme-mode-switcher .show > .btn.btn-active-color-primary {
+  background-color: transparent !important;
+  color: inherit !important; /* خليه يورث لون النص الحالي */
+}
+
+/* تأكد أن الأيقونة نفسها ما تغيّرش لونها للابيض */
+:host ::ng-deep app-theme-mode-switcher .btn app-keenicon,
+:host ::ng-deep app-theme-mode-switcher .btn .ki,
+:host ::ng-deep app-theme-mode-switcher .btn i,
+:host ::ng-deep app-theme-mode-switcher .btn svg {
+  color: inherit !important;
+  fill: currentColor !important;
+}
+
+/* لو فيه ستايل عام بيحط خلفية عند الهوفر على كل أزرار النافبار */
+:host ::ng-deep .app-navbar .btn:hover,
+:host ::ng-deep .app-navbar .btn:focus,
+:host ::ng-deep .app-navbar .btn:active,
+:host ::ng-deep .app-navbar .btn.active {
+  background-color: transparent !important;
+}
+
+/* Global Search styles */
+.global-search-container {
+  position: relative;
+  width: 650px;
+  
+  .search-input-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+    width: 100%;
+    
+    .search-icon {
+      position: absolute;
+      left: 10px;
+      color: #64748b;
+      font-size: 0.85rem;
+      pointer-events: none;
+    }
+    
+    .global-search-input {
+      width: 100%;
+      height: 32px;
+      padding: 6px 30px 6px 28px;
+      background: #f1f5f9 !important;
+      border: 1px solid #cbd5e1 !important;
+      border-radius: 16px !important;
+      font-size: 0.85rem;
+      color: #1e293b !important;
+      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    
+    .global-search-input:focus {
+      background: #ffffff !important;
+      border-color: #3b82f6 !important;
+      box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15) !important;
+      outline: none;
+    }
+    
+    .clear-icon {
+      position: absolute;
+      right: 10px;
+      color: #94a3b8;
+      font-size: 0.9rem;
+      cursor: pointer;
+      transition: color 0.15s ease;
+    }
+    
+    .clear-icon:hover {
+      color: #64748b;
+    }
+  }
+
+  /* Dropdown search results */
+  .search-results-dropdown {
+    position: absolute;
+    top: calc(100% + 6px);
+    left: 0;
+    right: 0;
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(15, 23, 42, 0.08);
+    max-height: 250px;
+    overflow-y: auto;
+    z-index: 2000;
+    padding: 6px;
+    
+    .search-result-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 6px 12px;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: background-color 0.15s ease, color 0.15s ease;
+      color: #334155;
+      
+      i {
+        color: #64748b;
+        font-size: 0.9rem;
+      }
+      
+      .result-title {
+        font-size: 0.825rem;
+        font-weight: 600;
+      }
+    }
+    
+    .search-result-item:hover {
+      background-color: #f1f5f9;
+      color: #3b82f6;
+      
+      i {
+        color: #3b82f6;
+      }
+    }
+  }
+}
+
+/* RTL Adjustments for Search */
+[dir="rtl"] {
+  .global-search-container {
+    .search-input-wrapper {
+      .search-icon {
+        left: auto;
+        right: 10px;
+      }
+      .global-search-input {
+        padding: 6px 28px 6px 30px;
+      }
+      .clear-icon {
+        right: auto;
+        left: 10px;
+      }
+    }
+  }
+}
+
+:host-context([data-bs-theme="dark"]) {
+  .global-search-container {
+    .search-input-wrapper {
+      .global-search-input {
+        background: rgba(255, 255, 255, 0.05) !important;
+        border-color: rgba(255, 255, 255, 0.1) !important;
+        color: #f1f5f9 !important;
+      }
+      .global-search-input:focus {
+        background: rgba(15, 23, 42, 0.6) !important;
+        border-color: #3b82f6 !important;
+      }
+      .search-icon {
+        color: #94a3b8;
+      }
+      .clear-icon {
+        color: #64748b;
+      }
+      .clear-icon:hover {
+        color: #94a3b8;
+      }
+    }
+    
+    .search-results-dropdown {
+      background: #1e1e2d;
+      border-color: rgba(255, 255, 255, 0.08);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+      
+      .search-result-item {
+        color: #94a3b8;
+      }
+      
+      .search-result-item:hover {
+        background-color: rgba(255, 255, 255, 0.05);
+        color: #3b82f6;
+      }
+    }
+  }
+}

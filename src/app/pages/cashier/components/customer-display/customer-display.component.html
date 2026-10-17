@@ -1,0 +1,97 @@
+﻿<div class="customer-display-shell" [class.is-complete]="cartData().isComplete">
+    <p-toast></p-toast>
+
+    <!-- Top Bar: Store Name + Clock -->
+    <header class="display-header">
+        <div class="store-brand">
+            <div class="store-icon">{{ storeInfo.logo }}</div>
+            <div>
+                <h1>{{ storeInfo.nameAr }}</h1>
+                <p>{{ storeInfo.name }}</p>
+            </div>
+        </div>
+        <div class="live-clock">
+            <span class="clock-time">{{ currentTime() | customDate: 'HH:mm:ss' }}</span>
+            <span class="clock-date">{{ currentTime() | customDate: 'EEEE, dd MMMM yyyy' }}</span>
+        </div>
+    </header>
+
+    <!-- Main area: Cart + Promo -->
+    <main class="display-main">
+        <!-- Cart Panel -->
+        <section class="cart-display">
+            <div class="cart-title">
+                <i class="pi pi-shopping-bag"></i>
+                <span>{{ 'CUSTOMER_DISPLAY.CART_TITLE' | translate }}</span>
+            </div>
+
+            <!-- Items List -->
+            <div class="cart-items-display">
+                <div *ngFor="let item of cartData().items" class="cart-item-row">
+                    <div class="ci-name">{{ item.name | translate }}</div>
+                    <div class="ci-qty">{{ item.qty }}×</div>
+                    <div class="ci-price">{{ item.price | number:'1.2-2' }}</div>
+                    <div class="ci-total">{{ item.total | number:'1.2-2' }}</div>
+                </div>
+
+                <div *ngIf="cartData().items.length === 0" class="empty-cart-msg">
+                    <i class="pi pi-shopping-cart"></i>
+                    <p>{{ 'CUSTOMER_DISPLAY.EMPTY_CART' | translate }}</p>
+                </div>
+            </div>
+
+            <!-- Totals -->
+            <div class="cart-totals">
+                <div class="total-line" *ngIf="cartData().discount > 0">
+                    <span>{{ 'CUSTOMER_DISPLAY.DISCOUNT' | translate }}</span>
+                    <span class="discount-val">- {{ cartData().discount | number:'1.2-2' }} {{ 'CUSTOMER_DISPLAY.CURRENCY' | translate }}</span>
+                </div>
+                <div class="total-line">
+                    <span>{{ 'CUSTOMER_DISPLAY.TAX' | translate }}</span>
+                    <span>{{ cartData().tax | number:'1.2-2' }} {{ 'CUSTOMER_DISPLAY.CURRENCY' | translate }}</span>
+                </div>
+                <div class="grand-total-display">
+                    <span>{{ 'CUSTOMER_DISPLAY.GRAND_TOTAL' | translate }}</span>
+                    <strong>{{ cartData().total | number:'1.2-2' }} {{ 'CUSTOMER_DISPLAY.CURRENCY' | translate }}</strong>
+                </div>
+            </div>
+
+            <!-- Payment Done Overlay -->
+            <div *ngIf="cartData().isComplete" class="payment-done-overlay">
+                <div class="done-icon">✅</div>
+                <h2>{{ 'CUSTOMER_DISPLAY.THANK_YOU' | translate }}</h2>
+                <p>{{ 'CUSTOMER_DISPLAY.PAYMENT_SUCCESS' | translate }}</p>
+                <div class="change-display" *ngIf="cartData().change && cartData().change! > 0">
+                    <span>{{ 'CUSTOMER_DISPLAY.CHANGE' | translate }}</span>
+                    <strong>{{ cartData().change | number:'1.2-2' }} {{ 'CUSTOMER_DISPLAY.CURRENCY' | translate }}</strong>
+                </div>
+            </div>
+        </section>
+
+        <!-- Promo Panel -->
+        <section class="promo-panel">
+            <div class="promo-banner" [style.border-color]="currentPromotion.color + '55'">
+                <div class="promo-icon" [style.background]="currentPromotion.color + '22'"
+                    [style.color]="currentPromotion.color">
+                    <i class="pi pi-megaphone"></i>
+                </div>
+                <p class="promo-text" [style.color]="currentPromotion.color">{{ currentPromotion.key | translate }}</p>
+            </div>
+
+            <div class="promo-dots">
+                <div *ngFor="let p of promotions; let i = index" class="dot" [class.active]="i === currentPromoIndex()">
+                </div>
+            </div>
+
+            <div class="store-tagline">
+                <p>{{ 'CUSTOMER_DISPLAY.STORE_TAGLINE' | translate }}</p>
+            </div>
+        </section>
+    </main>
+
+    <!-- Bottom Info Bar -->
+    <footer class="display-footer">
+        <span>{{ 'CUSTOMER_DISPLAY.WIFI_INFO' | translate }}</span>
+        <span>{{ 'CUSTOMER_DISPLAY.CONTACT_INFO' | translate }}</span>
+    </footer>
+</div>

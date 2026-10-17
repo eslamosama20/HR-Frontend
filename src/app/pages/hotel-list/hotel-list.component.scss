@@ -1,0 +1,124 @@
+.line-clamp-2 {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+::ng-deep {
+  .hotel-carousel {
+    .p-carousel-content {
+      height: 100%;
+    }
+
+    .p-carousel-indicators {
+      bottom: 10px;
+      padding: 0;
+    }
+
+    .p-carousel-indicator button {
+      background-color: rgba(255, 255, 255, 0.5);
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      
+      &.p-highlight {
+        background-color: white;
+      }
+    }
+  }
+
+  .p-rating {
+    .p-rating-icon {
+      color: #fbbf24;
+      font-size: 1rem;
+    }
+  }
+
+  .p-slider {
+    .p-slider-range {
+      background: #3b82f6;
+    }
+
+    .p-slider-handle {
+      background: #3b82f6;
+      border-color: #3b82f6;
+    }
+  }
+
+  .p-checkbox {
+    .p-checkbox-box {
+      &.p-highlight {
+        background: #3b82f6;
+        border-color: #3b82f6;
+      }
+    }
+  }
+
+  .p-calendar,
+  .p-dropdown,
+  .p-inputnumber {
+    width: 100%;
+
+    .p-inputtext {
+      width: 100%;
+    }
+  }
+
+  .p-button {
+    &.p-button-primary {
+      background: #3b82f6;
+      border-color: #3b82f6;
+
+      &:hover {
+        background: #2563eb;
+        border-color: #2563eb;
+      }
+    }
+  }
+}
+
+// Mobile Optimization
+@media (max-width: 768px) {
+  .container {
+    padding-left: 1rem;
+    padding-right: 1rem;
+  }
+
+  h1 {
+    font-size: 1.75rem;
+  }
+
+  h2 {
+    font-size: 1.5rem;
+  }
+
+  .grid {
+    gap: 1rem;
+  }
+
+  ::ng-deep {
+    .p-dropdown {
+      font-size: 0.875rem;
+    }
+
+    .p-button {
+      padding: 0.5rem 1rem;
+      font-size: 0.875rem;
+    }
+  }
+}
+
+@media (max-width: 640px) {
+  .hotel-carousel {
+    height: 200px !important;
+  }
+
+  .text-3xl {
+    font-size: 1.5rem;
+  }
+
+  .p-6 {
+    padding: 1rem;
+  }
+}

@@ -1,0 +1,288 @@
+<p-table
+  #dt1
+  [value]="penalties"
+  [columns]="columns"
+  [resizableColumns]="true"
+  columnResizeMode="expand"
+  dataKey="id"
+  [rows]="10"
+  styleClass="p-datatable-gridlines scroller"
+  [rowsPerPageOptions]="[10, 25, 50]"
+  [loading]="loading"
+  [paginator]="true"
+  [paginatorLocale]="activeLanguage === 'en' ? 'en-US' : 'ar-EG'"
+  [globalFilterFields]="['employeeDeviceId', 'employeeName', 'reason']"
+>
+  <ng-template pTemplate="caption">
+    <div class="flex flex-col rtl:flex-row-reverse justify-between gap-2">
+      <div class="flex gap-2">
+        <p-button
+          styleClass="rounded-md w-auto text-nowrap"
+          icon="pi pi-external-link"
+          [label]="translate.instant('FINANCE.EXPORT')"
+          (onClick)="exportExcel()"
+        />
+        <p-button
+          styleClass="rounded-md w-auto text-nowrap	"
+          [label]="translate.instant('FINANCE.CLEAR_FILTERS')"
+          [outlined]="true"
+          icon="pi pi-filter-slash"
+          (onClick)="clear(dt1)"
+        />
+        <p-button
+          styleClass="rounded-md w-auto text-nowrap	"
+          label="اضافة جزاء"
+          [outlined]="true"
+          icon="pi pi-plus"
+          (onClick)="showAddPenaltyDialog()"
+        />
+      </div>
+
+      <ng-container *ngIf="penalties.length === 0 && !loading">
+        <div class="flex justify-center items-center w-full">
+          <p
+            class="text-center font-semibold text-xl w-full flex justify-center"
+          >
+            لا يوجد جزاءات متاحة
+          </p>
+        </div>
+      </ng-container>
+      <span class="p-input-icon-left ml-auto">
+        <i class="pi pi-search"></i>
+        <input
+          pInputText
+          type="text"
+          [(ngModel)]="searchValue"
+          (input)="filter(dt1, $event)"
+          [placeholder]="translate.instant('FINANCE.SEARCH')"
+        />
+      </span>
+    </div>
+  </ng-template>
+  <ng-template pTemplate="header" let-columns>
+    <tr>
+      <th
+        style="min-width: fit-content"
+        *ngFor="let column of columns"
+        pResizableColumn
+        [pSortableColumn]="column.field"
+      >
+        <div class="flex align-items-center">
+          {{ column.header }}
+          <p-sortIcon [field]="column.field" class="mx-1 "></p-sortIcon>
+          <p-columnFilter
+            *ngIf="column.filter"
+            [type]="column.filterType"
+            [field]="column.field"
+            display="menu"
+          />
+        </div>
+      </th>
+      <th style="min-width: fit-content">
+        <div class="flex align-items-center text-base">
+          {{ "FINANCE.ACTIONS" | translate }}
+        </div>
+      </th>
+    </tr>
+  </ng-template>
+  <ng-template pTemplate="body" let-Entry>
+    <tr *ngIf="penalties.length > 0">
+      <td class="text-lg rtl:text-right font-bold text-sky-700">
+        {{ Entry.employeeDeviceId || '-' }}
+      </td>
+      <td class="text-lg rtl:text-right">
+        {{ Entry.employeeName }}
+      </td>
+      <td class="text-lg rtl:text-right">
+        {{
+          Entry.date ? (Entry.date | date : "yyyy/MM/dd" : "": "ar-EG"): '-'
+        }}
+      </td>
+      <td
+        class="text-lg rtl:text-right font-semibold"
+      >
+        {{ Entry.amount | currency : "EGP" : "symbol" : "1.0-2" : "ar-EG" }}
+      </td>
+      <td class="text-lg rtl:text-right">
+        <span class="text-gray-700 font-medium">{{ Entry.reason || '-' }}</span>
+      </td>
+      <td class="text-lg rtl:text-right">
+          {{
+            Entry.createdAt ? (Entry.createdAt | date : "yyyy/MM/dd  hh:mm a" : "": "ar-EG"): '-'
+          }}
+      </td>
+      <td class="text-lg rtl:text-right flex gap-2">
+        <ng-container
+        >
+          <p-overlayPanel #opPenalty [autoZIndex]="false" [baseZIndex]="80">
+            <div class="flex flex-column gap-3 w-auto p-1">
+              <p-button
+                icon="pi pi-pencil"
+                class="p-button-secondary"
+                [label]="translate.instant('FINANCE.EDIT')"
+                styleClass="rounded-lg p-button-secondary w-full"
+                (onClick)="showAddPenaltyDialog(Entry)"
+              ></p-button>
+              <p-button
+                icon="pi pi-trash"
+                class="p-button-danger"
+                [label]="translate.instant('FINANCE.DELETE')"
+                styleClass="rounded-lg p-button-danger w-full"
+                (onClick)="confirmPenaltyDeletion($event, Entry)"
+              ></p-button>
+            </div>
+          </p-overlayPanel>
+          <p-button
+            [text]="true"
+            (onClick)="opPenalty.toggle($event)"
+            severity="secondary"
+            styleClass="p-button-outlined rounded-xl"
+          >
+            <ng-template pTemplate="icon">
+              <i class="pi pi-cog text-xl"></i>
+            </ng-template>
+          </p-button>
+        </ng-container>
+      </td>
+    </tr>
+  </ng-template>
+</p-table>
+
+<p-dialog
+  [header]="
+    penaltyFormGroup.controls.id.value
+      ? 'تعديل الجزاء'
+      : 'إضافة جزاء'
+  "
+  [(visible)]="penaltyDialogVisible"
+  [style]="{ width: '70%' }"
+  (onHide)="closePenaltyDialog()"
+>
+
+  <form
+    [formGroup]="penaltyFormGroup"
+    (ngSubmit)="savePenalty()"
+    class="flex flex-col gap-4 "
+    novalidate
+  >
+    <div class="field w-full">
+      <label for="employeeId" class="block">
+        اسم الموظف
+      </label>
+      <p-dropdown
+        id="employeeId"
+        formControlName="employeeId"
+        [options]="employeeOptions"
+        [placeholder]="translate.instant('FINANCE.SELECT')"
+        [showClear]="true"
+        [filter]="true"
+        filterBy="label,name,code,deviceId,referenceNumber"
+        styleClass="w-full flex rtl:flex-row-reverse"
+        appendTo="body"
+      >
+      </p-dropdown>
+      <small
+        class="text-red-500 p-error block"
+        *ngIf="
+          penaltyFormGroup.controls.employeeId.invalid &&
+          (penaltyFormGroup.controls.employeeId.touched)
+        "
+      >
+        الموظف مطلوب
+      </small>
+    </div>
+    <div class="field w-full flex justify-between gap-2">
+      <div class="field w-full">
+        <label for="date" class="block">
+          اليوم
+        </label>
+        <p-calendar
+          id="date"
+          formControlName="date"
+          [showButtonBar]="true"
+          variant="filled"
+          [showIcon]="true"
+          [iconDisplay]="'input'"
+          [dateFormat]="'d/m/yy'"
+          appendTo="body"
+          styleClass="w-full"
+        >
+          <ng-template pTemplate="inputicon">
+            <i class="pi pi-calendar "></i>
+          </ng-template>
+        </p-calendar>
+
+        <small
+          class="text-red-500 p-error block"
+          *ngIf="
+            penaltyFormGroup.controls.date.invalid &&
+            (penaltyFormGroup.controls.date.touched)
+          "
+        >
+          اليوم مطلوب
+        </small>
+      </div>
+      <div class="field w-full">
+        <label for="amount" class="block">
+          الجزاء
+        </label>
+        <p-inputNumber
+          id="amount"
+          formControlName="amount"
+          [min]="0"
+          [maxFractionDigits]="2"
+          [minFractionDigits]="0"
+          styleClass="w-full"
+          class="w-full"
+        />
+        <small
+          class="text-red-500 p-error block"
+          *ngIf="
+            penaltyFormGroup.controls.amount.invalid &&
+            (penaltyFormGroup.controls.amount.touched)
+          "
+        >
+          الجزاء مطلوبة
+        </small>
+      </div>
+    </div>
+
+    <div class="field w-full">
+      <label for="reason" class="block font-medium mb-1">
+        سبب الجزاء
+      </label>
+      <textarea
+        id="reason"
+        pInputTextarea
+        formControlName="reason"
+        rows="3"
+        class="w-full p-inputtext p-component rounded-md"
+        placeholder="اكتب سبب توقيع الجزاء (اختياري)..."
+      ></textarea>
+    </div>
+
+  </form>
+
+  <hr class="mt-2 mb-1" />
+
+  <p-footer>
+    <div class="flex justify-content-end gap-2">
+      <p-button
+        styleClass="rounded-md"
+        [label]="translate.instant('FINANCE.CANCEL')"
+        severity="secondary"
+        (onClick)="closePenaltyDialog()"
+      />
+      <p-button
+        styleClass="rounded-md"
+        [label]="translate.instant('FINANCE.SAVE')"
+        (onClick)="savePenalty()"
+        [disabled]="penaltyFormGroup.invalid"
+      />
+    </div>
+  </p-footer>
+</p-dialog>
+
+<p-confirmDialog> </p-confirmDialog>
+<p-toast />
+

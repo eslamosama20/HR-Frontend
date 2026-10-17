@@ -1,0 +1,665 @@
+<div class="min-h-screen bg-gray-50 p-6">
+  <!-- Page Header -->
+  <div class="mb-8">
+    <h1 class="text-3xl font-bold text-gray-900 mb-2">
+      {{ "FINANCE.TT_TABLE_TEMPLATES_BUILDER" | translate }}
+    </h1>
+    <p class="text-gray-600">
+      {{ "FINANCE.TT_TABLE_TEMPLATES_DESCRIPTION" | translate }}
+    </p>
+  </div>
+
+  <!-- Main Content -->
+  <div class="bg-white rounded-lg shadow-lg">
+    <!-- Toolbar -->
+    <div class="border-b border-gray-200 px-6 py-4">
+      <div class="flex justify-between items-center">
+        <h2 class="text-xl font-semibold text-gray-800">
+          {{ "FINANCE.TT_TABLE_TEMPLATES" | translate }}
+        </h2>
+        <div class="flex gap-2">
+          <button
+            *ngIf="hasOrderChanged"
+            pButton
+            type="button"
+            [label]="'FINANCE.TT_SAVE_ORDER' | translate"
+            icon="pi pi-save"
+            class="p-button-success"
+            [loading]="savingOrder"
+            (click)="saveTemplateOrder()"
+          ></button>
+          <button
+            *ngIf="isDeveloper"
+            pButton
+            type="button"
+            [label]="'FINANCE.TT_SEED_TEMPLATES' | translate"
+            icon="pi pi-download"
+            class="p-button-warning"
+            [loading]="seedingTemplates"
+            (click)="seedDefaultTemplates()"
+          ></button>
+          <button
+            *ngIf="hasPermission(PERMISSIONS.ReservationPrintTableTemplates.Create)"
+            pButton
+            type="button"
+            [label]="'FINANCE.TT_NEW_TEMPLATE' | translate"
+            icon="pi pi-plus"
+            class="p-button-primary"
+            (click)="newTemplate()"
+          ></button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Templates Table -->
+    <div class="p-6">
+      <p-table
+        #dt1
+        [value]="templates"
+        [loading]="loading"
+        responsiveLayout="scroll"
+        [paginator]="true"
+        [rows]="10"
+        [rowsPerPageOptions]="[5, 10, 20]"
+        styleClass="p-datatable-striped custom-paginator-table"
+        [globalFilterFields]="['name', 'description']"
+        [showCurrentPageReport]="true"
+        currentPageReportTemplate="اجمالي {{ templates?.length ? (templates.length) : '' }}"
+        paginatorTemplate="CurrentPageReport PrevPageLink PageLinks NextPageLink RowsPerPageDropdown"
+      >
+        <ng-template pTemplate="header">
+          <tr>
+            <th class="bg-gray-50 w-12 text-center">
+              #
+            </th>
+            <th class="bg-gray-50">
+              {{ "FINANCE.TT_TEMPLATE_NAME" | translate }}
+            </th>
+            <th class="bg-gray-50">
+              {{ "FINANCE.TT_TEMPLATE_DESCRIPTION" | translate }}
+            </th>
+            <th class="bg-gray-50">
+              {{ "FINANCE.TT_COLUMNS_COUNT" | translate }}
+            </th>
+            <th class="bg-gray-50">
+              {{ "FINANCE.TT_CREATED_AT" | translate }}
+            </th>
+            <th class="bg-gray-50 w-24 text-center">
+              {{ "FINANCE.TT_ORDER" | translate }}
+            </th>
+            <th class="bg-gray-50 w-32">
+              {{ "FINANCE.TT_ACTIONS" | translate }}
+            </th>
+          </tr>
+        </ng-template>
+
+        <ng-template pTemplate="body" let-template let-rowIndex="rowIndex">
+          <tr (click)="hasPermission(PERMISSIONS.ReservationPrintTableTemplates.Update) && editTemplate(template)"
+          class="cursor-pointer hover:bg-gray-200 transition-colors duration-200">
+            <td class="text-center text-sm">
+              {{ (dt1?.first || 0) + rowIndex + 1 }}
+            </td>
+            <td class="font-medium text-start">{{ template.name }}</td>
+            <td class="text-gray-600">
+              {{
+                template.description ||
+                  ("FINANCE.TT_NO_DESCRIPTION" | translate)
+              }}
+            </td>
+            <td>
+              <span
+                class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800"
+              >
+                {{ template.columns?.length || 0 }}
+                {{ "FINANCE.TT_COLUMNS" | translate }}
+              </span>
+            </td>
+            <td class="text-gray-600">
+              {{ template.createdAt  | customDate : "yyyy/MM/dd" : "": "ar-SA" }}
+            </td>
+            <td class="text-center">
+              <div class="flex justify-center space-x-1">
+                <button
+                  pButton
+                  type="button"
+                  icon="pi pi-arrow-up"
+                  class="p-button-rounded p-button-text p-button-secondary"
+                  [pTooltip]="'FINANCE.TT_MOVE_UP' | translate"
+                  [disabled]="rowIndex === 0"
+                  (click)="moveTemplateUp(rowIndex, $event)"
+                ></button>
+                <button
+                  pButton
+                  type="button"
+                  icon="pi pi-arrow-down"
+                  class="p-button-rounded p-button-text p-button-secondary"
+                  [pTooltip]="'FINANCE.TT_MOVE_DOWN' | translate"
+                  [disabled]="rowIndex === templates.length - 1"
+                  (click)="moveTemplateDown(rowIndex, $event)"
+                ></button>
+              </div>
+            </td>
+            <td>
+              <div class="flex space-x-2">
+                <button
+                  *ngIf="hasPermission(PERMISSIONS.ReservationPrintTableTemplates.Update)"
+                  pButton
+                  type="button"
+                  icon="pi pi-pencil"
+                  class="p-button-rounded p-button-text p-button-warning"
+                  [pTooltip]="'FINANCE.TT_EDIT' | translate"
+                  (click)="editTemplate(template) ; $event.stopPropagation()"
+                ></button>
+                <button
+                  *ngIf="hasPermission(PERMISSIONS.ReservationPrintTableTemplates.Delete)"
+                  pButton
+                  type="button"
+                  icon="pi pi-trash"
+                  class="p-button-rounded p-button-text p-button-danger"
+                  [pTooltip]="'FINANCE.TT_DELETE' | translate"
+                  (click)="deleteTemplate(template) ; $event.stopPropagation()"
+                ></button>
+              </div>
+            </td>
+          </tr>
+        </ng-template>
+
+        <ng-template pTemplate="emptymessage">
+          <tr>
+            <td colspan="5" class="text-center py-8">
+              <div class="text-gray-500">
+                <i class="pi pi-inbox text-4xl mb-4 block"></i>
+                <p class="text-lg font-medium">
+                  {{ "FINANCE.TT_NO_TEMPLATES_FOUND" | translate }}
+                </p>
+                <p class="text-sm">
+                  {{ "FINANCE.TT_CREATE_FIRST_TEMPLATE" | translate }}
+                </p>
+              </div>
+            </td>
+          </tr>
+        </ng-template>
+      </p-table>
+    </div>
+  </div>
+</div>
+
+<!-- Template Dialog -->
+<p-dialog
+  [(visible)]="showTemplateDialog"
+  [modal]="true"
+  [closable]="true"
+  [draggable]="false"
+  [resizable]="false"
+  styleClass="w-full max-w-6xl"
+  [header]="
+    selectedTemplate
+      ? ('FINANCE.TT_EDIT_TEMPLATE' | translate)
+      : ('FINANCE.TT_NEW_TEMPLATE_TITLE' | translate)
+  "
+>
+  <form [formGroup]="templateForm" class="space-y-6">
+    <!-- Template Basic Info -->
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div class="space-y-2">
+        <label
+          for="templateName"
+          class="block text-sm font-medium text-gray-700"
+          >{{ "FINANCE.TT_TEMPLATE_NAME" | translate }} *</label
+        >
+        <input
+          id="templateName"
+          type="text"
+          pInputText
+          formControlName="name"
+          [placeholder]="'FINANCE.TT_ENTER_TEMPLATE_NAME' | translate"
+          class="w-full"
+          [class.ng-invalid]="
+            templateForm.get('name')?.invalid &&
+            templateForm.get('name')?.touched
+          "
+        />
+        <small
+          class="text-red-500"
+          *ngIf="
+            templateForm.get('name')?.invalid &&
+            templateForm.get('name')?.touched
+          "
+        >
+          {{ "FINANCE.TT_TEMPLATE_NAME_REQUIRED" | translate }}
+        </small>
+      </div>
+
+      <div class="space-y-2">
+        <label
+          for="templateDescription"
+          class="block text-sm font-medium text-gray-700"
+          >{{ "FINANCE.TT_TEMPLATE_DESCRIPTION" | translate }}</label
+        >
+        <input
+          id="templateDescription"
+          type="text"
+          pInputText
+          formControlName="description"
+          [placeholder]="'FINANCE.TT_ENTER_TEMPLATE_DESCRIPTION' | translate"
+          class="w-full"
+        />
+      </div>
+    </div>
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+  <div class="space-y-2">
+    <label class="block text-sm font-medium text-gray-700">
+     
+    </label>
+    <p-selectButton
+      formControlName="pageOrientation"
+      [options]="[
+        { label: 'Portrait', value: 'Portrait' },
+        { label: 'Landscape', value: 'Landscape' }
+      ]"
+    ></p-selectButton>
+  </div>
+</div>
+
+
+    <!-- Columns Section -->
+    <div class="border-t pt-6">
+      <div class="flex justify-between items-center mb-4">
+        <h3 class="text-lg font-semibold text-gray-800">
+          {{ "FINANCE.TT_COLUMNS_CONFIGURATION" | translate }}
+        </h3>
+        <button
+          pButton
+          type="button"
+          [label]="'FINANCE.TT_ADD_COLUMN' | translate"
+          icon="pi pi-plus"
+          class="p-button-outlined"
+          (click)="addColumn()"
+        ></button>
+      </div>
+
+      <!-- Columns Table -->
+      <div class="border border-gray-200 rounded-lg overflow-hidden">
+        <p-table
+          [value]="columnsFormArray.controls"
+          responsiveLayout="scroll"
+          styleClass="p-datatable-sm"
+        >
+          <ng-template pTemplate="header">
+            <tr>
+              <th class="bg-gray-50 w-12">#</th>
+              <th class="bg-gray-50">
+                {{ "FINANCE.TT_COLUMN_NAME" | translate }}
+              </th>
+              <th class="bg-gray-50">
+                {{ "FINANCE.TT_DISPLAY_NAME" | translate }}
+              </th>
+              <th class="bg-gray-50">
+                {{ "FINANCE.TT_DATA_TYPE" | translate }}
+              </th>
+              <th class="bg-gray-50">{{ "FINANCE.TT_WIDTH" | translate }}</th>
+              <th class="bg-gray-50">
+                {{ "FINANCE.TT_ALIGNMENT" | translate }}
+              </th>
+              <th class="bg-gray-50">{{ "FINANCE.TT_VISIBLE" | translate }}</th>
+              <th class="bg-gray-50 w-32">
+                {{ "FINANCE.TT_ACTIONS" | translate }}
+              </th>
+            </tr>
+          </ng-template>
+
+          <ng-template pTemplate="body" let-control let-i="rowIndex">
+            <tr>
+              <td class="text-center">{{ i + 1 }}</td>
+              <td class="font-mono text-sm">
+                {{ control.get("columnName")?.value }}
+              </td>
+              <td>{{ control.get("displayName")?.value }}</td>
+              <td>
+                <span
+                  class="inline-flex items-center px-2 py-1 rounded text-xs font-medium"
+                  [ngClass]="{
+                    'bg-blue-100 text-blue-800':
+                      control.get('dataType')?.value === 'string',
+                    'bg-green-100 text-green-800':
+                      control.get('dataType')?.value === 'number',
+                    'bg-purple-100 text-purple-800':
+                      control.get('dataType')?.value === 'date',
+                    'bg-yellow-100 text-yellow-800':
+                      control.get('dataType')?.value === 'boolean',
+                    'bg-red-100 text-red-800':
+                      control.get('dataType')?.value === 'currency'
+                  }"
+                >
+                  {{ control.get("dataType")?.value }}
+                </span>
+              </td>
+              <td>{{ control.get("width")?.value }}px</td>
+              <td class="capitalize">{{ control.get("alignment")?.value }}</td>
+              <td>
+                <i
+                  class="pi"
+                  [ngClass]="
+                    control.get('isVisible')?.value
+                      ? 'pi-eye text-green-600'
+                      : 'pi-eye-slash text-gray-400'
+                  "
+                >
+                </i>
+              </td>
+              <td>
+                <div class="flex space-x-1">
+                  <button
+                    pButton
+                    type="button"
+                    icon="pi pi-arrow-up"
+                    class="p-button-rounded p-button-text p-button-sm"
+                    [disabled]="i === 0"
+                    [pTooltip]="'FINANCE.TT_MOVE_UP' | translate"
+                    (click)="moveColumnUp(i)"
+                  ></button>
+                  <button
+                    pButton
+                    type="button"
+                    icon="pi pi-arrow-down"
+                    class="p-button-rounded p-button-text p-button-sm"
+                    [disabled]="i === columnsFormArray.length - 1"
+                    [pTooltip]="'FINANCE.TT_MOVE_DOWN' | translate"
+                    (click)="moveColumnDown(i)"
+                  ></button>
+                  <button
+                    pButton
+                    type="button"
+                    icon="pi pi-pencil"
+                    class="p-button-rounded p-button-text p-button-warning p-button-sm"
+                    [pTooltip]="'FINANCE.TT_EDIT' | translate"
+                    (click)="editColumn(i)"
+                  ></button>
+                  <button
+                    pButton
+                    type="button"
+                    icon="pi pi-trash"
+                    class="p-button-rounded p-button-text p-button-danger p-button-sm"
+                    [pTooltip]="'FINANCE.TT_REMOVE' | translate"
+                    (click)="removeColumn(i)"
+                  ></button>
+                </div>
+              </td>
+            </tr>
+          </ng-template>
+
+          <ng-template pTemplate="emptymessage">
+            <tr>
+              <td colspan="8" class="text-center py-8">
+                <div class="text-gray-500">
+                  <i class="pi pi-list text-2xl mb-2 block"></i>
+                  <p>{{ "FINANCE.TT_NO_COLUMNS_CONFIGURED" | translate }}</p>
+                  <p class="text-sm">
+                    {{ "FINANCE.TT_ADD_COLUMNS_MESSAGE" | translate }}
+                  </p>
+                </div>
+              </td>
+            </tr>
+          </ng-template>
+        </p-table>
+      </div>
+    </div>
+  </form>
+
+  <ng-template pTemplate="footer">
+    <div class="flex justify-end space-x-3">
+      <button
+        pButton
+        type="button"
+        [label]="'FINANCE.TT_CANCEL' | translate"
+        class="p-button-text"
+        (click)="showTemplateDialog = false"
+      ></button>
+      <button
+        pButton
+        type="button"
+        [label]="'FINANCE.TT_SAVE_TEMPLATE' | translate"
+        [loading]="loading"
+        [disabled]="!templateForm.valid"
+        class="p-button-primary"
+        (click)="saveTemplate()"
+      ></button>
+    </div>
+  </ng-template>
+</p-dialog>
+
+<!-- Column Dialog -->
+<p-dialog
+  [(visible)]="showColumnDialog"
+  [modal]="true"
+  [closable]="true"
+  [draggable]="false"
+  [resizable]="false"
+  styleClass="w-full max-w-2xl"
+  [header]="
+    editingColumnIndex >= 0
+      ? ('FINANCE.TT_EDIT_COLUMN' | translate)
+      : ('FINANCE.TT_ADD_COLUMN_TITLE' | translate)
+  "
+>
+  <form [formGroup]="columnForm" class="space-y-6">
+    <!-- Quick Column Selection -->
+    <div class="space-y-2">
+      <label class="block text-sm font-medium text-gray-700">{{
+        "FINANCE.TT_QUICK_SELECT_COLUMN" | translate
+      }}</label>
+      <p class="text-sm text-gray-500 mb-2">
+        {{ "FINANCE.TT_QUICK_SELECT_DESCRIPTION" | translate }}
+      </p>
+      <p-dropdown appendTo="body"
+        #quickSelectDropdown
+        [options]="availableColumns"
+        optionLabel="label"
+        optionValue="value"
+        placeholder="Select a predefined column"
+        [showClear]="true"
+        class="w-full"
+        (onChange)="
+          onColumnSelect($event.value ? getColumnOption($event.value) : null, quickSelectDropdown)
+        "
+      >
+        <ng-template pTemplate="selectedItem" let-option>
+          <div class="flex items-center space-x-2">
+            <span>{{ getColumnOption(option)?.label }}</span>
+          </div>
+        </ng-template>
+        <ng-template pTemplate="item" let-option>
+          <div class="flex items-center space-x-2">
+
+            <span>{{ option.label }}</span>
+          </div>
+        </ng-template>
+      </p-dropdown>
+    </div>
+
+    <div class="border-t pt-4">
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <!-- Column Name -->
+        <div class="space-y-2">
+          <label
+            for="columnName"
+            class="block text-sm font-medium text-gray-700"
+            >{{ "FINANCE.TT_COLUMN_NAME" | translate }} *</label
+          >
+          <input
+            [readonly]="true"
+            [disabled]="true"
+            id="columnName"
+            type="text"
+            pInputText
+            formControlName="columnName"
+            class="w-full font-mono"
+            [class.ng-invalid]="
+              columnForm.get('columnName')?.invalid &&
+              columnForm.get('columnName')?.touched
+            "
+          />
+          <small
+            class="text-red-500"
+            *ngIf="
+              columnForm.get('columnName')?.invalid &&
+              columnForm.get('columnName')?.touched
+            "
+          >
+            {{ "FINANCE.TT_COLUMN_NAME_REQUIRED" | translate }}
+          </small>
+        </div>
+
+        <!-- Display Name -->
+        <div class="space-y-2">
+          <label
+            for="displayName"
+            class="block text-sm font-medium text-gray-700"
+            >{{ "FINANCE.TT_DISPLAY_NAME" | translate }} *</label
+          >
+          <input
+            id="displayName"
+            type="text"
+            pInputText
+            formControlName="displayName"
+            [placeholder]="'FINANCE.TT_DISPLAY_NAME_PLACEHOLDER' | translate"
+            class="w-full"
+            [class.ng-invalid]="
+              columnForm.get('displayName')?.invalid &&
+              columnForm.get('displayName')?.touched
+            "
+          />
+          <small
+            class="text-red-500"
+            *ngIf="
+              columnForm.get('displayName')?.invalid &&
+              columnForm.get('displayName')?.touched
+            "
+          >
+            {{ "FINANCE.TT_DISPLAY_NAME_REQUIRED" | translate }}
+          </small>
+        </div>
+
+        <!-- Data Type -->
+        <div class="space-y-2">
+          <label
+            for="dataType"
+            class="block text-sm font-medium text-gray-700"
+            >{{ "FINANCE.TT_DATA_TYPE_REQUIRED" | translate }}</label
+          >
+          <p-dropdown appendTo="body"
+            id="dataType"
+            [options]="dataTypes"
+            optionLabel="label"
+            optionValue="value"
+            formControlName="dataType"
+            class="w-full"
+          >
+          </p-dropdown>
+        </div>
+
+        <!-- Width -->
+        <div class="space-y-2">
+          <label for="width" class="block text-sm font-medium text-gray-700">{{
+            "FINANCE.TT_WIDTH_PX" | translate
+          }}</label>
+          <p-inputNumber
+            id="width"
+            formControlName="width"
+            [min]="0"
+            [max]="1000"
+            suffix="px"
+            class="w-full"
+          >
+          </p-inputNumber>
+          <small
+            class="text-red-500"
+            *ngIf="
+              columnForm.get('width')?.invalid &&
+              columnForm.get('width')?.touched
+            "
+          >
+            {{ "FINANCE.TT_WIDTH_VALIDATION" | translate }}
+          </small>
+        </div>
+
+        <!-- Alignment -->
+        <div class="space-y-2">
+          <label
+            for="alignment"
+            class="block text-sm font-medium text-gray-700"
+            >{{ "FINANCE.TT_ALIGNMENT_REQUIRED" | translate }}</label
+          >
+          <p-dropdown appendTo="body"
+            id="alignment"
+            [options]="alignmentOptions"
+            optionLabel="label"
+            optionValue="value"
+            formControlName="alignment"
+            class="w-full"
+          >
+          </p-dropdown>
+        </div>
+
+        <!-- Order Index -->
+        <div class="space-y-2">
+          <label
+            for="orderIndex"
+            class="block text-sm font-medium text-gray-700"
+            >{{ "FINANCE.TT_ORDER_INDEX" | translate }}</label
+          >
+          <p-inputNumber
+            [readonly]="true"
+            [disabled]="true"
+            id="orderIndex"
+            formControlName="orderIndex"
+            [min]="0"
+            class="w-full"
+          >
+          </p-inputNumber>
+        </div>
+      </div>
+
+      <!-- Visible Checkbox -->
+      <div class="mt-4">
+        <div class="flex items-center space-x-2">
+          <p-checkbox
+            formControlName="isVisible"
+            binary="true"
+            inputId="isVisible"
+          >
+          </p-checkbox>
+          <label for="isVisible" class="text-sm font-medium text-gray-700">{{
+            "FINANCE.TT_VISIBLE_IN_TABLE" | translate
+          }}</label>
+        </div>
+      </div>
+    </div>
+  </form>
+
+  <ng-template pTemplate="footer">
+    <div class="flex justify-end space-x-3">
+      <button
+        pButton
+        type="button"
+        [label]="'FINANCE.TT_CANCEL' | translate"
+        class="p-button-text"
+        (click)="showColumnDialog = false"
+      ></button>
+      <button
+        pButton
+        type="button"
+        [label]="'FINANCE.TT_SAVE_COLUMN' | translate"
+        [disabled]="!columnForm.valid"
+        class="p-button-primary"
+        (click)="saveColumn()"
+      ></button>
+    </div>
+  </ng-template>
+</p-dialog>
+
+<!-- Toast Messages -->
+<p-toast></p-toast>
+
+<!-- Confirmation Dialog -->
+<p-confirmDialog></p-confirmDialog>

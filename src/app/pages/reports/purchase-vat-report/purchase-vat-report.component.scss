@@ -1,0 +1,136 @@
+table, th, td {
+  border: 1px solid black;
+  border-collapse: collapse;
+}
+th, td {
+  border-color: #494949;
+  padding: 2px;
+}
+
+body {
+  font-family: Arial, sans-serif;
+  margin: 20px;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+th, td {
+  padding: 10px;
+  text-align: center;
+  border: 1px solid #ddd;
+}
+
+th {
+  background-color: #42acff !important; /* Light blue */
+  color: #ffffff !important; /* White text */
+  font-weight: bold;
+}
+
+.purchase-header-bg {
+  background-color: #42acff !important;
+  color: #ffffff !important;
+}
+
+/* Styling for prices, subtotals, and overall total */
+.price {
+  color: #696969; /* Dim Gray */
+  font-size: 1em;
+}
+
+.subtotal {
+  color: #B22222; /* Firebrick */
+  font-size: 1.1em;
+  font-weight: bold;
+}
+
+.overall-total {
+  color: #006400; /* Dark Green */
+  font-size: 1.2em;
+  font-weight: bold;
+  background-color: #f9f9f9;
+}
+
+/* Styling for the overall totals row */
+.overall-total-row td {
+  border-top: 2px solid #333;
+  padding-top: 15px;
+  padding-bottom: 15px;
+}
+
+.link-style {
+  color: #3b82f6;
+  text-decoration: none;
+  
+  &:hover {
+    text-decoration: underline;
+  }
+}
+
+.button-group {
+  display: flex;
+  gap: 10px; /* Adds space between the buttons */
+}
+
+.search-button {
+  background-color: #007bff; /* Primary color for search button */
+  color: #ffffff;
+  font-weight: bold;
+}
+
+.export-button {
+  background-color: #28a745 !important; /* Success color for export button */
+  color: #ffffff;
+  font-weight: bold;
+}
+
+.search-button .pi,
+.export-button .pi {
+  margin-right: 5px; /* Space between icon and label */
+}
+
+button:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+.pdf-button {
+  background-color: #F44336;
+  color: white;
+  border: 1px solid #B71C1C;
+  transition: background-color 0.3s ease, transform 0.2s ease;
+}
+.pdf-button:hover {
+  background-color: #D32F2F;
+  transform: scale(1.02); /* Slight zoom effect */
+}
+.pdf-button:disabled {
+  background-color: #FFCDD2; /* Lighter red when disabled */
+  color: #B0BEC5; /* Greyed-out text */
+}
+
+/* Panel header styling */
+::ng-deep .p-panel .p-panel-header {
+  background-color: #42acff !important;
+  color: #ffffff !important;
+}
+
+::ng-deep .p-panel .p-panel-header * {
+  color: #ffffff !important;
+}
+
+/* Print styles for header */
+@media print {
+  .purchase-header-bg,
+  th.purchase-header-bg {
+    background-color: #42acff !important;
+    color: #ffffff !important;
+  }
+  
+  h2 {
+    color: #ffffff !important;
+  }
+}
+

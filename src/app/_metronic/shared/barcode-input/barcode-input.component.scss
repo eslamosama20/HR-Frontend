@@ -1,0 +1,42 @@
+.barcode-input {
+  width: 100%;
+}
+
+.barcode-input__control {
+  position: relative;
+}
+
+.barcode-input__icon {
+  position: absolute;
+  top: 50%;
+  left: 0.75rem;
+  transform: translateY(-50%);
+  color: var(--bs-gray-600);
+  pointer-events: none;
+  display: inline-flex;
+  align-items: center;
+}
+
+.barcode-input__field {
+  padding-left: 2.8rem;
+  padding-right: 2.8rem;
+}
+
+.barcode-input__state {
+  position: absolute;
+  top: 50%;
+  right: 0.75rem;
+  transform: translateY(-50%);
+  display: inline-flex;
+  align-items: center;
+}
+
+.barcode-input__error {
+  color: var(--bs-danger);
+  display: block;
+  margin-top: 0.4rem;
+}
+
+.barcode-input.has-error .barcode-input__field {
+  border-color: var(--bs-danger);
+}

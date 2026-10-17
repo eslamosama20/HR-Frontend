@@ -1,0 +1,443 @@
+:host {
+  display: block;
+  width: 100%;
+}
+
+:host ::ng-deep {
+  .p-panel {
+    border-radius: 10px;
+
+    .p-panel-header {
+      padding: 0.25rem 0.75rem !important;
+      min-height: auto !important;
+      height: auto !important;
+    }
+
+    .p-panel-content {
+      padding: 0.5rem 0.75rem !important;
+    }
+  }
+}
+
+.error {
+  color: #ef4444;
+  font-size: 0.75rem;
+  margin-top: 0.25rem;
+  font-weight: 600;
+}
+
+/* ==========================================================================
+   Top Form Controls Styling
+   ========================================================================== */
+.reservation-form {
+  > .row ::ng-deep .p-dropdown {
+    height: 38px !important;
+    min-height: 38px !important;
+    border-radius: 6px !important;
+    display: flex;
+    align-items: center;
+    border: 1px solid #cbd5e1;
+
+    .p-dropdown-label {
+      font-size: 0.9rem;
+      padding: 0.35rem 0.65rem;
+      line-height: 1.4;
+    }
+
+    &:focus,
+    &.p-focus {
+      border-color: #0284c7;
+      box-shadow: 0 0 0 2px rgba(2, 132, 199, 0.15);
+    }
+  }
+
+  .form-control.h-12 {
+    height: 38px !important;
+    min-height: 38px !important;
+    border-radius: 6px !important;
+    border: 1px solid #cbd5e1;
+    font-size: 0.9rem;
+    padding: 0.35rem 0.65rem;
+
+    &:focus {
+      border-color: #0284c7;
+      box-shadow: 0 0 0 2px rgba(2, 132, 199, 0.15);
+    }
+  }
+}
+
+/* ==========================================================================
+   Table Cards & Modern Styling
+   ========================================================================== */
+.meal-table-card,
+.summary-card {
+  background: #ffffff;
+  border-radius: 10px;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.05);
+  overflow: hidden;
+  width: 100%;
+}
+
+/* Table Toolbar */
+.table-toolbar,
+.summary-card-header {
+  background: #f8fafc;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.items-count-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  background: #e0f2fe;
+  color: #0369a1;
+  font-size: 0.875rem;
+  font-weight: 800;
+  padding: 0.25rem 0.65rem;
+  border-radius: 6px;
+  border: 1px solid #bae6fd;
+}
+
+/* Table Responsive Wrapper - Compact with clean scrolling */
+.table-responsive-wrapper {
+  max-height: 520px;
+  overflow-y: auto;
+  overflow-x: hidden;
+  width: 100%;
+
+  @media (max-width: 1200px) {
+    overflow-x: auto;
+  }
+
+  &::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+
+  &::-webkit-scrollbar-track {
+    background: #f1f5f9;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background: #cbd5e1;
+    border-radius: 4px;
+  }
+
+  &::-webkit-scrollbar-thumb:hover {
+    background: #94a3b8;
+  }
+}
+
+/* ==========================================================================
+   Meal ERP Main Table - Bold Headers & Enhanced Typography
+   ========================================================================== */
+.meal-erp-table {
+  width: 100%;
+  table-layout: fixed;
+  border-collapse: separate;
+  border-spacing: 0;
+  text-align: center;
+  font-size: 0.85rem;
+
+  thead {
+    position: sticky;
+    top: 0;
+    z-index: 10;
+
+    th {
+      background: #f1f5f9;
+      color: #0f172a !important;
+      font-weight: 800 !important;
+      font-size: 0.82rem !important;
+      line-height: 1.25;
+      padding: 0.55rem 0.15rem;
+      border-bottom: 2px solid #cbd5e1;
+      border-inline-end: 1px solid #e2e8f0;
+      white-space: normal;
+      word-break: keep-all;
+      overflow-wrap: normal;
+      text-wrap: balance;
+      vertical-align: middle;
+      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+      letter-spacing: -0.1px;
+
+      &:first-child {
+        border-inline-start: none;
+      }
+
+      &:last-child {
+        border-inline-end: none;
+      }
+    }
+  }
+
+  tbody {
+    tr {
+      transition: background-color 0.15s ease;
+
+      &:nth-child(even) {
+        background-color: #fafbfd;
+      }
+
+      &:hover {
+        background-color: #f1f5f9;
+      }
+
+      td {
+        padding: 0.25rem 0.15rem;
+        vertical-align: middle;
+        border-bottom: 1px solid #edf2f7;
+        border-inline-end: 1px solid #f1f5f9;
+        font-size: 0.85rem;
+        color: #1e293b;
+        overflow: hidden;
+
+        &:last-child {
+          border-inline-end: none;
+        }
+
+        .form-control,
+        .form-control-sm {
+          height: 32px !important;
+          min-height: 32px !important;
+          font-size: 0.825rem !important;
+          font-weight: 600 !important;
+          padding: 0.15rem 0.35rem !important;
+          border-radius: 5px !important;
+          border: 1px solid #cbd5e1 !important;
+          background-color: #ffffff;
+          width: 100% !important;
+          box-sizing: border-box;
+          transition: all 0.2s ease;
+
+          &:focus {
+            border-color: #0284c7 !important;
+            box-shadow: 0 0 0 2px rgba(2, 132, 199, 0.15) !important;
+            outline: none !important;
+          }
+
+          &:disabled {
+            background-color: #f1f5f9;
+            color: #94a3b8;
+            cursor: not-allowed;
+          }
+        }
+
+        input[type="date"] {
+          font-size: 0.76rem !important;
+          font-weight: 600 !important;
+          padding: 0.12rem 0.2rem !important;
+          cursor: pointer !important;
+
+          &::-webkit-calendar-picker-indicator {
+            cursor: pointer !important;
+          }
+        }
+
+        ::ng-deep .p-dropdown {
+          height: 32px !important;
+          min-height: 32px !important;
+          border-radius: 5px !important;
+          border: 1px solid #cbd5e1 !important;
+          display: flex;
+          align-items: center;
+          width: 100% !important;
+
+          .p-dropdown-label {
+            font-size: 0.825rem !important;
+            font-weight: 600 !important;
+            padding: 0.15rem 0.35rem !important;
+            line-height: 1.15;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+          }
+
+          .p-dropdown-trigger {
+            width: 18px !important;
+
+            .p-dropdown-trigger-icon {
+              font-size: 0.65rem !important;
+            }
+          }
+
+          &:focus,
+          &.p-focus {
+            border-color: #0284c7 !important;
+            box-shadow: 0 0 0 2px rgba(2, 132, 199, 0.15) !important;
+          }
+        }
+      }
+    }
+  }
+
+  tfoot {
+    .tfoot-totals-row {
+      background: #f8fafc;
+      border-top: 2px solid #cbd5e1;
+
+      td {
+        padding: 0.65rem 0.35rem;
+        border-top: 2px solid #cbd5e1;
+        border-bottom: none;
+        font-size: 0.95rem;
+        font-weight: 800;
+      }
+    }
+  }
+}
+
+/* Delete Row Button */
+.btn-delete-row {
+  width: 28px;
+  height: 28px;
+  border-radius: 5px;
+  background: #fee2e2;
+  color: #dc2626;
+  border: 1px solid #fecaca;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  padding: 0;
+  transition: all 0.2s ease;
+
+  i {
+    font-size: 0.8rem;
+  }
+
+  &:hover {
+    background: #dc2626;
+    color: #ffffff;
+    border-color: #dc2626;
+    transform: scale(1.05);
+  }
+
+  &:active {
+    transform: translateY(0);
+  }
+}
+
+/* Empty State */
+.empty-state-cell {
+  background: #ffffff !important;
+}
+
+/* ==========================================================================
+   Summary Totals Table - Enhanced Bold Typography
+   ========================================================================== */
+.erp-summary-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 0;
+
+  thead {
+    th {
+      background: #f1f5f9;
+      color: #0f172a !important;
+      font-weight: 800 !important;
+      font-size: 0.95rem !important;
+      padding: 0.85rem 1rem;
+      border-bottom: 2px solid #e2e8f0;
+    }
+  }
+
+  tbody {
+    tr {
+      border-bottom: 1px solid #f1f5f9;
+      transition: background-color 0.15s ease;
+
+      &:hover {
+        background-color: #f8fafc;
+      }
+
+      td {
+        padding: 0.85rem 1rem;
+        font-size: 1rem;
+        vertical-align: middle;
+      }
+
+      &.profit-row {
+        background-color: #f0fdf4;
+        border-top: 2px solid #86efac;
+
+        &:hover {
+          background-color: #dcfce7;
+        }
+
+        td {
+          border-bottom: none;
+          font-weight: 800;
+        }
+      }
+    }
+  }
+}
+
+/* Dark Mode Context Support */
+:host-context(.dark) {
+  .meal-table-card,
+  .summary-card {
+    background: #1e293b;
+    border-color: #334155;
+  }
+
+  .table-toolbar,
+  .summary-card-header {
+    background: #0f172a;
+    border-bottom-color: #334155;
+  }
+
+  .meal-erp-table {
+    thead th {
+      background: #0f172a;
+      color: #f1f5f9 !important;
+      border-color: #334155;
+    }
+
+    tbody tr {
+      &:nth-child(even) {
+        background-color: #1a2332;
+      }
+
+      &:hover {
+        background-color: #243044;
+      }
+
+      td {
+        border-color: #334155;
+        color: #e2e8f0;
+
+        .form-control,
+        .form-control-sm {
+          background-color: #0f172a;
+          border-color: #334155 !important;
+          color: #f8fafc;
+        }
+      }
+    }
+
+    tfoot .tfoot-totals-row {
+      background: #0f172a;
+      border-top-color: #334155;
+    }
+  }
+
+  .erp-summary-table {
+    thead th {
+      background: #0f172a;
+      color: #f1f5f9 !important;
+      border-color: #334155;
+    }
+
+    tbody tr {
+      border-color: #334155;
+
+      &.profit-row {
+        background-color: rgba(16, 185, 129, 0.1);
+        border-top-color: #059669;
+      }
+    }
+  }
+}

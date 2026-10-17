@@ -1,0 +1,1284 @@
+<div class="fixed inset-0 bg-gray-500 bg-opacity-75 flex items-center justify-center z-50" *ngIf="loading">
+  <i class="pi pi-spin pi-spinner" style="font-size: 2rem"></i>
+</div>
+
+<div class="w-full" [attr.dir]="activeLanguage === 'ar' ? 'rtl' : 'ltr'" *ngIf="invoice && !loading"
+  id="invoiceSection">
+  <div class="w-full">
+    <div class="card border-0">
+      <!-- Card Header -->
+      <div class="card-header p-3 border-0 bg-transparent">
+        <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 no-print">
+          <div class="d-flex flex-wrap align-items-center gap-2">
+            <button class="btn btn-sm btn-secondary d-inline-flex align-items-center gap-1 rounded-3" (click)="goBack()">
+              <i class="pi pi-arrow-right"></i> {{ 'COMMON.BACK' | translate }}
+            </button>
+            <button class="btn btn-sm btn-primary d-inline-flex align-items-center gap-1 rounded-3" (click)="printInvoice()">
+              <i class="pi pi-print"></i> {{ activeLanguage === 'ar' ? 'طباعة 1' : 'Print 1' }}
+            </button>
+            <button class="btn btn-sm btn-primary d-inline-flex align-items-center gap-1 rounded-3" (click)="printDocument()">
+              <i class="pi pi-print"></i> {{ activeLanguage === 'ar' ? 'طباعة 2' : 'Print 2' }}
+            </button>
+            <button class="btn btn-sm btn-primary d-inline-flex align-items-center gap-1 rounded-3" (click)="printInvoice3()">
+              <i class="pi pi-print"></i> {{ activeLanguage === 'ar' ? 'طباعة 3' : 'Print 3' }}
+            </button>
+            <button class="btn btn-sm btn-primary d-inline-flex align-items-center gap-1 rounded-3" (click)="shareInvoice()">
+              <i class="pi pi-share-alt"></i> {{ 'INVOICE.SHARE' | translate }}
+            </button>
+            <button *ngIf="invoice.transactionId === null" class="btn btn-sm btn-primary d-inline-flex align-items-center gap-1 rounded-3"
+              (click)="createTransaction(invoice.id)">
+              <i class="pi pi-plus-circle"></i> {{"INVOICE.CREATE_TRANSACTION"|translate}}
+            </button>
+            <a *ngIf="invoice.transactionId"
+              [routerLink]="['/accounting/journal-transactions/transaction', invoice.transactionId]" target="_blank"
+              class="btn btn-sm btn-primary d-inline-flex align-items-center gap-1 rounded-3 text-white text-decoration-none">
+              <i class="pi pi-external-link"></i> {{ 'INVOICE.VIEW_RELATED_TRANSACTION' | translate }}
+            </a>
+            <button *ngIf="invoice.reservationIds && invoice.reservationIds.length > 0"
+              class="btn btn-sm btn-primary d-inline-flex align-items-center gap-1 rounded-3" (click)="viewReservations()">
+              <i class="pi pi-calendar-check"></i> {{ 'INVOICE.VIEW_RELATED_RESERVATIONS' | translate }} ({{ invoice.reservationIds.length }})
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Card Body -->
+      <div class="card-body p-2 m-0">
+        <!-- Invoice & Customer Info -->
+        <div class="row mb-2 p-0 m-0">
+          <div class="col-12">
+            <div class="d-flex flex-wrap gap-2 mb-1 justify-content-center text-center">
+              <div class="text-dark text-lg">
+                <strong>{{ "INVOICE.INVOICENO" | translate }}:</strong> {{ invoice.invoiceNo }}
+              </div>
+              <div class="text-dark text-lg">
+                <strong>{{ "INVOICE.SALES_INVOICE" | translate }}</strong>
+              </div>
+              <div class="text-dark text-lg">
+                <strong>{{ "INVOICE.CLIENTNAME" | translate }}:</strong> {{ getCustomerName() }}
+              </div>
+              <div class="text-dark text-lg">
+                <strong>{{ "INVOICE.DATE" | translate }}:</strong>
+                {{ invoice.issueDate | customDate : "yyyy-MM-dd" : "" : "ar-SA" }}
+              </div>
+            </div>
+          </div>
+          <div class="col-sm-6">
+            <div class="text-dark text-lg mb-1" *ngIf="getCustomerTaxNumber()">
+              <strong>{{ "INVOICE.TAXNUMBER" | translate }}:</strong>
+              {{ getCustomerTaxNumber() }}
+            </div>
+            <div class="text-dark text-lg mb-1" *ngIf="getCustomerPhone()">
+              <strong>{{ "INVOICE.PHONENO" | translate }}:</strong>
+              {{ getCustomerPhone() }}
+            </div>
+            <div class="text-dark text-lg mb-1" *ngIf="getCustomerEmail()">
+              <strong>{{ 'INVOICE.EMAIL' | translate }}:</strong>
+              {{ getCustomerEmail() }}
+            </div>
+            <div class="text-dark text-lg mb-1" *ngIf="invoice.description">
+              <strong>{{ 'INVOICE.DESCRIPTION' | translate }}:</strong> {{ invoice.description }}
+            </div>
+          </div>
+        </div>
+
+        <!-- Room Details Table -->
+        <div class="mb-2" *ngIf="getAllRoomEntries().length > 0">
+          <h3 class="mb-1 text-primary text-lg">{{ 'INVOICE.ROOM_TABLE' | translate }}</h3>
+          <div class="table-responsive-sm">
+            <table class="table table-bordered mb-2">
+              <thead class="sales-header-bg text-white">
+                <tr>
+                  <th class="text-center">#</th>
+                  <th class="text-center">{{ 'INVOICE.ROOM_TYPE' | translate }}</th>
+                  <th class="text-center">{{ 'INVOICE.ROOM_COUNT' | translate }}</th>
+                  <th class="text-center">{{ 'INVOICE.ROOM_RATE' | translate }}</th>
+                  <th class="text-center">{{ 'INVOICE.PAX' | translate }}</th>
+                  <th class="text-center">{{ 'INVOICE.NIGHTS' | translate }}</th>
+                  <th class="text-center">{{ 'INVOICE.MEALS' | translate }}</th>
+                  <th class="text-center">{{ 'INVOICE.MEAL_RATE' | translate }}</th>
+                  <th class="text-center">{{ 'INVOICE.VIEW_NAME' | translate }}</th>
+                  <th class="text-center">{{ 'INVOICE.VIEW_RATE' | translate }} </th>
+                  <th class="text-center">{{ 'INVOICE.TOTAL_PRICE' | translate }} </th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let entry of getAllRoomEntries(); let i = index">
+                  <td class="text-center">{{ i + 1 }}</td>
+                  <td class="text-center">{{ getRoomTypeName(entry.roomTypeId) }}</td>
+                  <td class="text-center">{{ entry.numberOfRooms || 0 }}</td>
+                  <td class="text-center">{{ entry.roomRate || 0 | formatDecimal }}</td>
+                  <td class="text-center">{{ getRoomPax(entry) }}</td>
+                  <td class="text-center">{{ entry.numberOfNights || 0 }}</td>
+                  <td class="text-center">{{ getMealName(entry.reservationMealId) }}</td>
+                  <td class="text-center">{{ entry.mealRate || 0 | formatDecimal }}</td>
+                  <td class="text-center">{{ getViewName(entry.reservationViewId) }}</td>
+                  <td class="text-center">{{ entry.viewRate || 0 | formatDecimal }}</td>
+                  <td class="text-center text-success">
+                    <strong>{{ getRoomTotalSalesPrice(entry) | formatDecimal }}</strong>
+                  </td>
+                </tr>
+              </tbody>
+              <tfoot>
+                <tr class="table-active">
+                  <td colspan="10" class="text-right">
+                    <strong>{{ 'INVOICE.TOTAL' | translate }}</strong>
+                  </td>
+                  <td class="text-center text-success">
+                    <strong>{{ getRoomTotals().totalSalesPrice | formatDecimal }}</strong>
+                  </td>
+                </tr>
+              </tfoot>
+            </table>
+          </div>
+        </div>
+
+        <!-- Service Details Table -->
+        <div class="mb-2" *ngIf="getAllServiceEntries().length > 0">
+          <h3 class="mb-1 text-primary text-lg">{{ 'INVOICE.OTHER_SERVICES_TABLE' | translate }}</h3>
+          <div class="table-responsive-sm">
+            <table class="table table-bordered mb-2">
+              <thead class="sales-header-bg text-white">
+                <tr>
+                  <th class="text-center">#</th>
+                  <th class="text-center">{{ 'INVOICE.SERVICE_NAME' | translate }}</th>
+                  <th class="text-center">{{ 'INVOICE.DESCRIPTION' | translate }}</th>
+                  <th class="text-center">{{ 'INVOICE.QUANTITY' | translate }}</th>
+                  <th class="text-center">{{ 'INVOICE.PRICE' | translate }}</th>
+                  <th class="text-center">{{ 'INVOICE.VAT_AMOUNT' | translate }}</th>
+                  <th class="text-center">{{ 'INVOICE.SUPPLIER' | translate }}</th>
+                  <th class="text-center">{{ 'INVOICE.TOTAL_PRICE' | translate }}</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let entry of getAllServiceEntries(); let i = index">
+                  <td class="text-center">{{ i + 1 }}</td>
+                  <td class="text-center">{{ getServiceName(entry.reservationServiceId) }}</td>
+                  <td class="text-center">{{ entry.description || '-' }}</td>
+                  <td class="text-center">{{ entry.quantity || 0 }}</td>
+                  <td class="text-center">{{ getServicePrice(entry) | formatDecimal }}</td>
+                  <td class="text-center">{{ getSalesVatAmount(entry) | formatDecimal }}</td>
+                  <td class="text-center">{{ getSupplierName(entry.reservationSupplierId) }}</td>
+                  <td class="text-center text-success">
+                    <strong>{{ getServiceTotalSalesPrice(entry) | formatDecimal }}</strong>
+                  </td>
+                </tr>
+              </tbody>
+              <tfoot>
+                <tr class="table-active">
+                  <td colspan="7" class="text-right">
+                    <strong>{{ 'INVOICE.TOTAL' | translate }}</strong>
+                  </td>
+                  <td class="text-center text-success">
+                    <strong>{{ getServiceTotals().totalSalesPrice | formatDecimal }}</strong>
+                  </td>
+                </tr>
+              </tfoot>
+            </table>
+          </div>
+        </div>
+
+        <!-- Totals Summary -->
+        <div class="row mb-2">
+          <div class="col-md-6 offset-md-6">
+            <table class="table table-bordered mb-1">
+              <tbody>
+                <tr>
+                  <td class="text-right text-lg"><strong>{{ 'INVOICE.NET_PRICE' | translate }}:</strong></td>
+                  <td class="text-center text-lg">{{ getNetPrice() | formatDecimal }} {{ activeLanguage === 'en' ? 'SAR'
+                    : 'ر.س' }}</td>
+                </tr>
+                <tr *ngIf="invoice.discountAmount && invoice.discountAmount > 0">
+                  <td class="text-right text-lg"><strong>{{ 'INVOICE.DISCOUNT' | translate }}:</strong></td>
+                  <td class="text-center text-danger text-lg">
+                    -{{ invoice.discountAmount | formatDecimal }} {{ activeLanguage === 'en' ? 'SAR' : 'ر.س' }}
+                  </td>
+                </tr>
+                <tr *ngIf="invoice.taxAmount && invoice.taxAmount > 0">
+                  <td class="text-right text-lg"><strong>{{ 'INVOICE.ADDEDTAX_INVOICE' | translate }}:</strong></td>
+                  <td class="text-center text-lg">{{ getTaxAmount() | formatDecimal }} {{ activeLanguage === 'en' ?
+                    'SAR' : 'ر.س' }}</td>
+                </tr>
+                <tr class="table-primary">
+                  <td class="text-right text-lg"><strong>{{ 'INVOICE.TOTAL_INVOICE' | translate }}:</strong></td>
+                  <td class="text-center text-lg">
+                    <strong>{{ getTotalPrice() | formatDecimal }} {{ activeLanguage === 'en' ? 'SAR' : 'ر.س' }}</strong>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- QR Code -->
+        <div class="text-center mb-2 flex flex-col items-center" *ngIf="invoice.generatedQR">
+          <p class="mb-1 text-lg"><strong>QR Code</strong></p>
+          <div class="qr-code-fixed-container">
+            <qrcode class="qr-code" [qrdata]="invoice.generatedQR" [width]="150" [errorCorrectionLevel]="'M'"
+              [colorLight]="'transparent'"></qrcode>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Error State -->
+<div class="error-container" *ngIf="!loading && !invoice">
+  <div class="text-center p-5">
+    <i class="pi pi-exclamation-triangle text-danger" style="font-size: 3rem"></i>
+    <p class="mt-3">{{ 'DATA.NOT_FOUND' | translate }}</p>
+    <button class="btn btn-primary" (click)="goBack()">{{ 'COMMON.BACK' | translate }}</button>
+  </div>
+</div>
+
+<!-- Print Document Component -->
+<ng-container *ngIf="!loading && invoice">
+  <div class="absolute top-0 left-[-100%]" *ngIf="docData">
+    <app-print-document #printComponent [headerTemplate]="headerTemplate" [bodyTemplate]="bodyTemplate"
+      [footerTemplate]="footerTemplate" [summaryTemplate]="summaryTemplate" [data]="[]" [columns]="[]"
+      [qrImageUrl]="null" [landscape]="useLandscape">
+    </app-print-document>
+
+    <app-print-document #printComponent3 [headerTemplate]="headerTemplate" [bodyTemplate]="bodyTemplate2"
+      [footerTemplate]="footerTemplate" [summaryTemplate]="summaryTemplate" [data]="[]" [columns]="[]"
+      [qrImageUrl]="null" [landscape]="false">
+    </app-print-document>
+
+    <!-- Header Template -->
+    <!-- Header Template -->
+    <!-- Header Template -->
+    <ng-template #logoHeaderTemplate>
+      <!-- ✅ أول بلوك: بيانات الفاتورة + اللوجو في المنتصف + نص فاتورة ضريبية -->
+      <div class="w-full border border-gray-900 mb-3">
+        <div class="flex justify-between items-center px-3 py-2">
+          <!-- بيانات الفاتورة -->
+          <div class="flex-1">
+            <p class="m-0 text-sm">
+              <strong>{{ 'INVOICE.INVOICENO' | translate }}:</strong>
+              {{ invoice.invoiceNo }}
+            </p>
+            <p class="m-0 text-sm">
+              <strong>{{ 'INVOICE.DATE' | translate }}:</strong>
+              {{ invoice.issueDate | customDate:'yyyy-MM-dd' }}
+            </p>
+            <p class="m-0 text-sm">
+              <strong>{{ 'INVOICE.DUE_DATE' | translate }}:</strong>
+              {{ invoice.dueDate | customDate:'yyyy-MM-dd' }}
+            </p>
+          </div>
+
+          <!-- 👇 المنتصف: اللوجو في النص وتحته نص الفاتورة الضريبية -->
+          <div class="flex-1 flex flex-col items-center justify-center text-center gap-1">
+            <img *ngIf="companyDetails?.logoUrl" [src]="companyDetails?.logoUrl || ''" alt="company-logo"
+              width="80" height="80" />
+            <h3 class="m-0 font-bold" style="font-size: 1.1rem;">{{ (getCustomerTaxNumber() && getCustomerTaxNumber().trim() ? 'INVOICE.TAX_INVOICE' : 'INVOICE.TAX_INVOICE_SIMPLE') | translate }}</h3>
+          </div>
+
+          <!-- QR Code (الطرف الآخر) -->
+          <div class="flex-1 flex justify-end">
+            <div *ngIf="invoice.generatedQR" class="text-right flex flex-col items-end gap-1">
+              <div class="qr-code-fixed-container">
+                <qrcode [qrdata]="invoice.generatedQR" elementType="img" [width]="80" [errorCorrectionLevel]="'L'">
+                </qrcode>
+              </div>
+              <div *ngIf="sellerName" class="text-sm font-semibold">
+                <span>{{ 'INVOICE.SELLER' | translate }}:</span> <span>{{ sellerName }}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </ng-template>
+
+    <ng-template #customerSupplierTemplate>
+      <!-- ✅ جدول العميل / الموردين الاصلي (طباعة 1) -->
+      <div class="w-full border border-gray-900 mb-3">
+        <table class="w-full text-sm">
+          <thead class="bg-gray-200 font-semibold">
+            <tr>
+              <th class="border border-gray-900 p-2 w-[50%] text-center">
+                {{ 'INVOICE.CLIENTNAME' | translate }}
+              </th>
+              <th class="border border-gray-900 p-2 w-[50%] text-center">
+                {{ 'INVOICE.SUPPLIER' | translate }}
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <!-- Customer Info -->
+              <td class="border border-gray-900 p-2 align-top" [style.text-align]="activeLanguage === 'en' ? 'left' : 'right'" style="width: 50%; font-size: 0.75rem; line-height: 1.6;">
+                <div class="flex items-baseline mb-1">
+                  <span style="flex: 0 0 72px;" [style.text-align]="activeLanguage === 'en' ? 'left' : 'right'"><strong>{{ 'INVOICE.CLIENTNAME' | translate }}</strong></span>
+                  <span style="margin: 0 4px;">:</span>
+                  <span style="flex: 1;" class="font-bold" [style.text-align]="activeLanguage === 'en' ? 'left' : 'right'">{{ getCustomerName() }}</span>
+                </div>
+                <div class="flex items-baseline mb-1">
+                  <span style="flex: 0 0 72px;" [style.text-align]="activeLanguage === 'en' ? 'left' : 'right'"><strong>{{ 'INVOICE.BUILDING_NUMBER' | translate }}</strong></span>
+                  <span style="margin: 0 4px;">:</span>
+                  <span style="flex: 1;" [style.text-align]="activeLanguage === 'en' ? 'left' : 'right'">{{ getCustomerBuildingNumber() || '-' }}</span>
+                </div>
+                <div class="flex items-baseline mb-1">
+                  <span style="flex: 0 0 72px;" [style.text-align]="activeLanguage === 'en' ? 'left' : 'right'"><strong>{{ 'INVOICE.STREET' | translate }}</strong></span>
+                  <span style="margin: 0 4px;">:</span>
+                  <span style="flex: 1;" [style.text-align]="activeLanguage === 'en' ? 'left' : 'right'">{{ getCustomerStreet() || '-' }}</span>
+                </div>
+                <div class="flex items-baseline mb-1">
+                  <span style="flex: 0 0 72px;" [style.text-align]="activeLanguage === 'en' ? 'left' : 'right'"><strong>{{ 'INVOICE.DISTRICT' | translate }}</strong></span>
+                  <span style="margin: 0 4px;">:</span>
+                  <span style="flex: 1;" [style.text-align]="activeLanguage === 'en' ? 'left' : 'right'">{{ getCustomerDistrict() || '-' }}</span>
+                </div>
+                <div class="flex items-baseline mb-1">
+                  <span style="flex: 0 0 72px;" [style.text-align]="activeLanguage === 'en' ? 'left' : 'right'"><strong>{{ 'INVOICE.CITY' | translate }}</strong></span>
+                  <span style="margin: 0 4px;">:</span>
+                  <span style="flex: 1;" [style.text-align]="activeLanguage === 'en' ? 'left' : 'right'">{{ getCustomerCity() || '-' }}</span>
+                </div>
+                <div class="flex items-baseline mb-1">
+                  <span style="flex: 0 0 72px;" [style.text-align]="activeLanguage === 'en' ? 'left' : 'right'"><strong>{{ 'INVOICE.COUNTRY' | translate }}</strong></span>
+                  <span style="margin: 0 4px;">:</span>
+                  <span style="flex: 1;" [style.text-align]="activeLanguage === 'en' ? 'left' : 'right'">{{ getCustomerCountry() || '-' }}</span>
+                </div>
+                <div class="flex items-baseline mb-1">
+                  <span style="flex: 0 0 72px;" [style.text-align]="activeLanguage === 'en' ? 'left' : 'right'"><strong>{{ 'INVOICE.POSTAL_CODE' | translate }}</strong></span>
+                  <span style="margin: 0 4px;">:</span>
+                  <span style="flex: 1;" [style.text-align]="activeLanguage === 'en' ? 'left' : 'right'">{{ getCustomerZipCode() || '-' }}</span>
+                </div>
+                <div class="flex items-baseline mb-1">
+                  <span style="flex: 0 0 72px;" [style.text-align]="activeLanguage === 'en' ? 'left' : 'right'"><strong>{{ 'INVOICE.ADDITIONAL_CONTACT_NUMBER' | translate }}</strong></span>
+                  <span style="margin: 0 4px;">:</span>
+                  <span style="flex: 1;" [style.text-align]="activeLanguage === 'en' ? 'left' : 'right'">{{ getCustomerAdditionalContactNumber() || '-' }}</span>
+                </div>
+                <div class="flex items-baseline mb-1">
+                  <span style="flex: 0 0 72px;" [style.text-align]="activeLanguage === 'en' ? 'left' : 'right'"><strong>{{ 'INVOICE.TAXNUMBER_INVOICE' | translate }}</strong></span>
+                  <span style="margin: 0 4px;">:</span>
+                  <span style="flex: 1;" [style.text-align]="activeLanguage === 'en' ? 'left' : 'right'">{{ getCustomerTaxNumber() || '-' }}</span>
+                </div>
+                <div class="flex items-baseline mb-1">
+                  <span style="flex: 0 0 72px;" [style.text-align]="activeLanguage === 'en' ? 'left' : 'right'"><strong>{{ 'FINANCE.OTHER_ID' | translate }}</strong></span>
+                  <span style="margin: 0 4px;">:</span>
+                  <span style="flex: 1;" [style.text-align]="activeLanguage === 'en' ? 'left' : 'right'">{{ getCustomerOtherId() || '-' }}</span>
+                </div>
+              </td>
+
+              <!-- Supplier Info -->
+              <td class="border border-gray-900 p-2 align-top" *ngIf="companyDetails; else noSupplier" [style.text-align]="activeLanguage === 'ar' ? 'right' : 'left'" style="width: 50%; font-size: 0.75rem; line-height: 1.6;">
+                <div class="flex items-baseline mb-1">
+                  <span style="flex: 0 0 72px;" [style.text-align]="activeLanguage === 'en' ? 'left' : 'right'"><strong>{{ 'INVOICE.NAME_INVOICE' | translate }}</strong></span>
+                  <span style="margin: 0 4px;">:</span>
+                  <span style="flex: 1;" class="font-bold" [style.text-align]="activeLanguage === 'en' ? 'left' : 'right'">{{ activeLanguage === 'en' ? companyDetails.englishName : companyDetails.arabicName }}</span>
+                </div>
+                <div class="flex items-baseline mb-1">
+                  <span style="flex: 0 0 72px;" [style.text-align]="activeLanguage === 'en' ? 'left' : 'right'"><strong>{{ 'INVOICE.BUILDING_NUMBER' | translate }}</strong></span>
+                  <span style="margin: 0 4px;">:</span>
+                  <span style="flex: 1;" [style.text-align]="activeLanguage === 'en' ? 'left' : 'right'">{{ companyDetails.buildingNumber || '-' }}</span>
+                </div>
+                <div class="flex items-baseline mb-1">
+                  <span style="flex: 0 0 72px;" [style.text-align]="activeLanguage === 'en' ? 'left' : 'right'"><strong>{{ 'INVOICE.STREET' | translate }}</strong></span>
+                  <span style="margin: 0 4px;">:</span>
+                  <span style="flex: 1;" [style.text-align]="activeLanguage === 'en' ? 'left' : 'right'">{{ (activeLanguage === 'en' ? companyDetails.address?.street : companyDetails.arabicAddress?.street) || companyDetails.street || '-' }}</span>
+                </div>
+                <div class="flex items-baseline mb-1">
+                  <span style="flex: 0 0 72px;" [style.text-align]="activeLanguage === 'en' ? 'left' : 'right'"><strong>{{ 'INVOICE.DISTRICT' | translate }}</strong></span>
+                  <span style="margin: 0 4px;">:</span>
+                  <span style="flex: 1;" [style.text-align]="activeLanguage === 'en' ? 'left' : 'right'">{{ companyDetails.district || '-' }}</span>
+                </div>
+                <div class="flex items-baseline mb-1">
+                  <span style="flex: 0 0 72px;" [style.text-align]="activeLanguage === 'en' ? 'left' : 'right'"><strong>{{ 'INVOICE.CITY' | translate }}</strong></span>
+                  <span style="margin: 0 4px;">:</span>
+                  <span style="flex: 1;" [style.text-align]="activeLanguage === 'en' ? 'left' : 'right'">{{ (activeLanguage === 'en' ? companyDetails.address?.city : companyDetails.arabicAddress?.city) || companyDetails.city || '-' }}</span>
+                </div>
+                <div class="flex items-baseline mb-1">
+                  <span style="flex: 0 0 72px;" [style.text-align]="activeLanguage === 'en' ? 'left' : 'right'"><strong>{{ 'INVOICE.COUNTRY' | translate }}</strong></span>
+                  <span style="margin: 0 4px;">:</span>
+                  <span style="flex: 1;" [style.text-align]="activeLanguage === 'en' ? 'left' : 'right'">{{ (activeLanguage === 'en' ? companyDetails.address?.country : companyDetails.arabicAddress?.country) || companyDetails.country || '-' }}</span>
+                </div>
+                <div class="flex items-baseline mb-1">
+                  <span style="flex: 0 0 72px;" [style.text-align]="activeLanguage === 'en' ? 'left' : 'right'"><strong>{{ 'INVOICE.POSTAL_CODE' | translate }}</strong></span>
+                  <span style="margin: 0 4px;">:</span>
+                  <span style="flex: 1;" [style.text-align]="activeLanguage === 'en' ? 'left' : 'right'">{{ (activeLanguage === 'en' ? companyDetails.address?.zipCode : companyDetails.arabicAddress?.zipCode) || companyDetails.zipCode || '-' }}</span>
+                </div>
+                <div class="flex items-baseline mb-1">
+                  <span style="flex: 0 0 72px;" [style.text-align]="activeLanguage === 'en' ? 'left' : 'right'"><strong>{{ 'INVOICE.ADDITIONAL_CONTACT_NUMBER' | translate }}</strong></span>
+                  <span style="margin: 0 4px;">:</span>
+                  <span style="flex: 1;" [style.text-align]="activeLanguage === 'en' ? 'left' : 'right'">{{ companyDetails.subNumber || '-' }}</span>
+                </div>
+                <div class="flex items-baseline mb-1">
+                  <span style="flex: 0 0 72px;" [style.text-align]="activeLanguage === 'en' ? 'left' : 'right'"><strong>{{ 'INVOICE.TAXNUMBER_INVOICE' | translate }}</strong></span>
+                  <span style="margin: 0 4px;">:</span>
+                  <span style="flex: 1;" [style.text-align]="activeLanguage === 'en' ? 'left' : 'right'">{{ companyDetails.taxNumber || '-' }}</span>
+                </div>
+                <div class="flex items-baseline mb-1">
+                  <span style="flex: 0 0 72px;" [style.text-align]="activeLanguage === 'en' ? 'left' : 'right'"><strong>{{ 'INVOICE.UNIFIED_NUMBER' | translate }}</strong></span>
+                  <span style="margin: 0 4px;">:</span>
+                  <span style="flex: 1;" [style.text-align]="activeLanguage === 'en' ? 'left' : 'right'">{{ companyDetails.unifiedNumber || '-' }}</span>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+
+        <ng-template #noSupplier>
+          <td class="border border-gray-900 p-2 align-top">
+            <em class="text-muted">{{ 'DATA.NO_RECORDS' | translate }}</em>
+          </td>
+        </ng-template>
+      </div>
+    </ng-template>
+
+    <ng-template #customerSupplierTemplate2>
+      <!-- ✅ جدول العميل / الموردين المزدوَج اللغتين (طباعة 3) -->
+      <div class="w-full border border-gray-900 mb-3">
+        <table class="w-full text-sm">
+          <thead class="bg-gray-200 font-semibold">
+            <tr>
+              <th class="border border-gray-900 p-2 w-[50%] text-center">
+                {{ 'INVOICE.CLIENTNAME' | translate }}
+              </th>
+              <th class="border border-gray-900 p-2 w-[50%] text-center">
+                {{ 'INVOICE.SUPPLIER' | translate }}
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <!-- Customer Info -->
+              <td class="border border-gray-900 p-2 align-top" style="width: 50%;">
+                <div class="flex w-full" dir="ltr" style="font-size: 0.72rem; line-height: 1.6; overflow-wrap: break-word; word-break: break-word;">
+                  <!-- Left Side (English LTR) -->
+                  <div class="w-1/2 pe-2" dir="ltr" style="min-width: 0; overflow: hidden;">
+                    <div class="flex items-baseline mb-1">
+                      <span style="min-width: 57px;" class="font-semibold text-gray-700">Name</span>
+                      <span class="px-1">:</span>
+                      <span class="font-bold" style="overflow-wrap: break-word; word-break: break-word;">{{ invoice?.customerProfile?.englishName || getCustomerName() }}</span>
+                    </div>
+                    <div class="flex items-baseline mb-1">
+                      <span style="min-width: 57px;" class="font-semibold text-gray-700">Building No.</span>
+                      <span class="px-1">:</span>
+                      <span>{{ getCustomerBuildingNumber() || '-' }}</span>
+                    </div>
+                    <div class="flex items-baseline mb-1">
+                      <span style="min-width: 57px;" class="font-semibold text-gray-700">Street Name</span>
+                      <span class="px-1">:</span>
+                      <span>{{ getCustomerStreet() || '-' }}</span>
+                    </div>
+                    <div class="flex items-baseline mb-1">
+                      <span style="min-width: 57px;" class="font-semibold text-gray-700">District</span>
+                      <span class="px-1">:</span>
+                      <span>{{ getCustomerDistrict() || '-' }}</span>
+                    </div>
+                    <div class="flex items-baseline mb-1">
+                      <span style="min-width: 57px;" class="font-semibold text-gray-700">City</span>
+                      <span class="px-1">:</span>
+                      <span>{{ getCustomerCity() || '-' }}</span>
+                    </div>
+                    <div class="flex items-baseline mb-1">
+                      <span style="min-width: 57px;" class="font-semibold text-gray-700">Country</span>
+                      <span class="px-1">:</span>
+                      <span>{{ getCustomerCountry() || '-' }}</span>
+                    </div>
+                    <div class="flex items-baseline mb-1">
+                      <span style="min-width: 57px;" class="font-semibold text-gray-700">Postal Code</span>
+                      <span class="px-1">:</span>
+                      <span>{{ getCustomerZipCode() || '-' }}</span>
+                    </div>
+                    <div class="flex items-baseline mb-1">
+                      <span style="min-width: 57px;" class="font-semibold text-gray-700">Additional No.</span>
+                      <span class="px-1">:</span>
+                      <span>{{ getCustomerAdditionalContactNumber() || '-' }}</span>
+                    </div>
+                    <div class="flex items-baseline mb-1">
+                      <span style="min-width: 57px;" class="font-semibold text-gray-700">VAT Number</span>
+                      <span class="px-1">:</span>
+                      <span>{{ getCustomerTaxNumber() || '-' }}</span>
+                    </div>
+                    <div class="flex items-baseline mb-1">
+                      <span style="min-width: 57px;" class="font-semibold text-gray-700">Other Buyer ID</span>
+                      <span class="px-1">:</span>
+                      <span>{{ getCustomerOtherId() || '-' }}</span>
+                    </div>
+                  </div>
+
+                  <!-- Right Side (Arabic RTL) -->
+                  <div class="w-1/2 ps-2" dir="rtl" style="min-width: 0; overflow: hidden;">
+                    <div class="flex items-baseline mb-1">
+                      <span style="min-width: 57px;" class="font-semibold text-gray-700">الاسم</span>
+                      <span class="px-1">:</span>
+                      <span class="font-bold" style="overflow-wrap: break-word; word-break: break-word;">{{ invoice?.customerProfile?.arabicName || getCustomerName() }}</span>
+                    </div>
+                    <div class="flex items-baseline mb-1">
+                      <span style="min-width: 57px;" class="font-semibold text-gray-700">رقم المبنى</span>
+                      <span class="px-1">:</span>
+                      <span>{{ getCustomerBuildingNumber() || '-' }}</span>
+                    </div>
+                    <div class="flex items-baseline mb-1">
+                      <span style="min-width: 57px;" class="font-semibold text-gray-700">اسم الشارع</span>
+                      <span class="px-1">:</span>
+                      <span>{{ getCustomerStreet() || '-' }}</span>
+                    </div>
+                    <div class="flex items-baseline mb-1">
+                      <span style="min-width: 57px;" class="font-semibold text-gray-700">الحي</span>
+                      <span class="px-1">:</span>
+                      <span>{{ getCustomerDistrict() || '-' }}</span>
+                    </div>
+                    <div class="flex items-baseline mb-1">
+                      <span style="min-width: 57px;" class="font-semibold text-gray-700">المدينة</span>
+                      <span class="px-1">:</span>
+                      <span>{{ getCustomerCity() || '-' }}</span>
+                    </div>
+                    <div class="flex items-baseline mb-1">
+                      <span style="min-width: 57px;" class="font-semibold text-gray-700">البلد</span>
+                      <span class="px-1">:</span>
+                      <span>{{ getCustomerCountry() || '-' }}</span>
+                    </div>
+                    <div class="flex items-baseline mb-1">
+                      <span style="min-width: 57px;" class="font-semibold text-gray-700">الرمز البريدي</span>
+                      <span class="px-1">:</span>
+                      <span>{{ getCustomerZipCode() || '-' }}</span>
+                    </div>
+                    <div class="flex items-baseline mb-1">
+                      <span style="min-width: 57px;" class="font-semibold text-gray-700">الرقم الاضافي</span>
+                      <span class="px-1">:</span>
+                      <span>{{ getCustomerAdditionalContactNumber() || '-' }}</span>
+                    </div>
+                    <div class="flex items-baseline mb-1">
+                      <span style="min-width: 57px;" class="font-semibold text-gray-700">م ق رقم ضريبي</span>
+                      <span class="px-1">:</span>
+                      <span>{{ getCustomerTaxNumber() || '-' }}</span>
+                    </div>
+                    <div class="flex items-baseline mb-1">
+                      <span style="min-width: 57px;" class="font-semibold text-gray-700">معرف اخر</span>
+                      <span class="px-1">:</span>
+                      <span>{{ getCustomerOtherId() || '-' }}</span>
+                    </div>
+                  </div>
+                </div>
+              </td>
+
+              <!-- Supplier Info -->
+              <td class="border border-gray-900 p-2 align-top" *ngIf="companyDetails; else noSupplier2" style="width: 50%;">
+                <div class="flex w-full" dir="ltr" style="font-size: 0.72rem; line-height: 1.6; overflow-wrap: break-word; word-break: break-word;">
+                  <!-- Left Side (English LTR) -->
+                  <div class="w-1/2 pe-2" dir="ltr" style="min-width: 0; overflow: hidden;">
+                    <div class="flex items-baseline mb-1">
+                      <span style="min-width: 57px;" class="font-semibold text-gray-700">Name</span>
+                      <span class="px-1">:</span>
+                      <span class="font-bold" style="overflow-wrap: break-word; word-break: break-word;">{{ companyDetails.englishName }}</span>
+                    </div>
+                    <div class="flex items-baseline mb-1">
+                      <span style="min-width: 57px;" class="font-semibold text-gray-700">Building No.</span>
+                      <span class="px-1">:</span>
+                      <span>{{ companyDetails.buildingNumber || '-' }}</span>
+                    </div>
+                    <div class="flex items-baseline mb-1">
+                      <span style="min-width: 57px;" class="font-semibold text-gray-700">Street Name</span>
+                      <span class="px-1">:</span>
+                      <span>{{ companyDetails.address?.street || companyDetails.street || '-' }}</span>
+                    </div>
+                    <div class="flex items-baseline mb-1">
+                      <span style="min-width: 57px;" class="font-semibold text-gray-700">District</span>
+                      <span class="px-1">:</span>
+                      <span>{{ companyDetails.district || '-' }}</span>
+                    </div>
+                    <div class="flex items-baseline mb-1">
+                      <span style="min-width: 57px;" class="font-semibold text-gray-700">City</span>
+                      <span class="px-1">:</span>
+                      <span>{{ companyDetails.address?.city || companyDetails.city || '-' }}</span>
+                    </div>
+                    <div class="flex items-baseline mb-1">
+                      <span style="min-width: 57px;" class="font-semibold text-gray-700">Country</span>
+                      <span class="px-1">:</span>
+                      <span>{{ companyDetails.address?.country || companyDetails.country || '-' }}</span>
+                    </div>
+                    <div class="flex items-baseline mb-1">
+                      <span style="min-width: 57px;" class="font-semibold text-gray-700">Postal Code</span>
+                      <span class="px-1">:</span>
+                      <span>{{ companyDetails.address?.zipCode || companyDetails.zipCode || '-' }}</span>
+                    </div>
+                    <div class="flex items-baseline mb-1">
+                      <span style="min-width: 57px;" class="font-semibold text-gray-700">Additional No.</span>
+                      <span class="px-1">:</span>
+                      <span>{{ companyDetails.subNumber || '-' }}</span>
+                    </div>
+                    <div class="flex items-baseline mb-1">
+                      <span style="min-width: 57px;" class="font-semibold text-gray-700">VAT Number</span>
+                      <span class="px-1">:</span>
+                      <span>{{ companyDetails.taxNumber || '-' }}</span>
+                    </div>
+                    <div class="flex items-baseline mb-1">
+                      <span style="min-width: 57px;" class="font-semibold text-gray-700">Other Buyer ID</span>
+                      <span class="px-1">:</span>
+                      <span>{{ companyDetails.unifiedNumber || '-' }}</span>
+                    </div>
+                  </div>
+
+                  <!-- Right Side (Arabic RTL) -->
+                  <div class="w-1/2 ps-2" dir="rtl" style="min-width: 0; overflow: hidden;">
+                    <div class="flex items-baseline mb-1">
+                      <span style="min-width: 57px;" class="font-semibold text-gray-700">الاسم</span>
+                      <span class="px-1">:</span>
+                      <span class="font-bold" style="overflow-wrap: break-word; word-break: break-word;">{{ companyDetails.arabicName }}</span>
+                    </div>
+                    <div class="flex items-baseline mb-1">
+                      <span style="min-width: 57px;" class="font-semibold text-gray-700">رقم المبنى</span>
+                      <span class="px-1">:</span>
+                      <span>{{ companyDetails.buildingNumber || '-' }}</span>
+                    </div>
+                    <div class="flex items-baseline mb-1">
+                      <span style="min-width: 57px;" class="font-semibold text-gray-700">اسم الشارع</span>
+                      <span class="px-1">:</span>
+                      <span>{{ companyDetails.arabicAddress?.street || companyDetails.street || '-' }}</span>
+                    </div>
+                    <div class="flex items-baseline mb-1">
+                      <span style="min-width: 57px;" class="font-semibold text-gray-700">الحي</span>
+                      <span class="px-1">:</span>
+                      <span>{{ companyDetails.district || '-' }}</span>
+                    </div>
+                    <div class="flex items-baseline mb-1">
+                      <span style="min-width: 57px;" class="font-semibold text-gray-700">المدينة</span>
+                      <span class="px-1">:</span>
+                      <span>{{ companyDetails.arabicAddress?.city || companyDetails.city || '-' }}</span>
+                    </div>
+                    <div class="flex items-baseline mb-1">
+                      <span style="min-width: 57px;" class="font-semibold text-gray-700">البلد</span>
+                      <span style="margin: 0 4px;">:</span>
+                      <span>{{ companyDetails.arabicAddress?.country || companyDetails.country || '-' }}</span>
+                    </div>
+                    <div class="flex items-baseline mb-1">
+                      <span style="min-width: 57px;" class="font-semibold text-gray-700">الرمز البريدي</span>
+                      <span style="margin: 0 4px;">:</span>
+                      <span>{{ companyDetails.arabicAddress?.zipCode || companyDetails.zipCode || '-' }}</span>
+                    </div>
+                    <div class="flex items-baseline mb-1">
+                      <span style="min-width: 57px;" class="font-semibold text-gray-700">الرقم الاضافي</span>
+                      <span style="margin: 0 4px;">:</span>
+                      <span>{{ companyDetails.subNumber || '-' }}</span>
+                    </div>
+                    <div class="flex items-baseline mb-1">
+                      <span style="min-width: 57px;" class="font-semibold text-gray-700">م ق رقم ضريبي</span>
+                      <span style="margin: 0 4px;">:</span>
+                      <span>{{ companyDetails.taxNumber || '-' }}</span>
+                    </div>
+                    <div class="flex items-baseline mb-1">
+                      <span style="min-width: 57px;" class="font-semibold text-gray-700">معرف اخر</span>
+                      <span style="margin: 0 4px;">:</span>
+                      <span>{{ companyDetails.unifiedNumber || '-' }}</span>
+                    </div>
+                  </div>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+
+        <ng-template #noSupplier2>
+          <td class="border border-gray-900 p-2 align-top">
+            <em class="text-muted">{{ 'DATA.NO_RECORDS' | translate }}</em>
+          </td>
+        </ng-template>
+      </div>
+    </ng-template>
+
+    <ng-template #headerTemplate>
+      <div class="w-full flex flex-col">
+        <ng-container *ngTemplateOutlet="logoHeaderTemplate"></ng-container>
+      </div>
+    </ng-template>
+
+    <!-- Body Template -->
+    <ng-template #bodyTemplate>
+      <!-- template مشترك لصف واحد في جدول الوصف -->
+      <ng-template #rowTemplate let-item let-rowIndex="rowIndex">
+        <tr>
+          <td class="border border-gray-900 p-2 text-center" style="width: 6%;">
+            {{ rowIndex + 1 }}
+          </td>
+          <td class="border border-gray-900 p-2" style="width: 36%;">
+            <div class="font-semibold">
+              <span>{{ item.itemName || '-' }}</span>
+              <span class="font-semibold"> - {{ item.description || '-' }}</span>
+            </div>
+          </td>
+          <td class="border border-gray-900 p-2 text-center" style="width: 7%;">
+            {{ item.quantity || 0 }}
+          </td>
+          <td class="border border-gray-900 p-2 text-center" style="width: 7%;">
+            {{ item.price | formatDecimal }}
+          </td>
+          <td class="border border-gray-900 p-2 text-center" style="width: 7%;">
+            {{ item.totalPrice | formatDecimal }}
+          </td>
+          <td class="border border-gray-900 p-2 text-center" style="width: 7%;">15%</td>
+          <td class="border border-gray-900 p-2 text-center" style="width: 7%;">
+            {{ getVatAmountFromNet(item.totalPrice) | formatDecimal }}
+          </td>
+          <td class="border border-gray-900 p-2 text-center" style="width: 15%;">
+            {{ getTotalWithVat(item.totalPrice) | formatDecimal }}
+          </td>
+        </tr>
+      </ng-template>
+
+      <!-- ✅ جدول الصفحة الأولى -->
+      <!-- ✅ جدول الصفحة الأولى بعد التعديل -->
+      <!-- ✅ بيانات العميل / المورد تظهر فقط في الصفحة الأولى -->
+      <ng-container *ngTemplateOutlet="customerSupplierTemplate"></ng-container>
+
+      <div class="w-full border border-gray-900">
+        <table class="w-full text-sm">
+          <thead class="sales-header-bg text-white">
+            <tr>
+              <th class="border border-gray-900 p-2 text-center" style="width: 6%;">#</th>
+              <th class="border border-gray-900 p-2 text-center" style="width: 40%;">
+                {{ 'INVOICE.DESCRIPTION_INVOICE' | translate }}
+              </th>
+              <th class="border border-gray-900 p-2 text-center" style="width: 7%;">
+                {{ 'INVOICE.QUANTITY' | translate }}
+              </th>
+              <th class="border border-gray-900 p-2 text-center" style="width: 7%;">
+                {{ 'INVOICE.PRICE_INVOICE' | translate }}
+              </th>
+              <th class="border border-gray-900 p-2 text-center" style="width: 7%;">
+                {{ 'INVOICE.TOTAL_BEFORE_TAX' | translate }}
+              </th>
+              <th class="border border-gray-900 p-2 text-center" style="width: 7%;">
+                {{ 'INVOICE.TAX_PERCENT' | translate }}
+              </th>
+              <th class="border border-gray-900 p-2 text-center" style="width: 7%;">
+                {{ 'INVOICE.TAX_AMOUNT' | translate }}
+              </th>
+              <th class="border border-gray-900 p-2 text-center" style="width: 15%;">
+                {{ 'INVOICE.TOTAL_INVOICE' | translate }}
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            <ng-container *ngFor="let item of docData | slice:0:descriptionRowsPerPage; let i = index">
+              <ng-container *ngTemplateOutlet="rowTemplate; context: { $implicit: item, rowIndex: i }">
+              </ng-container>
+            </ng-container>
+          </tbody>
+        </table>
+      </div>
+
+
+      <!-- 👇 لو عدد الصفوف أكبر من descriptionRowsPerPage نبدأ صفحة ثانية -->
+      <!-- 👇 لو عدد الصفوف أكبر من descriptionRowsPerPage نبدأ صفحة ثانية -->
+      <ng-container *ngIf="docData.length > descriptionRowsPerPage">
+
+        <!-- page break: ابدأ صفحة جديدة -->
+        <div class="page-break"></div>
+
+        <!-- ✅ الهيدر مكرر في الصفحة الثانية بنفس الشكل وبدون خلفية زرقاء -->
+        <ng-container *ngTemplateOutlet="logoHeaderTemplate"></ng-container>
+
+        <!-- ✅ جدول الصفحة الثانية -->
+        <div class="w-full border border-gray-900">
+          <table class="w-full text-sm">
+            <thead class="sales-header-bg text-white">
+              <!-- صف عناوين الأعمدة -->
+              <tr>
+                <th class="border border-gray-900 p-2 text-center" style="width: 6%;">#</th>
+                <th class="border border-gray-900 p-2 text-center" style="width: 40%;">{{ 'INVOICE.DESCRIPTION_INVOICE'
+                  |
+                  translate }}</th>
+                <th class="border border-gray-900 p-2 text-center" style="width: 7%;">{{ 'INVOICE.QUANTITY' | translate
+                  }}</th>
+                <th class="border border-gray-900 p-2 text-center" style="width: 7%;">{{ 'INVOICE.PRICE_INVOICE' |
+                  translate }}
+                </th>
+                <th class="border border-gray-900 p-2 text-center" style="width: 7%;">{{ 'INVOICE.TOTAL_BEFORE_TAX' |
+                  translate }}</th>
+                <th class="border border-gray-900 p-2 text-center" style="width: 7%;">{{ 'INVOICE.TAX_PERCENT' |
+                  translate }}</th>
+                <th class="border border-gray-900 p-2 text-center" style="width: 7%;">{{ 'INVOICE.TAX_AMOUNT' |
+                  translate }}</th>
+                <th class="border border-gray-900 p-2 text-center" style="width: 15%;">{{ 'INVOICE.TOTAL_INVOICE' |
+                  translate }}
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              <ng-container *ngFor="let item of docData | slice:descriptionRowsPerPage; let i = index">
+                <ng-container
+                  *ngTemplateOutlet="rowTemplate; context: { $implicit: item, rowIndex: (descriptionRowsPerPage + i) }">
+                </ng-container>
+              </ng-container>
+            </tbody>
+          </table>
+        </div>
+
+      </ng-container>
+    </ng-template>
+
+    <!-- Body Template 2 for Print 3 -->
+    <ng-template #bodyTemplate2>
+      <ng-template #rowTemplate2 let-item let-rowIndex="rowIndex">
+        <tr>
+          <td class="border border-gray-900 p-2 text-center" style="width: 6%;">
+            {{ rowIndex + 1 }}
+          </td>
+          <td class="border border-gray-900 p-2" style="width: 36%;">
+            <div class="font-semibold">
+              <span>{{ item.itemName || '-' }}</span>
+              <span class="font-semibold"> - {{ item.description || '-' }}</span>
+            </div>
+          </td>
+          <td class="border border-gray-900 p-2 text-center" style="width: 7%;">
+            {{ item.quantity || 0 }}
+          </td>
+          <td class="border border-gray-900 p-2 text-center" style="width: 7%;">
+            {{ item.price | formatDecimal }}
+          </td>
+          <td class="border border-gray-900 p-2 text-center" style="width: 7%;">
+            {{ item.totalPrice | formatDecimal }}
+          </td>
+          <td class="border border-gray-900 p-2 text-center" style="width: 7%;">15%</td>
+          <td class="border border-gray-900 p-2 text-center" style="width: 7%;">
+            {{ getVatAmountFromNet(item.totalPrice) | formatDecimal }}
+          </td>
+          <td class="border border-gray-900 p-2 text-center" style="width: 15%;">
+            {{ getTotalWithVat(item.totalPrice) | formatDecimal }}
+          </td>
+        </tr>
+      </ng-template>
+
+      <ng-container *ngTemplateOutlet="customerSupplierTemplate2"></ng-container>
+
+      <div class="w-full border border-gray-900">
+        <table class="w-full text-sm">
+          <thead class="sales-header-bg text-white">
+            <tr>
+              <th class="border border-gray-900 p-2 text-center" style="width: 6%;">#</th>
+              <th class="border border-gray-900 p-2 text-center" style="width: 40%;">
+                {{ 'INVOICE.DESCRIPTION_INVOICE' | translate }}
+              </th>
+              <th class="border border-gray-900 p-2 text-center" style="width: 7%;">
+                {{ 'INVOICE.QUANTITY' | translate }}
+              </th>
+              <th class="border border-gray-900 p-2 text-center" style="width: 7%;">
+                {{ 'INVOICE.PRICE_INVOICE' | translate }}
+              </th>
+              <th class="border border-gray-900 p-2 text-center" style="width: 7%;">
+                {{ 'INVOICE.TOTAL_BEFORE_TAX' | translate }}
+              </th>
+              <th class="border border-gray-900 p-2 text-center" style="width: 7%;">
+                {{ 'INVOICE.TAX_PERCENT' | translate }}
+              </th>
+              <th class="border border-gray-900 p-2 text-center" style="width: 7%;">
+                {{ 'INVOICE.TAX_AMOUNT' | translate }}
+              </th>
+              <th class="border border-gray-900 p-2 text-center" style="width: 15%;">
+                {{ 'INVOICE.TOTAL_INVOICE' | translate }}
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            <ng-container *ngFor="let item of docData | slice:0:descriptionRowsPerPage; let i = index">
+              <ng-container *ngTemplateOutlet="rowTemplate2; context: { $implicit: item, rowIndex: i }">
+              </ng-container>
+            </ng-container>
+          </tbody>
+        </table>
+      </div>
+
+      <ng-container *ngIf="(docData?.length || 0) > descriptionRowsPerPage">
+        <div class="page-break"></div>
+        <div class="w-full border border-gray-900 mt-4">
+          <table class="w-full text-sm">
+            <thead class="sales-header-bg text-white">
+              <tr>
+                <th class="border border-gray-900 p-2 text-center" style="width: 6%;">#</th>
+                <th class="border border-gray-900 p-2 text-center" style="width: 40%;">{{ 'INVOICE.DESCRIPTION_INVOICE' |
+                  translate }}</th>
+                <th class="border border-gray-900 p-2 text-center" style="width: 7%;">{{ 'INVOICE.QUANTITY' | translate
+                  }}</th>
+                <th class="border border-gray-900 p-2 text-center" style="width: 7%;">{{ 'INVOICE.PRICE_INVOICE' |
+                  translate }}
+                </th>
+                <th class="border border-gray-900 p-2 text-center" style="width: 7%;">{{ 'INVOICE.TOTAL_BEFORE_TAX' |
+                  translate }}</th>
+                <th class="border border-gray-900 p-2 text-center" style="width: 7%;">{{ 'INVOICE.TAX_PERCENT' |
+                  translate }}</th>
+                <th class="border border-gray-900 p-2 text-center" style="width: 7%;">{{ 'INVOICE.TAX_AMOUNT' |
+                  translate }}</th>
+                <th class="border border-gray-900 p-2 text-center" style="width: 15%;">{{ 'INVOICE.TOTAL_INVOICE' |
+                  translate }}
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              <ng-container *ngFor="let item of docData | slice:descriptionRowsPerPage; let i = index">
+                <ng-container
+                  *ngTemplateOutlet="rowTemplate2; context: { $implicit: item, rowIndex: (descriptionRowsPerPage + i) }">
+                </ng-container>
+              </ng-container>
+            </tbody>
+          </table>
+        </div>
+      </ng-container>
+    </ng-template>
+
+
+    <!-- Summary Template: Used for both on-screen and print -->
+    <ng-template #summaryTemplate>
+      <div style="display: flex !important; justify-content: space-between !important; align-items: flex-start !important; gap: 15px !important; width: 100% !important; page-break-inside: avoid; break-inside: avoid; margin-top: 15px;">
+        <!-- Left Section: Company Terms & Conditions and Bank Accounts -->
+        <div *ngIf="anyPolicyChecked || anyBankChecked"
+             [style.text-align]="activeLanguage === 'ar' ? 'right' : 'left'"
+             style="font-size: 0.88rem; line-height: 1.4; color: #000 !important; flex: 1 1 0% !important; min-width: calc(100% - 250px) !important;">
+             
+          <!-- Terms and Conditions Block -->
+          <div *ngIf="anyPolicyChecked" class="mb-3">
+            <strong class="text-dark mb-1 d-block font-bold" style="text-align: inherit; color: #000 !important; font-size: 0.92rem;">
+              {{ activeLanguage === 'ar' ? 'الشروط والأحكام:' : 'Terms & Conditions:' }}
+            </strong>
+            <ul class="m-0 p-0 w-full" 
+                [style.direction]="activeLanguage === 'ar' ? 'rtl' : 'ltr'"
+                [style.text-align]="activeLanguage === 'ar' ? 'right' : 'left'"
+                style="list-style: none; color: #000 !important; font-weight: 500; display: block !important;">
+              <ng-container *ngFor="let policy of selectedPolicies">
+                <li *ngIf="policy.checked" class="mb-1" style="text-align: inherit; color: #000 !important; display: block !important; width: 100% !important; clear: both !important; white-space: pre-line !important;">
+                  {{ activeLanguage === 'ar' ? policy.name : policy.nameEn }}
+                </li>
+              </ng-container>
+            </ul>
+          </div>
+
+          <!-- Bank Accounts Block -->
+          <div *ngIf="anyBankChecked">
+            <strong class="text-dark mb-1 d-block font-bold" style="text-align: inherit; color: #000 !important; font-size: 0.92rem;">
+              {{ activeLanguage === 'ar' ? 'الحسابات البنكية للشركة' : 'Company Bank Accounts' }}
+            </strong>
+            <ul class="m-0 p-0 w-full"
+                [style.direction]="activeLanguage === 'ar' ? 'rtl' : 'ltr'"
+                [style.text-align]="activeLanguage === 'ar' ? 'right' : 'left'"
+                style="list-style: none; color: #000 !important; font-weight: 500; display: block !important;">
+              <ng-container *ngFor="let bank of selectedBanks">
+                <li *ngIf="bank.checked" class="mb-1" style="text-align: inherit; color: #000 !important; display: block !important; width: 100% !important; clear: both !important;">
+                  <div style="display: flex; flex-wrap: wrap; gap: 4px 8px; align-items: center; width: 100%;">
+                    <span>{{ activeLanguage === 'ar' ? 'اسم الحساب: ' : 'Account Name: ' }}<span class="font-bold" style="color: #000 !important;">{{ bank.accountName }}</span></span>
+                    <span>-</span>
+                    <span>{{ activeLanguage === 'ar' ? bank.bankName : bank.bankNameEn }} : <span class="font-bold" style="color: #000 !important;">{{ bank.accountNumber }}</span></span>
+                    <span style="white-space: nowrap;">(IBAN: <span class="font-bold" style="color: #000 !important;">{{ bank.iban }}</span>)</span>
+                    <span *ngIf="bank.swiftCode" style="white-space: nowrap;">(SWIFT: <span class="font-bold" style="color: #000 !important;">{{ bank.swiftCode }}</span>)</span>
+                  </div>
+                </li>
+              </ng-container>
+            </ul>
+          </div>
+        </div>
+
+        <!-- Spacer block shown only when NEITHER policies NOR bank accounts are checked -->
+        <div style="flex: 1 1 auto !important;" *ngIf="!anyPolicyChecked && !anyBankChecked"></div>
+
+        <!-- Right Section: Totals Table -->
+        <div style="width: 230px; flex-shrink: 0 !important; flex-grow: 0 !important;">
+          <table class="w-full border border-gray-900">
+            <tbody>
+              <tr>
+                <td class="p-2 border border-gray-900">
+                  <strong class="text-dark">{{ "INVOICE.TOTAL_INVOICE" | translate }}</strong>
+                </td>
+                <td class="p-2 text-center border border-gray-900">
+                  {{ getInvoiceNetPrice() | formatDecimal }}
+                </td>
+              </tr>
+              <tr *ngIf="invoice.discountAmount && invoice.discountAmount > 0">
+                <td class="p-2 border border-gray-900">
+                  <strong class="text-dark"> {{ "INVOICE.DISCOUNT_INVOICE" | translate }}</strong>
+                </td>
+                <td class="p-2 text-center border border-gray-900">
+                  {{ invoice.discountAmount | formatDecimal }}
+                </td>
+              </tr>
+              <tr *ngIf="invoice.taxAmount && invoice.taxAmount > 0">
+                <td class="p-2 border border-gray-900">
+                  <strong class="text-dark"> {{ "INVOICE.ADDEDTAX_INVOICE" | translate }}</strong>
+                </td>
+                <td class="p-2 text-center border border-gray-900">
+                  {{ getInvoiceTaxAmount() | formatDecimal }}
+                </td>
+              </tr>
+              <tr>
+                <td class="p-2 border border-gray-900">
+                  <strong class="text-dark"> {{ "INVOICE.TOTALWITHTAX_INVOICE" | translate }}</strong>
+                </td>
+                <td class="p-2 text-center border border-gray-900">
+                  <strong class="text-dark">{{ getInvoiceTotalPrice() | formatDecimal }}</strong>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </ng-template>
+
+    <!-- Footer Template -->
+    <ng-template #footerTemplate>
+      <!-- الفوتر العادي (التوقيعات) يبقى كما هو في التدفق -->
+      <div *ngIf="showCompanySignature || showCustomerSignature" class="w-full border border-slate-900 rounded-2xl p-2" style="page-break-inside: avoid; break-inside: avoid;">
+        <table class="w-full" style="border-collapse: collapse; table-layout: fixed;">
+          <tr *ngIf="showCompanySignature || showCustomerSignature">
+            <!-- Company Signature -->
+            <td *ngIf="showCompanySignature" [style.width]="showCustomerSignature ? '30%' : '100%'" 
+                [style.text-align]="activeLanguage === 'en' ? 'left' : 'right'" 
+                style="padding: 10px 40px; vertical-align: top;" class="font-semibold text-xs text-slate-800">
+              <p class="m-0 p-0" style="font-size: 0.85rem; white-space: nowrap;">
+                {{activeLanguage==='en'?companyDetails?.englishName:companyDetails?.arabicName}}
+              </p>
+              <p class="m-0 p-0 w-full text-[10px] text-slate-600" style="margin-top: 6px;">
+                {{ "INVOICE.SIGNATURE_INVOICE" | translate}}: <span class="font-light">..................................................</span>
+              </p>
+              <div *ngIf="showStamp && companyDetails?.stampUrl" 
+                   [style.text-align]="activeLanguage === 'en' ? 'left' : 'right'"
+                   style="margin-top: 6px; display: inline-block; width: 100%;">
+                <img [src]="companyDetails?.stampUrl || ''" alt="company-stamp" width="70" height="70" 
+                     [style.margin-right]="activeLanguage === 'ar' ? '40px' : '0'"
+                     [style.margin-left]="activeLanguage === 'en' ? '40px' : '0'"
+                     style="opacity: 0.95; display: inline-block;">
+              </div>
+            </td>
+            <!-- Spacer Column -->
+            <td *ngIf="showCompanySignature && showCustomerSignature" style="width: 40%;"></td>
+            <!-- Customer Signature -->
+            <td *ngIf="showCustomerSignature" [style.width]="showCompanySignature ? '30%' : '100%'" 
+                [style.text-align]="activeLanguage === 'en' ? 'left' : 'right'" 
+                style="padding: 10px 40px; vertical-align: top;" class="font-semibold text-xs text-slate-800">
+              <p class="m-0 p-0" style="font-size: 0.85rem; white-space: nowrap;">
+                {{getCustomerName()}}
+              </p>
+              <p class="m-0 p-0 w-full text-[10px] text-slate-600" style="margin-top: 6px;">
+                {{ "INVOICE.SIGNATURE_INVOICE" | translate}}: <span class="font-light">..................................................</span>
+              </p>
+            </td>
+          </tr>
+        </table>
+      </div>
+
+      <!-- 👇 هذا السطر يظهر فقط في الشاشة (مش في الطباعة) -->
+      <div class="w-full border-t border-slate-900 rounded-2xl flex justify-center border mt-4 pb-2 address-inline">
+        {{companyDetails?.getFullAddress()}}
+      </div>
+
+      <!-- 👇 وهذا هو السطر الذي سيتكرر في أسفل كل صفحة طباعة -->
+      <div class="print-address-footer">
+        {{companyDetails?.getFullAddress()}}
+      </div>
+    </ng-template>
+
+
+
+
+
+    <!-- Custom Body Template: Items table only (header content in headerTemplate) -->
+    <!-- AFTER -->
+    <!-- <ng-template #bodyTemplate>
+
+  <ng-template #rowTemplate let-item let-rowIndex="rowIndex">
+    <tr>
+      <td class="border border-gray-900 p-2 text-center" style="width: 6%;">
+        {{ rowIndex + 1 }}
+      </td>
+      <td class="border border-gray-900 p-2" style="width: 36%;">
+        <div class="font-semibold">
+          <span>{{ item.itemName || '-' }}</span>
+          <span class="text-xs text-muted"> - {{ item.description || '-' }}</span>
+        </div>
+      </td>
+      <td class="border border-gray-900 p-2 text-center" style="width: 8%;">
+        {{ item.quantity || 0 }}
+      </td>
+      <td class="border border-gray-900 p-2 text-center" style="width: 10%;">
+        {{ item.price | formatDecimal }}
+      </td>
+      <td class="border border-gray-900 p-2 text-center" style="width: 14%;">
+        {{ item.totalPrice | formatDecimal }}
+      </td>
+      <td class="border border-gray-900 p-2 text-center" style="width: 8%;">15%</td>
+      <td class="border border-gray-900 p-2 text-center" style="width: 9%;">
+        {{ getVatAmountFromNet(item.totalPrice) | formatDecimal }}
+      </td>
+      <td class="border border-gray-900 p-2 text-center" style="width: 9%;">
+        {{ getTotalWithVat(item.totalPrice) | formatDecimal }}
+      </td>
+    </tr>
+  </ng-template>
+
+  <div class="w-full border border-gray-900">
+    <table class="w-full text-sm">
+      <thead class="bg-gray-200">
+        <tr>
+          <th class="border border-gray-900 p-2 text-center" style="width: 6%;">#</th>
+          <th class="border border-gray-900 p-2 text-center" style="width: 36%;">
+            {{ 'INVOICE.DESCRIPTION' | translate }}
+          </th>
+          <th class="border border-gray-900 p-2 text-center" style="width: 8%;">
+            {{ 'INVOICE.QUANTITY' | translate }}
+          </th>
+          <th class="border border-gray-900 p-2 text-center" style="width: 10%;">
+            {{ 'INVOICE.PRICE' | translate }}
+          </th>
+          <th class="border border-gray-900 p-2 text-center" style="width: 14%;">Total before VAT</th>
+          <th class="border border-gray-900 p-2 text-center" style="width: 8%;">VAT %</th>
+          <th class="border border-gray-900 p-2 text-center" style="width: 9%;">VAT</th>
+          <th class="border border-gray-900 p-2 text-center" style="width: 9%;">Total</th>
+        </tr>
+      </thead>
+      <tbody>
+        <ng-container
+          *ngFor="let item of docData | slice:0:descriptionRowsPerPage; let i = index">
+          <ng-container
+            *ngTemplateOutlet="rowTemplate; context: { $implicit: item, rowIndex: i }">
+          </ng-container>
+        </ng-container>
+      </tbody>
+    </table>
+  </div>
+
+  <ng-container *ngIf="docData.length > descriptionRowsPerPage">
+
+    <div class="page-break"></div>
+
+    <div class="w-full flex flex-col border border-slate-900 p-3 mb-3">
+      <div class="w-full flex mb-2"
+           *ngIf="companyDetails?.logoUrl"
+           [ngClass]="activeLanguage === 'ar' ? 'justify-start' : 'justify-end'">
+        <img [src]="companyDetails?.logoUrl || ''"
+             alt="company-logo" width="120" height="120">
+      </div>
+
+      <div class="w-full flex justify-between items-center">
+        <div>
+          <p class="m-0">
+            <strong>{{ 'INVOICE.INVOICENO' | translate }}:</strong> {{ invoice.invoiceNo }}
+          </p>
+          <p class="m-0">
+            <strong>{{ 'INVOICE.DATE' | translate }}:</strong>
+            {{ invoice.issueDate | customDate:'yyyy-MM-dd' }}
+          </p>
+        </div>
+
+        <div *ngIf="invoice.generatedQR" class="text-right flex flex-col items-end gap-1">
+          <qrcode [qrdata]="invoice.generatedQR"
+                  elementType="img"
+                  [width]="80"
+                  [errorCorrectionLevel]="'L'">
+          </qrcode>
+          <div *ngIf="sellerName" class="text-sm font-semibold">
+            <span>البائع:</span> <span>{{ sellerName }}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  
+  <div class="w-full border border-gray-900">
+    <table class="w-full text-sm">
+      <thead class="bg-gray-200">
+        <tr>
+          <th class="border border-gray-900 p-2 text-center" style="width: 6%;">#</th>
+          <th class="border border-gray-900 p-2 text-center" style="width: 40%;">
+            الوصف
+          </th>
+          <th class="border border-gray-900 p-2 text-center" style="width: 8%;">
+            الكمية
+          </th>
+          <th class="border border-gray-900 p-2 text-center" style="width: 10%;">
+            السعر
+          </th>
+          <th class="border border-gray-900 p-2 text-center" style="width: 12%;">
+            الإجمالي قبل الضريبة
+          </th>
+          <th class="border border-gray-900 p-2 text-center" style="width: 7%;">
+            نسبة الضريبة
+          </th>
+          <th class="border border-gray-900 p-2 text-center" style="width: 7%;">
+            قيمة الضريبة
+          </th>
+          <th class="border border-gray-900 p-2 text-center" style="width: 10%;">
+            الإجمالي
+          </th>
+        </tr>
+      </thead>
+      <tbody>
+        <ng-container
+          *ngFor="let item of docData | slice:descriptionRowsPerPage; let i = index">
+          <ng-container
+            *ngTemplateOutlet="rowTemplate; context: { $implicit: item, rowIndex: (descriptionRowsPerPage + i) }">
+          </ng-container>
+        </ng-container>
+      </tbody>
+    </table>
+  </div>
+
+  </ng-container>
+</ng-template> -->
+
+  </div>
+</ng-container>
+
+<p-toast></p-toast>
+
+<!-- Print Format Dialog -->
+<p-dialog [(visible)]="printOrientationDialogVisible" [header]="activeLanguage === 'ar' ? 'اختر نوع الطباعة' : 'Select Print Type'" [style]="{ width: '500px' }"
+  [modal]="true" [appendTo]="'body'" [draggable]="false" [resizable]="false">
+  <div class="flex flex-col gap-4 p-4">
+    <div class="flex flex-col gap-3">
+      <!-- A4 Portrait -->
+      <div
+        class="flex items-center gap-3 p-3 cursor-pointer rounded-lg border-2 transition-all hover:border-blue-500 hover:bg-blue-50"
+        [class.border-blue-500]="selectedPrintType === 'A4Portrait'"
+        [class.bg-blue-50]="selectedPrintType === 'A4Portrait'" (click)="selectedPrintType = 'A4Portrait'">
+        <input type="radio" name="printType" [checked]="selectedPrintType === 'A4Portrait'"
+          (change)="selectedPrintType = 'A4Portrait'" class="cursor-pointer">
+        <label class="cursor-pointer flex items-center gap-3 flex-1">
+          <i class="pi pi-file text-blue-600" style="font-size: 1.5rem"></i>
+          <div>
+            <div class="font-semibold text-lg">{{ activeLanguage === 'ar' ? 'طباعة A4 عمودي' : 'A4 Portrait Print' }}</div>
+            <div class="text-sm text-gray-600">{{ activeLanguage === 'ar' ? 'Portrait - الطباعة العادية بالاتجاه العمودي' : 'Standard portrait orientation print' }}</div>
+          </div>
+        </label>
+      </div>
+
+      <!-- A4 Landscape -->
+      <div
+        class="flex items-center gap-3 p-3 cursor-pointer rounded-lg border-2 transition-all hover:border-blue-500 hover:bg-blue-50"
+        [class.border-blue-500]="selectedPrintType === 'A4Landscape'"
+        [class.bg-blue-50]="selectedPrintType === 'A4Landscape'" (click)="selectedPrintType = 'A4Landscape'">
+        <input type="radio" name="printType" [checked]="selectedPrintType === 'A4Landscape'"
+          (change)="selectedPrintType = 'A4Landscape'" class="cursor-pointer">
+        <label class="cursor-pointer flex items-center gap-3 flex-1">
+          <i class="pi pi-file text-blue-600" style="font-size: 1.5rem; transform: rotate(90deg);"></i>
+          <div>
+            <div class="font-semibold text-lg">{{ activeLanguage === 'ar' ? 'طباعة A4 أفقي' : 'A4 Landscape Print' }}</div>
+            <div class="text-sm text-gray-600">{{ activeLanguage === 'ar' ? 'Landscape - الطباعة العادية بالاتجاه الأفقي' : 'Standard landscape orientation print' }}</div>
+          </div>
+        </label>
+      </div>
+
+    </div>
+  </div>
+  <ng-template pTemplate="footer">
+    <div class="flex justify-end gap-2 p-2">
+      <button pButton type="button" [label]="activeLanguage === 'ar' ? 'إلغاء' : 'Cancel'"
+        styleClass="p-button-outlined p-button-secondary rounded-xl px-4 py-2 font-bold"
+        (click)="printOrientationDialogVisible = false">
+      </button>
+      <button pButton type="button" [label]="activeLanguage === 'ar' ? 'موافق' : 'Confirm'"
+        styleClass="p-button-primary rounded-xl px-4 py-2 font-bold shadow-sm" (click)="confirmPrintOrientation()">
+      </button>
+    </div>
+  </ng-template>
+</p-dialog>
+
+<!-- Share Dialog -->
+<app-invoice-share-modal
+  [(visible)]="invoiceShareDialogVisible"
+  [invoiceId]="invoice?.id"
+  [invoiceNo]="invoice?.invoiceNo"
+  [customerName]="getCustomerName()"
+  [defaultEmail]="getCustomerEmail()"
+  [defaultPhone]="getCustomerPhone()"
+  [isReservation]="true"
+  [activeLanguage]="activeLanguage"
+></app-invoice-share-modal>

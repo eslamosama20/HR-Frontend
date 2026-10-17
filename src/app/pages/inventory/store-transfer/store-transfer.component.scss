@@ -1,0 +1,52 @@
+// Store Transfer Styles
+
+::ng-deep {
+  .p-datatable {
+    .p-datatable-thead > tr > th {
+      padding: 0.4rem 0.5rem !important;
+      font-size: 0.85rem;
+      white-space: nowrap;
+    }
+
+    .p-datatable-tbody > tr > td {
+      padding: 0.4rem 0.5rem !important;
+      font-size: 0.825rem;
+      white-space: nowrap;
+    }
+
+    .p-datatable-header {
+      padding: 0.5rem 0.75rem !important;
+    }
+  }
+
+  .p-paginator {
+    padding: 0.4rem !important;
+    
+    .p-paginator-current {
+      font-size: 0.8rem;
+    }
+  }
+
+  .field {
+    margin-bottom: 0.5rem !important;
+  }
+
+  .p-panel {
+    .p-panel-content {
+      padding: 0.75rem !important;
+    }
+  }
+
+  .p-dialog {
+    .p-dialog-content {
+      padding: 1rem !important;
+    }
+  }
+}
+
+/* Larger table text (1.125rem) as requested */
+:host ::ng-deep .p-datatable .p-datatable-thead > tr > th,
+:host ::ng-deep .p-datatable .p-datatable-tbody > tr > td {
+  font-size: 1.125rem !important;
+}
+

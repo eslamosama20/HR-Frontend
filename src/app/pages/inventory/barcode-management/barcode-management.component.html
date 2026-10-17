@@ -1,0 +1,110 @@
+<p-toast></p-toast>
+
+<p-panel [header]="'BARCODE_MANAGEMENT.PAGE_TITLE' | translate">
+  <div class="toolbar">
+    <div class="toolbar__search">
+      <input
+        pInputText
+        type="text"
+        [(ngModel)]="searchTerm"
+        [placeholder]="'BARCODE_MANAGEMENT.SEARCH_PLACEHOLDER' | translate"
+        (keyup.enter)="onSearch()"
+      />
+      <button pButton type="button" icon="pi pi-search" (click)="onSearch()"></button>
+    </div>
+
+    <div class="toolbar__actions">
+      <div class="copies-group">
+        <span class="copies-label">{{ 'BARCODE_MANAGEMENT.COPIES' | translate }}</span>
+        <p-inputNumber
+          [(ngModel)]="copies"
+          [min]="1"
+          [max]="100"
+          [showButtons]="true"
+          [useGrouping]="false"
+          inputId="barcodeCopies"
+        ></p-inputNumber>
+      </div>
+
+      <button
+        pButton
+        type="button"
+        icon="pi pi-print"
+        class="p-button-success print-selected-btn"
+        [label]="'BARCODE_MANAGEMENT.PRINT_SELECTED' | translate"
+        [disabled]="selectedCount() === 0"
+        (click)="printSelected()"
+      ></button>
+    </div>
+  </div>
+
+  <p-table
+    [value]="products"
+    [loading]="loading"
+    styleClass="p-datatable-sm barcode-table"
+    responsiveLayout="scroll"
+  >
+    <ng-template pTemplate="header">
+      <tr>
+        <th style="width: 52px; text-align: center;">
+          <input
+            type="checkbox"
+            [checked]="allCurrentPageSelected()"
+            (change)="toggleSelectCurrentPage($any($event.target).checked)"
+          />
+        </th>
+        <th>{{ 'BARCODE_MANAGEMENT.PRODUCT_NAME' | translate }}</th>
+        <th>{{ 'BARCODE_MANAGEMENT.REFERENCE_CODE' | translate }}</th>
+        <th>{{ 'BARCODE_MANAGEMENT.PREVIEW' | translate }}</th>
+        <th style="width: 130px;">{{ 'BARCODE_MANAGEMENT.ACTIONS' | translate }}</th>
+      </tr>
+    </ng-template>
+
+    <ng-template pTemplate="body" let-product>
+      <tr>
+        <td style="text-align: center;">
+          <input
+            type="checkbox"
+            [checked]="isSelected(product)"
+            (change)="toggleSelection(product, $any($event.target).checked)"
+          />
+        </td>
+        <td>{{ getProductName(product) }}</td>
+        <td>{{ product.referenceCode }}</td>
+        <td>
+          <img
+            class="barcode-preview"
+            [src]="getBarcodeImageUrl(product.referenceCode)"
+            [alt]="product.referenceCode"
+          />
+        </td>
+        <td>
+          <button
+            pButton
+            type="button"
+            icon="pi pi-print"
+            class="p-button-text p-button-sm"
+            [label]="'BARCODE_MANAGEMENT.PRINT' | translate"
+            (click)="printSingle(product)"
+          ></button>
+        </td>
+      </tr>
+    </ng-template>
+
+    <ng-template pTemplate="emptymessage">
+      <tr>
+        <td colspan="5" class="empty-cell">
+          {{ 'BARCODE_MANAGEMENT.NO_DATA' | translate }}
+        </td>
+      </tr>
+    </ng-template>
+  </p-table>
+
+  <p-paginator
+    [rows]="pageSize"
+    [totalRecords]="totalCount"
+    [first]="(pageNumber - 1) * pageSize"
+    [rowsPerPageOptions]="[10, 20, 50, 100]"
+    (onPageChange)="onPageChange($event)"
+  ></p-paginator>
+</p-panel>

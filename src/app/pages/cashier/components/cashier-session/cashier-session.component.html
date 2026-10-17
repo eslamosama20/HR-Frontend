@@ -1,0 +1,749 @@
+<div class="session-shell">
+  <p-toast></p-toast>
+
+  <div *ngIf="loading()" class="loading-overlay">
+    <div class="loading-card">
+      <i class="pi pi-spin pi-spinner"></i>
+      <span>{{ 'CASHIER_SESSION.LOADING_SESSIONS' | translate }}</span>
+    </div>
+  </div>
+
+  <div class="session-unified-card">
+    <header class="session-header">
+      <!-- Top Row: Page Title on Right | Navigation Buttons on Left -->
+      <div class="session-header-top">
+        <div class="header-title">
+          <div>
+            <h1>{{ 'CASHIER_SESSION.PAGE_TITLE' | translate }}</h1>
+            <p>{{ 'CASHIER_SESSION.PAGE_SUBTITLE' | translate }}</p>
+          </div>
+        </div>
+
+        <div class="header-actions">
+          <button pButton type="button" icon="pi pi-desktop" label="شاشة الكاشير (POS)" class="action-btn soft-btn" routerLink="/cashier/pos"></button>
+          <button pButton type="button" icon="pi pi-file" label="إدارة الفواتير" class="action-btn soft-btn" routerLink="/cashier/invoice-control"></button>
+          <button pButton type="button" icon="pi pi-file-edit" label="تقرير الإغلاق (Z-Report)" class="action-btn soft-btn" routerLink="/cashier/z-report"></button>
+          <button pButton type="button" icon="pi pi-chart-line" [label]="'CASHIER_REPORTS.PAGE_TITLE' | translate" class="action-btn soft-btn" routerLink="/cashier/reports"></button>
+          <button pButton type="button" icon="pi pi-map" [label]="'CASHIER_POS.TABLES_MAP' | translate" class="action-btn soft-btn" routerLink="/cashier/floor"></button>
+        </div>
+      </div>
+
+      <!-- Bottom Row: Active Session Status & Session Operation Actions -->
+      <div class="session-header-bottom">
+        <div class="header-status" [class.open]="currentSession()" [class.closed]="!currentSession()">
+          <i class="pi" [ngClass]="currentSession() ? 'pi-check-circle' : 'pi-info-circle'"></i>
+          <div>
+            <strong>{{ (currentSession() ? 'CASHIER_SESSION.ACTIVE_SESSION' : 'CASHIER_SESSION.NO_ACTIVE_SESSION') | translate }}</strong>
+            <span> — {{ currentSession()?.sessionNumber || ('CASHIER_SESSION.NO_OPEN_SESSION_MSG' | translate) }}</span>
+          </div>
+        </div>
+
+        <div class="header-session-actions">
+          <button *ngIf="!currentSession()" pButton type="button" [label]="'CASHIER_SESSION.OPEN_NEW_SESSION' | translate" icon="pi pi-plus"
+            class="hero-btn open-btn" (click)="openNewSessionDialog()">
+          </button>
+
+          <button *ngIf="currentSession()" pButton type="button" label="تعديل المخازن" icon="pi pi-building"
+            class="hero-btn edit-stores-btn" (click)="openEditSessionStoresDialog()">
+          </button>
+
+          <button *ngIf="currentSession()" pButton type="button" [label]="'CASHIER_SESSION.CLOSE_SESSION' | translate" icon="pi pi-times-circle"
+            class="hero-btn close-btn" (click)="openCloseSessionDialog()">
+          </button>
+
+          <button *ngIf="currentSession()" pButton type="button" [label]="'CASHIER_SESSION.CASH_OUT' | translate" icon="pi pi-arrow-down"
+            class="hero-btn cash-out-btn" (click)="openCashActionDialog('out')">
+          </button>
+
+          <button *ngIf="currentSession()" pButton type="button" [label]="'CASHIER_SESSION.CASH_IN' | translate" icon="pi pi-arrow-up"
+            class="hero-btn cash-in-btn" (click)="openCashActionDialog('in')">
+          </button>
+        </div>
+      </div>
+    </header>
+
+    <section *ngIf="currentSession(); else noActiveSession" class="active-session-panel">
+      <div class="panel-head">
+        <div class="panel-title-group">
+          <h2>
+            <i class="pi pi-chart-bar"></i>
+            <span>{{ 'CASHIER_SESSION.ACTIVE_SESSION_DETAILS' | translate }}</span>
+          </h2>
+          <p>{{ 'CASHIER_SESSION.SALES_LIVE_SUMMARY' | translate }}</p>
+        </div>
+        <p-tag [value]="getStatusLabel(currentSession()!.status)"
+          [severity]="getStatusSeverity(currentSession()!.status)"></p-tag>
+      </div>
+
+      <div class="session-meta-grid">
+        <article class="meta-card">
+          <div class="meta-card-label">
+            <div class="meta-icon bg-blue">
+              <i class="pi pi-hashtag"></i>
+            </div>
+            <span>{{ 'CASHIER_SESSION.SESSION_NUMBER' | translate }}</span>
+          </div>
+          <strong class="meta-value">{{ currentSession()?.sessionNumber }}</strong>
+        </article>
+
+        <article class="meta-card">
+          <div class="meta-card-label">
+            <div class="meta-icon bg-purple">
+              <i class="pi pi-user"></i>
+            </div>
+            <span>{{ 'CASHIER_SESSION.CASHIER_NAME' | translate }}</span>
+          </div>
+          <strong class="meta-value">{{ currentSession()?.cashierUserName }}</strong>
+        </article>
+
+        <article class="meta-card">
+          <div class="meta-card-label">
+            <div class="meta-icon bg-amber">
+              <i class="pi pi-clock"></i>
+            </div>
+            <span>{{ 'CASHIER_SESSION.OPEN_TIME' | translate }}</span>
+          </div>
+          <strong class="meta-value">{{ currentSession()?.openingDate | customDate }}</strong>
+        </article>
+
+        <article class="meta-card clickable-meta" (click)="openEditSessionStoresDialog()" title="انقر لتعديل المخازن المربوطة بالوردية">
+          <div class="meta-card-label">
+            <div class="meta-icon bg-teal">
+              <i class="pi pi-building"></i>
+            </div>
+            <span>{{ 'CASHIER_SESSION.TREASURY_BRANCH' | translate }}</span>
+            <i class="pi pi-pencil edit-store-icon" style="margin-right: auto; font-size: 0.85rem; color: #0d9488;"></i>
+          </div>
+          <strong class="meta-value" [pTooltip]="getSessionStoreNames(currentSession())" tooltipPosition="bottom">
+            {{ getSessionStoreNames(currentSession()) }}
+          </strong>
+        </article>
+      </div>
+
+      <div class="summary-grid">
+        <article class="summary-card sales">
+          <div class="summary-card-head">
+            <i class="pi pi-chart-line"></i>
+            <span>{{ 'CASHIER_SESSION.TOTAL_SALES' | translate }}</span>
+          </div>
+          <strong class="summary-val">{{ sessionSummary()?.totalSalesAmount || 0 | number:'1.2-2' }} <small>ر.س.</small></strong>
+        </article>
+
+        <article class="summary-card cash">
+          <div class="summary-card-head">
+            <i class="pi pi-wallet"></i>
+            <span>{{ 'CASHIER_SESSION.CASH_COLLECTED' | translate }}</span>
+          </div>
+          <strong class="summary-val">{{ sessionSummary()?.cashAmount || 0 | number:'1.2-2' }} <small>ر.س.</small></strong>
+        </article>
+
+        <article class="summary-card card">
+          <div class="summary-card-head">
+            <i class="pi pi-credit-card"></i>
+            <span>{{ 'CASHIER_SESSION.CARD_SALES' | translate }}</span>
+          </div>
+          <strong class="summary-val">{{ sessionSummary()?.cardAmount || 0 | number:'1.2-2' }} <small>ر.س.</small></strong>
+        </article>
+
+        <article class="summary-card credit">
+          <div class="summary-card-head">
+            <i class="pi pi-user"></i>
+            <span>{{ 'CASHIER_SESSION.CREDIT_SALES' | translate }}</span>
+          </div>
+          <strong class="summary-val">{{ sessionSummary()?.creditAmount || 0 | number:'1.2-2' }} <small>ر.س.</small></strong>
+        </article>
+
+        <article class="summary-card tx">
+          <div class="summary-card-head">
+            <i class="pi pi-receipt"></i>
+            <span>{{ 'CASHIER_SESSION.TRANSACTIONS_COUNT' | translate }}</span>
+          </div>
+          <strong class="summary-val">{{ sessionSummary()?.totalTransactions || 0 }} <small>عملية</small></strong>
+        </article>
+
+        <article class="summary-card expected">
+          <div class="summary-card-head">
+            <i class="pi pi-money-bill"></i>
+            <span>{{ 'CASHIER_SESSION.EXPECTED_CASH' | translate }}</span>
+          </div>
+          <strong class="summary-val">{{ expectedBalance | number:'1.2-2' }} <small>ر.س.</small></strong>
+        </article>
+      </div>
+    </section>
+
+    <ng-template #noActiveSession>
+      <section class="empty-panel">
+        <div class="empty-visual">
+          <i class="pi pi-wallet"></i>
+        </div>
+        <h2>{{ 'CASHIER_SESSION.NO_OPEN_SESSION_TITLE' | translate }}</h2>
+        <p>{{ 'CASHIER_SESSION.NO_OPEN_SESSION_MSG' | translate }}</p>
+        <button pButton type="button" [label]="'CASHIER_SESSION.OPEN_NEW_SESSION' | translate" icon="pi pi-plus" class="hero-btn open-btn"
+          (click)="openNewSessionDialog()">
+        </button>
+      </section>
+    </ng-template>
+
+    <section class="history-panel">
+      <div class="panel-head">
+        <div class="panel-title-group">
+          <h2>
+            <i class="pi pi-history"></i>
+            <span>{{ 'CASHIER_SESSION.SESSION_HISTORY' | translate }}</span>
+          </h2>
+          <p>{{ 'CASHIER_SESSION.SESSION_HISTORY_SUB' | translate }}</p>
+        </div>
+        <span class="count-pill">{{ sessions().length }} {{ 'CASHIER_SESSION.SESSIONS_COUNT' | translate }}</span>
+      </div>
+
+      <p-table #dtSession [value]="sessions()" [columns]="columns" [paginator]="true" [rows]="10" [rowsPerPageOptions]="[10, 20, 50]"
+        [globalFilterFields]="['sessionNumber', 'cashierUserName', 'storeName', 'notes']"
+        [showCurrentPageReport]="true"
+        currentPageReportTemplate="{{ activeLanguage === 'ar' ? 'إجمالي' : 'Total' }} {totalRecords}"
+        paginatorTemplate="CurrentPageReport PrevPageLink PageLinks NextPageLink RowsPerPageDropdown"
+        styleClass="sessions-table p-datatable-gridlines" [tableStyle]="{'min-width': '105rem'}">
+
+        <ng-template pTemplate="caption">
+          <div class="table-caption-container">
+            <!-- Side 1: Search Box (Right side in RTL) -->
+            <span class="p-input-icon-left">
+              <i class="pi pi-search"></i>
+              <input
+                pInputText
+                type="text"
+                [(ngModel)]="searchValue"
+                (input)="filter(dtSession, $event)"
+                (blur)="trimSearchValue()"
+                [placeholder]="'FINANCE.SEARCH' | translate"
+                class="session-search-input"
+              />
+            </span>
+
+            <!-- Side 2: Status Filter & Clear Filters Button (Left side in RTL) -->
+            <div class="caption-actions-group">
+              <!-- Status Filter Radio Buttons -->
+              <div class="status-radio-group">
+                <div class="flex items-center gap-2">
+                  <p-radioButton
+                    name="statusFilter"
+                    value="all"
+                    [(ngModel)]="statusFilter"
+                    (ngModelChange)="onStatusFilterChange(dtSession)"
+                    inputId="session_status_all"
+                  />
+                  <label for="session_status_all" class="cursor-pointer text-sm font-semibold mb-0">
+                    {{ activeLanguage === 'ar' ? 'كل الورديات' : 'All Sessions' }}
+                  </label>
+                </div>
+
+                <div class="flex items-center gap-2">
+                  <p-radioButton
+                    name="statusFilter"
+                    value="open"
+                    [(ngModel)]="statusFilter"
+                    (ngModelChange)="onStatusFilterChange(dtSession)"
+                    inputId="session_status_open"
+                  />
+                  <label for="session_status_open" class="cursor-pointer text-sm font-semibold mb-0">
+                    {{ activeLanguage === 'ar' ? 'الورديات المفتوحة' : 'Open Sessions' }}
+                  </label>
+                </div>
+
+                <div class="flex items-center gap-2">
+                  <p-radioButton
+                    name="statusFilter"
+                    value="closed"
+                    [(ngModel)]="statusFilter"
+                    (ngModelChange)="onStatusFilterChange(dtSession)"
+                    inputId="session_status_closed"
+                  />
+                  <label for="session_status_closed" class="cursor-pointer text-sm font-semibold mb-0">
+                    {{ activeLanguage === 'ar' ? 'الورديات المغلقة' : 'Closed Sessions' }}
+                  </label>
+                </div>
+              </div>
+
+              <!-- Clear Filters Button -->
+              <p-button
+                styleClass="rounded-md w-auto text-nowrap"
+                [label]="'FINANCE.CLEAR_FILTERS' | translate"
+                [outlined]="true"
+                icon="pi pi-filter-slash"
+                (onClick)="clear(dtSession)"
+              />
+            </div>
+          </div>
+        </ng-template>
+
+        <ng-template pTemplate="header" let-columns>
+          <tr>
+            <th class="index-th">#</th>
+            <th *ngFor="let col of columns" [pSortableColumn]="col.field" pResizableColumn [style.minWidth]="col.minWidth || '9.5rem'">
+              <div class="th-content">
+                <span class="th-label">{{ col.header }}</span>
+                <div class="th-icons">
+                  <p-sortIcon [field]="col.field"></p-sortIcon>
+                  <p-columnFilter *ngIf="col.filter" [type]="col.filterType" [field]="col.field" display="menu"></p-columnFilter>
+                </div>
+              </div>
+            </th>
+            <th style="min-width: 8.5rem; text-align: center;">{{ 'CASHIER_SESSION.TABLE_ACTIONS' | translate }}</th>
+          </tr>
+        </ng-template>
+
+        <ng-template pTemplate="body" let-session let-rowIndex="rowIndex">
+          <tr class="table-row-hover">
+            <td class="index-cell">{{ rowIndex + 1 }}</td>
+            <td><strong>{{ session.sessionNumber }}</strong></td>
+            <td>{{ session.cashierUserName }}</td>
+            <td [pTooltip]="getSessionStoreNames(session)" tooltipPosition="top">
+              <span class="store-badge-text">{{ getSessionStoreNames(session) }}</span>
+            </td>
+            <td>{{ session.openingDate | customDate }}</td>
+            <td>{{ session.closingDate ? (session.closingDate | customDate) : '-' }}</td>
+            <td>{{ session.openingBalance | number:'1.2-2' }}</td>
+            <td>{{ session.totalSales | number:'1.2-2' }}</td>
+            <td>{{ session.expectedBalance | number:'1.2-2' }}</td>
+            <td>
+              <span class="difference" [class.positive]="session.difference >= 0"
+                [class.negative]="session.difference < 0">
+                {{ session.difference | number:'1.2-2' }}
+              </span>
+            </td>
+            <td>
+              <p-tag [value]="getStatusLabel(session.status)" [severity]="getStatusSeverity(session.status)"></p-tag>
+            </td>
+            <td>
+              <div class="action-buttons-cell">
+                <button
+                  pButton
+                  type="button"
+                  icon="pi pi-file-edit"
+                  class="p-button-text p-button-sm table-action-btn"
+                  [pTooltip]="'CASHIER_SESSION.TOOLTIP_REPORT' | translate"
+                  [routerLink]="['/cashier/session', session.id, 'report']">
+                </button>
+                <button pButton type="button" icon="pi pi-eye" class="p-button-text p-button-sm table-action-btn"
+                  [pTooltip]="'CASHIER_SESSION.TOOLTIP_DETAILS' | translate" (click)="viewSessionDetails(session)">
+                </button>
+                <button *ngIf="session.status === 0 && canCloseAny()" pButton type="button" icon="pi pi-times-circle" 
+                  class="p-button-text p-button-danger p-button-sm table-action-btn"
+                  [pTooltip]="'CASHIER_SESSION.CLOSE_SESSION' | translate" (click)="closeOtherSession(session)">
+                </button>
+              </div>
+            </td>
+          </tr>
+        </ng-template>
+
+        <ng-template pTemplate="emptymessage">
+          <tr>
+            <td colspan="12" class="empty-table">{{ 'CASHIER_SESSION.TABLE_EMPTY_MSG' | translate }}</td>
+          </tr>
+        </ng-template>
+      </p-table>
+  </section>
+  </div>
+</div>
+
+<p-dialog [(visible)]="showOpenSessionDialog" [modal]="true" [draggable]="false" [resizable]="false"
+  [style]="{width: '460px', maxWidth: '95vw'}" styleClass="session-dialog" [header]="'CASHIER_SESSION.DIALOG_OPEN_TITLE' | translate">
+
+  <div class="dialog-body">
+    <div class="dialog-note info">
+      <i class="pi pi-info-circle"></i>
+      <span>{{ 'CASHIER_SESSION.DIALOG_OPEN_NOTE' | translate }}</span>
+    </div>
+
+    <div class="form-group">
+      <label>{{ 'CASHIER_SESSION.DIALOG_STORE' | translate }}</label>
+      <p-multiSelect
+        [options]="storeOptions"
+        [(ngModel)]="selectedStoreDetailsIds"
+        optionLabel="label"
+        optionValue="value"
+        appendTo="body"
+        [filter]="true"
+        [disabled]="storesLoading"
+        scrollHeight="260px"
+        defaultLabel="يرجى اختيار مخزن أو أكثر"
+        [style]="{ width: '100%' }">
+      </p-multiSelect>
+    </div>
+
+    <div class="form-group">
+      <label>{{ 'CASHIER_SESSION.DIALOG_OPENING_BALANCE' | translate }}</label>
+      <p-inputNumber [(ngModel)]="openingBalance" [minFractionDigits]="0" [maxFractionDigits]="2" mode="decimal"
+        class="w-full" inputStyleClass="w-full money-input">
+      </p-inputNumber>
+    </div>
+
+    <div class="form-group">
+      <label>مدة الوردية (بالساعات)</label>
+      <p-inputNumber [(ngModel)]="shiftDurationHours" [min]="1" [max]="24" class="w-full" inputStyleClass="w-full money-input" suffix=" ساعات">
+      </p-inputNumber>
+    </div>
+
+    <div class="form-group" *ngIf="canSetCustomNumber()">
+      <label>رقم الوردية (يدوي / اختياري)</label>
+      <input type="text" [(ngModel)]="customSessionNumber" placeholder="اتركه فارغاً للتوليد التلقائي" class="p-inputtext w-full session-dialog-input" />
+    </div>
+
+    <div class="form-group" *ngIf="canSetAlertLimit()">
+      <label>حد تنبيهات المخزون (الكمية الحرجة)</label>
+      <p-inputNumber [(ngModel)]="stockAlertLimit" [min]="1" placeholder="القيمة الافتراضية 10" class="w-full" inputStyleClass="w-full session-dialog-input">
+      </p-inputNumber>
+    </div>
+  </div>
+
+  <ng-template pTemplate="footer">
+    <button pButton type="button" [label]="'CASHIER_SESSION.DIALOG_CANCEL' | translate" icon="pi pi-times" class="p-button-text"
+      (click)="showOpenSessionDialog = false" [disabled]="loading()"></button>
+    <button pButton type="button" [label]="'CASHIER_SESSION.DIALOG_OPEN_BTN' | translate" icon="pi pi-check" class="p-button-success"
+      (click)="openNewSession()" [loading]="loading()" [disabled]="loading()"></button>
+  </ng-template>
+</p-dialog>
+
+<p-dialog [(visible)]="showCloseSessionDialog" [modal]="true" [draggable]="false" [resizable]="false" [closable]="!isExpired"
+  [style]="{width: '560px', maxWidth: '95vw'}" styleClass="session-dialog" [header]="isExpired ? 'انتهت مدة الوردية - يرجى إغلاق الوردية وجرد الصندوق' : ('CASHIER_SESSION.DIALOG_CLOSE_TITLE' | translate)">
+
+  <div class="dialog-body">
+    <!-- Warning if held orders exist -->
+    <div *ngIf="pendingHeldOrders.length > 0" class="held-orders-blocker mb-3">
+      <div class="held-alert-icon-wrap">
+        <i class="pi pi-exclamation-triangle"></i>
+      </div>
+      <div class="held-alert-content">
+        <div class="held-alert-top">
+          <h4 class="held-title">لا يمكن إغلاق الوردية!</h4>
+          <span class="held-badge">{{ pendingHeldOrders.length }} طلب معلق</span>
+        </div>
+        <p class="held-desc">
+          يوجد طلبات معلقة مسجلة في هذه الوردية لم يتم إتمامها. يرجى التوجه لشاشة الكاشير لاستعادتها وإتمام الدفع أو حذفها قبل إغلاق الوردية.
+        </p>
+        <button pButton type="button" label="الذهاب للطلبات المعلقة في الكاشير" icon="pi pi-arrow-left"
+          class="held-go-btn" routerLink="/cashier/pos" (click)="showCloseSessionDialog = false">
+        </button>
+      </div>
+    </div>
+
+    <div class="dialog-note expected">
+      <div>
+        <small>{{ 'CASHIER_SESSION.DIALOG_EXPECTED_NOTE' | translate }}</small>
+        <strong>{{ expectedBalance | number:'1.2-2' }} {{ 'CASHIER_Z_REPORT.SAR' | translate }}</strong>
+      </div>
+      <span>{{ 'CASHIER_SESSION.DIALOG_EXPECTED_SUB' | translate }}</span>
+    </div>
+
+    <div class="form-group">
+      <label>{{ 'CASHIER_SESSION.DIALOG_ACTUAL_CASH' | translate }}</label>
+      <p-inputNumber [(ngModel)]="actualBalance" [minFractionDigits]="0" [maxFractionDigits]="2" mode="decimal"
+        class="w-full" inputStyleClass="w-full money-input">
+      </p-inputNumber>
+    </div>
+
+    <div *ngIf="actualBalance > 0" class="diff-box" [class.positive]="balanceDifference >= 0"
+      [class.negative]="balanceDifference < 0">
+      <span>{{ 'CASHIER_SESSION.DIALOG_DIFFERENCE' | translate }}</span>
+      <strong>{{ balanceDifference | number:'1.2-2' }} {{ 'CASHIER_Z_REPORT.SAR' | translate }}</strong>
+    </div>
+
+    <div class="form-group">
+      <label>{{ 'CASHIER_SESSION.DIALOG_CLOSING_NOTES' | translate }}</label>
+      <textarea pInputTextarea [(ngModel)]="closingNotes" rows="3" class="w-full"
+        [placeholder]="'CASHIER_SESSION.DIALOG_CLOSING_NOTES' | translate"></textarea>
+    </div>
+  </div>
+
+  <ng-template pTemplate="footer">
+    <button *ngIf="!isExpired" pButton type="button" [label]="'CASHIER_SESSION.DIALOG_CANCEL' | translate" icon="pi pi-times" class="p-button-text"
+      (click)="showCloseSessionDialog = false" [disabled]="loading()"></button>
+    <button pButton type="button" [label]="'CASHIER_SESSION.DIALOG_CLOSE_BTN' | translate" icon="pi pi-check" class="p-button-danger"
+      (click)="closeSession()" [loading]="loading() || checkingHeldOrders()" [disabled]="loading() || checkingHeldOrders() || pendingHeldOrders.length > 0"></button>
+  </ng-template>
+</p-dialog>
+
+<!-- Active Session Conflict Dialog -->
+<p-dialog
+  [(visible)]="showActiveSessionConflictDialog"
+  [modal]="true"
+  [draggable]="false"
+  [resizable]="false"
+  [closable]="false"
+  [style]="{width: '600px', maxWidth: '95vw'}"
+  styleClass="session-dialog conflict-dialog"
+  [header]="'CASHIER_SESSION.CONFLICT_TITLE' | translate">
+
+  <div class="dialog-body">
+    <div class="conflict-warning">
+      <i class="pi pi-exclamation-triangle"></i>
+      <div>
+        <h3>{{ 'CASHIER_SESSION.CONFLICT_MSG' | translate }}</h3>
+        <p>{{ 'CASHIER_SESSION.CONFLICT_SUB' | translate }}</p>
+      </div>
+    </div>
+
+    <div *ngIf="conflictingSession" class="active-session-info">
+      <h4>{{ 'CASHIER_SESSION.CONFLICT_INFO_TITLE' | translate }}</h4>
+      <div class="info-grid">
+        <div class="info-item">
+          <span>{{ 'CASHIER_SESSION.SESSION_NUMBER' | translate }}:</span>
+          <strong>{{ conflictingSession.sessionNumber }}</strong>
+        </div>
+        <div class="info-item">
+          <span>{{ 'CASHIER_SESSION.OPEN_TIME' | translate }}:</span>
+          <strong>{{ conflictingSession.openingDate | customDate }}</strong>
+        </div>
+        <div class="info-item" *ngIf="conflictingSession.openingBalance !== undefined">
+          <span>{{ 'CASHIER_SESSION.DIALOG_OPENING_BALANCE' | translate }}:</span>
+          <strong>{{ conflictingSession.openingBalance | number:'1.2-2' }} {{ 'CASHIER_Z_REPORT.SAR' | translate }}</strong>
+        </div>
+        <div class="info-item" *ngIf="conflictingSession.storeDetailsId">
+          <span>{{ 'CASHIER_SESSION.DIALOG_STORE' | translate }}:</span>
+          <strong>{{ conflictingSession.storeName || conflictingSession.storeDetailsId }}</strong>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <ng-template pTemplate="footer">
+    <button pButton type="button" [label]="'CASHIER_SESSION.CONFLICT_BACK' | translate" icon="pi pi-arrow-right" class="p-button-text" (click)="cancelConflictDialog()"></button>
+    <button pButton type="button" [label]="'CASHIER_SESSION.CONFLICT_REFRESH_BTN' | translate" icon="pi pi-refresh" class="p-button-warning" (click)="closeAndOpenNewSession()"></button>
+  </ng-template>
+</p-dialog>
+
+<p-dialog [(visible)]="showCashActionDialog" [modal]="true" [draggable]="false" [resizable]="false"
+  [style]="{width: '520px', maxWidth: '95vw'}" styleClass="session-dialog"
+  [header]="(cashActionType === 'in' ? 'CASHIER_SESSION.CASH_ACTION_DEPOSIT' : 'CASHIER_SESSION.CASH_ACTION_WITHDRAW') | translate">
+
+  <div class="dialog-body">
+    <div class="dialog-note info">
+      <i class="pi pi-wallet"></i>
+      <span *ngIf="cashActionType === 'in'">{{ 'CASHIER_SESSION.CASH_ACTION_NOTE_IN' | translate }}</span>
+      <span *ngIf="cashActionType === 'out'">{{ 'CASHIER_SESSION.CASH_ACTION_NOTE_OUT' | translate }}</span>
+    </div>
+
+    <div class="form-group">
+      <label>{{ 'CASHIER_SESSION.CASH_ACTION_AMOUNT' | translate }}</label>
+      <p-inputNumber [(ngModel)]="cashActionAmount" [min]="0.01" [minFractionDigits]="2" [maxFractionDigits]="2"
+        mode="decimal" class="w-full" inputStyleClass="w-full money-input">
+      </p-inputNumber>
+    </div>
+
+    <div class="form-group">
+      <label>{{ 'CASHIER_SESSION.CASH_ACTION_REASON' | translate }}</label>
+      <textarea pInputTextarea [(ngModel)]="cashActionReason" rows="3" class="w-full"
+        [placeholder]="'CASHIER_SESSION.CASH_ACTION_REASON' | translate">
+      </textarea>
+    </div>
+  </div>
+
+  <ng-template pTemplate="footer">
+    <button pButton type="button" [label]="'CASHIER_SESSION.DIALOG_CANCEL' | translate" icon="pi pi-times" class="p-button-text" (click)="showCashActionDialog = false" [disabled]="loading()"></button>
+    <button pButton type="button" [label]="(cashActionType === 'in' ? 'CASHIER_SESSION.CASH_ACTION_CONFIRM_IN' : 'CASHIER_SESSION.CASH_ACTION_CONFIRM_OUT') | translate"
+      [icon]="cashActionType === 'in' ? 'pi pi-arrow-up' : 'pi pi-arrow-down'"
+      [class]="cashActionType === 'in' ? 'p-button-success' : 'p-button-warning'" (click)="submitCashAction()" [loading]="loading()" [disabled]="loading()"></button>
+  </ng-template>
+</p-dialog>
+
+<p-dialog [(visible)]="showSessionDetailsDialog" [modal]="true" [draggable]="false" [resizable]="false"
+  [style]="{width: '720px', maxWidth: '96vw'}" styleClass="session-dialog" [header]="'CASHIER_SESSION.DETAILS_TITLE' | translate">
+
+  <div *ngIf="selectedSession" class="dialog-body details-body">
+    <div class="details-grid">
+      <article>
+        <span>{{ 'CASHIER_SESSION.SESSION_NUMBER' | translate }}</span>
+        <strong>{{ selectedSession.sessionNumber }}</strong>
+      </article>
+      <article>
+        <span>{{ 'CASHIER_SESSION.CASHIER_NAME' | translate }}</span>
+        <strong>{{ selectedSession.cashierUserName }}</strong>
+      </article>
+      <article>
+        <span>{{ 'CASHIER_SESSION.TABLE_STORE' | translate }}</span>
+        <strong [pTooltip]="getSessionStoreNames(selectedSession)" tooltipPosition="top">{{ getSessionStoreNames(selectedSession) }}</strong>
+      </article>
+      <article>
+        <span>{{ 'CASHIER_SESSION.OPEN_TIME' | translate }}</span>
+        <strong>{{ selectedSession.openingDate | customDate }}</strong>
+      </article>
+      <article>
+        <span>{{ 'CASHIER_SESSION.TABLE_CLOSE_TIME' | translate }}</span>
+        <strong>{{ selectedSession.closingDate ? (selectedSession.closingDate | customDate) : ('CASHIER_POS.SESSION_OPEN' | translate) }}</strong>
+      </article>
+    </div>
+
+    <div class="details-financial">
+      <h4>{{ 'CASHIER_SESSION.DETAILS_FINANCIAL' | translate }}</h4>
+      <div class="financial-grid">
+        <article>
+          <span>{{ 'CASHIER_SESSION.TABLE_OPENING_BALANCE' | translate }}</span>
+          <strong>{{ selectedSession.openingBalance | number:'1.2-2' }}</strong>
+        </article>
+        <article>
+          <span>{{ 'CASHIER_SESSION.TABLE_TOTAL_SALES' | translate }}</span>
+          <strong>{{ selectedSession.totalSales | number:'1.2-2' }}</strong>
+        </article>
+        <article>
+          <span>{{ 'CASHIER_SESSION.CASH_COLLECTED' | translate }}</span>
+          <strong>{{ selectedSession.totalCash | number:'1.2-2' }}</strong>
+        </article>
+        <article>
+          <span>{{ 'CASHIER_SESSION.CARD_SALES' | translate }}</span>
+          <strong>{{ selectedSession.totalCard | number:'1.2-2' }}</strong>
+        </article>
+      </div>
+    </div>
+
+    <div *ngIf="sessionSummary()" class="details-summary">
+      <article>
+        <span>{{ 'CASHIER_SESSION.TRANSACTIONS_COUNT' | translate }}</span>
+        <strong>{{ sessionSummary()?.totalTransactions }}</strong>
+      </article>
+      <article>
+        <span>{{ 'CASHIER_SESSION.DETAILS_REFUNDS' | translate }}</span>
+        <strong>{{ sessionSummary()?.totalRefundsAmount || 0 | number:'1.2-2' }}</strong>
+      </article>
+      <article>
+        <span>{{ 'CASHIER_SESSION.TABLE_EXPECTED_CASH' | translate }}</span>
+        <strong>{{ sessionSummary()?.expectedCash || 0 | number:'1.2-2' }}</strong>
+      </article>
+      <article>
+        <span>{{ 'CASHIER_SESSION.TABLE_DIFFERENCE' | translate }}</span>
+        <strong>{{ sessionSummary()?.difference || 0 | number:'1.2-2' }}</strong>
+      </article>
+    </div>
+  </div>
+
+  <ng-template pTemplate="footer">
+    <button *ngIf="selectedSession && selectedSession.status === 0 && canCloseAny()" pButton type="button" 
+      [label]="'CASHIER_SESSION.CLOSE_SESSION' | translate" icon="pi pi-times-circle" class="p-button-danger mr-2"
+      (click)="closeOtherSession(selectedSession)"></button>
+    <button pButton type="button" [label]="'CASHIER_SESSION.DETAILS_CLOSE' | translate" icon="pi pi-times" class="p-button-text"
+      (click)="showSessionDetailsDialog = false"></button>
+  </ng-template>
+</p-dialog>
+
+<!-- Supervisor Override Dialog -->
+<p-dialog
+  [(visible)]="showSupervisorOverrideDialog"
+  [modal]="true"
+  [draggable]="false"
+  [resizable]="false"
+  [style]="{width: '460px', maxWidth: '95vw'}"
+  styleClass="session-dialog supervisor-override-dialog"
+  [header]="'اعتماد الوردية - موافقة المشرف'">
+
+  <div class="dialog-body">
+    <div class="dialog-note expected" style="display: flex; flex-direction: column; align-items: stretch; gap: 0.75rem; padding: 1rem; border: 1px solid #f5c6cb; background-color: #f8d7da; color: #721c24; border-radius: 12px; height: auto;">
+      <div style="display: flex; align-items: center; gap: 0.5rem;">
+        <i class="pi pi-exclamation-triangle" style="color: #721c24; font-size: 1.35rem;"></i>
+        <strong style="font-weight: 700;">فارق الوردية يتجاوز الحد المسموح به!</strong>
+      </div>
+      
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; font-size: 0.85rem; border-top: 1px solid rgba(114, 28, 36, 0.15); padding-top: 0.6rem;">
+        <div>الرصيد المتوقع: <strong style="font-weight: 800;">{{ (discrepancyDetails?.expectedCash ?? expectedBalance) | number:'1.2-2' }}</strong></div>
+        <div>الرصيد الفعلي: <strong style="font-weight: 800;">{{ (discrepancyDetails?.actualCash ?? actualBalance) | number:'1.2-2' }}</strong></div>
+        <div style="color: #b52b2b;">العجز / الفارق: <strong style="font-weight: 800;">{{ (discrepancyDetails?.discrepancy ?? discrepancyDetails?.expectedCash) | number:'1.2-2' }}</strong></div>
+        <div>الحد المسموح: <strong style="font-weight: 800;">{{ (discrepancyDetails?.threshold ?? 50) | number:'1.2-2' }}</strong></div>
+      </div>
+      
+      <span style="font-size: 0.8rem; line-height: 1.4; opacity: 0.9;">يتطلب إدخال رقم المعرف الخاص بالمشرف ورمز المرور لإتمام الإغلاق وتفويض الفارق.</span>
+    </div>
+
+    <div class="form-group" style="margin-top: 1.5rem;">
+      <label style="display: block; margin-bottom: 0.5rem; font-weight: 600;">المشرف المعتمد</label>
+      <p-dropdown
+        [options]="supervisorsList"
+        [(ngModel)]="supervisorId"
+        optionLabel="label"
+        optionValue="value"
+        appendTo="body"
+        [filter]="true"
+        [showClear]="true"
+        scrollHeight="260px"
+        placeholder="اختر المشرف لتفويض الفارق"
+        [style]="{ width: '100%', height: '44px', display: 'flex', 'align-items': 'center' }">
+      </p-dropdown>
+    </div>
+    
+    <div class="form-group" style="margin-top: 1rem;">
+      <label style="display: block; margin-bottom: 0.5rem; font-weight: 600;">كلمة مرور المشرف (Passcode)</label>
+      <input
+        type="password"
+        [(ngModel)]="approvalPasscode"
+        style="width: 100%; padding: 0.75rem; border: 1px solid #ced4da; border-radius: 6px;"
+        placeholder="••••••••" />
+    </div>
+  </div>
+
+  <ng-template pTemplate="footer">
+    <button
+      pButton
+      type="button"
+      [label]="'CASHIER_SESSION.DIALOG_CANCEL' | translate"
+      icon="pi pi-times"
+      class="p-button-text"
+      (click)="showSupervisorOverrideDialog = false; supervisorId = ''; approvalPasscode = ''; discrepancyDetails = null">
+    </button>
+    <button
+      pButton
+      type="button"
+      [label]="'اعتماد وإغلاق'"
+      icon="pi pi-shield"
+      class="p-button-danger"
+      [disabled]="!supervisorId || !approvalPasscode"
+      (click)="closeSession(supervisorId)">
+    </button>
+  </ng-template>
+</p-dialog>
+
+<!-- Edit Active Session Stores Dialog -->
+<p-dialog [(visible)]="showEditStoresDialog" [modal]="true" [draggable]="false" [resizable]="false"
+  [style]="{width: '520px', maxWidth: '95vw'}" styleClass="session-dialog" header="تعديل مخازن الوردية الحالية">
+  <div class="dialog-body">
+    <div class="dialog-note info mb-3">
+      <i class="pi pi-info-circle"></i>
+      <span>يمكنك إضافة أو إزالة مخازن من الوردية المفتوحة حالياً دون الحاجة لإغلاقها. يجب الإبقاء على مخزن واحد على الأقل.</span>
+    </div>
+
+    <!-- Current Selected Stores Preview (Horizontal) -->
+    <div class="current-stores-preview" *ngIf="getSelectedStoreNames().length > 0"
+      style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 0.65rem 0.85rem; margin-bottom: 1rem;">
+      <span style="font-size: 0.8rem; font-weight: 700; color: #475569; display: block; margin-bottom: 0.4rem;">المخازن المحددة حالياً:</span>
+      <div style="display: flex; flex-wrap: wrap; gap: 0.4rem; align-items: center;">
+        <span *ngFor="let name of getSelectedStoreNames()"
+          style="background: #e0f2fe; color: #0369a1; border: 1px solid #bae6fd; font-size: 0.83rem; font-weight: 700; padding: 0.25rem 0.65rem; border-radius: 6px; display: inline-flex; align-items: center; gap: 0.35rem;">
+          <i class="pi pi-building" style="font-size: 0.85rem;"></i>
+          {{ name }}
+        </span>
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label>المخازن المربوطة بالوردية <span class="text-danger">*</span></label>
+      <p-multiSelect
+        [options]="storeOptions"
+        [(ngModel)]="editSessionStoreIds"
+        [loading]="storesLoading"
+        defaultLabel="يرجى اختيار مخزن أو أكثر"
+        [selectedItemsLabel]="'{0} مخازن محددة'"
+        [maxSelectedLabels]="2"
+        optionLabel="label"
+        optionValue="value"
+        appendTo="body"
+        [filter]="true"
+        filterBy="label"
+        filterPlaceholder="بحث باسم المخزن..."
+        scrollHeight="200px"
+        [style]="{ width: '100%' }"
+        styleClass="w-full store-multiselect">
+      </p-multiSelect>
+    </div>
+  </div>
+  <ng-template pTemplate="footer">
+    <button pButton type="button" label="إلغاء" icon="pi pi-times" class="p-button-text"
+      (click)="showEditStoresDialog = false"></button>
+    <button pButton type="button" label="حفظ التغييرات" icon="pi pi-check" class="p-button-success"
+      (click)="saveEditedSessionStores()"></button>
+  </ng-template>
+</p-dialog>

@@ -1,0 +1,199 @@
+<p-table
+  #dt1
+  [value]="mealReservations"
+  [columns]="columns"
+  [resizableColumns]="true"
+  columnResizeMode="expand"
+  dataKey="id"
+  [rows]="10"
+  styleClass="p-datatable-gridlines scroller custom-paginator-table"
+  [rowsPerPageOptions]="[10, 25, 50]"
+  [loading]="loading"
+  [paginator]="true"
+  [paginatorLocale]="activeLanguage === 'en' ? 'en-US' : 'ar-SA'"
+  
+  [showCurrentPageReport]="true"
+  currentPageReportTemplate="اجمالي {{ mealReservations?.length ? (mealReservations.length) : '' }}"
+  paginatorTemplate="CurrentPageReport PrevPageLink PageLinks NextPageLink RowsPerPageDropdown"
+  [sortField]="'createdAt'"
+  [sortOrder]="-1"
+  [tableStyle]=""
+>
+  <ng-template pTemplate="caption">
+    <div class="flex rtl:flex-row-reverse justify-between gap-2">
+      <div class="flex gap-2">
+        <p-button
+          styleClass="rounded-md w-auto text-nowrap"
+          icon="pi pi-external-link"
+          [label]="translate.instant('FINANCE.EXPORT')"
+          (onClick)="dt1.exportCSV()"
+        />
+        <p-button
+          styleClass="rounded-md w-auto text-nowrap	"
+          [label]="translate.instant('FINANCE.CLEAR_FILTERS')"
+          [outlined]="true"
+          icon="pi pi-filter-slash"
+          (onClick)="clear(dt1)"
+        />
+        <p-button
+          styleClass="rounded-md w-auto text-nowrap	"
+          [label]="translate.instant('FINANCE.ADD_MEAL_RESERVATION')"
+          [outlined]="true"
+          icon="pi pi-plus"
+          (onClick)="navigateToAddMealReservation()"
+        />
+      </div>
+
+      <ng-container *ngIf="mealReservations.length === 0 && !loading">
+        <div class="flex justify-center items-center w-full">
+          <p class="text-center font-semibold text-xl w-full flex justify-center">
+            {{ "FINANCE.NO_MEAL_RESERVATIONS" | translate }}
+          </p>
+        </div>
+      </ng-container>
+
+      <span class="p-input-icon-left ml-auto">
+        <i class="pi pi-search"></i>
+        <input
+          pInputText
+          type="text"
+          [(ngModel)]="searchValue"
+          (input)="filter(dt1, $event)"
+          (blur)="trimSearchValue()"
+          [placeholder]="translate.instant('FINANCE.SEARCH')"
+        />
+      </span>
+    </div>
+  </ng-template>
+
+  <!-- الهيدر ديناميكي من columns -->
+  <ng-template pTemplate="header" let-columns>
+    <tr>
+      <!-- ✅ عمود الترقيم -->
+      <th style="min-width: 3rem; width: 3rem" pSortableColumn="rowIndex">
+        <div class="flex align-items-center">
+          #
+<!--          <p-sortIcon field="rowIndex" class="mx-1"></p-sortIcon>-->
+        </div>
+      </th>
+
+      <th
+        style="min-width: fit-content"
+        *ngFor="let column of columns"
+        pResizableColumn
+        [pSortableColumn]="column.field"
+      >
+        <div class="flex align-items-center">
+          {{ column.header }}
+          <p-sortIcon [field]="column.field" class="mx-1 "></p-sortIcon>
+          <p-columnFilter
+            *ngIf="column.filter"
+            [type]="column.filterType"
+            [field]="column.field"
+            display="menu"
+          />
+        </div>
+      </th>
+      <th style="min-width: fit-content">
+        <div class="flex align-items-center text-base">
+          {{ "FINANCE.ACTIONS" | translate }}
+        </div>
+      </th>
+    </tr>
+  </ng-template>
+
+  <!-- الجسم: نزود أعمدة القيم الجديدة هنا -->
+  <ng-template pTemplate="body" let-Entry let-rowIndex="rowIndex">
+    <tr *ngIf="mealReservations.length > 0"
+        class="hover:bg-gray-200 cursor-pointer transition-colors duration-200"
+        (click)="navigateToMealReservation(Entry)"
+        (contextmenu)="openOverlay($event, Entry)"
+        style="cursor:pointer">
+
+      <!-- ✅ عمود الترقيم -->
+      <td class="text-lg text-center">
+        {{ rowIndex + 1 }}
+      </td>
+
+      <!-- 1) رقم مرجعي -->
+      <td class="text-lg rtl:text-right">
+        {{ Entry.referenceNumber }}
+      </td>
+
+      <!-- 2) اسم العميل -->
+      <td class="text-lg rtl:text-right">
+        {{ Entry.customerProfileName }}
+      </td>
+
+      <!-- 3) رقم حجز العميل (جديد) -->
+      <td class="text-lg rtl:text-right">
+        {{ Entry.customerReservationNumber || '-' }}
+      </td>
+
+      <!-- 4) الوصف (جديد) -->
+      <td class="text-lg rtl:text-right">
+        {{ Entry.description || '-' }}
+      </td>
+
+      <!-- 5) الملاحظات (جديد) -->
+      <td class="text-lg rtl:text-right">
+        {{ Entry.notes || '-' }}
+      </td>
+
+      <!-- 6) تاريخ الإنشاء -->
+      <td class="text-lg rtl:text-right">
+        {{ activeLanguage === 'en'
+            ? (Entry.createdAt | customDate: 'YYYY/M/d  h:mm a':'':'en-US')
+            : (Entry.createdAt | customDate:'YYYY/M/d  h:mm a':'':'ar-SA')
+        }}
+      </td>
+
+      <!-- الأكشنز -->
+      <td class="text-lg rtl:text-right justify-center flex gap-2" (click)="$event.stopPropagation()">
+        <p-button
+          [text]="true"
+          (onClick)="toggleCogOverlay($event, Entry)"
+          severity="secondary"
+          styleClass="p-button-outlined rounded-xl"
+        >
+          <ng-template pTemplate="icon">
+            <i class="pi pi-cog text-xl"></i>
+          </ng-template>
+        </p-button>
+
+        <p-button
+          *ngIf="Entry.transactionId !== null"
+          [routerLink]="'/accounting/journal-transactions/transaction/'+Entry.transactionId"
+          [link]="true"
+          icon="pi pi-external-link"
+          class="p-button-success p-button-outlined w-full p-2"
+          styleClass="rounded-lg p-button-success p-button-outlined w-full"
+          (click)="$event.stopPropagation()"
+        ></p-button>
+      </td>
+    </tr>
+  </ng-template>
+</p-table>
+
+<p-overlayPanel #opMealReservation appendTo="body" [dismissable]="true" [autoZIndex]="true" [baseZIndex]="99999">
+  <div class="flex flex-column gap-3 w-auto p-1" *ngIf="selectedEntry">
+    <p-button
+      icon="pi pi-pencil"
+      class="p-button-secondary"
+      [label]="translate.instant('FINANCE.EDIT')"
+      styleClass="rounded-lg p-button-secondary w-full"
+      (onClick)="navigateToMealReservation(selectedEntry); opMealReservation.hide()"
+    ></p-button>
+    <p-button
+      icon="pi pi-trash"
+      class="p-button-danger"
+      [label]="translate.instant('FINANCE.DELETE')"
+      styleClass="rounded-lg p-button-danger w-full"
+      (onClick)="confirmMealReservationDeletion($event, selectedEntry); opMealReservation.hide()"
+    ></p-button>
+  </div>
+</p-overlayPanel>
+
+<p-confirmDialog></p-confirmDialog>
+<p-toast></p-toast>
+

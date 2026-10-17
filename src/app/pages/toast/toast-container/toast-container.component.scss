@@ -1,0 +1,128 @@
+/* لو فيه ستايل قديم كان حاطط top/right، نلغيه هنا */
+.toast-container {
+  position: fixed !important;
+  /* reset أي تموضع قديم */
+  top: auto !important;
+  right: auto !important;
+  left: auto !important;
+  bottom: auto !important;
+
+  z-index: 9999;
+  display: flex;
+  gap: 10px;
+  pointer-events: none;
+}
+
+/* أسفل-يسار صريح (بغض النظر عن RTL) */
+.toast-container.toast-bottom-left {
+  bottom: 20px !important;
+  left: 20px !important;
+  /* نخلي الأحدث يظهر تحت ويتراكم لفوق */
+  flex-direction: column-reverse;
+  align-items: flex-start;
+}
+
+/* التوست نفسه */
+.toast {
+  pointer-events: auto;
+  display: flex;
+  gap: 10px;
+  min-width: 320px;
+  max-width: 380px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+  border-inline-start: 4px solid transparent;
+  background: #fff;
+  animation: slideFromBottom 0.2s ease-out;
+
+  .icon {
+    display: flex;
+    align-items: flex-start;
+  }
+
+  .body {
+    flex: 1;
+
+    .message {
+      display: flex;
+      flex-direction: column; /* ↓↓↓ علشان العنوان فوق المحتوى */
+      gap: 2px;
+
+      .title {
+        font-weight: 700;
+        font-size: 14px;
+        color: #222;
+        line-height: 1.2;
+      }
+
+      .text {
+        font-weight: 500;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        color: #444;
+
+        .link-hint {
+          display: inline-flex;
+          align-items: center;
+          gap: 3px;
+          background: #e3f2fd;
+          color: #1976d2;
+          padding: 1px 6px;
+          border-radius: 10px;
+          font-size: 11px;
+        }
+      }
+    }
+
+    .meta {
+      margin-top: 4px;
+      font-size: 11px;
+      color: #666;
+    }
+  }
+
+  .close {
+    border: 0;
+    background: transparent;
+    cursor: pointer;
+    align-self: start;
+    color: #666;
+  }
+
+  &.success {
+    border-inline-start-color: #4caf50;
+  }
+  &.error {
+    border-inline-start-color: #f44336;
+  }
+  &.warning {
+    border-inline-start-color: #ff9800;
+  }
+  &.info {
+    border-inline-start-color: #2196f3;
+  }
+
+  &:hover {
+    transform: translateY(-2px);
+  }
+}
+
+@keyframes slideFromBottom {
+  from {
+    transform: translateY(16px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+@media (max-width: 480px) {
+  .toast {
+    min-width: 260px;
+    max-width: calc(100vw - 40px);
+  }
+}

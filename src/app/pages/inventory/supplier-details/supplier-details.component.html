@@ -1,0 +1,90 @@
+<app-entity-manager [actions]="actions" [columns]="columns" [loadData]="loadData"
+                    [formConfig]="formConfig" [entityName]="entityName"
+                    [importConfig]="importConfig" [enableBulkDelete]="true"
+                    [service]="supplierDetailsService"></app-entity-manager>
+
+<p-toast></p-toast>
+
+<!-- Processing spinner dialog -->
+<p-dialog
+  [(visible)]="isImporting"
+  [modal]="true"
+  [closable]="false"
+  [style]="{width: '320px'}"
+  [header]="activeLanguage === 'ar' ? 'جاري المعالجة...' : 'Processing...'"
+>
+  <div class="flex flex-column align-items-center gap-3 py-4">
+    <p-progressSpinner strokeWidth="4" animationDuration=".8s" />
+    <p class="text-center text-600 m-0">
+      {{ activeLanguage === 'ar' ? 'يتم معالجة الملف على الخادم، الرجاء الانتظار...' : 'Processing file on server, please wait...' }}
+    </p>
+  </div>
+</p-dialog>
+
+<!-- Import failures dialog -->
+<p-dialog
+  [(visible)]="showImportFailuresDialog"
+  [header]="translate.instant('COMMON.IMPORT_FAILURES_TITLE')"
+  [modal]="true"
+  [style]="{width: '60vw', maxHeight: '80vh'}"
+  [breakpoints]="{'960px': '75vw', '640px': '90vw'}"
+  [draggable]="false"
+  [resizable]="false"
+>
+  <div class="import-failures-wrap mb-3" [dir]="activeLanguage === 'ar' ? 'rtl' : 'ltr'">
+    <div class="import-failures-summary">
+      <div class="import-failures-summary__icon">
+        <i class="pi pi-exclamation-triangle"></i>
+      </div>
+      <div class="import-failures-summary__content">
+        <div class="import-failures-summary__title">{{ 'COMMON.IMPORT_FAILURES_TITLE' | translate }}</div>
+        <div class="import-failures-summary__subtitle">
+          {{ 'COMMON.IMPORT_FAILED_ROWS' | translate: { count: importFailures.length } }}
+        </div>
+      </div>
+      <span class="import-failures-summary__badge">{{ importFailures.length }}</span>
+    </div>
+  </div>
+  <p-table
+    [value]="importFailures"
+    styleClass="p-datatable-sm p-datatable-gridlines import-failures-table"
+    [scrollable]="true"
+    scrollHeight="400px"
+  >
+    <ng-template pTemplate="header">
+      <tr>
+        <th style="width:80px">{{ 'COMMON.IMPORT_FAILURE_ROW' | translate }}</th>
+        <th>{{ 'COMMON.IMPORT_FAILURE_NAME' | translate }}</th>
+        <th>{{ 'COMMON.IMPORT_FAILURE_REASON' | translate }}</th>
+      </tr>
+    </ng-template>
+    <ng-template pTemplate="body" let-f>
+      <tr>
+        <td class="text-center font-mono">{{ f.row }}</td>
+        <td class="font-semibold">{{ f.name }}</td>
+        <td class="text-sm">
+          <div class="flex align-items-start gap-2">
+            <span class="failure-chip" [ngClass]="getImportFailureVisualState(f).chipClass">
+              <i [class]="getImportFailureVisualState(f).icon"></i>
+            </span>
+            <span
+              class="failure-reason"
+              [class.failure-reason--truncated]="isImportFailureReasonTruncated(f)"
+              [attr.title]="isImportFailureReasonTruncated(f) ? getImportFailureReason(f) : null"
+            >
+              {{ getImportFailureReasonPreview(f) }}
+            </span>
+          </div>
+        </td>
+      </tr>
+    </ng-template>
+  </p-table>
+  <p-footer>
+    <p-button
+      [label]="translate.instant('FINANCE.CLOSE_LABEL')"
+      icon="pi pi-times"
+      severity="secondary"
+      (onClick)="showImportFailuresDialog = false"
+    />
+  </p-footer>
+</p-dialog>

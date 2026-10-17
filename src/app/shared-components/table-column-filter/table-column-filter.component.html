@@ -1,0 +1,171 @@
+<!-- Trigger Button in Table Header -->
+<button
+  #triggerBtn
+  type="button"
+  class="table-filter-trigger-btn"
+  [class.table-filter-trigger-btn--active]="isFilterActive"
+  (click)="toggleOverlay($event)"
+  [title]="isArabic ? 'فلترة حسب ' + header : 'Filter by ' + header"
+>
+  <i class="pi pi-filter" [class.pi-filter-fill]="isFilterActive"></i>
+  <span *ngIf="isFilterActive" class="filter-active-dot"></span>
+</button>
+
+<!-- Filter Overlay Panel -->
+<p-overlayPanel
+  #op
+  [appendTo]="'body'"
+  [dismissable]="true"
+  [showCloseIcon]="false"
+  (onHide)="onOverlayHide()"
+  styleClass="custom-table-filter-overlay-panel"
+>
+  <div class="custom-table-filter-container" [dir]="isArabic ? 'rtl' : 'ltr'">
+    
+    <!-- Header: فلتر [اسم العمود] + زر إغلاق X -->
+    <div class="filter-header" *ngIf="header">
+      <div class="filter-header__title">
+        <i class="pi pi-filter"></i>
+        <span>{{ isArabic ? 'فلتر ' + header : 'Filter ' + header }}</span>
+      </div>
+      <button
+        type="button"
+        class="filter-header__close-btn"
+        (click)="op.hide()"
+        [title]="isArabic ? 'إغلاق' : 'Close'"
+      >
+        <i class="pi pi-times"></i>
+      </button>
+    </div>
+
+    <!-- Match Operator: تطابق الكل / تطابق أي (Always Shown) -->
+    <div class="filter-operator-box">
+      <p-dropdown
+        [(ngModel)]="operator"
+        [options]="operatorOptions"
+        optionLabel="label"
+        optionValue="value"
+        styleClass="w-full filter-dropdown filter-dropdown--operator"
+      ></p-dropdown>
+    </div>
+
+    <!-- Filter Constraints / Rules List -->
+    <div class="filter-constraints-list">
+      <div
+        class="filter-constraint-item"
+        *ngFor="let rule of constraints; let i = index"
+        [class.filter-constraint-item--additional]="i > 0"
+      >
+        <!-- Header for additional rules with remove button -->
+        <div class="filter-constraint-item__header" *ngIf="i > 0">
+          <span class="filter-rule-label">{{ isArabic ? 'قاعدة إضافية (' + (i + 1) + ')' : 'Rule ' + (i + 1) }}</span>
+          <button
+            type="button"
+            class="filter-rule-remove-btn"
+            (click)="removeRule(i, $event)"
+            [title]="isArabic ? 'إزالة هذه القاعدة' : 'Remove rule'"
+          >
+            <i class="pi pi-times"></i>
+            <span>{{ isArabic ? 'إزالة' : 'Remove' }}</span>
+          </button>
+        </div>
+
+        <!-- Match Mode Dropdown -->
+        <div class="filter-field-item" *ngIf="matchModes.length > 1">
+          <p-dropdown
+            [(ngModel)]="rule.matchMode"
+            [options]="matchModes"
+            optionLabel="label"
+            optionValue="value"
+            styleClass="w-full filter-dropdown"
+          ></p-dropdown>
+        </div>
+
+        <!-- Value Input Field -->
+        <div class="filter-field-item">
+          <!-- Text Input -->
+          <input
+            *ngIf="type === 'text'"
+            pInputText
+            type="text"
+            class="w-full filter-input"
+            [(ngModel)]="rule.value"
+            (keydown.enter)="applyFilter()"
+            [placeholder]="placeholder || (isArabic ? 'اكتب للبحث...' : 'Search...')"
+          />
+
+          <!-- Date Calendar Input -->
+          <p-calendar
+            *ngIf="type === 'date'"
+            [(ngModel)]="rule.value"
+            [showIcon]="true"
+            [dateFormat]="dateFormat"
+            [showButtonBar]="true"
+            styleClass="w-full filter-calendar"
+            inputStyleClass="w-full filter-input"
+            [placeholder]="placeholder || (isArabic ? 'اختر التاريخ...' : 'Select date...')"
+            (onClearClick)="rule.value = null"
+          ></p-calendar>
+
+          <!-- Numeric Input -->
+          <p-inputNumber
+            *ngIf="type === 'numeric'"
+            [(ngModel)]="rule.value"
+            styleClass="w-full"
+            inputStyleClass="w-full filter-input"
+            (keydown.enter)="applyFilter()"
+            [placeholder]="placeholder || (isArabic ? 'أدخل رقماً...' : 'Enter number...')"
+          ></p-inputNumber>
+
+          <!-- Dropdown Input -->
+          <p-dropdown
+            *ngIf="type === 'dropdown'"
+            [(ngModel)]="rule.value"
+            [options]="options"
+            [optionLabel]="optionLabel"
+            [optionValue]="optionValue"
+            [showClear]="true"
+            styleClass="w-full filter-dropdown"
+            [placeholder]="placeholder || (isArabic ? 'اختر...' : 'Select...')"
+          ></p-dropdown>
+        </div>
+      </div>
+    </div>
+
+    <!-- Add Rule Button: إضافة قاعدة فلتر -->
+    <div class="filter-add-rule-box">
+      <button
+        type="button"
+        class="filter-add-rule-btn"
+        (click)="addRule($event)"
+      >
+        <i class="pi pi-plus"></i>
+        <span>{{ isArabic ? 'إضافة قاعدة فلتر' : 'Add Rule' }}</span>
+      </button>
+    </div>
+
+    <!-- Action Buttons Bar: Apply on Right (Green), Clear on Left (Red) -->
+    <div class="filter-footer">
+      <!-- Apply Button (Green - Right side in RTL) -->
+      <button
+        type="button"
+        class="filter-btn filter-btn--apply"
+        (click)="applyFilter()"
+      >
+        <i class="pi pi-check"></i>
+        <span>{{ isArabic ? 'تطبيق' : 'Apply' }}</span>
+      </button>
+
+      <!-- Clear Button (Red - Left side in RTL) -->
+      <button
+        type="button"
+        class="filter-btn filter-btn--clear"
+        (click)="clearFilter()"
+      >
+        <i class="pi pi-trash"></i>
+        <span>{{ isArabic ? 'مسح' : 'Clear' }}</span>
+      </button>
+    </div>
+
+  </div>
+</p-overlayPanel>

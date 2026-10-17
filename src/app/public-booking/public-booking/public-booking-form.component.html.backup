@@ -1,0 +1,332 @@
+<div class="public-booking-container">
+  <!-- Step 1: Landing Page -->
+  <div *ngIf="currentStep() === 1" class="step-container">
+    <!-- Hero Section -->
+    <div class="booking-hero">
+      <!-- Top Navigation -->
+      <nav class="nav-container">
+        <div class="nav-logo">
+          <img *ngIf="companyDetails?.logo" src="data:image/*;base64,{{companyDetails?.logo}}" [alt]="companyDetails.englishName" class="logo-image">
+          <div *ngIf="!companyDetails?.logo" class="logo-text">
+            {{companyDetails?.englishName || 'Smart & Pro ERP'}}
+          </div>
+        </div>
+        <div class="nav-contact">
+          <a href="tel:{{companyDetails?.phones?.[0]?.phoneNumber}}" *ngIf="companyDetails?.phones?.length">
+            <i class="pi pi-phone"></i>
+            {{companyDetails.phones[0].phoneNumber}}
+          </a>
+          <a href="mailto:{{companyDetails?.email}}" *ngIf="companyDetails?.email">
+            <i class="pi pi-envelope"></i>
+            {{companyDetails.email}}
+          </a>
+        </div>
+      </nav>
+
+      <!-- Hero Content -->
+      <div class="hero-content">
+        <h1>{{companyDetails?.englishName || 'Smart & Pro'}}</h1>
+        <p class="company-subtitle" *ngIf="companyDetails?.arabicName">{{companyDetails.arabicName}}</p>
+        <p>Your Premium Hotel Booking Experience | تجربة حجز فندقية متميزة</p>
+        <div class="company-address" *ngIf="companyDetails?.address">
+          <i class="pi pi-map-marker"></i>
+          <span>{{companyDetails.address}}</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Search Form -->
+    <div class="search-container">
+      <div class="search-form">
+        <!-- Hotel Selection -->
+        <div class="form-group">
+          <label class="search-label">
+            <i class="pi pi-building"></i>
+            Hotel | الفندق
+          </label>
+          <select formControlName="hotelId" class="search-input">
+            <option value="">Select a hotel | اختر فندق</option>
+            <option *ngFor="let hotel of hotels" [value]="hotel.id">
+              {{hotel.englishName || hotel.arabicName}}
+            </option>
+          </select>
+        </div>
+
+        <!-- Check-in Date -->
+        <div class="form-group">
+          <label class="search-label">
+            <i class="pi pi-calendar"></i>
+            Check-in | تاريخ الوصول
+          </label>
+          <p-calendar 
+            formControlName="arrivalDate"
+            [minDate]="minDateObj"
+            [showIcon]="true"
+            dateFormat="dd/mm/yy"
+            styleClass="w-full">
+          </p-calendar>
+        </div>
+
+        <!-- Check-out Date -->
+        <div class="form-group">
+          <label class="search-label">
+            <i class="pi pi-calendar"></i>
+            Check-out | تاريخ المغادرة
+          </label>
+          <p-calendar 
+            formControlName="departureDate"
+            [minDate]="minDepartureDateObj"
+            [showIcon]="true"
+            dateFormat="dd/mm/yy"
+            styleClass="w-full">
+          </p-calendar>
+        </div>
+
+        <!-- Book Now Button -->
+        <button type="button" (click)="onBookNow()" class="search-button">
+          <i class="pi pi-check"></i>
+          Book Now | احجز الآن
+        </button>
+      </div>
+    </div>
+
+    <!-- Promotional Banners with Images -->
+    <div class="promo-images-section">
+      <div class="promo-images-container">
+        <h2 class="promo-images-title">Trending destinations</h2>
+        <p class="promo-images-subtitle">Travelers searching for hotels also booked these</p>
+        
+        <div class="promo-images-grid">
+          <!-- Dubai -->
+          <div class="promo-image-card">
+            <div class="promo-image" style="background: linear-gradient(rgba(0,0,0,0.2), rgba(0,0,0,0.4)), url('https://images.unsplash.com/photo-1512453979798-5ea266f8880c?w=400&h=300&fit=crop') center/cover;">
+              <div class="promo-overlay">
+                <h3>Dubai</h3>
+                <p>1,234 properties</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- London -->
+          <div class="promo-image-card">
+            <div class="promo-image" style="background: linear-gradient(rgba(0,0,0,0.2), rgba(0,0,0,0.4)), url('https://images.unsplash.com/photo-1513635269975-59663e0ac1ad?w=400&h=300&fit=crop') center/cover;">
+              <div class="promo-overlay">
+                <h3>London</h3>
+                <p>2,156 properties</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Paris -->
+          <div class="promo-image-card">
+            <div class="promo-image" style="background: linear-gradient(rgba(0,0,0,0.2), rgba(0,0,0,0.4)), url('https://images.unsplash.com/photo-1502602898657-3e91760cbb34?w=400&h=300&fit=crop') center/cover;">
+              <div class="promo-overlay">
+                <h3>Paris</h3>
+                <p>1,987 properties</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- New York -->
+          <div class="promo-image-card">
+            <div class="promo-image" style="background: linear-gradient(rgba(0,0,0,0.2), rgba(0,0,0,0.4)), url('https://images.unsplash.com/photo-1496442226666-8d4d0e62e6e9?w=400&h=300&fit=crop') center/cover;">
+              <div class="promo-overlay">
+                <h3>New York</h3>
+                <p>3,421 properties</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Tokyo -->
+          <div class="promo-image-card">
+            <div class="promo-image" style="background: linear-gradient(rgba(0,0,0,0.2), rgba(0,0,0,0.4)), url('https://images.unsplash.com/photo-1540959733332-eab4deabeeaf?w=400&h=300&fit=crop') center/cover;">
+              <div class="promo-overlay">
+                <h3>Tokyo</h3>
+                <p>1,654 properties</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Barcelona -->
+          <div class="promo-image-card">
+            <div class="promo-image" style="background: linear-gradient(rgba(0,0,0,0.2), rgba(0,0,0,0.4)), url('https://images.unsplash.com/photo-1583422409516-2895a77efded?w=400&h=300&fit=crop') center/cover;">
+              <div class="promo-overlay">
+                <h3>Barcelona</h3>
+                <p>1,432 properties</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Special Offers Section -->
+    <div class="offers-section">
+      <div class="offers-container">
+        <h2 class="offers-title">Special offers for you</h2>
+        
+        <div class="offers-grid">
+          <div class="offer-card offer-large">
+            <div class="offer-image" style="background: linear-gradient(135deg, rgba(0,53,128,0.9), rgba(0,113,194,0.85)), url('https://images.unsplash.com/photo-1566073771259-6a8506099945?w=600&h=400&fit=crop') center/cover;">
+              <div class="offer-content">
+                <span class="offer-badge">Limited Time</span>
+                <h3>Save 15% or more</h3>
+                <p>Members get access to exclusive deals – sign in now</p>
+                <button class="offer-button">Sign in, it's free</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="offer-card">
+            <div class="offer-image" style="background: linear-gradient(rgba(0,0,0,0.3), rgba(0,0,0,0.5)), url('https://images.unsplash.com/photo-1571896349842-33c89424de2d?w=400&h=300&fit=crop') center/cover;">
+              <div class="offer-content">
+                <span class="offer-badge">New</span>
+                <h3>Fly away</h3>
+                <p>Compare and book flights</p>
+                <a href="#" class="offer-link">Explore flights</a>
+              </div>
+            </div>
+          </div>
+
+          <div class="offer-card">
+            <div class="offer-image" style="background: linear-gradient(rgba(0,0,0,0.3), rgba(0,0,0,0.5)), url('https://images.unsplash.com/photo-1602002418082-a4443e081dd1?w=400&h=300&fit=crop') center/cover;">
+              <div class="offer-content">
+                <span class="offer-badge">Popular</span>
+                <h3>Enjoy the sun</h3>
+                <p>Beach resorts and hotels</p>
+                <a href="#" class="offer-link">Discover more</a>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Features Section -->
+    <div class="features-section">
+      <div class="features-container">
+        <h2 class="features-title">Why book with us?</h2>
+        <div class="features-grid">
+          <div class="feature-card">
+            <i class="pi pi-shield"></i>
+            <h3>Secure Booking</h3>
+            <p>Your data is protected with advanced security measures</p>
+          </div>
+          <div class="feature-card">
+            <i class="pi pi-dollar"></i>
+            <h3>Best Price Guarantee</h3>
+            <p>Find a lower price? We'll match it and give you an extra discount</p>
+          </div>
+          <div class="feature-card">
+            <i class="pi pi-clock"></i>
+            <h3>24/7 Support</h3>
+            <p>Our customer service team is here for you around the clock</p>
+          </div>
+          <div class="feature-card">
+            <i class="pi pi-star"></i>
+            <h3>Verified Reviews</h3>
+            <p>Real reviews from real guests who stayed at these properties</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="booking-footer">
+      <div class="footer-container">
+        <div class="footer-info">
+          <p>&copy; 2025 {{companyDetails?.englishName || 'Smart & Pro'}}. All rights reserved.</p>
+          <div class="footer-links">
+            <a href="#">Privacy Policy</a>
+            <a href="#">Terms of Service</a>
+            <a href="#"Contact Us</a>
+          </div>
+        </div>
+      </div>
+    </footer>
+  </div>
+
+  <!-- Step 2: Room Selection -->        <div class="offer-card offer-large">
+          <div class="offer-image" style="background: linear-gradient(135deg, rgba(0,53,128,0.9), rgba(0,113,194,0.85)), url('https://images.unsplash.com/photo-1566073771259-6a8506099945?w=600&h=400&fit=crop') center/cover;">
+            <div class="offer-content">
+              <span class="offer-badge">Limited Time</span>
+              <h3>Save 15% or more</h3>
+              <p>Members get access to exclusive deals – sign in now</p>
+              <button class="offer-button">Sign in, it's free</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="offer-card">
+          <div class="offer-image" style="background: linear-gradient(rgba(0,0,0,0.3), rgba(0,0,0,0.5)), url('https://images.unsplash.com/photo-1571896349842-33c89424de2d?w=400&h=300&fit=crop') center/cover;">
+            <div class="offer-content">
+              <span class="offer-badge">New</span>
+              <h3>Fly away</h3>
+              <p>Compare and book flights</p>
+              <a href="#" class="offer-link">Explore flights</a>
+            </div>
+          </div>
+        </div>
+
+        <div class="offer-card">
+          <div class="offer-image" style="background: linear-gradient(rgba(0,0,0,0.3), rgba(0,0,0,0.5)), url('https://images.unsplash.com/photo-1602002418082-a4443e081dd1?w=400&h=300&fit=crop') center/cover;">
+            <div class="offer-content">
+              <span class="offer-badge">Popular</span>
+              <h3>Enjoy the sun</h3>
+              <p>Beach resorts and hotels</p>
+              <a href="#" class="offer-link">Discover more</a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Features Section -->
+  <div class="features-section">
+    <div class="features-container">
+      <h2 class="features-title">Why book with us?</h2>
+      <div class="features-grid">
+        <div class="feature-card">
+          <i class="pi pi-shield"></i>
+          <h3>Secure Booking</h3>
+          <p>Your data is protected with advanced security measures</p>
+        </div>
+        <div class="feature-card">
+          <i class="pi pi-dollar"></i>
+          <h3>Best Price Guarantee</h3>
+          <p>Find a lower price? We'll match it and give you an extra discount</p>
+        </div>
+        <div class="feature-card">
+          <i class="pi pi-clock"></i>
+          <h3>24/7 Support</h3>
+          <p>Our customer service team is here for you around the clock</p>
+        </div>
+        <div class="feature-card">
+          <i class="pi pi-star"></i>
+          <h3>Verified Reviews</h3>
+          <p>Real reviews from real guests who stayed at these properties</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Footer -->
+      <footer class="booking-footer">
+      <div class="footer-container">
+        <div class="footer-info">
+          <p>&copy; 2025 {{companyDetails?.englishName || 'Smart & Pro'}}. All rights reserved.</p>
+          <div class="footer-links">
+            <a href="#">Privacy Policy</a>
+            <a href="#">Terms of Service</a>
+            <a href="#">Contact Us</a>
+          </div>
+        </div>
+      </div>
+    </footer>
+  </div>
+
+  <!-- Step 2: Room Selection -->
+  <div *ngIf="currentStep() === 2" class="step-container">
+
+</div>

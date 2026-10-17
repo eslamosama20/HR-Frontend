@@ -1,0 +1,304 @@
+﻿<div class="container-fluid">
+  <p-toast></p-toast>
+  
+  <!-- Header -->
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <h2 class="page-title">إدارة المخزون التالف</h2>
+    <p-button 
+      icon="pi pi-refresh" 
+      [label]="'تحديث' | translate" 
+      styleClass="p-button-rounded"
+      (onClick)="refresh()"
+      [loading]="loading">
+    </p-button>
+  </div>
+
+  <!-- Add New Damaged Item Form -->
+  <p-panel header="إضافة تالف جديد" styleClass="mb-4">
+    <div class="row g-3">
+      <!-- Work Location (Store) -->
+      <div class="col-md-6">
+        <label class="form-label">موقع العمل (المخزن) <span class="text-danger">*</span></label>
+        <p-dropdown 
+          [options]="stores" 
+          [(ngModel)]="selectedStore"
+          optionLabel="arabicName"
+          [placeholder]="'اختر المخزن' | translate"
+          [filter]="true"
+          filterBy="arabicName,englishName"
+          [showClear]="true"
+          styleClass="w-100"
+          (onChange)="onStoreChange($event)">
+        </p-dropdown>
+      </div>
+
+      <!-- Damage Date -->
+      <div class="col-md-6">
+        <label class="form-label">تاريخ التلف <span class="text-danger">*</span></label>
+        <p-calendar 
+          [(ngModel)]="damageDate"
+          [showIcon]="true"
+          dateFormat="dd/mm/yy"
+          [placeholder]="'اختر التاريخ' | translate"
+          styleClass="w-100">
+        </p-calendar>
+      </div>
+
+      <!-- Search by Name Button -->
+      <div class="col-md-6">
+        <label class="form-label">اختيار المنتج من المخزن</label>
+        <div class="d-flex gap-2">
+          <p-button 
+            icon="pi pi-search" 
+            label="البحث بالاسم"
+            styleClass="p-button-primary"
+            [disabled]="!selectedStore"
+            (onClick)="openProductDialog()">
+          </p-button>
+          <small class="text-muted align-self-center" *ngIf="!selectedStore">اختر المخزن أولاً</small>
+        </div>
+      </div>
+
+      <!-- Reported By -->
+      <div class="col-md-6">
+        <label class="form-label">أبلغ عنه <span class="text-danger">*</span></label>
+        <input 
+          type="text" 
+          pInputText 
+          [(ngModel)]="reportedBy"
+          placeholder="اسم المبلغ"
+          class="w-100" />
+      </div>
+
+      <!-- Reason -->
+      <div class="col-12">
+        <label class="form-label">السبب</label>
+        <textarea 
+          pInputTextarea 
+          [(ngModel)]="reason"
+          rows="3" 
+          class="w-100"
+          placeholder="أدخل سبب التلف...">
+        </textarea>
+      </div>
+    </div>
+  </p-panel>
+
+  <!-- Selected Items to Add -->
+  <p-panel header="المنتجات المختارة للإضافة كتالف" styleClass="mb-4" *ngIf="itemsToAdd.length > 0">
+    <p-table [value]="itemsToAdd" styleClass="p-datatable-sm" responsiveLayout="scroll">
+      <ng-template pTemplate="header">
+        <tr>
+          <th style="text-align: center;">المنتج</th>
+          <th style="text-align: center;">الوحدة</th>
+          <th style="text-align: center;">الكمية</th>
+          <th style="text-align: center;">تاريخ الصلاحية</th>
+          <th style="text-align: center;">الموقع</th>
+          <th style="text-align: center;">حذف</th>
+        </tr>
+      </ng-template>
+      <ng-template pTemplate="body" let-item let-rowIndex="rowIndex">
+        <tr>
+          <td style="text-align: center;">
+              <div>
+                <div class="font-medium">{{ item.product.productName }}</div>
+                <div class="text-sm text-muted">{{ item.product.productCode }}</div>
+                <div class="text-xs text-muted" *ngIf="item.product.batchNo">دفعة: {{ item.product.batchNo }}</div>
+              </div>
+          </td>
+          <td style="text-align: center;">{{ item.product.unitName }}</td>
+          <td style="text-align: center;">{{ item.quantity | number: '1.2-2' }}</td>
+          <td style="text-align: center;">
+            <span *ngIf="item.product.expiryDate">{{ item.product.expiryDate | customDate: 'yyyy-MM-dd' }}</span>
+            <span *ngIf="!item.product.expiryDate">-</span>
+          </td>
+          <td style="text-align: center;">
+            <div class="text-sm">
+              <div *ngIf="item.product.shelfNumber">رف: {{ item.product.shelfNumber }}</div>
+              <div *ngIf="item.product.rowNumber">صف: {{ item.product.rowNumber }}</div>
+              <span *ngIf="!item.product.shelfNumber && !item.product.rowNumber">-</span>
+            </div>
+          </td>
+          <td style="text-align: center;">
+            <button
+              pButton
+              type="button"
+              icon="pi pi-times"
+              class="p-button-rounded p-button-danger p-button-text p-button-sm"
+              (click)="removeItemToAdd(rowIndex)"
+            ></button>
+          </td>
+        </tr>
+      </ng-template>
+    </p-table>
+
+    <div class="d-flex justify-content-end gap-2 mt-3">
+      <p-button 
+        label="إلغاء"
+        icon="pi pi-times"
+        styleClass="p-button-secondary"
+        (onClick)="resetForm()">
+      </p-button>
+      <p-button 
+        label="حفظ التوالف"
+        icon="pi pi-save"
+        styleClass="p-button-success"
+        (onClick)="addDamagedItem()"
+        [loading]="loading">
+      </p-button>
+    </div>
+  </p-panel>
+
+  <!-- Damaged Items Table -->
+  <p-panel header="سجل المخزون التالف" styleClass="mb-4">
+    <div class="table-responsive">
+      <p-table 
+        [value]="damagedItems()" 
+        [loading]="loading"
+        [paginator]="true" 
+        [rows]="15"
+        [showCurrentPageReport]="true"
+        currentPageReportTemplate="عرض {first} إلى {last} من {totalRecords}"
+        styleClass="p-datatable-sm">
+        
+        <ng-template pTemplate="header">
+          <tr>
+            <th class="text-center">تاريخ التلف</th>
+            <th>منتج</th>
+            <th>وحدة</th>
+            <th>المخزن</th>
+            <th class="text-center">الكمية التالفة</th>
+            <th>السبب</th>
+            <th>أبلغ عنه</th>
+          </tr>
+        </ng-template>
+
+        <ng-template pTemplate="body" let-item>
+          <tr>
+            <td class="text-center">{{ item.damageDate | customDate: 'yyyy-MM-dd' }}</td>
+            <td>{{ item.productName }}</td>
+            <td>{{ item.unitName }}</td>
+            <td>{{ item.storeName }}</td>
+            <td class="text-center">{{ item.quantity }}</td>
+            <td>{{ item.reason || '-- لا شيء --' }}</td>
+            <td>{{ item.reportedBy }}</td>
+          </tr>
+        </ng-template>
+
+        <ng-template pTemplate="emptymessage">
+          <tr>
+            <td colspan="7" class="text-center py-5">
+              <i class="pi pi-inbox" style="font-size: 3rem; color: var(--surface-400);"></i>
+              <p class="mt-3 text-muted">لا توجد عناصر تالفة</p>
+            </td>
+          </tr>
+        </ng-template>
+      </p-table>
+    </div>
+  </p-panel>
+</div>
+
+<!-- Product Selection Dialog -->
+<p-dialog
+  [(visible)]="showProductDialog"
+  [header]="'اختيار منتج من المخزن'"
+  [modal]="true"
+  [style]="{width: '600px'}"
+  [draggable]="false"
+  [resizable]="false"
+>
+  <div class="d-flex flex-column gap-3">
+    <div class="field">
+      <label for="product" class="form-label">المنتج (اختر من المخزن)</label>
+      <p-dropdown
+        id="product"
+        [options]="storeProducts"
+        [(ngModel)]="selectedStoreProduct"
+        optionLabel="productName"
+        placeholder="اختر المنتج"
+        [filter]="true"
+        filterBy="productName,productCode"
+        [showClear]="true"
+        styleClass="w-100"
+        appendTo="body"
+      >
+        <ng-template let-product pTemplate="item">
+          <div class="d-flex justify-content-between align-items-center w-100">
+            <div>
+              <div class="font-medium">{{ product.productName }}</div>
+              <div class="text-sm text-muted">{{ product.productCode }}</div>
+              <div class="text-xs text-muted" *ngIf="product.batchNo">دفعة: {{ product.batchNo }}</div>
+            </div>
+            <div class="text-end">
+              <div class="text-sm font-medium text-primary">الكمية: {{ product.quantity }}</div>
+              <div class="text-xs text-muted" *ngIf="product.expiryDate">
+                صلاحية: {{ product.expiryDate | customDate: 'yyyy-MM-dd' }}
+              </div>
+            </div>
+          </div>
+        </ng-template>
+        <ng-template let-product pTemplate="selectedItem">
+          <div *ngIf="product">
+            <span>{{ product.productName }}</span>
+            <span class="text-sm text-muted ms-2">({{ product.quantity }} متاح)</span>
+            <span class="text-xs text-primary ms-2" *ngIf="product.expiryDate">
+              - صلاحية: {{ product.expiryDate | customDate: 'yyyy-MM-dd' }}
+            </span>
+          </div>
+        </ng-template>
+      </p-dropdown>
+    </div>
+
+    <div class="field" *ngIf="selectedStoreProduct">
+      <div class="bg-light p-3 rounded mb-2">
+        <div class="text-sm"><strong>الكمية المتاحة:</strong> {{ selectedStoreProduct.quantity }}</div>
+        <div class="text-sm" *ngIf="selectedStoreProduct.expiryDate">
+          <strong>تاريخ الصلاحية:</strong> {{ selectedStoreProduct.expiryDate | customDate: 'yyyy-MM-dd' }}
+        </div>
+        <div class="text-sm" *ngIf="selectedStoreProduct.shelfNumber">
+          <strong>رقم الرف:</strong> {{ selectedStoreProduct.shelfNumber }}
+        </div>
+        <div class="text-sm" *ngIf="selectedStoreProduct.rowNumber">
+          <strong>رقم الصف:</strong> {{ selectedStoreProduct.rowNumber }}
+        </div>
+      </div>
+    </div>
+
+    <div class="field">
+      <label for="quantity" class="form-label">الكمية التالفة</label>
+      <p-inputNumber
+        id="quantity"
+        [(ngModel)]="productQuantity"
+        mode="decimal"
+        [minFractionDigits]="2"
+        [maxFractionDigits]="2"
+        [min]="0.01"
+        [max]="selectedStoreProduct?.quantity || 999999"
+        placeholder="0.00"
+        styleClass="w-100"
+      ></p-inputNumber>
+      <small class="text-muted" *ngIf="selectedStoreProduct">
+        الحد الأقصى: {{ selectedStoreProduct.quantity }}
+      </small>
+    </div>
+  </div>
+
+  <ng-template pTemplate="footer">
+    <button
+      pButton
+      type="button"
+      label="إلغاء"
+      icon="pi pi-times"
+      class="p-button-text"
+      (click)="showProductDialog = false"
+    ></button>
+    <button
+      pButton
+      type="button"
+      label="إضافة"
+      icon="pi pi-check"
+      (click)="addProductFromDialog()"
+      [disabled]="!selectedStoreProduct || !productQuantity || productQuantity > (selectedStoreProduct?.quantity || 0)"
+    ></button>
+  </ng-template>
+</p-dialog>

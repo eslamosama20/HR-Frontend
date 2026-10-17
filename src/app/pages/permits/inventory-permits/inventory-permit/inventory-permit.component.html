@@ -1,0 +1,669 @@
+<p-panel>
+  <ng-template pTemplate="header">
+    <div class="flex items-center justify-between w-full py-0 my-0">
+      <!-- Title on Right (Start in RTL) -->
+      <div class="flex items-center gap-2">
+        <span class="font-bold text-lg md:text-xl text-gray-900 dark:text-gray-50 leading-none">
+          {{
+            isEditMode
+              ? (inventoryPermitType === 'entry' ? ('FINANCE.EDIT_PERMIT' | translate) + ' - ' + ('FINANCE.PERMIT_ENTRY_TITLE' | translate) : ('FINANCE.EDIT_PERMIT' | translate) + ' - ' + ('FINANCE.PERMIT_EXIT_TITLE' | translate))
+              : (inventoryPermitType === 'entry' ? ('FINANCE.PERMIT_ENTRY_TITLE' | translate) : ('FINANCE.PERMIT_EXIT_TITLE' | translate))
+          }}
+        </span>
+      </div>
+
+      <!-- Action & Back Button on Far Left (End in RTL) -->
+      <div class="flex items-center gap-2 no-print">
+        <p-button 
+          *ngIf="isEditMode" 
+          styleClass="rounded-md" 
+          icon="pi pi-print" 
+          [label]="'FINANCE.PRINT_PERMIT' | translate" 
+          (onClick)="printDocument()">
+        </p-button>
+        <p-button 
+          *ngIf="isEditMode" 
+          styleClass="rounded-md" 
+          severity="danger"
+          icon="pi pi-trash" 
+          [label]="'FINANCE.DELETE' | translate" 
+          (onClick)="onDeleteClick()">
+        </p-button>
+        <app-back-button [customRoute]="'/permits/inventory-permits'"></app-back-button>
+      </div>
+    </div>
+  </ng-template>
+
+  <!-- Navigation Controls (only in edit mode) -->
+  <app-detail-actions-menu
+    *ngIf="isEditMode && navigationControls"
+    class="no-print mb-2"
+    [showPrint]="false"
+    [showEdit]="false"
+    [showCopy]="false"
+    [showDelete]="false"
+    [navigationControls]="navigationControls">
+  </app-detail-actions-menu>
+
+  <div class="fixed inset-0 bg-gray-500 bg-opacity-75 flex items-center justify-center z-50 no-print" *ngIf="loading">
+    <i class="pi pi-spin pi-spinner" style="font-size: 2rem"></i>
+  </div>
+
+  <form
+    *ngIf="!loading"
+    [formGroup]="inventoryPermitFormGroup"
+    class="permit-form-container"
+    novalidate
+  >
+    <!-- Basic Info Grid -->
+    <div class="grid grid-cols-1 md:grid-cols-12 gap-3 items-start">
+      <!-- 1. Permit Date (تاريخ الإذن) -->
+      <div class="col-span-1 md:col-span-4 flex flex-col">
+        <label for="permitDate" class="form-label font-bold text-gray-800 dark:text-gray-100">
+          {{ translate.instant("FINANCE.PERMIT_DATE") }} <span class="text-red-500">*</span>
+        </label>
+        <p-calendar
+          [readonlyInput]="isReadOnly"
+          [disabled]="isReadOnly"
+          id="permitDate"
+          inputId="permitDate"
+          [showButtonBar]="true"
+          formControlName="permitDate"
+          [showIcon]="true"
+          [dateFormat]="'dd/mm/yy'"
+          appendTo="body"
+          styleClass="w-full"
+        >
+        </p-calendar>
+        <small
+          class="text-red-500 p-error block mt-1 text-xs"
+          *ngIf="
+            inventoryPermitFormGroup.controls.permitDate.invalid &&
+            (inventoryPermitFormGroup.controls.permitDate.touched || isSubmitted)
+          "
+        >
+          {{ translate.instant("FINANCE.PERMIT_DATE_REQUIRED") }}
+        </small>
+      </div>
+
+      <!-- 2. Main Account (الحساب الرئيسي) -->
+      <div class="col-span-1 md:col-span-4 flex flex-col">
+        <label for="mainAccountId" class="form-label font-bold text-gray-800 dark:text-gray-100">
+          {{ translate.instant("FINANCE.MAIN_ACCOUNT") }} <span class="text-red-500">*</span>
+        </label>
+        <p-dropdown
+          [readonly]="isReadOnly"
+          id="mainAccountId"
+          formControlName="mainAccountId"
+          [options]="mainAccountsOptions"
+          [placeholder]="translate.instant('FINANCE.SELECT')"
+          [showClear]="!isReadOnly"
+          [filter]="true"
+          filterBy="label"
+          styleClass="w-full flex rtl:flex-row-reverse"
+          appendTo="body"
+        >
+        </p-dropdown>
+        <small
+          class="text-red-500 p-error block mt-1 text-xs"
+          *ngIf="
+            inventoryPermitFormGroup.controls.mainAccountId.invalid &&
+            (inventoryPermitFormGroup.controls.mainAccountId.touched || isSubmitted)
+          "
+        >
+          {{ translate.instant("FINANCE.MAIN_ACCOUNT_REQUIRED") }}
+        </small>
+      </div>
+
+      <!-- 3. Store Details (المخزن) -->
+      <div class="col-span-1 md:col-span-4 flex flex-col">
+        <label for="storeDetailsId" class="form-label font-bold text-gray-800 dark:text-gray-100">
+          {{ translate.instant("FINANCE.STORE_DETAILS") }} <span class="text-red-500">*</span>
+        </label>
+        <p-dropdown
+          [readonly]="isReadOnly"
+          id="storeDetailsId"
+          formControlName="storeDetailsId"
+          [options]="storeDetailsOptions"
+          [placeholder]="translate.instant('FINANCE.SELECT')"
+          [showClear]="!isReadOnly"
+          [filter]="true"
+          filterBy="label"
+          styleClass="w-full flex rtl:flex-row-reverse"
+          appendTo="body"
+        >
+        </p-dropdown>
+        <small
+          class="text-red-500 p-error block mt-1 text-xs"
+          *ngIf="
+            inventoryPermitFormGroup.controls.storeDetailsId.invalid &&
+            (inventoryPermitFormGroup.controls.storeDetailsId.touched || isSubmitted)
+          "
+        >
+          {{ translate.instant("DATA.STORE_DETAILS_REQUIRED") }}
+        </small>
+      </div>
+
+      <!-- 4. Description (البيان / الوصف) -->
+      <div class="col-span-1 md:col-span-12 flex flex-col">
+        <div class="flex justify-between items-center mb-1">
+          <label for="description" class="form-label font-bold text-gray-800 dark:text-gray-100 m-0">
+            {{ translate.instant("FINANCE.DESCRIPTION") }}
+          </label>
+          <small class="text-gray-500 text-xs">
+            {{ inventoryPermitFormGroup.get('description')?.value?.length || 0 }}/255 
+          </small>
+        </div>
+        <textarea
+          rows="2"
+          pInputTextarea
+          id="description"
+          class="w-full"
+          styleClass="w-full"
+          formControlName="description"
+          maxlength="255"
+          placeholder="أدخل ملاحظات أو وصف الإذن..."
+        >
+        </textarea>
+      </div>
+    </div>
+
+    <!-- Summary KPI Cards (Total Quantity & Total Amount) -->
+    <div class="permit-summary-bar grid grid-cols-1 sm:grid-cols-2 gap-3 mt-3">
+      <div class="summary-kpi-card qty-card">
+        <div class="kpi-icon">
+          <i class="pi pi-box"></i>
+        </div>
+        <div class="kpi-content">
+          <span class="kpi-label">{{ "INVOICE.TOTAL_QUANTITY" | translate }}</span>
+          <span class="kpi-value">{{ (getTotalQuantity() | number:'1.0-2') || '0' }}</span>
+        </div>
+      </div>
+
+      <div class="summary-kpi-card total-card">
+        <div class="kpi-icon">
+          <i class="pi pi-receipt"></i>
+        </div>
+        <div class="kpi-content">
+          <span class="kpi-label">{{ "INVOICE.TOTAL" | translate }}</span>
+          <span class="kpi-value">{{ (getTotalPrice() | number:'1.2-2') || '0.00' }}</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- قسم التذكير بالصلاحية وقسم الرواكد جنب بعض لإذن الدخول -->
+    <div *ngIf="inventoryPermitType === 'entry'" class="grid grid-cols-1 lg:grid-cols-2 gap-3 mt-3 items-start">
+      <!-- قسم التذكير بتاريخ الصلاحية -->
+      <div class="border border-gray-300 rounded-xl p-3 bg-gray-50 flex flex-col justify-start self-start">
+        <div class="flex items-center gap-2 mb-2">
+          <p-checkbox 
+            formControlName="reminderEnabled"
+            [binary]="true"
+            inputId="reminderEnabled">
+          </p-checkbox>
+          <label for="reminderEnabled" class="font-bold text-base cursor-pointer text-gray-800 m-0">
+            {{ translate.instant("FINANCE.ENABLE_EXPIRY_REMINDER") }}
+          </label>
+        </div>
+        
+        <div *ngIf="inventoryPermitFormGroup.get('reminderEnabled')?.value" class="grid grid-cols-1 sm:grid-cols-2 gap-2 mt-2">
+          <div class="flex flex-col">
+            <label for="reminderFrequency" class="form-label font-semibold text-xs mb-1">
+              {{ translate.instant("FINANCE.REMINDER_FREQUENCY") }}
+            </label>
+            <p-dropdown
+              id="reminderFrequency"
+              formControlName="reminderFrequency"
+              [options]="reminderFrequencyOptions"
+              [placeholder]="translate.instant('FINANCE.SELECT')"
+              [showClear]="true"
+              styleClass="w-full"
+              appendTo="body"
+              (onChange)="onReminderFrequencyChange($event)">
+            </p-dropdown>
+          </div>
+          
+          <div *ngIf="inventoryPermitFormGroup.get('reminderFrequency')?.value === 'Custom'" class="flex flex-col">
+            <label for="customReminderDays" class="form-label font-semibold text-xs mb-1">
+              {{ translate.instant("FINANCE.CUSTOM_REMINDER_DAYS") }}
+            </label>
+            <p-inputNumber
+              id="customReminderDays"
+              formControlName="customReminderDays"
+              [min]="1"
+              [max]="365"
+              [showButtons]="true"
+              suffix=" {{ translate.instant('FINANCE.DAYS') }}"
+              styleClass="w-full">
+            </p-inputNumber>
+          </div>
+          
+          <div class="col-span-1 sm:col-span-2 text-xs text-blue-900 bg-blue-100/80 p-2.5 rounded-lg flex items-center gap-2 mt-1 border border-blue-200">
+            <i class="pi pi-info-circle text-blue-600"></i>
+            <span *ngIf="inventoryPermitFormGroup.get('reminderFrequency')?.value === 'Daily'">
+              {{ translate.instant("FINANCE.REMINDER_INFO_DAILY") }}
+            </span>
+            <span *ngIf="inventoryPermitFormGroup.get('reminderFrequency')?.value === 'Weekly'">
+              {{ translate.instant("FINANCE.REMINDER_INFO_WEEKLY") }}
+            </span>
+            <span *ngIf="inventoryPermitFormGroup.get('reminderFrequency')?.value === 'Monthly'">
+              {{ translate.instant("FINANCE.REMINDER_INFO_MONTHLY") }}
+            </span>
+            <span *ngIf="inventoryPermitFormGroup.get('reminderFrequency')?.value === 'Custom'">
+              {{ translate.instant("FINANCE.REMINDER_INFO_CUSTOM", { days: inventoryPermitFormGroup.get('customReminderDays')?.value || 0 }) }}
+            </span>
+          </div>
+        </div>
+      </div>
+
+      <!-- قسم التحويل للرواكد -->
+      <div class="border border-amber-300 rounded-xl p-3 bg-amber-50 flex flex-col justify-start self-start">
+        <div class="flex items-center gap-2 mb-2">
+          <p-checkbox 
+            formControlName="stagnantEnabled"
+            [binary]="true"
+            inputId="stagnantEnabled">
+          </p-checkbox>
+          <label for="stagnantEnabled" class="font-bold text-base cursor-pointer text-amber-900 m-0">
+            تفعيل التحويل التلقائي للرواكد
+          </label>
+        </div>
+        
+        <div *ngIf="inventoryPermitFormGroup.get('stagnantEnabled')?.value" class="flex flex-col gap-2 mt-2">
+          <div class="flex flex-col">
+            <label for="stagnantPeriodMonths" class="form-label font-semibold text-xs mb-1 text-amber-900">
+              مدة الركود (بالأشهر)
+            </label>
+            <p-inputNumber
+              id="stagnantPeriodMonths"
+              formControlName="stagnantPeriodMonths"
+              [min]="1"
+              [max]="36"
+              [showButtons]="true"
+              suffix=" شهر"
+              styleClass="w-full">
+            </p-inputNumber>
+          </div>
+          
+          <div class="text-xs text-amber-900 bg-amber-100/80 p-2.5 rounded-lg flex items-center gap-2 mt-1 border border-amber-200">
+            <i class="pi pi-exclamation-triangle text-amber-600"></i>
+            <span>
+              سيتم تحويل هذه الأصناف تلقائياً إلى قائمة الرواكد بعد {{ inventoryPermitFormGroup.get('stagnantPeriodMonths')?.value || 3 }} شهر في حالة عدم وجود أي حركات عليها.
+            </span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </form>
+
+  <!-- Barcode & Recipe Selector Bar -->
+  <div class="my-3 flex flex-col gap-2" *ngIf="!loading">
+    <div class="w-full" #permitBarcodeInputHost>
+      <app-barcode-input
+        [placeholder]="'INVOICE.BARCODE_PLACEHOLDER' | translate"
+        [errorText]="'INVOICE.BARCODE_NOT_FOUND' | translate"
+        [disabled]="isReadOnly || loading"
+        [scanHandler]="permitBarcodeScanHandler"
+        (barcodeResolved)="onPermitBarcodeResolved($event)"
+        (barcodeFailed)="onPermitBarcodeFailed($event)"
+      ></app-barcode-input>
+    </div>
+
+    <!-- Recipe selector for Exit Permits -->
+    <div
+      *ngIf="inventoryPermitType === 'exit'"
+      class="recipe-picker-bar"
+    >
+      <div class="recipe-picker-header flex items-center justify-between mb-2.5">
+        <span class="font-bold text-sm text-sky-900 flex items-center gap-2">
+          <i class="pi pi-bolt text-sky-600"></i>
+          <span>سحب خامات بناءً على وصفة تشغيل</span>
+        </span>
+        <span class="text-xs font-semibold text-sky-700 bg-sky-100/90 px-2.5 py-0.5 rounded-full border border-sky-200">
+          إضافة سريعة لبنود الوصفة
+        </span>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-12 gap-3 items-end">
+        <!-- حقل اختيار الوصفة -->
+        <div class="col-span-1 md:col-span-8 flex flex-col">
+          <label for="recipeId" class="form-label font-bold text-sm mb-1.5 text-sky-950 flex items-center gap-1.5">
+            <i class="pi pi-book text-sky-600"></i>
+            <span>{{ translate.instant("FINANCE.SELECT_RECIPE") }}</span>
+          </label>
+          <p-dropdown
+            [readonly]="isReadOnly"
+            id="recipeId"
+            [(ngModel)]="selectedRecipeId"
+            [ngModelOptions]="{standalone: true}"
+            [options]="recipeOptions"
+            [placeholder]="translate.instant('FINANCE.SELECT')"
+            [showClear]="!isReadOnly"
+            [filter]="true"
+            filterBy="label"
+            styleClass="w-full flex rtl:flex-row-reverse"
+            appendTo="body"
+          >
+          </p-dropdown>
+        </div>
+
+        <!-- حقل الكمية -->
+        <div class="col-span-1 md:col-span-2 flex flex-col">
+          <label for="recipeQuantity" class="form-label font-bold text-sm mb-1.5 text-sky-950 flex items-center gap-1.5">
+            <i class="pi pi-hashtag text-sky-600"></i>
+            <span>{{ translate.instant("FINANCE.QUANTITY") }}</span>
+          </label>
+          <p-inputNumber
+            [readonly]="isReadOnly"
+            id="recipeQuantity"
+            [(ngModel)]="selectedRecipeQuantity"
+            [ngModelOptions]="{standalone: true}"
+            [min]="1"
+            styleClass="w-full flex rtl:flex-row-reverse"
+            minFractionDigits="0"
+            maxFractionDigits="0"
+            [showButtons]="true"
+            [disabled]="isEditMode"
+          ></p-inputNumber>
+        </div>
+
+        <!-- زر الإضافة -->
+        <div class="col-span-1 md:col-span-2 flex items-end">
+          <p-button
+            [disabled]="isReadOnly || !selectedRecipeId"
+            (onClick)="addRecipeEntry()"
+            styleClass="w-full rounded-md h-[42px] flex items-center justify-center gap-2 p-button-info"
+            icon="pi pi-plus"
+            [label]="'FINANCE.ADD' | translate"
+            severity="info"
+          />
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Editable Table Component -->
+  <app-inventory-permit-entries-editable-table
+    *ngIf="!loading"
+    [stocks]="stocks"
+    [storeDetailsId]="inventoryPermitFormGroup.controls.storeDetailsId.value"
+    [permitType]="inventoryPermitType"
+    [isReadOnly]="isReadOnly"
+    [mainPurchaseClasses]="mainPurchaseClasses"
+    [mainPurchaseClassOptions]="mainPurchaseClassOptions"
+    [data]="inventoryPermitFormGroup.controls.inventoryPermitEntries.value"
+  ></app-inventory-permit-entries-editable-table>
+
+  <small
+    class="text-red-500 p-error block text-xs my-2"
+    *ngIf="inventoryPermitFormGroup.controls.inventoryPermitEntries.invalid && isSubmitted"
+  >
+    <ng-container *ngIf="inventoryPermitFormGroup.controls.inventoryPermitEntries.errors">
+      <div *ngIf="inventoryPermitFormGroup.controls.inventoryPermitEntries.errors.minLength">
+        {{ translate.instant("FINANCE.PERMIT_ENTRIES_REQUIRED") }}
+      </div>
+    </ng-container>
+  </small>
+
+  <!-- Bottom Action Buttons (Aligned to Left in RTL) -->
+  <div class="flex justify-content-end gap-2 no-print mt-3" *ngIf="!isEditMode && !loading">
+    <p-button
+      styleClass="rounded-md"
+      icon="pi pi-save"
+      [label]="translate.instant('FINANCE.SAVE')"
+      (onClick)="saveInventoryPermit(false)"
+      [disabled]="isReadOnly"
+    />
+    <p-button
+      styleClass="rounded-md"
+      icon="pi pi-check"
+      [label]="translate.instant('DATA.SAVE_AND_CONTINUE')"
+      severity="success"
+      (onClick)="saveInventoryPermit(true)"
+      [disabled]="isReadOnly"
+    />
+    <p-button
+      styleClass="rounded-md"
+      icon="pi pi-times"
+      [label]="translate.instant('FINANCE.CANCEL')"
+      severity="secondary"
+      (onClick)="navigateToInventoryPermitsPage()"
+    />
+  </div>
+
+  <div class="flex justify-content-end gap-2 no-print mt-3" *ngIf="isEditMode && !loading">
+    <p-button
+      styleClass="rounded-md"
+      icon="pi pi-save"
+      [label]="translate.instant('FINANCE.SAVE')"
+      (onClick)="saveInventoryPermit(false)"
+      [disabled]="isReadOnly"
+    />
+    <p-button
+      styleClass="rounded-md"
+      icon="pi pi-times"
+      [label]="translate.instant('FINANCE.CANCEL')"
+      severity="secondary"
+      (onClick)="navigateToInventoryPermitsPage()"
+    />
+  </div>
+</p-panel>
+
+<ng-container *ngIf="isEditMode">
+  <div class="absolute top-0 left-[-100%]" *ngIf="docData && docColumns.length > 0">
+    <app-print-document
+      #printComponent
+      [headerTemplate]="headerTemplate"
+      [footerTemplate]="footerTemplate"
+      [bodyTemplate]="bodyTemplate"
+      [data]="docData"
+      [columns]="docColumns"
+      [summaryTemplate]="summaryTemplate"
+    >
+    </app-print-document>
+
+    <!-- Header Template -->
+    <ng-template #headerTemplate>
+      <div class="w-full flex flex-col  rounded-lg p-8">
+
+      @if (companyDetails) {
+        <ng-container class="container m-0 p-0">
+          <div class="py-1 px-1 flex justify-between ">
+            <div class="w-full ltr:text-left text-right">
+              <p class="font-semibold text-lg m-0 p-0">
+                {{companyDetails.arabicName}}
+              </p>
+              <p class="font-semibold text-lg m-0 p-0"  *ngIf="companyDetails.city">
+                {{companyDetails.city}}
+              </p>
+              <p class="font-semibold text-lg m-0 p-0">
+                {{companyDetails.phone}}
+              </p>
+              <p class="font-semibold text-lg m-0 p-0">
+                {{ "INVOICE.TAXNUMBER"| translate}}: {{companyDetails.taxNumber}}
+              </p>
+            </div>
+            <div
+              class="flex w-full justify-center items-center"
+            >
+              <img
+                [src]="companyDetails?.logoUrl || ''"
+                alt="company-logo"
+                width="100"
+                height="100"
+              >
+            </div>
+            <div class="w-full ltr:text-right text-left">
+              <p class="font-semibold text-lg m-0 p-0">
+                {{companyDetails.englishName}}
+              </p>
+              <p class="font-semibold text-lg m-0 p-0" *ngIf="companyDetails.city">
+                {{companyDetails.city}}
+              </p>
+              <p class="font-semibold text-lg m-0 p-0">
+                {{companyDetails.phone}}
+              </p>
+              <p class="font-semibold text-lg m-0 p-0">
+                TAX No: {{companyDetails.taxNumber}}
+              </p>
+            </div>
+          </div>
+
+        </ng-container>
+      }
+
+      </div>
+      <div class="flex-1 w-full text-center">
+        <h2 class="text-4xl font-bold">{{ "FINANCE.PERMIT" | translate}} [{{currentInventoryPermit.permitType}}] ({{currentInventoryPermit.referenceNumber}})</h2>
+      </div>
+    </ng-template>
+
+    <!-- Body Template -->
+    <ng-template #bodyTemplate>
+      <div class="flex justify-between w-full gap-4">
+        <p class="w-1/3 text-center font-semibold text-lg m-0">{{"FINANCE.PERMIT_DATE"| translate}}: {{currentInventoryPermit.permitDate | customDate}}</p>
+        <p class="w-1/3 text-center font-semibold text-lg m-0">{{"FINANCE.PERMIT_TYPE"| translate}}: {{currentInventoryPermit.permitType}}</p>
+      </div>
+      <div class="flex justify-between w-full gap-4">
+        <p class="w-1/3 text-center font-semibold text-lg m-0">{{"FINANCE.MAIN_ACCOUNT"| translate}}: {{activeLanguage=='en'?currentInventoryPermit.mainAccount.englishName:currentInventoryPermit.mainAccount.arabicName}}</p>
+        <p class=" w-1/3 text-center font-semibold text-lg m-0">{{"FINANCE.STORE"| translate}}: {{activeLanguage=='en'?currentInventoryPermit.storeDetails.englishName:currentInventoryPermit.storeDetails.arabicName}}</p>
+        <p *ngIf="currentInventoryPermit.description" class="w-1/3 text-center font-semibold text-lg m-0">{{"FINANCE.DESCRIPTION"| translate}}: {{currentInventoryPermit.description}}</p>
+      </div>
+    </ng-template>
+    <ng-template #summaryTemplate>
+      <div class="w-full" >
+        <table class="w-full border border-gray-900">
+          <tbody>
+          <tr>
+            <td class="p-2 border border-gray-900">
+              <strong class=" text-dark">{{"INVOICE.TOTAL_QUANTITY"|translate}}</strong>
+            </td>
+            <td class="p-2 text-center border border-gray-900">{{getTotalQuantity() | number:'1.0-2'}}</td>
+          </tr>
+          <tr>
+            <td class="p-2 border border-gray-900">
+              <strong class="text-dark"> {{"INVOICE.TOTAL"|translate}}</strong>
+            </td>
+            <td class="p-2 text-center border border-gray-900">
+              <strong class="text-dark">{{getTotalPrice() | number:'1.0-2'}}</strong>
+            </td>
+          </tr>
+          </tbody>
+        </table>
+      </div>
+
+    </ng-template>
+
+
+    <!-- Footer Template -->
+    <ng-template #footerTemplate>
+      <div class="w-full border border-slate-900 rounded-2xl flex justify-between">
+        <div class="h-auto w-[100%] text-center font-semibold text-lg flex flex-row-reverse justify-between gap-8 items-center">
+
+          <div class="m-0 p-0 w-full text-end ltr:text-start flex flex-col justify-center items-center">
+            <p class="m-0 p-0">
+              {{ "INVOICE.EXPENSES_MANAGER_SIGNATURE" | translate}}:
+            </p>
+            <p class="text-sm font-light">..................................</p>
+          </div>
+          <div class="m-0 p-0 w-full text-end ltr:text-start flex flex-col justify-center items-center">
+            <p class="m-0 p-0">
+              {{ "INVOICE.SECTION_MANAGER_SIGNATURE" | translate}}:
+            </p>
+            <p class="text-sm font-light">..................................</p>
+          </div>
+          <div class="m-0 p-0 w-full text-end ltr:text-start flex flex-col justify-center items-center">
+            <p class="m-0 p-0">
+              {{ "INVOICE.TREASURY_KEEPER_SIGNATURE" | translate}}:
+            </p>
+            <p class="text-sm font-light">..................................</p>
+          </div>
+          <div class="m-0 p-0 w-full text-end ltr:text-start flex flex-col justify-center items-center">
+            <p class="m-0 p-0">
+              {{ "INVOICE.RECIPIENT_EMPLOYEE_SIGNATURE" | translate}}:
+            </p>
+            <p class="text-sm font-light">..................................</p>
+          </div>
+        </div>
+
+      </div>
+      <div class="w-full border-t border-slate-900 rounded-2xl flex justify-center border absolute" style="bottom: 0;">
+        {{companyDetails?.getFullAddress()}}
+      </div>
+    </ng-template>
+
+  </div>
+</ng-container>
+
+<div class="p-5 mt-5" *ngIf="isEditMode">
+  <!-- File Upload -->
+  <div class="mb-4">
+    <p-fileUpload
+      name="file"
+      id="file"
+      mode="basic"
+      chooseIcon="pi pi-upload"
+      accept="application/pdf"
+      (uploadHandler)="onFileSelected($event)"
+      customUpload="true"
+      [auto]="true"
+      chooseLabel="ارفع ملف جديد"/>
+  </div>
+
+  <!-- List of PDFs -->
+  <div>
+    <table class="min-w-full bg-white shadow-md rounded border border-gray-200">
+      <thead>
+      <tr class="bg-gray-100">
+        <th class="text-center p-3">اسم الملف</th>
+        <th class="text-center p-3">العمليات</th>
+      </tr>
+      </thead>
+      <tbody>
+      <tr *ngFor="let pdf of attachments" class="border-t">
+        <td class="p-3">{{ pdf.fileName }}</td>
+        <td class="p-3 flex justify-center">
+          <button
+            pButton
+            label="عرض"
+            icon="pi pi-eye"
+            class="p-button-text text-blue-500 mr-2"
+            (click)="onView(pdf)"
+          ></button>
+          <p-fileUpload
+            mode="basic"
+            chooseIcon="pi pi-upload"
+            accept="application/pdf"
+            (uploadHandler)="onUpdate($event,pdf)"
+            customUpload="true"
+            [auto]="true"
+            chooseLabel="تعديل"/>
+          <button
+            pButton
+            label="مسح"
+            icon="pi pi-trash"
+            class="p-button-text text-red-500"
+            (click)="onDelete(pdf)"
+          ></button>
+        </td>
+      </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- View PDF Dialog -->
+<p-dialog
+  [(visible)]="viewDialog"
+  [header]="'View PDF'"
+  [style]="{ width: '70vw' , height: '70vh' }"
+>
+  <ng-container *ngIf="currentPdfUrl">
+    <a [href]="currentPdfUrl" target="_blank">
+      <button pButton type="button"  icon="pi pi-download">افتح الملف في نافذة جديدة</button>
+    </a>
+    <embed  [src]="currentPdfUrl" type="application/pdf" width="100%" height="500px" />
+  </ng-container>
+</p-dialog>
+
+<p-toast></p-toast>

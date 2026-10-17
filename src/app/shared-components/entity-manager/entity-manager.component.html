@@ -1,0 +1,357 @@
+<p-table #dt1 [value]="data" [columns]="columns" [resizableColumns]="true" columnResizeMode="expand" dataKey="id"
+  [rows]="pageSize" styleClass="p-datatable-gridlines custom-paginator-table" [rowsPerPageOptions]="[10, 25, 50]"
+  [loading]="loading" [lazy]="!!loadData || (useServerSearch && !!service)" [lazyLoadOnInit]="true"
+  (onLazyLoad)="loadEntitiesLazy($event)" [totalRecords]="totalRecords || totalCount" [paginator]="true"
+  [paginatorLocale]="activeLanguage === 'en' ? 'en-US' : 'ar-SA'" [showCurrentPageReport]="true"
+  currentPageReportTemplate="اجمالي {{ (useServerSearch && service ? totalRecords : totalCount) ? (useServerSearch && service ? totalRecords : totalCount) : (data?.length ? data.length : '') }}"
+  paginatorTemplate="CurrentPageReport NextPageLink LastPageLink PageLinks FirstPageLink PrevPageLink RowsPerPageDropdown"
+  [sortField]="'createdAt'" [sortOrder]="-1" [(selection)]="selectedItems">
+  <ng-template pTemplate="caption">
+    <div class="flex rtl:flex-row-reverse justify-between gap-2">
+      <div class="flex gap-2">
+        <input #importFileInput type="file" [accept]="importConfig?.accept || '.xlsx,.xls'"
+          (change)="onImportFileChange($event)" style="display: none;" />
+        <p-button *ngIf="importConfig && hasAddPermission()" styleClass="rounded-md w-auto" icon="pi pi-file-excel"
+          [label]="importConfig?.label || translate.instant('FINANCE.IMPORT_EXCEL')" [disabled]="importConfig?.disabled"
+          (onClick)="triggerImport(importFileInput)" />
+
+        <p-button styleClass="rounded-md w-auto" icon="pi pi-external-link" [label]="translate.instant('DATA.EXPORT')"
+          (onClick)="exportExcel()" />
+        <p-button *ngIf="enableBulkDelete && selectedItems.length > 0 && hasDeletePermission() && actions?.bulkDelete?.visible !== false" styleClass="rounded-md w-auto text-nowrap"
+          icon="pi pi-trash" severity="danger"
+          [label]="translate.instant('COMMON.DELETE_SELECTED') + ' (' + selectedItems.length + ')'"
+          (onClick)="confirmBulkDeletion($event)" />
+        <p-button styleClass="rounded-md w-auto text-nowrap	" [label]="translate.instant('DATA.CLEAR_FILTERS')"
+          [outlined]="true" icon="pi pi-flter-slash" (onClick)="clear(dt1)" />
+        <p-button *ngIf="hasAddPermission()" styleClass="rounded-md w-auto text-nowrap	" icon="pi pi-plus"
+          [label]="translate.instant('DATA.ADD_NEW')" [outlined]="true" (onClick)="openModal()" />
+      </div>
+
+      <ng-container *ngIf="data.length === 0 && !loading">
+        <div class="flex justify-center items-center w-full">
+          <p class="text-center font-semibold text-xl w-full">
+            {{ "DATA.NO_DATA" | translate }}
+          </p>
+        </div>
+      </ng-container>
+      <span class="p-input-icon-left ml-auto">
+        <i class="pi pi-search"></i>
+        <input pInputText type="text" [(ngModel)]="searchValue" (input)="filter(dt1, $event)"
+          [placeholder]="translate.instant('DATA.SEARCH')" />
+      </span>
+    </div>
+  </ng-template>
+  <ng-template pTemplate="header" let-columns>
+    <tr>
+      <th style="width: 3rem" *ngIf="enableBulkDelete">
+        <p-tableHeaderCheckbox></p-tableHeaderCheckbox>
+      </th>
+      <th style="width: 4rem">
+        <div class="flex align-items-center text-base">
+          #
+        </div>
+      </th>
+      <th style="min-width: fit-content" *ngFor="let column of columns" pResizableColumn
+        [pSortableColumn]="column.field">
+        <div class="flex align-items-center">
+          {{ column.label }}
+          <p-sortIcon [field]="column.field" class="mx-1 "></p-sortIcon>
+          <p-columnFilter *ngIf="column.filter" [type]="column.filterType" [field]="column.field" display="menu"
+            [maxFractionDigits]="column.filterType === 'numeric' ? 3 : 0"
+            [locale]="activeLanguage === 'en' ? 'en-US' : 'ar-SA'" />
+        </div>
+      </th>
+      <th style="min-width: fit-content">
+        <div class="flex align-items-center text-base">
+          {{ "DATA.ACTIONS" | translate }}
+        </div>
+      </th>
+    </tr>
+  </ng-template>
+  <ng-template pTemplate="body" let-Entry let-i="rowIndex">
+    <tr (contextmenu)="onRowClick($event, Entry)" (click)="handleAction(actions.view, Entry)" class="clickable-row">
+      <td *ngIf="enableBulkDelete" (click)="$event.stopPropagation()">
+        <p-tableCheckbox [value]="Entry"></p-tableCheckbox>
+      </td>
+      <td class="text-lg rtl:text-right">
+        {{ i + 1 }}
+      </td>
+
+      <ng-container *ngFor="let column of columns">
+        <td class="text-lg rtl:text-right" [ngSwitch]="column.type">
+          <ng-container *ngSwitchCase="'text'">
+            {{ column.accessorFunction ?
+            column.accessorFunction(Entry)
+            : getValue(Entry, column.field)
+            }}
+          </ng-container>
+          <ng-container *ngSwitchCase="'number'">
+            {{ column.accessorFunction ?
+            column.accessorFunction(Entry)
+            : getValue(Entry, column.field) | number
+            }}
+          </ng-container>
+          <ng-container *ngSwitchCase="'date'">
+            {{
+            getValue(Entry, column.field) ? (getValue(Entry, column.field) | customDate : "dd/MM/yyyy" : "": "ar-SA"):
+            '-'
+            }}
+          </ng-container>
+          <ng-container *ngSwitchCase="'boolean'">
+            <i class="pi" [ngClass]="{
+            'text-green-500 pi-check-circle w-5': getValue(Entry, column.field),
+            'text-red-500 pi-times-circle w-5': !getValue(Entry, column.field)
+          }"></i>
+          </ng-container>
+          <ng-container *ngSwitchCase="'currency'">
+            {{
+            activeLanguage === "en"
+            ? (getValue(Entry, column.field) | currency : "SAR" : "symbol-narrow" : "1.0-2")
+            : (getValue(Entry, column.field) | currency : "SAR" : "symbol-narrow" : "1.0-2" : "ar-SA")
+            }}
+          </ng-container>
+        </td>
+      </ng-container>
+      <td class="text-lg rtl:text-right flex gap-2">
+        <ng-container *ngIf="hasEditPermission() || hasDeletePermission()">
+
+          <p-button *ngIf="actions.edit || actions.delete" [text]="true" (onClick)="onCogClick($event, Entry)"
+            severity="secondary" styleClass="p-button-outlined rounded-xl">
+            <ng-template pTemplate="icon">
+              <i class="pi pi-cog text-xl"></i>
+            </ng-template>
+          </p-button>
+          <p-button *ngIf="actions.view" [text]="true"
+            (onClick)="handleAction(actions.view, Entry);$event.stopPropagation()" severity="secondary"
+            styleClass="p-button-outlined rounded-xl mx-1">
+            <ng-template pTemplate="icon">
+              <i class="pi pi-eye text-xl"></i>
+            </ng-template>
+          </p-button>
+        </ng-container>
+      </td>
+    </tr>
+    <span #overlayAnchor style="position: absolute; width: 1px; height: 1px;"></span>
+
+    <p-overlayPanel #opEntitiy [autoZIndex]="false" [dismissable]="true" [baseZIndex]="80">
+      <div class="flex flex-column gap-3 w-auto p-1">
+        <p-button *ngIf="hasEditPermission() && actions.edit" icon="pi pi-pencil" class="p-button-secondary"
+          [label]="translate.instant('DATA.EDIT')" styleClass="rounded-lg p-button-secondary w-full"
+          (onClick)="handleAction(actions.edit, selectedEntry);$event.stopPropagation()"></p-button>
+        <p-button *ngIf="hasDeletePermission() && actions.delete" icon="pi pi-trash" class="p-button-danger"
+          [label]="translate.instant('DATA.DELETE')" styleClass="rounded-lg p-button-danger w-full"
+          (onClick)="confirmEntityDeletion($event, selectedEntry);$event.stopPropagation()"></p-button>
+        <ng-container *ngFor="let action of actions.customActions">
+          <p-button *ngIf="action && action?.visible && action?.visibleCondition(selectedEntry)" [label]="action.name"
+            [styleClass]="'rounded-lg p-button-secondary w-full'"
+            (onClick)="handleCustomAction(action, selectedEntry);$event.stopPropagation()"></p-button>
+        </ng-container>
+      </div>
+    </p-overlayPanel>
+  </ng-template>
+</p-table>
+
+<p-confirmDialog> </p-confirmDialog>
+<p-toast />
+
+<p-dialog [header]="
+    isEditMode
+      ? translate.instant('DATA.EDIT')
+      : translate.instant('DATA.ADD_NEW')
+  " [(visible)]="modalOpen" [style]="{ width: formConfig.fields.length < 3 ? '50%' : '85%' }" (onHide)="closeModal()">
+  <div>
+    <h1 class="text-xl font-semibold">{{ formConfig?.title }}</h1>
+
+    <form (ngSubmit)="onSubmit()" *ngIf="formConfig" [formGroup]="formGroup" [class]="getFormGridClass()">
+      <div *ngFor="let field of formConfig.fields">
+        <ng-container [ngSwitch]="field.type" *ngIf="fieldAccessible(field)">
+          <div *ngSwitchCase="'text'">
+            <label [for]="field.field" [ngClass]="{ required: field.required || false }" class="form-label">{{
+              field.label }}</label>
+            <input [disabled]="field.disabled" [formControlName]="field.field" [placeholder]="
+                    field.placeholder !== undefined
+                      ? field.placeholder
+                      : translate.instant('DATA.ENTER') + ' ' + field.label
+                  " [required]="field.required" class="form-control" name="{{ field.field }}" type="text" />
+            <div *ngIf="
+                    formGroup.controls[field.field].invalid &&
+                    formGroup.controls[field.field].touched
+                  ">
+              <div *ngFor="let validation of field.validations">
+                <small *ngIf="formGroup.controls[field.field].errors?.[validation.field]"
+                  class="text-red-500 text-danger p-error block text-xs pt-1">
+                  {{ validation.message }}
+                </small>
+              </div>
+            </div>
+          </div>
+          <div *ngSwitchCase="'number'">
+            <label [for]="field.field" [ngClass]="{ required: field.required || false }" class="form-label">{{
+              field.label }}</label>
+            <input [disabled]="field.disabled" [formControlName]="field.field" [placeholder]="
+                    field.placeholder !== undefined
+                      ? field.placeholder
+                      : 'Enter ' + field.label
+                  " [required]="field.required" class="form-control" name="{{ field.field }}" type="number" />
+            <div *ngIf="
+                    formGroup.controls[field.field].invalid &&
+                    formGroup.controls[field.field].touched
+                  ">
+              <div *ngFor="let validation of field.validations">
+                <small *ngIf="formGroup.controls[field.field].errors?.[validation.field]"
+                  class="text-red-500 text-danger p-error block text-xs pt-1">
+                  {{ validation.message }}
+                </small>
+              </div>
+            </div>
+          </div>
+          <div *ngSwitchCase="'textarea'">
+            <label [for]="field.field" [ngClass]="{ required: field.required || false }" class="form-label">{{
+              field.label }}</label>
+            <textarea [disabled]="field.disabled" [formControlName]="field.field" [placeholder]="
+                    field.placeholder !== undefined
+                      ? field.placeholder
+                      : 'Enter ' + field.label
+                  " [required]="field.required" class="form-control" name="{{ field.field }}"></textarea>
+            <div *ngIf="
+                    formGroup.controls[field.field].invalid &&
+                    formGroup.controls[field.field].touched
+                  ">
+              <div *ngFor="let validation of field.validations">
+                <small *ngIf="formGroup.controls[field.field].errors?.[validation.field]"
+                  class="text-red-500 text-danger p-error block text-xs pt-1">
+                  {{ validation.message }}
+                </small>
+              </div>
+            </div>
+          </div>
+          <div *ngSwitchCase="'select'">
+            <label [for]="field.field" [ngClass]="{ required: field.required || false }" class="form-label">{{
+              field.label }}</label>
+            <select [disabled]="field.disabled" [formControlName]="field.field" [required]="field.required"
+              aria-label="Please Select ..." class="form-select form-control" name="{{ field.field }}">
+              <option [value]="null" disabled selected>
+                {{ "DATA.SELECT_OPTION" | translate }}
+              </option>
+              <option *ngFor="let option of getOptions(field); trackBy: trackByFn" [value]="option.value">
+                {{ option.label }}
+              </option>
+            </select>
+            <div *ngIf="
+                    formGroup.controls[field.field].invalid &&
+                    formGroup.controls[field.field].touched
+                  ">
+              <div *ngFor="let validation of field.validations">
+                <small *ngIf="formGroup.controls[field.field].errors?.[validation.field]"
+                  class="text-red-500 text-danger p-error block text-xs pt-1">
+                  {{ validation.message }}
+                </small>
+              </div>
+            </div>
+          </div>
+          <div *ngSwitchCase="'multiselect'">
+            <label [for]="field.field" [ngClass]="{ required: field.required || false }" class="form-label">{{
+              field.label }}</label>
+            <p-multiSelect [options]="getOptions(field)" [formControlName]="field.field" optionLabel="label"
+              optionValue="value"
+              [placeholder]="field.placeholder ? field.placeholder : ('DATA.SELECT_OPTION' | translate)"
+              [disabled]="field.disabled" [showToggleAll]="true" styleClass="w-full form-control p-0"
+              class="w-full"></p-multiSelect>
+            <div *ngIf="
+                    formGroup.controls[field.field].invalid &&
+                    formGroup.controls[field.field].touched
+                  ">
+              <div *ngFor="let validation of field.validations">
+                <small *ngIf="formGroup.controls[field.field].errors?.[validation.field]"
+                  class="text-red-500 text-danger p-error block text-xs pt-1">
+                  {{ validation.message }}
+                </small>
+              </div>
+            </div>
+          </div>
+          <div *ngSwitchCase="'checkbox'">
+            <div class="form-check">
+              <input [disabled]="field.disabled" [formControlName]="field.field" [required]="field.required"
+                class="form-check-input" name="{{ field.field }}" type="checkbox" />
+              <label [for]="field.field" [ngClass]="{ required: field.required || false }"
+                class="form-label form-check">
+                {{ field.label }}
+              </label>
+            </div>
+
+            <div *ngIf="
+                    formGroup.controls[field.field].invalid &&
+                    formGroup.controls[field.field].touched
+                  ">
+              <div *ngFor="let validation of field.validations">
+                <small *ngIf="formGroup.controls[field.field].errors?.[validation.field]"
+                  class="text-red-500 text-danger p-error block text-xs pt-1">
+                  {{ validation.message }}
+                </small>
+              </div>
+            </div>
+          </div>
+        </ng-container>
+      </div>
+    </form>
+  </div>
+  <hr class="mt-2 mb-1" />
+
+  <p-footer>
+    <div class="flex justify-content-end gap-2">
+      <p-button styleClass="rounded-md" [label]="formConfig.submitLabel || translate.instant('DATA.SAVE')"
+        (onClick)="onSubmit()" [disabled]="formGroup.invalid" />
+      <p-button styleClass="rounded-md" [label]="translate.instant('DATA.CANCEL')" severity="secondary"
+        (onClick)="closeModal()" />
+    </div>
+  </p-footer>
+
+</p-dialog>
+
+<!-- Import Instructions Dialog -->
+<p-dialog [(visible)]="showImportInstructions"
+  [header]="importConfig?.instructions?.title || translate.instant('FINANCE.IMPORT_INSTRUCTIONS')" [modal]="true"
+  [style]="{width: '50vw'}" [breakpoints]="{'960px': '75vw', '640px': '90vw'}" [draggable]="false" [resizable]="false">
+  <div class="import-instructions-content" [dir]="activeLanguage === 'ar' ? 'rtl' : 'ltr'">
+    <!-- Description -->
+    <div *ngIf="importConfig?.instructions?.description" class="mb-4">
+      <p class="text-gray-700">{{ importConfig.instructions.description }}</p>
+    </div>
+
+    <!-- Required Headers -->
+    <div class="mb-4">
+      <h4 class="font-semibold mb-2 text-lg">{{ translate.instant('COMMON.REQUIRED_HEADERS') || 'Required Headers' }}:
+      </h4>
+      <div class="bg-gray-50 p-3 rounded border border-gray-200">
+        <ul class="list-disc list-inside space-y-1">
+          <li *ngFor="let header of importConfig?.instructions?.headers" class="text-sm font-mono"
+            [ngClass]="{'text-red-600 font-semibold': header.startsWith('*')}">
+            {{ header }}
+          </li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- Additional Notes -->
+    <div *ngIf="importConfig?.instructions?.notes && importConfig.instructions.notes.length > 0" class="mb-4">
+      <h4 class="font-semibold mb-2 text-lg">{{ translate.instant('COMMON.NOTES') || 'Notes' }}:</h4>
+      <ul class="list-disc list-inside space-y-1 text-sm text-gray-600">
+        <li *ngFor="let note of importConfig.instructions.notes">
+          {{ note }}
+        </li>
+      </ul>
+    </div>
+  </div>
+
+  <p-footer>
+    <div class="flex gap-2 justify-end">
+      <p-button *ngIf="importConfig?.downloadTemplate"
+        [label]="importConfig?.downloadTemplateLabel || translate.instant('FINANCE.DOWNLOAD_TEMPLATE')"
+        icon="pi pi-download" severity="info" styleClass="rounded-md" (onClick)="importConfig.downloadTemplate()" />
+      <p-button [label]="translate.instant('DATA.CANCEL_LABEL')" icon="pi pi-times"
+        styleClass="p-button-text rounded-md" (onClick)="cancelImportInstructions()" />
+      <p-button [label]="translate.instant('COMMON.PROCEED') || 'Proceed'" icon="pi pi-check" styleClass="rounded-md"
+        (onClick)="confirmImportInstructions()" />
+    </div>
+  </p-footer>
+</p-dialog>

@@ -1,0 +1,140 @@
+<app-zid-shell activeTab="products" titleKey="CASHIER_ZID.PRODUCTS_TITLE" subtitleKey="CASHIER_ZID.PRODUCTS_SUBTITLE">
+  <p-toast></p-toast>
+  <p-confirmDialog></p-confirmDialog>
+
+  <div zid-actions class="zid-actions">
+    <button pButton type="button" icon="pi pi-cloud-download" [label]="'CASHIER_ZID.SYNC_PRODUCTS' | translate" [loading]="isBusy('syncProducts')" (click)="requestSyncProducts()"></button>
+    <button pButton type="button" icon="pi pi-sitemap" [label]="'CASHIER_ZID.BULK_MAP' | translate" class="p-button-outlined" [loading]="isBusy('bulk')" (click)="requestBulkMapSelected()"></button>
+  </div>
+
+  <div zid-kpis class="zid-summary">
+    <div class="zid-metric"><span>{{ 'CASHIER_ZID.TOTAL_PRODUCTS' | translate }}</span><strong>{{ totalRecords() }}</strong></div>
+    <div class="zid-metric"><span>{{ 'CASHIER_ZID.MAPPED_PRODUCTS' | translate }}</span><strong>{{ mappedCount() }}</strong></div>
+    <div class="zid-metric"><span>{{ 'CASHIER_ZID.UNMAPPED_PRODUCTS' | translate }}</span><strong>{{ unmappedCount() }}</strong></div>
+    <div class="zid-metric"><span>{{ 'CASHIER_ZID.SELECTED_PRODUCTS' | translate }}</span><strong>{{ selectedCount() }}</strong></div>
+  </div>
+
+  <div zid-filters class="zid-panel">
+    <div class="zid-panel-header">
+      <div>
+        <h2>{{ 'CASHIER_ZID.MAPPING_WIZARD_TITLE' | translate }}</h2>
+        <p>{{ 'CASHIER_ZID.MAPPING_WIZARD_DESCRIPTION' | translate }}</p>
+      </div>
+    </div>
+    <div class="zid-grid compact">
+      <div class="zid-field">
+        <label>{{ 'CASHIER_ZID.MAPPING_STATUS' | translate }}</label>
+        <p-dropdown [options]="mappingFilterOptions" [(ngModel)]="mappedOnly" (onChange)="onFilterChange()"></p-dropdown>
+      </div>
+    </div>
+  </div>
+
+  <div class="zid-validation-panel" *ngIf="selectedCount()">
+    <div class="zid-cell-stack">
+      <strong>{{ selectedCount() }} {{ 'CASHIER_ZID.SELECTED_PRODUCTS' | translate }}</strong>
+      <small>{{ 'CASHIER_ZID.MAPPING_WIZARD_DESCRIPTION' | translate }}</small>
+    </div>
+    <button pButton type="button" icon="pi pi-sitemap" [label]="'CASHIER_ZID.BULK_MAP' | translate" class="p-button-sm" [loading]="isBusy('bulk')" (click)="requestBulkMapSelected()"></button>
+  </div>
+
+  <div class="zid-error" *ngIf="error() && !loading()">
+    <i class="pi pi-exclamation-triangle"></i>
+    <span>{{ error() }}</span>
+    <button pButton type="button" icon="pi pi-refresh" class="p-button-text p-button-sm" (click)="loadProducts()"></button>
+  </div>
+
+  <div class="zid-table-panel" *ngIf="loading() && !products().length">
+    <app-zid-skeleton [rows]="6"></app-zid-skeleton>
+  </div>
+
+  <div class="zid-table-panel" *ngIf="!loading() || products().length">
+    <div class="zid-table-toolbar">
+      <div class="zid-table-title">
+        <strong>{{ 'CASHIER_ZID.PRODUCTS_TITLE' | translate }}</strong>
+        <span>{{ totalRecords() }} {{ 'CASHIER_ZID.TOTAL_PRODUCTS' | translate }}</span>
+      </div>
+    </div>
+
+    <p-table
+      [value]="products()"
+      [loading]="loading()"
+      [paginator]="true"
+      [rows]="pageSize"
+      [totalRecords]="totalRecords()"
+      [lazy]="true"
+      [lazyLoadOnInit]="false"
+      (onLazyLoad)="onPageChange($event)"
+      responsiveLayout="scroll"
+      styleClass="p-datatable-sm p-datatable-striped">
+      <ng-template pTemplate="header">
+        <tr>
+          <th style="width: 44px"><input type="checkbox" (change)="toggleAllSelected($any($event.target).checked)" /></th>
+          <th>{{ 'CASHIER_ZID.ZID_PRODUCT_ID' | translate }}</th>
+          <th>{{ 'CASHIER_ZID.ZID_PRODUCT' | translate }}</th>
+          <th>{{ 'CASHIER_ZID.SKU' | translate }}</th>
+          <th>{{ 'CASHIER_ZID.STOCK' | translate }}</th>
+          <th>{{ 'CASHIER_ZID.MAPPING' | translate }}</th>
+          <th>{{ 'CASHIER_ZID.ERP_ITEM' | translate }}</th>
+          <th>{{ 'CASHIER_ZID.ACTIONS' | translate }}</th>
+        </tr>
+      </ng-template>
+      <ng-template pTemplate="body" let-product>
+        <tr [ngClass]="{ 'zid-row-warning': !product.isMapped }">
+          <td><input type="checkbox" [(ngModel)]="product.selected" /></td>
+          <td><strong>{{ product.zidProductId }}</strong></td>
+          <td>{{ product.zidProductName }}</td>
+          <td>{{ product.zidSku || '-' }}</td>
+          <td>{{ product.quantity }}</td>
+          <td>
+            <p-tag *ngIf="product.isMapped" severity="success" [value]="'CASHIER_ZID.MAPPED' | translate"></p-tag>
+            <p-tag *ngIf="!product.isMapped" severity="danger" [value]="'CASHIER_ZID.UNMAPPED' | translate"></p-tag>
+            <div class="zid-cell-stack" *ngIf="product.mainPurchaseClassName || product.mainPurchaseClassId">
+              <small>{{ product.mainPurchaseClassName || product.mainPurchaseClassId }}</small>
+            </div>
+          </td>
+          <td>
+            <p-autoComplete
+              [(ngModel)]="product.mappingDraftLabel"
+              [suggestions]="erpItemSuggestions()"
+              field="nameAr"
+              [dropdown]="true"
+              [forceSelection]="true"
+              [minLength]="2"
+              [placeholder]="'CASHIER_ZID.SEARCH_ERP_ITEM' | translate"
+              (onFocus)="beginErpItemSearch(product)"
+              (completeMethod)="searchErpItems($event)"
+              (onSelect)="applyErpItem(product, $event.value)"
+              (onClear)="applyErpItem(product, null)">
+              <ng-template let-item pTemplate="item">
+                <div class="zid-cell-stack">
+                  <strong>{{ item.nameAr || item.nameEn }}</strong>
+                  <small>{{ item.code || item.id }}</small>
+                </div>
+              </ng-template>
+            </p-autoComplete>
+          </td>
+          <td>
+            <button
+              pButton
+              type="button"
+              icon="pi pi-link"
+              [label]="'CASHIER_ZID.MAP' | translate"
+              class="p-button-sm p-button-outlined"
+              [loading]="isBusy('map-' + product.zidProductId)"
+              (click)="requestMapSingle(product)">
+            </button>
+          </td>
+        </tr>
+      </ng-template>
+      <ng-template pTemplate="emptymessage">
+        <tr>
+          <td colspan="8">
+            <app-zid-empty-state titleKey="CASHIER_ZID.EMPTY_PRODUCTS_TITLE" descriptionKey="CASHIER_ZID.EMPTY_PRODUCTS_DESC">
+              <button pButton type="button" icon="pi pi-cloud-download" [label]="'CASHIER_ZID.SYNC_PRODUCTS' | translate" class="p-button-sm p-button-outlined" (click)="requestSyncProducts()"></button>
+            </app-zid-empty-state>
+          </td>
+        </tr>
+      </ng-template>
+    </p-table>
+  </div>
+</app-zid-shell>

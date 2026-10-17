@@ -1,0 +1,19 @@
+name: Trigger Jenkins
+
+on:
+  push:
+    branches:
+      - deploy   # or main, or whichever branch you use
+
+jobs:
+  trigger:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Call Jenkins job
+        run: |
+          CRUMB=$(curl -s -u ci-user:112f4d4b3c4abd4c752c7366947669ed7d \
+          "http://216.144.229.211:8080/crumbIssuer/api/xml?xpath=concat(//crumbRequestField,\":\",//crumb)")
+
+          curl -X POST -u ci-user:112f4d4b3c4abd4c752c7366947669ed7d \
+          -H "$CRUMB" \
+          "http://216.144.229.211:8080/job/Client-App/build"

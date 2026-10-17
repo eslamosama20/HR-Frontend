@@ -1,0 +1,418 @@
+.table {
+  width: 100% !important;
+  max-width: 100% !important;
+  margin-bottom: 0 !important;
+  white-space: nowrap;
+}
+
+.table-responsive {
+  width: 100% !important;
+  overflow-x: auto !important;
+  overflow-y: hidden !important;
+  -webkit-overflow-scrolling: touch !important;
+  display: block !important;
+  
+  &::-webkit-scrollbar {
+    height: 10px;
+    width: 10px;
+  }
+  
+  &::-webkit-scrollbar-track {
+    background: rgba(0, 0, 0, 0.05);
+    border-radius: 5px;
+  }
+  
+  &::-webkit-scrollbar-thumb {
+    background: rgba(0, 0, 0, 0.3);
+    border-radius: 5px;
+    border: 2px solid transparent;
+    background-clip: content-box;
+  }
+  
+  &::-webkit-scrollbar-thumb:hover {
+    background: rgba(0, 0, 0, 0.5);
+    background-clip: content-box;
+  }
+  
+  .table {
+    margin-bottom: 0 !important;
+    min-width: 100%;
+  }
+}
+
+[data-bs-theme="dark"],
+.dark-mode,
+body.dark {
+  .table-responsive {
+    &::-webkit-scrollbar-track {
+      background: rgba(255, 255, 255, 0.05);
+    }
+    
+    &::-webkit-scrollbar-thumb {
+      background: rgba(255, 255, 255, 0.3);
+    }
+    
+    &::-webkit-scrollbar-thumb:hover {
+      background: rgba(255, 255, 255, 0.5);
+    }
+  }
+}
+
+.d-mobile-block {
+  display: none !important;
+}
+
+@media (max-width: 767px) {
+  .table {
+    font-size: 0.85rem !important;
+  }
+  
+  .table th,
+  .table td {
+    padding: 0.5rem 0.4rem !important;
+    font-size: 0.85rem !important;
+  }
+
+  .card {
+    margin-bottom: 1rem !important;
+  }
+  
+  .card-header {
+    padding: 0.75rem 1rem !important;
+    font-size: 0.9rem !important;
+  }
+  
+  .card-body {
+    padding: 1rem !important;
+  }
+  
+  .card-footer {
+    padding: 0.75rem 1rem !important;
+  }
+
+  .btn {
+    font-size: 0.875rem !important;
+    padding: 0.5rem 0.75rem !important;
+  }
+  
+  .btn-sm {
+    font-size: 0.75rem !important;
+    padding: 0.375rem 0.5rem !important;
+  }
+  
+  .btn-group {
+    flex-wrap: wrap !important;
+    gap: 0.25rem !important;
+  }
+
+  .form-control,
+  .form-select,
+  .p-dropdown,
+  .p-inputtext {
+    font-size: 0.875rem !important;
+    padding: 0.5rem 0.75rem !important;
+  }
+  
+  .form-label {
+    font-size: 0.875rem !important;
+    margin-bottom: 0.3rem !important;
+  }
+  
+  .input-group {
+    flex-wrap: nowrap !important;
+  }
+
+  .modal-dialog {
+    margin: 0.5rem !important;
+    max-width: calc(100% - 1rem) !important;
+  }
+  
+  .modal-header,
+  .modal-body,
+  .modal-footer {
+    padding: 1rem !important;
+  }
+  
+  .modal-title {
+    font-size: 1.1rem !important;
+  }
+
+  .dropdown-menu {
+    max-width: 90vw !important;
+    font-size: 0.875rem !important;
+  }
+  
+  .dropdown-item {
+    padding: 0.5rem 1rem !important;
+    font-size: 0.875rem !important;
+  }
+  
+  .p-dropdown-panel {
+    max-width: 90vw !important;
+  }
+  
+  .p-dropdown-item {
+    font-size: 0.875rem !important;
+    padding: 0.5rem !important;
+  }
+
+  .nav-tabs,
+  .nav-pills {
+    flex-wrap: nowrap !important;
+    overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch !important;
+  }
+  
+  .nav-link {
+    white-space: nowrap !important;
+    font-size: 0.875rem !important;
+    padding: 0.5rem 1rem !important;
+  }
+
+  .pagination {
+    font-size: 0.875rem !important;
+  }
+  
+  .page-link {
+    padding: 0.375rem 0.625rem !important;
+    font-size: 0.875rem !important;
+  }
+  
+  .p-paginator {
+    font-size: 0.875rem !important;
+    padding: 0.5rem !important;
+  }
+  
+  .p-paginator .p-paginator-pages .p-paginator-page {
+    min-width: 2rem !important;
+    height: 2rem !important;
+    font-size: 0.875rem !important;
+  }
+
+  .container,
+  .container-fluid {
+    padding-left: 0.75rem !important;
+    padding-right: 0.75rem !important;
+  }
+  
+  .row {
+    margin-left: -0.5rem !important;
+    margin-right: -0.5rem !important;
+  }
+  
+  .row > * {
+    padding-left: 0.5rem !important;
+    padding-right: 0.5rem !important;
+  }
+
+  h1, .h1 { font-size: 1.5rem !important; }
+  h2, .h2 { font-size: 1.3rem !important; }
+  h3, .h3 { font-size: 1.15rem !important; }
+  h4, .h4 { font-size: 1rem !important; }
+  h5, .h5 { font-size: 0.9rem !important; }
+  h6, .h6 { font-size: 0.85rem !important; }
+  
+  .fs-1 { font-size: 1.5rem !important; }
+  .fs-2 { font-size: 1.3rem !important; }
+  .fs-3 { font-size: 1.15rem !important; }
+
+  .d-mobile-none {
+    display: none !important;
+  }
+
+  .d-mobile-block {
+    display: block !important;
+  }
+
+  .mobile-w-100 {
+    width: 100% !important;
+  }
+
+  .mobile-stack > * {
+    width: 100% !important;
+    margin-bottom: 0.75rem !important;
+  }
+
+  .mobile-text-center {
+    text-align: center !important;
+  }
+
+  .mobile-scroll-x {
+    overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch !important;
+  }
+  
+  .mobile-scroll-y {
+    overflow-y: auto !important;
+    -webkit-overflow-scrolling: touch !important;
+  }
+
+  .svg-icon {
+    width: 1.25rem !important;
+    height: 1.25rem !important;
+  }
+  
+  .fs-2x {
+    font-size: 1.5rem !important;
+  }
+  
+  .fs-3x {
+    font-size: 2rem !important;
+  }
+
+  .alert {
+    padding: 0.75rem !important;
+    font-size: 0.875rem !important;
+  }
+  
+  .alert-heading {
+    font-size: 1rem !important;
+  }
+
+  .badge {
+    font-size: 0.75rem !important;
+    padding: 0.25rem 0.5rem !important;
+  }
+
+  .breadcrumb {
+    font-size: 0.875rem !important;
+    padding: 0.5rem !important;
+  }
+  
+  .breadcrumb-item {
+    font-size: 0.875rem !important;
+  }
+
+  .toolbar {
+    flex-wrap: wrap !important;
+    gap: 0.5rem !important;
+  }
+  
+  .toolbar-buttons {
+    flex-wrap: wrap !important;
+    gap: 0.25rem !important;
+  }
+
+  .datepicker,
+  .daterangepicker,
+  .p-calendar-panel {
+    max-width: 95vw !important;
+    font-size: 0.875rem !important;
+  }
+
+  .p-fileupload {
+    font-size: 0.875rem !important;
+  }
+  
+  .p-fileupload-buttonbar {
+    flex-wrap: wrap !important;
+    gap: 0.5rem !important;
+  }
+
+  .p-tree {
+    font-size: 0.875rem !important;
+  }
+  
+  .p-tree-node-content {
+    padding: 0.5rem !important;
+  }
+
+  .p-dataview-content {
+    padding: 0.5rem !important;
+  }
+  
+  .p-dataview-header {
+    padding: 0.75rem !important;
+  }
+}
+
+@media (min-width: 768px) and (max-width: 1023px) {
+  .table {
+    font-size: 0.9rem !important;
+  }
+  
+  .table th,
+  .table td {
+    padding: 0.625rem 0.5rem !important;
+    font-size: 0.9rem !important;
+  }
+
+  .card {
+    margin-bottom: 1.25rem !important;
+  }
+  
+  .card-header {
+    padding: 1rem 1.25rem !important;
+    font-size: 0.95rem !important;
+  }
+  
+  .card-body {
+    padding: 1.25rem !important;
+  }
+  
+  .card-footer {
+    padding: 1rem 1.25rem !important;
+  }
+
+  .btn {
+    font-size: 0.9rem !important;
+    padding: 0.5rem 1rem !important;
+  }
+
+  .form-control,
+  .form-select,
+  .p-dropdown,
+  .p-inputtext {
+    font-size: 0.9rem !important;
+  }
+  
+  .form-label {
+    font-size: 0.9rem !important;
+  }
+
+  .modal-dialog {
+    margin: 1rem !important;
+    max-width: calc(100% - 2rem) !important;
+  }
+  
+  .modal-header,
+  .modal-body,
+  .modal-footer {
+    padding: 1.25rem !important;
+  }
+
+  .container,
+  .container-fluid {
+    padding-left: 1rem !important;
+    padding-right: 1rem !important;
+  }
+
+  h1, .h1 { font-size: 1.75rem !important; }
+  h2, .h2 { font-size: 1.5rem !important; }
+  h3, .h3 { font-size: 1.3rem !important; }
+  h4, .h4 { font-size: 1.1rem !important; }
+  h5, .h5 { font-size: 0.95rem !important; }
+  h6, .h6 { font-size: 0.9rem !important; }
+}
+
+@media (min-width: 1024px) {
+  .container-xxl {
+    max-width: 1400px !important;
+  }
+  
+  .card {
+    margin-bottom: 1.5rem !important;
+  }
+  
+  .card-header {
+    padding: 1.25rem 1.5rem !important;
+  }
+  
+  .card-body {
+    padding: 1.5rem !important;
+  }
+  
+  .card-footer {
+    padding: 1.25rem 1.5rem !important;
+  }
+}

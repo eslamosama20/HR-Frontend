@@ -1,0 +1,997 @@
+<div class="session-shell">
+  <p-toast></p-toast>
+  <p-confirmDialog [style]="{width: '460px', maxWidth: '95vw'}"></p-confirmDialog>
+
+  <div *ngIf="isLoading()" class="loading-overlay">
+    <div class="loading-card">
+      <i class="pi pi-spin pi-spinner"></i>
+      <span>???? ????? ?????? ??????...</span>
+    </div>
+  </div>
+
+  <div class="session-unified-card">
+    
+    <!-- 1. Header (Matching cashier/session) -->
+    <header class="session-header">
+      <!-- Top Row: Page Title on Right | Action Buttons on Left -->
+      <div class="session-header-top">
+        <div class="header-title">
+          <div>
+            <h1>{{ 'PHARMACY_PATIENTS.PAGE_TITLE' | translate }}</h1>
+            <p>{{ 'PHARMACY_PATIENTS.PAGE_SUBTITLE' | translate }}</p>
+          </div>
+        </div>
+
+        <div class="header-actions">
+          <button pButton type="button" icon="pi pi-refresh" label="????? ????????" class="action-btn soft-btn" (click)="refreshList()"></button>
+          <button *ngIf="canCreateEditPatient" pButton type="button" icon="pi pi-plus" [label]="'PHARMACY_PATIENTS.NEW_PATIENT' | translate" class="hero-btn open-btn" (click)="openAddPatient()"></button>
+        </div>
+      </div>
+    </header>
+
+    <!-- 2. KPI / Summary Cards Grid (Exact cashier/session summary-card style) -->
+    <section class="session-meta-panel">
+      <div class="summary-grid">
+        <article class="summary-card cash" (click)="setQuickFilter('all'); selectedInsurance = 'all'">
+          <div class="summary-card-head">
+            <i class="pi pi-users"></i>
+            <span>{{ 'PHARMACY_PATIENTS.TOTAL_PATIENTS' | translate }}</span>
+          </div>
+          <div class="summary-val">{{ patientsCount }} <small>????</small></div>
+        </article>
+
+        <article class="summary-card credit" (click)="setQuickFilter('chronic')">
+          <div class="summary-card-head">
+            <i class="pi pi-heart"></i>
+            <span>{{ 'PHARMACY_PATIENTS.CHRONIC_CASES' | translate }}</span>
+          </div>
+          <div class="summary-val">{{ chronicCasesCount }} <small>????</small></div>
+        </article>
+
+        <article class="summary-card card" (click)="setQuickFilter('allergies')">
+          <div class="summary-card-head">
+            <i class="pi pi-exclamation-triangle"></i>
+            <span>{{ 'PHARMACY_PATIENTS.ALLERGY_CASES' | translate }}</span>
+          </div>
+          <div class="summary-val">{{ allergyCasesCount }} <small>??????</small></div>
+        </article>
+
+        <article class="summary-card sales" (click)="setQuickFilter('insured')">
+          <div class="summary-card-head">
+            <i class="pi pi-shield"></i>
+            <span>???? ???????</span>
+          </div>
+          <div class="summary-val">{{ insuredCount }} <small>?????</small></div>
+        </article>
+
+        <article class="summary-card tx" (click)="setQuickFilter('active')">
+          <div class="summary-card-head">
+            <i class="pi pi-check-circle"></i>
+            <span>??????? ??????</span>
+          </div>
+          <div class="summary-val">{{ activePatientsCount }} <small>???</small></div>
+        </article>
+
+        <article class="summary-card expected">
+          <div class="summary-card-head">
+            <i class="pi pi-filter"></i>
+            <span>????? ?????</span>
+          </div>
+          <div class="summary-val">{{ filteredPatients.length }} <small>????</small></div>
+        </article>
+      </div>
+    </section>
+
+    <!-- 3. History / Table Panel (Matching cashier/session history-panel) -->
+    <section class="history-panel">
+      <div class="panel-head">
+        <div class="panel-right-group">
+          <div class="panel-title-group">
+            <h2>
+              <i class="pi pi-list"></i>
+              <span>??? ????? ??????</span>
+            </h2>
+            <p>??? ?????? ????? ??????? ??????? ?? ??????? ????? ??????</p>
+          </div>
+
+          <!-- Search Input -->
+          <div class="filter-search-box">
+            <i class="pi pi-search"></i>
+            <input 
+              pInputText 
+              type="text" 
+              [(ngModel)]="searchTerm" 
+              [placeholder]="'PHARMACY_PATIENTS.SEARCH_PLACEHOLDER' | translate" 
+              class="search-input" />
+            <button *ngIf="searchTerm" type="button" class="btn-clear" (click)="searchTerm = ''">
+              <i class="pi pi-times"></i>
+            </button>
+          </div>
+
+          <!-- Dropdown Filters (Gender, Status, Insurance) -->
+          <div class="header-dropdown-filters">
+            <!-- Gender Dropdown -->
+            <p-dropdown
+              [options]="filterGenderOptions"
+              [(ngModel)]="genderFilter"
+              optionLabel="label"
+              optionValue="value"
+              appendTo="body"
+              [autoDisplayFirst]="true"
+              styleClass="header-filter-dropdown"
+              placeholder="?????">
+            </p-dropdown>
+
+            <!-- Status Dropdown -->
+            <p-dropdown
+              [options]="filterStatusOptions"
+              [(ngModel)]="statusFilter"
+              optionLabel="label"
+              optionValue="value"
+              appendTo="body"
+              [autoDisplayFirst]="true"
+              styleClass="header-filter-dropdown"
+              placeholder="??????">
+            </p-dropdown>
+
+            <!-- Insurance Dropdown -->
+            <p-dropdown
+              [options]="filterInsuranceOptions"
+              [(ngModel)]="insuranceFilter"
+              optionLabel="label"
+              optionValue="value"
+              appendTo="body"
+              [autoDisplayFirst]="true"
+              styleClass="header-filter-dropdown"
+              placeholder="???????">
+            </p-dropdown>
+          </div>
+        </div>
+
+        <div class="panel-filters">
+          <p-button
+            styleClass="rounded-md w-auto text-nowrap clear-filters-btn"
+            label="????? ???????"
+            [outlined]="true"
+            icon="pi pi-filter-slash"
+            (onClick)="clearFilters(dtPatients)"
+          />
+          <span class="count-pill">{{ filteredPatients.length }} ????</span>
+        </div>
+      </div>
+
+      <!-- PrimeNG Table -->
+      <p-table 
+        #dtPatients
+        [value]="filteredPatients" 
+        [columns]="columns"
+        [paginator]="true" 
+        [rows]="10" 
+        [rowsPerPageOptions]="[10, 25, 50]"
+        [showCurrentPageReport]="true"
+        currentPageReportTemplate="??? {first} ??? {last} ?? ??? {totalRecords} ??? ????"
+        styleClass="session-table p-datatable-gridlines"
+        [loading]="isLoading()">
+
+        <ng-template pTemplate="header">
+          <tr>
+            <!-- 0. ??????? -->
+            <th style="width: 48px; min-width: 48px; text-align: center;">
+              <span class="th-label">#</span>
+            </th>
+
+            <th pSortableColumn="fullName" pResizableColumn>
+              <div class="th-content">
+                <span class="th-label">{{ 'PHARMACY_PATIENTS.TABLE_NAME' | translate }}</span>
+                <div class="th-icons">
+                  <p-sortIcon field="fullName"></p-sortIcon>
+                  <p-columnFilter type="text" field="fullName" display="menu"></p-columnFilter>
+                </div>
+              </div>
+            </th>
+            <th pSortableColumn="nationalId" pResizableColumn>
+              <div class="th-content">
+                <span class="th-label">{{ 'PHARMACY_PATIENTS.FIELD_NATIONAL_ID' | translate }}</span>
+                <div class="th-icons">
+                  <p-sortIcon field="nationalId"></p-sortIcon>
+                  <p-columnFilter type="text" field="nationalId" display="menu"></p-columnFilter>
+                </div>
+              </div>
+            </th>
+            <th pSortableColumn="age" pResizableColumn>
+              <div class="th-content">
+                <span class="th-label">{{ 'PHARMACY_PATIENTS.TABLE_AGE' | translate }}</span>
+                <div class="th-icons">
+                  <p-sortIcon field="age"></p-sortIcon>
+                  <p-columnFilter type="numeric" field="age" display="menu"></p-columnFilter>
+                </div>
+              </div>
+            </th>
+            <th pSortableColumn="gender" pResizableColumn>
+              <div class="th-content">
+                <span class="th-label">{{ 'PHARMACY_PATIENTS.TABLE_GENDER' | translate }}</span>
+                <div class="th-icons">
+                  <p-sortIcon field="gender"></p-sortIcon>
+                  <p-columnFilter type="text" field="gender" display="menu"></p-columnFilter>
+                </div>
+              </div>
+            </th>
+            <th pSortableColumn="phone" pResizableColumn>
+              <div class="th-content">
+                <span class="th-label">{{ 'PHARMACY_PATIENTS.TABLE_PHONE' | translate }}</span>
+                <div class="th-icons">
+                  <p-sortIcon field="phone"></p-sortIcon>
+                  <p-columnFilter type="text" field="phone" display="menu"></p-columnFilter>
+                </div>
+              </div>
+            </th>
+            <th pSortableColumn="insuranceClass" pResizableColumn>
+              <div class="th-content">
+                <span class="th-label">{{ 'PHARMACY_PATIENTS.TABLE_INSURANCE' | translate }}</span>
+                <div class="th-icons">
+                  <p-sortIcon field="insuranceClass"></p-sortIcon>
+                  <p-columnFilter type="text" field="insuranceClass" display="menu"></p-columnFilter>
+                </div>
+              </div>
+            </th>
+            <th pSortableColumn="activePrescriptions" pResizableColumn style="text-align: center; min-width: 135px;">
+              <div class="th-content justify-content-center text-center">
+                <span class="th-label text-center">{{ 'PHARMACY_PATIENTS.TABLE_ACTIVE_RX' | translate }}</span>
+                <div class="th-icons">
+                  <p-sortIcon field="activePrescriptions"></p-sortIcon>
+                  <p-columnFilter type="numeric" field="activePrescriptions" display="menu"></p-columnFilter>
+                </div>
+              </div>
+            </th>
+            <th>
+              <div class="th-content">
+                <span class="th-label">????????? ????????</span>
+              </div>
+            </th>
+            <th pSortableColumn="isActive" pResizableColumn>
+              <div class="th-content">
+                <span class="th-label">{{ 'PHARMACY_PATIENTS.FIELD_STATUS' | translate }}</span>
+                <div class="th-icons">
+                  <p-sortIcon field="isActive"></p-sortIcon>
+                  <p-columnFilter type="boolean" field="isActive" display="menu"></p-columnFilter>
+                </div>
+              </div>
+            </th>
+            <th style="width: 120px; text-align: center;">{{ 'PHARMACY_PATIENTS.TABLE_ACTIONS' | translate }}</th>
+          </tr>
+        </ng-template>
+
+        <ng-template pTemplate="body" let-patient let-rowIndex="rowIndex">
+          <tr>
+            <!-- 0. ??????? -->
+            <td style="text-align: center; font-weight: 700; color: #64748b;">
+              {{ rowIndex + 1 }}
+            </td>
+
+            <!-- Patient Name (Without Avatar) -->
+            <td>
+              <div class="patient-cell">
+                <div class="patient-names-box">
+                  <span class="patient-name-link" (click)="openPatient(patient)">{{ patient.fullName }}</span>
+                  <small *ngIf="patient.patientCode" class="text-muted">#{{ patient.patientCode }}</small>
+                </div>
+              </div>
+            </td>
+
+            <!-- National ID -->
+            <td>
+              <span class="national-id-chip" (click)="copyToClipboard(patient.nationalId, '??? ??????')" [pTooltip]="'???? ?????'" tooltipPosition="top">
+                <i class="pi pi-id-card"></i> {{ patient.nationalId }}
+              </span>
+            </td>
+
+            <!-- Age & DOB -->
+            <td>
+              <div class="age-dob-box">
+                <span class="age-txt" *ngIf="patient.age">{{ patient.age }} ???</span>
+                <small class="text-muted">{{ patient.dob | customDate: 'yyyy/MM/dd' }}</small>
+              </div>
+            </td>
+
+            <!-- Gender -->
+            <td>
+              <p-tag [value]="patient.gender === 'female' ? ('PHARMACY_PATIENTS.GENDER_FEMALE' | translate) : ('PHARMACY_PATIENTS.GENDER_MALE' | translate)"
+                     [severity]="patient.gender === 'female' ? 'warning' : 'info'"></p-tag>
+            </td>
+
+            <!-- Phone -->
+            <td>
+              <span class="phone-no" dir="ltr" *ngIf="patient.phone">{{ patient.phone }}</span>
+              <span class="text-muted" *ngIf="!patient.phone">-</span>
+            </td>
+
+            <!-- Insurance (Matches columns[5]) -->
+            <td>
+              <span class="store-badge-text" [pTooltip]="patient.insuranceClass" tooltipPosition="top">
+                {{ patient.insuranceClass || '????' }}
+              </span>
+            </td>
+
+            <!-- Active Prescriptions (Matches columns[6]) -->
+            <td style="text-align: center !important;" class="text-center">
+              <div class="rx-badge-container text-center justify-content-center" (click)="viewPatientPrescriptions(patient)" [pTooltip]="patient.activePrescriptions > 0 ? '???? ???? ' + patient.activePrescriptions + ' ???? ????? ??????' : '?? ???? ????? ????? - ???? ?????????'" tooltipPosition="top">
+                <div *ngIf="patient.activePrescriptions > 0" class="rx-pill-btn rx-has-data mx-auto">
+                  <span class="rx-icon-circle">
+                    <i class="pi pi-receipt"></i>
+                  </span>
+                  <span class="rx-text-count">{{ patient.activePrescriptions }}</span>
+                  <span class="rx-text-unit">????</span>
+                </div>
+                <div *ngIf="!patient.activePrescriptions || patient.activePrescriptions === 0" class="rx-pill-btn rx-no-data mx-auto">
+                  <i class="pi pi-file rx-empty-ic"></i>
+                  <span class="rx-text-unit">0 ????</span>
+                </div>
+              </div>
+            </td>
+
+            <!-- Clinical Alerts (Extra Header Column 1) -->
+            <td>
+              <div class="clinical-badges-group">
+                <span class="badge-tag tag-red" *ngIf="patient.allergies?.length" [pTooltip]="patient.allergies.join('? ')" tooltipPosition="top">
+                  <i class="pi pi-ban"></i> {{ patient.allergies.length }} ??????
+                </span>
+                <span class="badge-tag tag-amber" *ngIf="patient.chronicDiseases?.length" [pTooltip]="patient.chronicDiseases.join('? ')" tooltipPosition="top">
+                  <i class="pi pi-heart"></i> {{ patient.chronicDiseases.length }} ????
+                </span>
+                <span class="text-muted fs-8" *ngIf="!patient.allergies?.length && !patient.chronicDiseases?.length">
+                  ????
+                </span>
+              </div>
+            </td>
+
+            <!-- Status (Matches columns[7]) -->
+            <td>
+              <p-tag [value]="(patient.isActive ? 'PHARMACY_PATIENTS.STATUS_ACTIVE' : 'PHARMACY_PATIENTS.STATUS_INACTIVE') | translate" 
+                     [severity]="patient.isActive ? 'success' : 'danger'"></p-tag>
+            </td>
+
+            <!-- Actions -->
+            <td style="text-align: center;">
+              <div class="d-flex gap-1 justify-content-center align-items-center">
+                <button 
+                  *ngIf="canViewPrescriptions"
+                  pButton 
+                  type="button" 
+                  icon="pi pi-receipt" 
+                  class="table-action-btn rx-action-btn" 
+                  [pTooltip]="'??????? ?????? (' + (patient.activePrescriptions || 0) + ')'" 
+                  (click)="viewPatientPrescriptions(patient)">
+                </button>
+                <button 
+                  pButton 
+                  type="button" 
+                  icon="pi pi-eye" 
+                  class="table-action-btn" 
+                  [pTooltip]="'PHARMACY_PRESCRIPTIONS.VIEW_DETAILS' | translate" 
+                  (click)="openPatient(patient)">
+                </button>
+                <button 
+                  *ngIf="canCreateEditPatient"
+                  pButton 
+                  type="button" 
+                  icon="pi pi-pencil" 
+                  class="table-action-btn edit-btn" 
+                  [pTooltip]="'COMMON.EDIT' | translate" 
+                  (click)="editPatient(patient)">
+                </button>
+                <button 
+                  *ngIf="canDeletePatient"
+                  pButton 
+                  type="button" 
+                  icon="pi pi-trash" 
+                  class="table-action-btn delete-btn" 
+                  pTooltip="??? ?????" 
+                  (click)="confirmDeletePatient(patient)">
+                </button>
+              </div>
+            </td>
+          </tr>
+        </ng-template>
+
+        <!-- Empty State -->
+        <ng-template pTemplate="emptymessage">
+          <tr>
+            <td colspan="10" class="empty-table">
+              <i class="pi pi-info-circle mr-1"></i> ?? ???? ????? ???? ?????? ??????? ????? ???????
+            </td>
+          </tr>
+        </ng-template>
+      </p-table>
+    </section>
+  </div>
+</div>
+
+<!-- ========================================== -->
+<!-- 5. Patient Profile Details Dialog -->
+<!-- ========================================== -->
+<p-dialog 
+  [(visible)]="showDetailsDialog" 
+  [modal]="true" 
+  [draggable]="false" 
+  [resizable]="false" 
+  [style]="{width:'720px', maxWidth:'95vw'}" 
+  styleClass="patient-details-dialog"
+  [header]="'PHARMACY_PATIENTS.DETAILS_TITLE' | translate">
+
+  <div *ngIf="selectedPatient() as patient" class="profile-dialog-content">
+    
+    <!-- Profile Header Card -->
+    <div class="profile-hero-card">
+      <div class="profile-avatar" [class.avatar-female]="patient.gender === 'female'">
+        {{ getInitials(patient.fullName) }}
+      </div>
+      <div class="profile-main-meta">
+        <h2>{{ patient.fullName }}</h2>
+        <div class="profile-chips">
+          <span class="chip-item code"><i class="pi pi-hashtag"></i> {{ patient.patientCode || '???? ???' }}</span>
+          <span class="chip-item national"><i class="pi pi-id-card"></i> {{ patient.nationalId }}</span>
+          <span class="chip-item status" [class.active]="patient.isActive">{{ patient.isActive ? '??? ???' : '??? ??? ???' }}</span>
+        </div>
+      </div>
+      <div class="profile-actions-top">
+        <button pButton type="button" icon="pi pi-pencil" label="?????" class="p-button-outlined p-button-sm" (click)="editPatient(patient); showDetailsDialog = false"></button>
+      </div>
+    </div>
+
+    <!-- Details Sections Grid -->
+    <div class="profile-sections-grid">
+      
+      <!-- Box 1: Personal Info -->
+      <div class="profile-section-card">
+        <div class="section-title">
+          <i class="pi pi-user"></i>
+          <span>???????? ???????</span>
+        </div>
+        <div class="info-rows">
+          <div class="info-row">
+            <span class="label">{{ 'PHARMACY_PATIENTS.FIELD_DOB' | translate }}</span>
+            <span class="val">{{ patient.dob | customDate: 'yyyy/MM/dd' }}</span>
+          </div>
+          <div class="info-row">
+            <span class="label">{{ 'PHARMACY_PATIENTS.TABLE_AGE' | translate }}</span>
+            <span class="val">{{ patient.age }} ???</span>
+          </div>
+          <div class="info-row">
+            <span class="label">{{ 'PHARMACY_PATIENTS.TABLE_GENDER' | translate }}</span>
+            <span class="val">{{ patient.gender === 'male' ? ('PHARMACY_PATIENTS.GENDER_MALE' | translate) : ('PHARMACY_PATIENTS.GENDER_FEMALE' | translate) }}</span>
+          </div>
+          <div class="info-row">
+            <span class="label">{{ 'PHARMACY_PATIENTS.TABLE_PHONE' | translate }}</span>
+            <span class="val" dir="ltr">{{ patient.phone || '??? ????' }}</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Box 2: Insurance Info -->
+      <div class="profile-section-card">
+        <div class="section-title">
+          <i class="pi pi-shield"></i>
+          <span>?????? ??????? ?????</span>
+        </div>
+        <div class="info-rows">
+          <div class="info-row">
+            <span class="label">??? ???????</span>
+            <span class="val">{{ patient.insuranceClass || '???? / ???? ?????' }}</span>
+          </div>
+          <div class="info-row">
+            <span class="label">??????? ??????</span>
+            <span class="val">
+              <span *ngIf="patient.activePrescriptions > 0" class="badge bg-success-subtle text-success fw-bold px-2 py-1 fs-7">
+                <i class="pi pi-receipt me-1"></i> {{ patient.activePrescriptions }} ???? ????
+              </span>
+              <span *ngIf="!patient.activePrescriptions || patient.activePrescriptions === 0" class="badge bg-light text-muted px-2 py-1 fs-7">
+                0 ????
+              </span>
+            </span>
+          </div>
+          <div class="info-row" *ngIf="patient.lastVisit">
+            <span class="label">??? ?????</span>
+            <span class="val">{{ patient.lastVisit | customDate: 'yyyy/MM/dd HH:mm' }}</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Box 3: Medical / Clinical Alerts (Full Width) -->
+      <div class="profile-section-card full-width">
+        <div class="section-title text-danger">
+          <i class="pi pi-exclamation-triangle"></i>
+          <span>????????? ???????? ???????</span>
+        </div>
+
+        <div class="clinical-alerts-wrapper">
+          <!-- Allergies -->
+          <div class="alert-block allergy-block">
+            <div class="alert-block-title">
+              <i class="pi pi-ban"></i>
+              <strong>{{ 'PHARMACY_PATIENTS.ALLERGIES' | translate }}:</strong>
+            </div>
+            <div class="alert-tags" *ngIf="patient.allergies?.length">
+              <span class="danger-tag" *ngFor="let item of patient.allergies">{{ item }}</span>
+            </div>
+            <p class="no-alert-text" *ngIf="!patient.allergies?.length">{{ 'PHARMACY_PATIENTS.NO_ALLERGIES' | translate }}</p>
+          </div>
+
+          <!-- Chronic Diseases -->
+          <div class="alert-block chronic-block">
+            <div class="alert-block-title">
+              <i class="pi pi-heart"></i>
+              <strong>{{ 'PHARMACY_PATIENTS.CHRONIC_DISEASES' | translate }}:</strong>
+            </div>
+            <div class="alert-tags" *ngIf="patient.chronicDiseases?.length">
+              <span class="warning-tag" *ngFor="let item of patient.chronicDiseases">{{ item }}</span>
+            </div>
+            <p class="no-alert-text" *ngIf="!patient.chronicDiseases?.length">{{ 'PHARMACY_PATIENTS.NO_CHRONIC' | translate }}</p>
+          </div>
+
+          <!-- Pharmacist Notes -->
+          <div class="alert-block notes-block" *ngIf="patient.notes">
+            <div class="alert-block-title">
+              <i class="pi pi-comment"></i>
+              <strong>{{ 'PHARMACY_PATIENTS.FIELD_NOTES' | translate }}:</strong>
+            </div>
+            <p class="notes-text">{{ patient.notes }}</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Box 4: Prescriptions History (Full Width) -->
+      <div class="profile-section-card full-width rx-history-card">
+        <div class="section-title text-primary d-flex justify-content-between align-items-center">
+          <div>
+            <i class="pi pi-file-edit"></i>
+            <span>??? ??????? ?????? ??????</span>
+          </div>
+          <span class="badge bg-light-primary text-primary fs-7 fw-bold" *ngIf="patientPrescriptions().length">
+            {{ patientPrescriptions().length }} ???? ?????
+          </span>
+        </div>
+
+        <div class="rx-history-wrapper">
+          <div *ngIf="patientPrescriptions().length === 0" class="no-rx-box">
+            <i class="pi pi-inbox text-muted fs-2 mb-2"></i>
+            <p class="text-muted mb-0">?? ???? ????? ???? ????? ???? ?????? ??? ????.</p>
+          </div>
+
+          <div *ngIf="patientPrescriptions().length > 0" class="rx-items-table-container">
+            <table class="table table-bordered table-hover align-middle mb-0 rx-table-custom">
+              <thead>
+                <tr>
+                  <th>??? ??????</th>
+                  <th>????? ???????</th>
+                  <th>?????? ???????</th>
+                  <th>???????</th>
+                  <th>???????</th>
+                  <th>????????</th>
+                  <th>??????</th>
+                  <th>??????</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let rx of patientPrescriptions()">
+                  <td>
+                    <span class="rx-code-badge">{{ rx.rxNo }}</span>
+                  </td>
+                  <td>{{ rx.issueDate | customDate: 'yyyy/MM/dd HH:mm' }}</td>
+                  <td>{{ rx.doctorName || '???? ???' }}</td>
+                  <td>
+                    <span class="badge bg-light text-dark" *ngIf="rx.insuranceEnabled">{{ rx.insuranceName || '?????' }}</span>
+                    <span class="text-muted" *ngIf="!rx.insuranceEnabled">????</span>
+                  </td>
+                  <td>
+                    <span class="badge bg-light-info text-info">{{ rx.items?.length || rx.itemsCount || 0 }} ?????</span>
+                  </td>
+                  <td class="fw-bold text-success">{{ rx.grandTotal | number:'1.2-2' }} ?.?</td>
+                  <td>
+                    <p-tag [value]="getRxStatusLabel(rx.status)" [severity]="getRxStatusSeverity(rx.status)"></p-tag>
+                  </td>
+                  <td>
+                    <button pButton type="button" icon="pi pi-eye" class="p-button-rounded p-button-text p-button-sm" (click)="viewPrescriptionDetails(rx)" pTooltip="??? ???????"></button>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <ng-template pTemplate="footer">
+    <div class="dialog-actions">
+      <button pButton type="button" label="?????" class="p-button-text p-button-secondary" (click)="showDetailsDialog = false"></button>
+    </div>
+  </ng-template>
+</p-dialog>
+
+<!-- ========================================== -->
+<!-- 6. Add / Edit Patient Modal Dialog -->
+<!-- ========================================== -->
+<p-dialog 
+  [(visible)]="showAddDialog" 
+  [modal]="true" 
+  [draggable]="false" 
+  [resizable]="false" 
+  [style]="{width:'960px', maxWidth:'96vw'}" 
+  [contentStyle]="{'max-height': '80vh', 'overflow-y': 'auto'}"
+  appendTo="body"
+  [header]="(isEditMode ? '????? ?????? ????' : '????? ???? ????') | translate"
+  styleClass="patient-form-dialog">
+  
+  <form [formGroup]="patientForm" class="patient-form-container">
+    
+    <!-- Section 1: Personal Information -->
+    <div class="form-section-card">
+      <div class="form-section-header">
+        <div class="sec-icon blue-sec">
+          <i class="pi pi-user"></i>
+        </div>
+        <div>
+          <h4>{{ 'PHARMACY_PATIENTS.SEC_PERSONAL' | translate }}</h4>
+          <p>???????? ???????? ??????? ??????</p>
+        </div>
+      </div>
+
+      <div class="form-grid">
+        <!-- Row 1: 3 Inputs -->
+        <div class="field">
+          <label class="required">{{ 'PHARMACY_PATIENTS.FIELD_NAME' | translate }}</label>
+          <input pInputText formControlName="fullName" class="w-full custom-form-control" placeholder="??? ?????? ????? ?? ?????" />
+          <small *ngIf="patientForm.get('fullName')?.invalid && patientForm.get('fullName')?.touched" class="p-error">??? ?????? ?????</small>
+        </div>
+
+        <div class="field">
+          <label class="required">{{ 'PHARMACY_PATIENTS.FIELD_NATIONAL_ID' | translate }}</label>
+          <input pInputText formControlName="nationalId" class="w-full custom-form-control" placeholder="??? ?????? ??????? ?? ???????" />
+          <small *ngIf="patientForm.get('nationalId')?.invalid && patientForm.get('nationalId')?.touched" class="p-error">??? ?????? ?????</small>
+        </div>
+
+        <div class="field">
+          <label>{{ 'PHARMACY_PATIENTS.FIELD_PHONE' | translate }}</label>
+          <input pInputText formControlName="phone" class="w-full custom-form-control" placeholder="05XXXXXXXX" dir="ltr" />
+        </div>
+
+        <!-- Row 2: 3 Inputs -->
+        <div class="field">
+          <label class="required">{{ 'PHARMACY_PATIENTS.FIELD_DOB' | translate }}</label>
+          <p-calendar formControlName="dob" class="w-full" [showIcon]="true" appendTo="body" dateFormat="dd/mm/yy" placeholder="dd/mm/yyyy"></p-calendar>
+          <small *ngIf="patientForm.get('dob')?.invalid && patientForm.get('dob')?.touched" class="p-error">????? ??????? ?????</small>
+        </div>
+
+        <div class="field">
+          <label>????? (???)</label>
+          <input pInputText type="number" formControlName="age" class="w-full custom-form-control" placeholder="????? ???????? ?? ???? ??????" />
+        </div>
+
+        <div class="field">
+          <label class="required">{{ 'PHARMACY_PATIENTS.FIELD_GENDER' | translate }}</label>
+          <p-dropdown [options]="genderOptions" formControlName="gender" class="w-full" appendTo="body" [autoDisplayFirst]="true"></p-dropdown>
+        </div>
+
+        <!-- Row 3: 3 Inputs -->
+        <div class="field">
+          <label>{{ 'PHARMACY_PATIENTS.FIELD_STATUS' | translate }}</label>
+          <p-dropdown [options]="statusOptions" formControlName="isActive" class="w-full" appendTo="body" [autoDisplayFirst]="true"></p-dropdown>
+        </div>
+
+        <div class="field">
+          <label>{{ 'PHARMACY_PATIENTS.FIELD_CODE' | translate }}</label>
+          <input pInputText formControlName="patientCode" class="w-full custom-form-control" placeholder="??? ????? ???????" />
+        </div>
+
+        <div class="field">
+          <label>??? ?????</label>
+          <input pInputText [value]="'??? ???? ?????????'" class="w-full custom-form-control bg-light" [disabled]="true" />
+        </div>
+      </div>
+    </div>
+
+    <!-- Section 2: Insurance Information (3 Inputs) -->
+    <div class="form-section-card">
+      <div class="form-section-header">
+        <div class="sec-icon teal-sec">
+          <i class="pi pi-shield"></i>
+        </div>
+        <div>
+          <h4>{{ 'PHARMACY_PATIENTS.SEC_INSURANCE' | translate }}</h4>
+          <p>?????? ??????? ????????? ??????? ??????</p>
+        </div>
+      </div>
+
+      <div class="form-grid">
+        <div class="field">
+          <label>{{ 'PHARMACY_PATIENTS.FIELD_INSURANCE_PROVIDER' | translate }}</label>
+          <input pInputText formControlName="insuranceProvider" class="w-full custom-form-control" placeholder="??? ???? ??????? (?????: ????? ?????????)" />
+        </div>
+
+        <div class="field">
+          <label>{{ 'PHARMACY_PATIENTS.FIELD_INSURANCE_ID' | translate }}</label>
+          <input pInputText formControlName="insuranceId" class="w-full custom-form-control" placeholder="??? ??????? ?? ????????" />
+        </div>
+
+        <div class="field">
+          <label>{{ 'PHARMACY_PATIENTS.FIELD_INSURANCE_CLASS' | translate }}</label>
+          <input pInputText formControlName="insuranceClass" class="w-full custom-form-control" placeholder="??? ??????? (????: A, B, VIP, ????)" />
+        </div>
+      </div>
+    </div>
+
+    <!-- Section 3: Medical / Clinical Alerts (3 Inputs Side by Side) -->
+    <div class="form-section-card no-margin">
+      <div class="form-section-header">
+        <div class="sec-icon red-sec">
+          <i class="pi pi-heart"></i>
+        </div>
+        <div>
+          <h4>{{ 'PHARMACY_PATIENTS.SEC_MEDICAL' | translate }}</h4>
+          <p>????????? ???????? ???????? ??????? ?????? ??????? ????? ?????</p>
+        </div>
+      </div>
+
+      <div class="form-grid">
+        <div class="field">
+          <label><i class="pi pi-ban text-danger"></i> {{ 'PHARMACY_PATIENTS.FIELD_ALLERGIES' | translate }}</label>
+          <textarea pInputTextarea formControlName="allergies" rows="3" class="w-full custom-form-control" placeholder="????: ?????? ????????? ????????"></textarea>
+          <small class="field-hint">???? ??? ????????? ??????</small>
+        </div>
+
+        <div class="field">
+          <label><i class="pi pi-heart text-warning"></i> {{ 'PHARMACY_PATIENTS.FIELD_CHRONIC' | translate }}</label>
+          <textarea pInputTextarea formControlName="chronicDiseases" rows="3" class="w-full custom-form-control" placeholder="????: ??????? ??? ????? ?????"></textarea>
+          <small class="field-hint">???? ??? ??????? ??????</small>
+        </div>
+
+        <div class="field">
+          <label><i class="pi pi-comment text-primary"></i> {{ 'PHARMACY_PATIENTS.FIELD_NOTES' | translate }}</label>
+          <textarea pInputTextarea formControlName="notes" rows="3" class="w-full custom-form-control" placeholder="??????? ?????? ?? ??????? ????"></textarea>
+          <small class="field-hint">??????? ??????? ???????</small>
+        </div>
+      </div>
+    </div>
+
+  </form>
+
+  <ng-template pTemplate="footer">
+    <div class="form-dialog-footer">
+      <button pButton type="button" [label]="'PHARMACY_PATIENTS.CANCEL' | translate" class="p-button-text p-button-secondary" (click)="showAddDialog = false"></button>
+      <button pButton type="button" [label]="(isEditMode ? '??? ?????????' : '????? ??????') | translate" icon="pi pi-check" [loading]="isSaving()" class="hero-btn save-blue-btn" [disabled]="patientForm.invalid" (click)="savePatient()"></button>
+    </div>
+  </ng-template>
+</p-dialog>
+
+<!-- ========================================== -->
+<!-- 7. Patient Prescriptions List Modal Dialog -->
+<!-- ========================================== -->
+<p-dialog 
+  [(visible)]="showPrescriptionsDialog" 
+  [modal]="true" 
+  [draggable]="false" 
+  [resizable]="false" 
+  [style]="{width:'1100px', maxWidth:'96vw'}" 
+  [contentStyle]="{'max-height': '82vh', 'overflow-y': 'auto', 'padding': '1.5rem'}"
+  appendTo="body"
+  header="??? ??????? ?????? ??????"
+  styleClass="patient-rx-dialog">
+
+  <div *ngIf="selectedPatientForPrescriptions() as p" class="patient-rx-modal-body">
+    <!-- Patient Mini Header Banner -->
+    <div class="rx-patient-hero-banner mb-3 p-3 rounded-3 d-flex justify-content-between align-items-center">
+      <div class="d-flex align-items-center gap-3">
+        <div class="rx-hero-avatar">
+          {{ getInitials(p.fullName) }}
+        </div>
+        <div>
+          <div class="d-flex align-items-center gap-2">
+            <h4 class="mb-0 fw-bold text-dark">{{ p.fullName }}</h4>
+            <span class="badge bg-light text-primary border fw-bold fs-8">#{{ p.patientCode }}</span>
+          </div>
+          <div class="d-flex align-items-center gap-3 text-muted fs-7 mt-1">
+            <span><i class="pi pi-id-card me-1"></i> ????: {{ p.nationalId }}</span>
+            <span><i class="pi pi-phone me-1"></i> ????: {{ p.phone || '-' }}</span>
+            <span *ngIf="p.insuranceClass"><i class="pi pi-shield me-1"></i> {{ p.insuranceClass }}</span>
+          </div>
+        </div>
+      </div>
+      <div class="d-flex gap-2 align-items-center">
+        <div class="rx-count-highlight">
+          <i class="pi pi-receipt"></i>
+          <span>{{ patientPrescriptions().length }} ????? ?????</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Loading Spinner -->
+    <div *ngIf="isLoadingPrescriptions()" class="text-center py-5">
+      <i class="pi pi-spin pi-spinner text-primary fs-1 mb-2"></i>
+      <p class="text-muted fw-bold">???? ????? ??????? ??????...</p>
+    </div>
+
+    <!-- Empty State -->
+    <div *ngIf="!isLoadingPrescriptions() && patientPrescriptions().length === 0" class="text-center py-5 empty-rx-container">
+      <div class="empty-icon-circle mx-auto mb-3">
+        <i class="pi pi-file-excel text-muted fs-2"></i>
+      </div>
+      <h5 class="fw-bold">?? ???? ????? ?????</h5>
+      <p class="text-muted">?? ??? ????? ?? ???? ???? ???? ?????? ??? ????.</p>
+    </div>
+
+    <!-- Prescriptions Table -->
+    <div *ngIf="!isLoadingPrescriptions() && patientPrescriptions().length > 0" class="rx-table-card">
+      <table class="table align-middle custom-rx-table mb-0">
+        <thead>
+          <tr>
+            <th style="width: 45px; text-align: center;">#</th>
+            <th>??? ??????</th>
+            <th>????? ???????</th>
+            <th>?????? ???????</th>
+            <th>????? ????? / ???????</th>
+            <th style="text-align: center;">???????</th>
+            <th>?????? ??????</th>
+            <th>??? ??????</th>
+            <th style="text-align: center;">??????</th>
+            <th style="text-align: center; min-width: 120px; width: 120px;">???????</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let rx of patientPrescriptions(); let i = index">
+            <td style="text-align: center; font-weight: 700; color: #94a3b8;">{{ i + 1 }}</td>
+            <td>
+              <span class="rx-code-chip">
+                <i class="pi pi-barcode me-1"></i>
+                {{ rx.rxNo }}
+              </span>
+            </td>
+            <td>
+              <div class="rx-date-box">
+                <span class="date-main">{{ rx.issueDate | customDate: 'yyyy/MM/dd' }}</span>
+                <span class="date-time text-muted">{{ rx.issueDate | customDate: 'HH:mm' }}</span>
+              </div>
+            </td>
+            <td>
+              <div class="rx-doctor-box">
+                <span class="doc-name">{{ rx.doctorName || '???? ???' }}</span>
+                <small class="doc-spec text-muted" *ngIf="rx.doctorSpecialization">{{ rx.doctorSpecialization }}</small>
+              </div>
+            </td>
+            <td>
+              <span class="badge rx-ins-badge" *ngIf="rx.insuranceEnabled">
+                <i class="pi pi-shield"></i> {{ rx.insuranceName || '????? ???' }}
+              </span>
+              <span class="badge rx-cash-badge" *ngIf="!rx.insuranceEnabled">
+                ????
+              </span>
+            </td>
+            <td style="text-align: center;">
+              <span class="rx-items-count-badge">
+                {{ rx.items?.length || rx.itemsCount || 0 }} ?????
+              </span>
+            </td>
+            <td class="fw-bold text-dark">{{ rx.grandTotal | number:'1.2-2' }} <small>?.?</small></td>
+            <td class="fw-bold text-success">{{ (rx.patientPayable || rx.grandTotal) | number:'1.2-2' }} <small>?.?</small></td>
+            <td style="text-align: center;">
+              <p-tag [value]="getRxStatusLabel(rx.status)" [severity]="getRxStatusSeverity(rx.status)"></p-tag>
+            </td>
+            <td style="text-align: center;">
+              <button 
+                type="button" 
+                class="rx-view-items-btn" 
+                (click)="viewPrescriptionDetails(rx)"
+                pTooltip="??????? ????? ??????? ????????" 
+                tooltipPosition="top">
+                <i class="pi pi-eye"></i>
+                <span>???????</span>
+              </button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <ng-template pTemplate="footer">
+    <div class="d-flex justify-content-between align-items-center w-100">
+      <span class="text-muted fs-7">?? ??? ???? ??????? ??????? ?? ????? ???????? ????????</span>
+      <button pButton type="button" label="?????" class="p-button-secondary p-button-text" (click)="showPrescriptionsDialog = false"></button>
+    </div>
+  </ng-template>
+</p-dialog>
+
+<!-- ========================================== -->
+<!-- 8. Prescription Details Modal Dialog       -->
+<!-- ========================================== -->
+<p-dialog 
+  [(visible)]="showPrescriptionDetailsModal" 
+  [modal]="true" 
+  [draggable]="false" 
+  [resizable]="false" 
+  [style]="{width:'850px', maxWidth:'94vw'}" 
+  [contentStyle]="{'max-height': '75vh', 'overflow-y': 'auto'}"
+  appendTo="body"
+  header="?????? ??????? ??????? ??????"
+  styleClass="rx-details-items-dialog">
+
+  <div *ngIf="selectedPrescriptionDetails() as rx" class="rx-details-body">
+    <!-- RX Header Card -->
+    <div class="card p-3 mb-3 bg-light border-0 shadow-none">
+      <div class="row g-2">
+        <div class="col-sm-6 col-md-3">
+          <small class="text-muted d-block">??? ??????</small>
+          <strong class="text-primary">{{ rx.rxNo }}</strong>
+        </div>
+        <div class="col-sm-6 col-md-3">
+          <small class="text-muted d-block">????? ?????/???????</small>
+          <strong>{{ rx.issueDate | customDate: 'yyyy/MM/dd HH:mm' }}</strong>
+        </div>
+        <div class="col-sm-6 col-md-3">
+          <small class="text-muted d-block">?????? ???????</small>
+          <strong>{{ rx.doctorName || '???? ???' }}</strong>
+        </div>
+        <div class="col-sm-6 col-md-3">
+          <small class="text-muted d-block">??????</small>
+          <p-tag [value]="getRxStatusLabel(rx.status)" [severity]="getRxStatusSeverity(rx.status)"></p-tag>
+        </div>
+      </div>
+    </div>
+
+    <!-- Medicines Table -->
+    <h6 class="fw-bold mb-2"><i class="pi pi-box text-primary me-1"></i> ????? ??????? ????????:</h6>
+    <div class="table-responsive">
+      <table class="table table-bordered table-striped align-middle mb-0">
+        <thead class="table-light">
+          <tr>
+            <th style="width: 40px; text-align: center;">#</th>
+            <th>??? ??????</th>
+            <th>??? ???????? (??????)</th>
+            <th>?????? ??????????</th>
+            <th style="text-align: center;">??????</th>
+            <th>??? ??????</th>
+            <th>????????</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let item of rx.items; let i = index">
+            <td style="text-align: center; font-weight: bold; color: #64748b;">{{ i + 1 }}</td>
+            <td>
+              <div class="fw-bold text-dark">{{ item.itemName }}</div>
+              <small class="text-muted" *ngIf="item.itemCode">???: {{ item.itemCode }}</small>
+            </td>
+            <td>
+              <span class="badge bg-light text-dark" *ngIf="item.batchNo">{{ item.batchNo }}</span>
+              <span class="text-muted" *ngIf="!item.batchNo">-</span>
+            </td>
+            <td>
+              <div>{{ item.dosage || '-' }} {{ item.frequency ? '• ' + item.frequency : '' }}</div>
+              <small class="text-info d-block" *ngIf="item.instructions">{{ item.instructions }}</small>
+            </td>
+            <td style="text-align: center;" class="fw-bold">{{ item.quantity }}</td>
+            <td>{{ item.unitPrice | number:'1.2-2' }} ?.?</td>
+            <td class="fw-bold text-success">{{ (item.totalPrice || (item.quantity * item.unitPrice)) | number:'1.2-2' }} ?.?</td>
+          </tr>
+          <tr *ngIf="!rx.items || rx.items.length === 0">
+            <td colspan="7" class="text-center py-3 text-muted">?? ???? ???? ????? ????? ???? ??????.</td>
+          </tr>
+        </tbody>
+        <tfoot *ngIf="rx.items && rx.items.length > 0">
+          <tr class="table-light fw-bold">
+            <td colspan="6" class="text-end">?????? ??????:</td>
+            <td class="text-success fs-6">{{ rx.grandTotal | number:'1.2-2' }} ?.?</td>
+          </tr>
+        </tfoot>
+      </table>
+    </div>
+
+    <!-- Notes if any -->
+    <div class="alert alert-info mt-3 mb-0" *ngIf="rx.notes">
+      <strong>???????:</strong> {{ rx.notes }}
+    </div>
+  </div>
+
+  <ng-template pTemplate="footer">
+    <button pButton type="button" label="?????" class="p-button-secondary p-button-text" (click)="showPrescriptionDetailsModal = false"></button>
+  </ng-template>
+</p-dialog>

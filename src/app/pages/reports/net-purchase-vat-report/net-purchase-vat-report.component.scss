@@ -1,0 +1,217 @@
+// Purchase header background color
+.purchase-header-bg {
+  background-color: #42acff !important;
+  color: #ffffff !important;
+}
+
+/* Panel header styling */
+::ng-deep .p-panel .p-panel-header {
+  background-color: #42acff !important;
+  color: #ffffff !important;
+}
+
+::ng-deep .p-panel .p-panel-header * {
+  color: #ffffff !important;
+}
+
+/* Print styles for header */
+@media print {
+  .purchase-header-bg,
+  th.purchase-header-bg {
+    background-color: #42acff !important;
+    color: #ffffff !important;
+  }
+}
+
+/* Share Dialog Styles */
+.share-dialog {
+  .share-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    
+    .icon-chip {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      width: 40px;
+      height: 40px;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      
+      i {
+        color: white;
+        font-size: 18px;
+      }
+    }
+    
+    .title {
+      .title-main {
+        font-size: 18px;
+        font-weight: 600;
+        color: #2c3e50;
+      }
+    }
+  }
+  
+  .share-body {
+    padding: 20px 0;
+    
+    // Tab styling
+    ::ng-deep .share-tabs {
+      .p-tabview-nav {
+        background: transparent;
+        border-bottom: 2px solid #e9ecef;
+        
+        .p-tabview-nav-link {
+          background: transparent;
+          border: none;
+          color: #6c757d;
+          padding: 12px 24px;
+          
+          &:not(.p-disabled):focus {
+            box-shadow: none;
+          }
+        }
+        
+        .p-highlight {
+          .p-tabview-nav-link {
+            color: #667eea;
+            border-bottom: 2px solid #667eea;
+          }
+          
+          .tab-header i {
+            color: #667eea;
+          }
+        }
+      }
+      
+      .p-tabview-panels {
+        background: transparent;
+        padding: 20px 0;
+      }
+    }
+    
+    .tab-header {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      
+      i {
+        font-size: 16px;
+        color: #6c757d;
+      }
+    }
+    
+    .share-form {
+      .form-field {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        margin-bottom: 20px;
+        
+        .field-label {
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          font-weight: 500;
+          color: #495057;
+          font-size: 14px;
+          
+          i {
+            color: #667eea;
+          }
+        }
+        
+        .field-input {
+          width: 100%;
+          padding: 10px 12px;
+          border: 1px solid #ced4da;
+          border-radius: 6px;
+          font-size: 14px;
+          transition: all 0.3s ease;
+          
+          &:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.15);
+          }
+          
+          &.invalid {
+            border-color: #dc3545;
+            
+            &:focus {
+              box-shadow: 0 0 0 0.2rem rgba(220, 53, 69, 0.15);
+            }
+          }
+        }
+        
+        .hint-message {
+          display: flex;
+          align-items: center;
+          gap: 6px;
+          color: #6c757d;
+          font-size: 12px;
+          
+          i {
+            font-size: 12px;
+          }
+        }
+        
+        .error-message {
+          display: flex;
+          align-items: center;
+          gap: 6px;
+          color: #dc3545;
+          font-size: 12px;
+          
+          i {
+            font-size: 12px;
+          }
+        }
+      }
+      
+      .form-actions {
+        display: flex;
+        justify-content: flex-end;
+        
+        ::ng-deep .submit-btn {
+          min-width: 120px;
+          
+          &.email-submit {
+            .p-button {
+              background: #667eea;
+              border-color: #667eea;
+              
+              &:hover:not(:disabled) {
+                background: #5568d3;
+                border-color: #5568d3;
+              }
+            }
+          }
+          
+          &.whatsapp-submit {
+            .p-button {
+              background: #25D366;
+              border-color: #25D366;
+              
+              &:hover:not(:disabled) {
+                background: #20bd5a;
+                border-color: #20bd5a;
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
+/* Larger table text (1.125rem) as requested */
+.net-purchase-vat-report table th,
+.net-purchase-vat-report table td,
+table th,
+table td {
+  font-size: 1.125rem !important;
+}
+

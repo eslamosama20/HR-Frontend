@@ -1,0 +1,493 @@
+:host {
+  display: block;
+  width: 100%;
+  --btn-bg: #0284c7;
+  --btn-text: #ffffff;
+  --btn-border: #0369a1;
+  --btn-hover-bg: #0369a1;
+  --btn-hover-text: #ffffff;
+}
+
+$green-sels: ".light-green-mode", '[data-bs-theme="light-green"]', "body.light-green";
+@each $sel in $green-sels {
+  :host-context(#{$sel}) {
+    --btn-bg: #018897;
+    --btn-text: #ffffff;
+    --btn-border: #018897;
+    --btn-hover-bg: #026f7c;
+    --btn-hover-text: #ffffff;
+  }
+}
+
+$indigo-sels: ".light-indigo-mode", '[data-bs-theme="light-indigo"]', "body.light-indigo";
+@each $sel in $indigo-sels {
+  :host-context(#{$sel}) {
+    --btn-bg: #3e4981;
+    --btn-text: #ffffff;
+    --btn-border: #3e4981;
+    --btn-hover-bg: #323b68;
+    --btn-hover-text: #ffffff;
+  }
+}
+
+$darkblue-sels: ".light-darkblue-mode", '[data-bs-theme="light-darkblue"]', "body.light-darkblue";
+@each $sel in $darkblue-sels {
+  :host-context(#{$sel}) {
+    --btn-bg: #191d29;
+    --btn-text: #ffffff;
+    --btn-border: #191d29;
+    --btn-hover-bg: #0f1421;
+    --btn-hover-text: #ffffff;
+  }
+}
+
+:host ::ng-deep {
+  /* Solid explicit theme buttons */
+  .p-button:not(.p-button-outlined):not(.p-button-text):not(.p-button-danger):not(.p-button-warning):not(.p-button-success):not(.p-button-help):not(.p-button-info):not(.p-button-secondary) {
+    background: var(--btn-bg) !important;
+    border: 1px solid var(--btn-border) !important;
+    color: var(--btn-text) !important;
+    font-weight: 700 !important;
+    opacity: 1 !important;
+    box-shadow: 0 1px 3px rgba(2, 132, 199, 0.25) !important;
+
+    &:hover:not(:disabled) {
+      background: var(--btn-hover-bg) !important;
+      border-color: var(--btn-hover-bg) !important;
+      color: var(--btn-hover-text) !important;
+      box-shadow: 0 2px 6px rgba(2, 132, 199, 0.35) !important;
+    }
+
+    &:disabled {
+      opacity: 0.5 !important;
+      cursor: not-allowed !important;
+    }
+  }
+
+  .p-button.p-button-secondary {
+    background: #f1f5f9 !important;
+    border: 1px solid #cbd5e1 !important;
+    color: #334155 !important;
+    font-weight: 600 !important;
+    opacity: 1 !important;
+
+    &:hover:not(:disabled) {
+      background: #e2e8f0 !important;
+      border-color: #94a3b8 !important;
+      color: #0f172a !important;
+    }
+
+    &:disabled {
+      opacity: 0.5 !important;
+      cursor: not-allowed !important;
+    }
+  }
+
+  .p-button.p-button-sm {
+    padding: 0.45rem 1rem !important;
+    font-size: 0.85rem !important;
+    font-weight: 600 !important;
+    border-radius: 0.375rem !important;
+  }
+  /* Integrated Input with Leading Icon */
+  .input-icon-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+    width: 100%;
+
+    .input-icon {
+      position: absolute;
+      top: 50%;
+      transform: translateY(-50%);
+      inset-inline-start: 0.95rem;
+      color: #94a3b8;
+      font-size: 1.05rem;
+      pointer-events: none;
+      transition: color 0.2s ease;
+      z-index: 3;
+    }
+
+    &:focus-within .input-icon {
+      color: #3b82f6;
+    }
+  }
+
+  .password-input-wrapper {
+    position: relative;
+    width: 100%;
+    display: flex;
+    align-items: center;
+
+    .password-lead-icon {
+      position: absolute;
+      top: 50%;
+      transform: translateY(-50%);
+      inset-inline-start: 0.95rem;
+      color: #94a3b8;
+      font-size: 1.05rem;
+      pointer-events: none;
+      transition: color 0.2s ease;
+      z-index: 15;
+    }
+
+    &:focus-within .password-lead-icon {
+      color: #3b82f6;
+    }
+  }
+
+  /* Form Control with Built-in Icon */
+  .form-control {
+    font-size: 0.925rem;
+    padding: 0.65rem 1rem;
+    border-radius: 0.5rem;
+    border: 1px solid #e2e8f0;
+    transition: all 0.2s ease;
+
+    &.with-icon {
+      padding-inline-start: 2.75rem !important;
+      padding-inline-end: 1rem !important;
+    }
+
+    &:focus {
+      border-color: #3b82f6;
+      box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
+      outline: none;
+    }
+  }
+
+  /* Remove Bootstrap default validation background icons that cover/overlap typed text */
+  .form-control.is-valid,
+  .form-control.is-invalid,
+  .p-password.is-valid input,
+  .p-password.is-invalid input {
+    background-image: none !important;
+  }
+
+  .form-control.is-valid,
+  .p-password.is-valid input {
+    border-color: #22c55e !important;
+
+    &:focus {
+      border-color: #22c55e !important;
+      box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.18) !important;
+    }
+  }
+
+  .form-control.is-invalid,
+  .p-password.is-invalid input {
+    border-color: #ef4444 !important;
+
+    &:focus {
+      border-color: #ef4444 !important;
+      box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.18) !important;
+    }
+  }
+
+  .input-icon-wrapper:has(.is-invalid) .input-icon,
+  .password-input-wrapper:has(.is-invalid) .password-lead-icon {
+    color: #ef4444 !important;
+  }
+
+  .input-icon-wrapper:has(.is-valid) .input-icon,
+  .password-input-wrapper:has(.is-valid) .password-lead-icon {
+    color: #22c55e !important;
+  }
+
+  /* PrimeNG Password Styling with Leading and Trailing Icons */
+  p-password,
+  .p-password {
+    width: 100% !important;
+    position: relative !important;
+    display: block !important;
+
+    .p-inputtext,
+    .p-password-input,
+    input {
+      width: 100% !important;
+      background-color: #ffffff !important;
+      padding-inline-start: 2.75rem !important; /* Space for the lock icon */
+      padding-inline-end: 2.75rem !important;   /* Space for the eye toggle */
+      padding-block: 0.65rem !important;
+      border-radius: 0.5rem !important;
+      border: 1px solid var(--kt-input-border-color, #e2e8f0) !important;
+      color: var(--kt-input-color, #1e293b) !important;
+      font-size: 0.925rem !important;
+      transition: all 0.2s ease !important;
+
+      &:focus {
+        border-color: #3b82f6 !important;
+        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15) !important;
+        outline: none !important;
+      }
+    }
+
+    /* Target eye toggle icon */
+    .p-password-toggle-mask,
+    .p-password-clear-icon,
+    i.pi-eye,
+    i.pi-eye-slash,
+    i[class*="pi-eye"],
+    .p-icon-wrapper,
+    .p-icon,
+    svg {
+      position: absolute !important;
+      top: 50% !important;
+      margin-top: 0 !important;
+      transform: translateY(-50%) !important;
+      inset-inline-end: 0.95rem !important;
+      inset-inline-start: auto !important;
+      cursor: pointer !important;
+      color: #94a3b8 !important;
+      z-index: 10 !important;
+      font-size: 1.15rem !important;
+      display: flex !important;
+      align-items: center !important;
+      justify-content: center !important;
+
+      &:hover {
+        color: #3b82f6 !important;
+      }
+    }
+  }
+
+  /* Compact Password Strength Meter Overlay Panel */
+  .p-password-panel {
+    padding: 0.35rem 0.65rem !important;
+    min-width: 130px !important;
+    max-width: 180px !important;
+    border-radius: 0.5rem !important;
+    border: 1px solid #e2e8f0 !important;
+    box-shadow: 0 4px 12px rgba(15, 23, 42, 0.08) !important;
+    background: #ffffff !important;
+    z-index: 1000 !important;
+
+    .p-password-meter {
+      height: 4px !important;
+      margin: 0.15rem 0 0.25rem 0 !important;
+      background: #e2e8f0 !important;
+      border-radius: 2px !important;
+    }
+
+    .p-password-strength {
+      height: 100% !important;
+      border-radius: 2px !important;
+
+      &.weak {
+        background: #ef4444 !important;
+      }
+      &.medium {
+        background: #f59e0b !important;
+      }
+      &.strong {
+        background: #22c55e !important;
+      }
+    }
+
+    .p-password-info {
+      font-size: 0.725rem !important;
+      font-weight: 700 !important;
+      color: #475569 !important;
+      margin: 0 !important;
+      padding: 0 !important;
+      line-height: 1.2 !important;
+      white-space: nowrap !important;
+    }
+  }
+}
+
+.password-requirements-box {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 0.75rem;
+}
+
+/* Role Card Styles with Crisp Defined Borders */
+.role-card {
+  position: relative;
+  border-radius: 0.625rem;
+  border: 1.5px solid #cbd5e1;
+  background-color: #ffffff;
+  min-height: 52px;
+  user-select: none;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.05);
+
+  .role-icon-box {
+    width: 32px;
+    height: 32px;
+    flex-shrink: 0;
+    background: #f1f5f9;
+    color: #64748b;
+    border: 1px solid #e2e8f0;
+    transition: all 0.2s ease;
+
+    i {
+      font-size: 0.95rem;
+    }
+  }
+
+  .role-name {
+    color: #1e293b;
+    font-size: 0.825rem;
+    font-weight: 600;
+  }
+
+  .role-check-indicator {
+    width: 22px;
+    height: 22px;
+    flex-shrink: 0;
+    border: 1.5px solid #94a3b8;
+    background: #ffffff;
+    transition: all 0.2s ease;
+  }
+
+  &:hover {
+    transform: translateY(-2px);
+    border-color: #64748b;
+    box-shadow: 0 4px 12px rgba(15, 23, 42, 0.1);
+
+    .role-icon-box {
+      background: #e2e8f0;
+      color: #334155;
+    }
+
+    .role-check-indicator {
+      border-color: #64748b;
+    }
+  }
+
+  &.role-card-selected {
+    background-color: #f0f9ff !important;
+    border: 2px solid #0284c7 !important;
+    box-shadow: 0 3px 10px rgba(2, 132, 199, 0.2) !important;
+
+    .role-icon-box {
+      background: #0284c7 !important;
+      border-color: #0284c7 !important;
+      color: #ffffff !important;
+    }
+
+    .role-name {
+      color: #0369a1 !important;
+      font-weight: 700 !important;
+    }
+
+    .role-check-indicator {
+      background: #0284c7 !important;
+      border-color: #0284c7 !important;
+      color: #ffffff !important;
+
+      i {
+        font-weight: 700;
+        font-size: 0.75rem;
+      }
+    }
+  }
+}
+
+/* Dark Mode Theme Support */
+:host-context([data-bs-theme="dark"]) {
+  .card {
+    background-color: #1e1e2d !important;
+    border-color: rgba(255, 255, 255, 0.08) !important;
+  }
+
+  :host ::ng-deep {
+    .p-password .p-inputtext,
+    .form-control {
+      background-color: rgba(255, 255, 255, 0.05) !important;
+      border-color: rgba(255, 255, 255, 0.12) !important;
+      color: #f1f5f9 !important;
+
+      &:focus {
+        border-color: #3b82f6 !important;
+      }
+    }
+
+    .input-group-text {
+      background-color: rgba(255, 255, 255, 0.08) !important;
+      border-color: rgba(255, 255, 255, 0.12) !important;
+      color: #94a3b8 !important;
+    }
+  }
+
+  .password-requirements-box {
+    background: rgba(30, 41, 59, 0.5);
+    border-color: rgba(255, 255, 255, 0.1);
+
+    .text-gray-700 {
+      color: #cbd5e1 !important;
+    }
+  }
+
+  .role-card {
+    background-color: rgba(30, 41, 59, 0.6) !important;
+    border-color: rgba(255, 255, 255, 0.18) !important;
+
+    .role-icon-box {
+      background: rgba(255, 255, 255, 0.08) !important;
+      border-color: rgba(255, 255, 255, 0.12) !important;
+      color: #94a3b8 !important;
+    }
+
+    .role-name {
+      color: #f1f5f9 !important;
+    }
+
+    .role-check-indicator {
+      border-color: rgba(255, 255, 255, 0.35) !important;
+      background: rgba(255, 255, 255, 0.05) !important;
+    }
+
+    &:hover {
+      border-color: rgba(255, 255, 255, 0.4) !important;
+      background-color: rgba(30, 41, 59, 0.85) !important;
+    }
+
+    &.role-card-selected {
+      background: rgba(2, 132, 199, 0.22) !important;
+      border-color: #38bdf8 !important;
+
+      .role-icon-box {
+        background: #0284c7 !important;
+        border-color: #0284c7 !important;
+        color: #ffffff !important;
+      }
+
+      .role-name {
+        color: #38bdf8 !important;
+      }
+
+      .role-check-indicator {
+        background: #0284c7 !important;
+        border-color: #0284c7 !important;
+        color: #ffffff !important;
+      }
+    }
+  }
+}
+
+/* Compact spacing for add-user page cards to override global theme large margins */
+.add-user-page {
+  .card {
+    margin-bottom: 0.5rem !important;
+
+    &:last-child {
+      margin-bottom: 0 !important;
+    }
+  }
+
+  .card-header {
+    min-height: 46px !important;
+  }
+
+  .card-body {
+    padding: 0.85rem 1rem !important;
+  }
+
+  .form-label {
+    margin-bottom: 0.25rem !important;
+    font-size: 0.825rem !important;
+  }
+}

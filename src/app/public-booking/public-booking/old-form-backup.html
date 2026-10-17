@@ -1,0 +1,777 @@
+﻿<div class="public-booking-container">
+  <!-- Company Header -->
+  <div class="company-header mb-5 rounded-md shadow-md p-4 flex flex-col md:flex-row items-center bg-gradient-to-r from-blue-600 to-indigo-600 text-white">
+    <div class="company-logo">
+      <img *ngIf="companyDetails?.logo" src="data:image/*;base64,{{companyDetails?.logo}}" [alt]="companyDetails.englishName" class="logo-image">
+      <div *ngIf="!companyDetails?.logo" class="logo-placeholder">
+        <i class="pi pi-building"></i>
+      </div>
+    </div>
+    <div class="company-info text-center">
+      <h1 class="company-name">
+        <span class="english-name">{{companyDetails?.englishName || 'Smart & Pro ERP'}}</span>
+        <span class="arabic-name" *ngIf="companyDetails?.arabicName">{{companyDetails.arabicName}}</span>
+      </h1>
+      <p class="company-tagline">Your Premium Hotel Booking Experience | ╪¬╪¼╪▒╪¿╪⌐ ╪¡╪¼╪▓ ┘ü┘å╪»┘é┘è╪⌐ ┘à╪¬┘à┘è╪▓╪⌐</p>
+    </div>
+    <div class="company-contact">
+      <div class="contact-item" *ngIf="companyDetails?.phones?.length > 0">
+        <i class="pi pi-phone"></i>
+        <span>{{companyDetails.phones[0].phoneNumber}}</span>
+      </div>
+      <div class="contact-item" *ngIf="companyDetails?.email">
+        <i class="pi pi-envelope"></i>
+        <span>{{companyDetails.email}}</span>
+      </div>
+      <div class="contact-item" *ngIf="!companyDetails?.email">
+        <i class="pi pi-envelope"></i>
+        <span>bookings&#64;smartandpro.com</span>
+      </div>
+      <div class="contact-item" *ngIf="companyDetails?.address?.fullAddress">
+        <i class="pi pi-map-marker"></i>
+        <span>{{companyDetails.address.fullAddress}}</span>
+      </div>
+      <div class="contact-item" *ngIf="!companyDetails?.address">
+        <i class="pi pi-map-marker"></i>
+        <span>Riyadh, Saudi Arabia | ╪º┘ä╪▒┘è╪º╪╢╪î ╪º┘ä┘à┘à┘ä┘â╪⌐ ╪º┘ä╪╣╪▒╪¿┘è╪⌐ ╪º┘ä╪│╪╣┘ê╪»┘è╪⌐</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="booking-card">
+    <div class="booking-header">
+      <h1 class="booking-title">
+        <span class="title">Make a Reservation | ┘é┘à ╪¿╪º┘ä╪¡╪¼╪▓</span>
+      </h1>
+      <p class="booking-subtitle">
+        <span class="english-subtitle">Book your perfect stay with us - it's quick, easy, and delightful!</span>
+        <span class="arabic-subtitle">╪º╪¡╪¼╪▓ ╪Ñ┘é╪º┘à╪¬┘â ╪º┘ä┘à╪½╪º┘ä┘è╪⌐ ┘à╪╣┘å╪º - ╪Ñ┘å┘ç╪º ╪│╪▒┘è╪╣╪⌐ ┘ê╪│┘ç┘ä╪⌐ ┘ê┘à┘à╪¬╪╣╪⌐!</span>
+      </p>
+      
+      <div class="booking-steps">
+        <div class="step">
+          <div class="step-number">1</div>
+          <span class="step-text">
+            <span class="english">Guest Info</span>
+            <span class="arabic">┘à╪╣┘ä┘ê┘à╪º╪¬ ╪º┘ä╪╢┘è┘ü</span>
+          </span>
+        </div>
+        <div class="step">
+          <div class="step-number">2</div>
+          <span class="step-text">
+            <span class="english">Stay Details</span>
+            <span class="arabic">╪¬┘ü╪º╪╡┘è┘ä ╪º┘ä╪Ñ┘é╪º┘à╪⌐</span>
+          </span>
+        </div>
+        <div class="step">
+          <div class="step-number">3</div>
+          <span class="step-text">
+            <span class="english">Room & Services</span>
+            <span class="arabic">╪º┘ä╪║╪▒┘ü╪⌐ ┘ê╪º┘ä╪«╪»┘à╪º╪¬</span>
+          </span>
+        </div>
+        <div class="step">
+          <div class="step-number">4</div>
+          <span class="step-text">
+            <span class="english">Confirm</span>
+            <span class="arabic">╪¬╪ú┘â┘è╪»</span>
+          </span>
+        </div>
+      </div>
+    </div>
+
+    <div class="booking-form-container">
+      <form [formGroup]="form" (ngSubmit)="submit()" class="booking-form">
+        
+        <!-- Guest Information Section -->
+        <div class="form-section">
+          <h3 class="section-title">
+            <i class="pi pi-user"></i>
+            Guest Information | ┘à╪╣┘ä┘ê┘à╪º╪¬ ╪º┘ä╪╢┘è┘ü
+            <small>Tell us about yourself | ╪ú╪«╪¿╪▒┘å╪º ╪╣┘å ┘å┘ü╪│┘â</small>
+          </h3>
+          
+          <div class="form-row">
+            <div class="form-group">
+              <label for="guestName">
+                <i class="pi pi-user-plus"></i>
+                Full Name * | ╪º┘ä╪º╪│┘à ╪º┘ä┘â╪º┘à┘ä *
+              </label>
+              <input 
+                id="guestName"
+                type="text" 
+                formControlName="guestName" 
+                placeholder="Enter your full name | ╪ú╪»╪«┘ä ╪º╪│┘à┘â ╪º┘ä┘â╪º┘à┘ä"
+                class="form-control"
+                [class.error]="form.get('guestName')?.invalid && form.get('guestName')?.touched">
+              <div class="error-message" *ngIf="form.get('guestName')?.invalid && form.get('guestName')?.touched">
+                Full name is required | ╪º┘ä╪º╪│┘à ╪º┘ä┘â╪º┘à┘ä ┘à╪╖┘ä┘ê╪¿
+              </div>
+            </div>
+            
+            <div class="form-group">
+              <label for="guestPhone">
+                <i class="pi pi-phone"></i>
+                Phone Number | ╪▒┘é┘à ╪º┘ä┘ç╪º╪¬┘ü
+              </label>
+              <input 
+                id="guestPhone"
+                type="tel" 
+                formControlName="guestPhone" 
+                placeholder="Enter your phone number | ╪ú╪»╪«┘ä ╪▒┘é┘à ┘ç╪º╪¬┘ü┘â"
+                class="form-control">
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label for="guestEmail">
+                <i class="pi pi-envelope"></i>
+                Email Address | ╪º┘ä╪¿╪▒┘è╪» ╪º┘ä╪Ñ┘ä┘â╪¬╪▒┘ê┘å┘è
+              </label>
+              <input 
+                id="guestEmail"
+                type="email" 
+                formControlName="guestEmail" 
+                placeholder="Enter your email address | ╪ú╪»╪«┘ä ╪¿╪▒┘è╪»┘â ╪º┘ä╪Ñ┘ä┘â╪¬╪▒┘ê┘å┘è"
+                class="form-control"
+                [class.error]="form.get('guestEmail')?.invalid && form.get('guestEmail')?.touched">
+              <div class="error-message" *ngIf="form.get('guestEmail')?.invalid && form.get('guestEmail')?.touched">
+                Please enter a valid email address | ┘è╪▒╪¼┘ë ╪Ñ╪»╪«╪º┘ä ╪╣┘å┘ê╪º┘å ╪¿╪▒┘è╪» ╪Ñ┘ä┘â╪¬╪▒┘ê┘å┘è ╪╡╪¡┘è╪¡
+              </div>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="nationality">
+              <i class="pi pi-globe"></i>
+              Nationality * | ╪º┘ä╪¼┘å╪│┘è╪⌐ *
+            </label>
+            <div class="dropdown-container">
+              <select 
+                id="nationality"
+                formControlName="nationality" 
+                class="form-control"
+                [disabled]="loading()"
+                [class.error]="form.get('nationality')?.invalid && form.get('nationality')?.touched">
+                <option *ngFor="let nationality of nationalities" [value]="nationality.value">
+                  {{nationality.label}}
+                </option>
+              </select>
+              <div class="loading-spinner" *ngIf="loading()">
+                <i class="pi pi-spinner pi-spin"></i>
+              </div>
+            </div>
+            <div class="error-message" *ngIf="form.get('nationality')?.invalid && form.get('nationality')?.touched">
+              Please select your nationality | ┘è╪▒╪¼┘ë ╪º╪«╪¬┘è╪º╪▒ ╪¼┘å╪│┘è╪¬┘â
+            </div>
+          </div>
+        </div>
+
+        <!-- Stay Details Section -->
+        <div class="form-section">
+          <h3 class="section-title">
+            <i class="pi pi-calendar"></i>
+            Stay Details | ╪¬┘ü╪º╪╡┘è┘ä ╪º┘ä╪Ñ┘é╪º┘à╪⌐
+            <small>When would you like to visit? | ┘à╪¬┘ë ╪¬┘ê╪» ╪º┘ä╪▓┘è╪º╪▒╪⌐╪ƒ</small>
+          </h3>
+          
+          <div class="form-row">
+            <div class="form-group">
+              <label for="arrivalDate">
+                <i class="pi pi-calendar-plus"></i>
+                Check-in Date * | ╪¬╪º╪▒┘è╪« ╪º┘ä┘ê╪╡┘ê┘ä *
+              </label>
+              <p-calendar 
+                appendTo="body"
+                styleClass="w-full"
+                inputId="arrivalDate"
+                formControlName="arrivalDate"
+                dateFormat="dd-mm-yy"
+                [showIcon]="true"
+                [minDate]="minDateObj"
+                (onSelect)="recomputeFrom('arrival')"
+                (onBlur)="recomputeFrom('arrival')"
+                [showButtonBar]="true"
+                placeholder="Select check-in date | ╪º╪«╪¬╪▒ ╪¬╪º╪▒┘è╪« ╪º┘ä┘ê╪╡┘ê┘ä"
+                [class.error]="form.get('arrivalDate')?.invalid && form.get('arrivalDate')?.touched">
+              </p-calendar>
+              <div class="error-message" *ngIf="form.get('arrivalDate')?.invalid && form.get('arrivalDate')?.touched">
+                Check-in date is required | ╪¬╪º╪▒┘è╪« ╪º┘ä┘ê╪╡┘ê┘ä ┘à╪╖┘ä┘ê╪¿
+              </div>
+            </div>
+            
+            <div class="form-group">
+              <label for="departureDate">
+                <i class="pi pi-calendar-minus"></i>
+                Check-out Date * | ╪¬╪º╪▒┘è╪« ╪º┘ä┘à╪║╪º╪»╪▒╪⌐ *
+              </label>
+              <p-calendar 
+                appendTo="body"
+                styleClass="w-full"
+                inputId="departureDate"
+                formControlName="departureDate"
+                dateFormat="dd-mm-yy"
+                [showIcon]="true"
+                [minDate]="minDepartureDateObj"
+                (onSelect)="recomputeFrom('departure')"
+                (onBlur)="recomputeFrom('departure')"
+                [showButtonBar]="true"
+                placeholder="Select check-out date | ╪º╪«╪¬╪▒ ╪¬╪º╪▒┘è╪« ╪º┘ä┘à╪║╪º╪»╪▒╪⌐"
+                [class.error]="form.get('departureDate')?.invalid && form.get('departureDate')?.touched">
+              </p-calendar>
+              <div class="error-message" *ngIf="form.get('departureDate')?.invalid && form.get('departureDate')?.touched">
+                Check-out date is required | ╪¬╪º╪▒┘è╪« ╪º┘ä┘à╪║╪º╪»╪▒╪⌐ ┘à╪╖┘ä┘ê╪¿
+              </div>
+            </div>
+            
+            <div class="form-group">
+              <label for="numberOfNights">
+                <i class="pi pi-moon"></i>
+                Number of Nights * | ╪╣╪»╪» ╪º┘ä┘ä┘è╪º┘ä┘è *
+              </label>
+              <input 
+                id="numberOfNights"
+                type="number" 
+                formControlName="numberOfNights" 
+                class="form-control"
+                min="1"
+                placeholder="How many nights? | ┘â┘à ┘ä┘è┘ä╪⌐╪ƒ"
+                (blur)="recomputeFrom('nights')"
+                (keydown.enter)="recomputeFrom('nights')">
+            </div>
+          </div>
+        </div>
+
+        <!-- Hotel & Business Section -->
+        <div class="form-section">
+          <h3 class="section-title">
+            <i class="pi pi-building"></i>
+            Hotel & Business Details | ╪¬┘ü╪º╪╡┘è┘ä ╪º┘ä┘ü┘å╪»┘é ┘ê╪º┘ä╪╣┘à┘ä
+          </h3>
+          
+          <div class="form-row">
+            <div class="form-group">
+              <label for="hotelId">
+                <i class="pi pi-home"></i>
+                Hotel * | ╪º┘ä┘ü┘å╪»┘é *
+              </label>
+              <div class="dropdown-container">
+                <select 
+                  id="hotelId"
+                  formControlName="hotelId" 
+                  class="form-control"
+                  [disabled]="loading()"
+                  [class.error]="form.get('hotelId')?.invalid && form.get('hotelId')?.touched">
+                  <option *ngFor="let hotel of hotels" [value]="hotel.id">
+                    {{hotel.englishName}} - {{hotel.arabicName}}
+                  </option>
+                </select>
+                <div class="loading-spinner" *ngIf="loading()">
+                  <i class="pi pi-spinner pi-spin"></i>
+                </div>
+              </div>
+              <div class="error-message" *ngIf="form.get('hotelId')?.invalid && form.get('hotelId')?.touched">
+                Please select a hotel | ┘è╪▒╪¼┘ë ╪º╪«╪¬┘è╪º╪▒ ┘ü┘å╪»┘é
+              </div>
+            </div>
+            
+            <div class="form-group">
+              <label for="reservationType">
+                <i class="pi pi-bookmark"></i>
+                Reservation Type * | ┘å┘ê╪╣ ╪º┘ä╪¡╪¼╪▓ *
+              </label>
+              <div class="dropdown-container">
+                <select 
+                  id="reservationType"
+                  formControlName="reservationType" 
+                  class="form-control"
+                  [disabled]="loading()"
+                  [class.error]="form.get('reservationType')?.invalid && form.get('reservationType')?.touched">
+                  <option value="HotelDirect">Hotel Direct | ┘à╪¿╪º╪┤╪▒ ┘à┘å ╪º┘ä┘ü┘å╪»┘é</option>
+                  <option value="AgentDirect">Agent Direct | ┘à╪¿╪º╪┤╪▒ ┘à┘å ╪º┘ä┘ê┘â┘è┘ä</option>
+                  <option value="Allotment">Allotment | ╪º┘ä╪¬╪«╪╡┘è╪╡</option>
+                </select>
+                <div class="loading-spinner" *ngIf="loading()">
+                  <i class="pi pi-spinner pi-spin"></i>
+                </div>
+              </div>
+              <div class="error-message" *ngIf="form.get('reservationType')?.invalid && form.get('reservationType')?.touched">
+                Please select reservation type | ┘è╪▒╪¼┘ë ╪º╪«╪¬┘è╪º╪▒ ┘å┘ê╪╣ ╪º┘ä╪¡╪¼╪▓
+              </div>
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label for="reservationClientCompanyId">
+                <i class="pi pi-briefcase"></i>
+                Client Company * | ╪┤╪▒┘â╪⌐ ╪º┘ä╪╣┘à┘è┘ä *
+              </label>
+              <div class="dropdown-container">
+                <select 
+                  id="reservationClientCompanyId"
+                  formControlName="reservationClientCompanyId" 
+                  class="form-control"
+                  [disabled]="loading()"
+                  [class.error]="form.get('reservationClientCompanyId')?.invalid && form.get('reservationClientCompanyId')?.touched">
+                  <option *ngFor="let company of companies" [value]="company.id">
+                    {{company.englishName}} - {{company.arabicName}}
+                  </option>
+                </select>
+                <div class="loading-spinner" *ngIf="loading()">
+                  <i class="pi pi-spinner pi-spin"></i>
+                </div>
+              </div>
+              <div class="error-message" *ngIf="form.get('reservationClientCompanyId')?.invalid && form.get('reservationClientCompanyId')?.touched">
+                Please select a company | ┘è╪▒╪¼┘ë ╪º╪«╪¬┘è╪º╪▒ ╪┤╪▒┘â╪⌐
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label for="reservationCompanyId">
+                <i class="pi pi-sitemap"></i>
+                Reservation Company | ╪┤╪▒┘â╪⌐ ╪º┘ä╪¡╪¼╪▓
+                <span *ngIf="form.get('reservationType')?.value === 'AgentDirect'">*</span>
+              </label>
+              <div class="dropdown-container">
+                <select 
+                  id="reservationCompanyId"
+                  formControlName="reservationCompanyId" 
+                  class="form-control"
+                  [disabled]="loading()"
+                  [class.error]="form.get('reservationCompanyId')?.invalid && form.get('reservationCompanyId')?.touched">
+                  <option *ngFor="let company of companies" [value]="company.id">
+                    {{company.englishName}} - {{company.arabicName}}
+                  </option>
+                </select>
+                <div class="loading-spinner" *ngIf="loading()">
+                  <i class="pi pi-spinner pi-spin"></i>
+                </div>
+              </div>
+              <div class="error-message" *ngIf="form.get('reservationCompanyId')?.invalid && form.get('reservationCompanyId')?.touched">
+                Please select a reservation company | ┘è╪▒╪¼┘ë ╪º╪«╪¬┘è╪º╪▒ ╪┤╪▒┘â╪⌐ ╪º┘ä╪¡╪¼╪▓
+              </div>
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label for="salesRepresentativeId">
+                <i class="pi pi-user-edit"></i>
+                Sales Representative | ┘à┘å╪»┘ê╪¿ ╪º┘ä┘à╪¿┘è╪╣╪º╪¬
+              </label>
+              <div class="dropdown-container">
+                <select 
+                  id="salesRepresentativeId"
+                  formControlName="salesRepresentativeId" 
+                  class="form-control"
+                  [disabled]="loading()">
+                  <option *ngFor="let rep of salesRepresentatives" [value]="rep.id">
+                    {{rep.englishName}} - {{rep.arabicName}}
+                  </option>
+                </select>
+                <div class="loading-spinner" *ngIf="loading()">
+                  <i class="pi pi-spinner pi-spin"></i>
+                </div>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label for="reservationSeasonId">
+                <i class="pi pi-sun"></i>
+                Season * | ╪º┘ä┘à┘ê╪│┘à *
+              </label>
+              <div class="dropdown-container">
+                <select 
+                  id="reservationSeasonId"
+                  formControlName="reservationSeasonId" 
+                  class="form-control"
+                  [disabled]="loading()"
+                  [class.error]="form.get('reservationSeasonId')?.invalid && form.get('reservationSeasonId')?.touched">
+                  <option *ngFor="let season of seasons" [value]="season.id">
+                    {{season.englishName}} - {{season.arabicName}}
+                  </option>
+                </select>
+                <div class="loading-spinner" *ngIf="loading()">
+                  <i class="pi pi-spinner pi-spin"></i>
+                </div>
+              </div>
+              <div class="error-message" *ngIf="form.get('reservationSeasonId')?.invalid && form.get('reservationSeasonId')?.touched">
+                Please select a season | ┘è╪▒╪¼┘ë ╪º╪«╪¬┘è╪º╪▒ ┘à┘ê╪│┘à
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Company Details Section - Hidden -->
+        <!--
+        <div class="form-section">
+          <h3 class="section-title">
+            <i class="fas fa-briefcase"></i>
+            Company Information
+          </h3>
+          
+          <div class="form-row">
+            <div class="form-group">
+              <label for="bankAccountId">Bank Account</label>
+              <div class="dropdown-container">
+                <select 
+                  id="bankAccountId"
+                  formControlName="bankAccountId" 
+                  class="form-control"
+                  [disabled]="loading()">
+                  <option *ngFor="let account of bankAccountOptions" [value]="account.value">
+                    {{account.label}}
+                  </option>
+                </select>
+                <div class="loading-spinner" *ngIf="loading()">
+                  <i class="fas fa-spinner fa-spin"></i>
+                </div>
+              </div>
+            </div>
+            
+            <div class="form-group">
+              <label for="companyPhoneId">Company Phone</label>
+              <div class="dropdown-container">
+                <select 
+                  id="companyPhoneId"
+                  formControlName="companyPhoneId" 
+                  class="form-control"
+                  [disabled]="loading()">
+                  <option *ngFor="let phone of companyPhoneOptions" [value]="phone.value">
+                    {{phone.label}}
+                  </option>
+                </select>
+                <div class="loading-spinner" *ngIf="loading()">
+                  <i class="fas fa-spinner fa-spin"></i>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="companyPolicyId">Company Policy</label>
+            <div class="dropdown-container">
+              <select 
+                id="companyPolicyId"
+                formControlName="companyPolicyId" 
+                class="form-control"
+                [disabled]="loading()">
+                <option *ngFor="let policy of companyPolicyOptions" [value]="policy.value">
+                  {{policy.label}}
+                </option>
+              </select>
+              <div class="loading-spinner" *ngIf="loading()">
+                <i class="fas fa-spinner fa-spin"></i>
+              </div>
+            </div>
+          </div>
+        </div>
+        -->
+
+        <!-- Room Selection Section -->
+        <div class="form-section">
+          <h3 class="section-title">
+            <i class="pi pi-home"></i>
+            Room Selection | ╪º╪«╪¬┘è╪º╪▒ ╪º┘ä╪║╪▒┘ü
+          </h3>
+          
+          <!-- Room Type Cards -->
+          <div class="room-cards-grid" *ngIf="roomTypes.length > 0">
+            <div 
+              *ngFor="let roomType of roomTypes; trackBy: trackByRoomTypeId" 
+              class="room-card"
+              [class.selected]="isRoomTypeSelected(roomType.id)"
+              (click)="toggleRoomType(roomType)">
+              
+              <!-- Room Logo -->
+              <div class="room-logo">
+                <img 
+                  *ngIf="roomType.logo" 
+                  [src]="'data:image/*;base64,' + roomType.logo" 
+                  [alt]="roomType.englishName"
+                  class="logo-image"
+                  loading="lazy">
+                <div *ngIf="!roomType.logo" class="logo-placeholder">
+                  <i class="pi pi-home"></i>
+                </div>
+              </div>
+
+              <!-- Room Info -->
+              <div class="room-info">
+                <h4 class="room-title">
+                  <span class="english">{{roomType.englishName}}</span>
+                  <span class="arabic">{{roomType.arabicName}}</span>
+                </h4>
+                <div class="room-details">
+                  <span class="capacity">
+                    <i class="pi pi-users"></i>
+                    {{roomType.personNo}} PAX
+                  </span>
+                </div>
+              </div>
+
+              <!-- Selection Indicator -->
+              <div class="selection-indicator" *ngIf="isRoomTypeSelected(roomType.id)">
+                <i class="pi pi-check"></i>
+                <span class="quantity-badge">{{getRoomTypeQuantity(roomType.id)}}</span>
+              </div>
+
+              <!-- Add Button -->
+              <div class="add-button" *ngIf="!isRoomTypeSelected(roomType.id)">
+                <i class="pi pi-plus"></i>
+              </div>
+            </div>
+          </div>
+
+          <!-- Loading State -->
+          <div class="loading-cards" *ngIf="loading() && roomTypes.length === 0">
+            <div class="loading-card" *ngFor="let i of [1,2,3,4]">
+              <div class="loading-placeholder"></div>
+            </div>
+          </div>
+
+          <!-- Selected Rooms Summary -->
+          <div class="selected-rooms-summary" *ngIf="getSelectedRoomTypes().length > 0">
+            <h4>
+              <i class="pi pi-shopping-bag"></i>
+              Selected Rooms | ╪º┘ä╪║╪▒┘ü ╪º┘ä┘à╪«╪¬╪º╪▒╪⌐
+            </h4>
+            <div class="selected-items">
+              <div 
+                *ngFor="let selectedRoom of getSelectedRoomTypes(); trackBy: trackBySelectedRoomId"
+                class="selected-room-item">
+                
+                <!-- Room Logo -->
+                <div class="selected-item-logo">
+                  <img 
+                    *ngIf="selectedRoom.roomType.logo" 
+                    [src]="'data:image/*;base64,' + selectedRoom.roomType.logo" 
+                    [alt]="selectedRoom.roomType.englishName"
+                    class="logo-image"
+                    loading="lazy">
+                  <div *ngIf="!selectedRoom.roomType.logo" class="logo-placeholder">
+                    <i class="pi pi-home"></i>
+                  </div>
+                </div>
+
+                <div class="selected-item-content">
+                  <!-- Room Basic Info -->
+                  <div class="room-item-header">
+                    <div class="item-info">
+                      <span class="item-name">{{selectedRoom.roomType.englishName}} - {{selectedRoom.roomType.arabicName}}</span>
+                      <span class="item-details">{{getRoomPax(selectedRoom.roomType, selectedRoom.quantity)}} PAX</span>
+                    </div>
+                    <div class="item-controls">
+                      <button type="button" class="qty-btn" (click)="decrementRoomQuantity(selectedRoom.id)">
+                        <i class="pi pi-minus"></i>
+                      </button>
+                      <span class="quantity">{{selectedRoom.quantity}}</span>
+                      <button type="button" class="qty-btn" (click)="incrementRoomQuantity(selectedRoom.id)">
+                        <i class="pi pi-plus"></i>
+                      </button>
+                      <button type="button" class="remove-btn" (click)="removeRoomEntry(selectedRoom.id)">
+                        <i class="pi pi-times"></i>
+                      </button>
+                    </div>
+                  </div>
+
+                  <!-- Room Options -->
+                  <div class="room-options">
+                    <div class="option-group">
+                      <label>
+                        <i class="pi pi-coffee"></i>
+                        Meal Plan | ╪«╪╖╪⌐ ╪º┘ä┘ê╪¼╪¿╪º╪¬
+                      </label>
+                      <select 
+                        [value]="selectedRoom.mealId || ''" 
+                        (change)="updateRoomMeal(selectedRoom.id, ($any($event.target)).value)"
+                        class="option-select">
+                        <option value="">No Meal | ╪¿╪»┘ê┘å ┘ê╪¼╪¿╪⌐</option>
+                        <option *ngFor="let meal of meals" [value]="meal.id">
+                          {{meal.englishName}} - {{meal.arabicName}}
+                        </option>
+                      </select>
+                    </div>
+                    
+                    <div class="option-group">
+                      <label>
+                        <i class="pi pi-eye"></i>
+                        Room View | ╪Ñ╪╖┘ä╪º┘ä╪⌐ ╪º┘ä╪║╪▒┘ü╪⌐
+                      </label>
+                      <select 
+                        [value]="selectedRoom.viewId || ''" 
+                        (change)="updateRoomView(selectedRoom.id, ($any($event.target)).value)"
+                        class="option-select">
+                        <option value="">Standard View | ╪Ñ╪╖┘ä╪º┘ä╪⌐ ╪╣╪º╪»┘è╪⌐</option>
+                        <option *ngFor="let view of views" [value]="view.id">
+                          {{view.englishName}} - {{view.arabicName}}
+                        </option>
+                      </select>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Services Section -->
+        <div class="form-section">
+          <h3 class="section-title">
+            <i class="pi pi-cog"></i>
+            Additional Services | ╪º┘ä╪«╪»┘à╪º╪¬ ╪º┘ä╪Ñ╪╢╪º┘ü┘è╪⌐
+            <small>(Optional | ╪º╪«╪¬┘è╪º╪▒┘è)</small>
+          </h3>
+          
+          <!-- Service Cards -->
+          <div class="service-cards-grid" *ngIf="availableServices.length > 0">
+            <div 
+              *ngFor="let service of availableServices; trackBy: trackByServiceId" 
+              class="service-card"
+              [class.selected]="isServiceSelected(service.id)"
+              (click)="toggleService(service)">
+              
+              <!-- Service Logo -->
+              <div class="service-logo">
+                <img 
+                  *ngIf="service.logo" 
+                  [src]="'data:image/*;base64,' + service.logo" 
+                  [alt]="service.englishName"
+                  class="logo-image"
+                  loading="lazy">
+                <div *ngIf="!service.logo" class="logo-placeholder">
+                  <i class="pi pi-cog"></i>
+                </div>
+              </div>
+
+              <!-- Service Info -->
+              <div class="service-info">
+                <h4 class="service-title">
+                  <span class="english">{{service.englishName}}</span>
+                  <span class="arabic">{{service.arabicName}}</span>
+                </h4>
+              </div>
+
+              <!-- Selection Indicator -->
+              <div class="selection-indicator" *ngIf="isServiceSelected(service.id)">
+                <i class="pi pi-check"></i>
+                <span class="quantity-badge">{{getServiceQuantity(service.id)}}</span>
+              </div>
+
+              <!-- Add Button -->
+              <div class="add-button" *ngIf="!isServiceSelected(service.id)">
+                <i class="pi pi-plus"></i>
+              </div>
+            </div>
+          </div>
+
+          <!-- Loading State -->
+          <div class="loading-cards" *ngIf="loading() && availableServices.length === 0">
+            <div class="loading-card" *ngFor="let i of [1,2,3,4]">
+              <div class="loading-placeholder"></div>
+            </div>
+          </div>
+
+          <!-- Selected Services Summary -->
+          <div class="selected-services-summary" *ngIf="getSelectedServices().length > 0">
+            <h4>
+              <i class="pi pi-shopping-bag"></i>
+              Selected Services | ╪º┘ä╪«╪»┘à╪º╪¬ ╪º┘ä┘à╪«╪¬╪º╪▒╪⌐
+            </h4>
+            <div class="selected-items">
+              <div 
+                *ngFor="let selectedService of getSelectedServices(); trackBy: trackBySelectedServiceId"
+                class="selected-service-item">
+                
+                <!-- Service Logo -->
+                <div class="selected-item-logo">
+                  <img 
+                    *ngIf="selectedService.service.logo" 
+                    [src]="'data:image/*;base64,' + selectedService.service.logo" 
+                    [alt]="selectedService.service.englishName"
+                    class="logo-image"
+                    loading="lazy">
+                  <div *ngIf="!selectedService.service.logo" class="logo-placeholder">
+                    <i class="pi pi-cog"></i>
+                  </div>
+                </div>
+
+                <div class="selected-item-content">
+                  <!-- Service Basic Info -->
+                  <div class="service-item-header">
+                    <div class="item-info">
+                      <span class="item-name">{{selectedService.service.englishName}} - {{selectedService.service.arabicName}}</span>
+                    </div>
+                    <div class="item-controls">
+                      <button type="button" class="qty-btn" (click)="decrementServiceQuantity(selectedService.id)">
+                        <i class="pi pi-minus"></i>
+                      </button>
+                      <span class="quantity">{{selectedService.quantity}}</span>
+                      <button type="button" class="qty-btn" (click)="incrementServiceQuantity(selectedService.id)">
+                        <i class="pi pi-plus"></i>
+                      </button>
+                      <button type="button" class="remove-btn" (click)="removeServiceEntry(selectedService.id)">
+                        <i class="pi pi-times"></i>
+                      </button>
+                    </div>
+                  </div>
+
+                  <!-- Service Description -->
+                  <div class="service-options">
+                    <div class="option-group full-width">
+                      <label>
+                        <i class="pi pi-align-left"></i>
+                        Description / Notes | ╪º┘ä┘ê╪╡┘ü / ╪º┘ä┘à┘ä╪º╪¡╪╕╪º╪¬
+                      </label>
+                      <textarea 
+                        [value]="selectedService.description || ''" 
+                        (input)="updateServiceDescription(selectedService.id, ($any($event.target)).value)"
+                        class="description-input"
+                        rows="2"
+                        placeholder="Add any special requests or notes... | ╪ú╪╢┘ü ╪ú┘è ╪╖┘ä╪¿╪º╪¬ ╪«╪º╪╡╪⌐ ╪ú┘ê ┘à┘ä╪º╪¡╪╕╪º╪¬..."></textarea>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Submit Section -->
+        <div class="form-actions">
+          <button 
+            type="submit" 
+            class="btn-submit"
+            [disabled]="form.invalid || submitting()"
+            [class.loading]="submitting()">
+            <span *ngIf="!submitting()">
+              <i class="pi pi-check"></i>
+              Book Now | ╪º╪¡╪¼╪▓ ╪º┘ä╪ó┘å
+            </span>
+            <span *ngIf="submitting()" class="loading-text">
+              <i class="pi pi-spinner pi-spin"></i>
+              Processing... | ╪¼╪º╪▒┘ì ╪º┘ä┘à╪╣╪º┘ä╪¼╪⌐...
+            </span>
+          </button>
+        </div>
+
+        <!-- Success/Error Messages -->
+        <div class="message-container">
+          <div class="success-message" *ngIf="success() === true">
+            <i class="pi pi-check-circle"></i>
+            <h3>Booking Confirmed! | ╪¬┘à ╪¬╪ú┘â┘è╪» ╪º┘ä╪¡╪¼╪▓!</h3>
+            <p>Your reservation has been successfully submitted. You will receive a confirmation shortly. | ╪¬┘à ╪Ñ╪▒╪│╪º┘ä ╪¡╪¼╪▓┘â ╪¿┘å╪¼╪º╪¡. ╪│╪¬╪¬┘ä┘é┘ë ╪¬╪ú┘â┘è╪»╪º┘ï ┘é╪▒┘è╪¿╪º┘ï.</p>
+          </div>
+          
+          <div class="error-message-container" *ngIf="success() === false">
+            <i class="pi pi-exclamation-triangle"></i>
+            <h3>Booking Failed | ┘ü╪┤┘ä ╪º┘ä╪¡╪¼╪▓</h3>
+            <p>There was an error processing your reservation. Please try again or contact support. | ╪¡╪»╪½ ╪«╪╖╪ú ┘ü┘è ┘à╪╣╪º┘ä╪¼╪⌐ ╪¡╪¼╪▓┘â. ┘è╪▒╪¼┘ë ╪º┘ä┘à╪¡╪º┘ê┘ä╪⌐ ┘à╪▒╪⌐ ╪ú╪«╪▒┘ë ╪ú┘ê ╪º┘ä╪º╪¬╪╡╪º┘ä ╪¿╪º┘ä╪»╪╣┘à.</p>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>

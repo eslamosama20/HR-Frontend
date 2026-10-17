@@ -1,0 +1,76 @@
+.page-title {
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: var(--text-color);
+  margin: 0;
+}
+
+:host ::ng-deep {
+  .p-panel {
+    .p-panel-header {
+      background-color: var(--surface-50);
+      border-bottom: 1px solid var(--surface-border);
+      padding: 1rem 1.5rem;
+      font-weight: 600;
+    }
+
+    .p-panel-content {
+      padding: 1.5rem;
+    }
+  }
+
+  .p-datatable {
+    .p-datatable-thead > tr > th {
+      background-color: var(--primary-color);
+      color: white;
+      font-weight: 600;
+      padding: 0.75rem 1rem;
+      border: none;
+    }
+
+    .p-datatable-tbody > tr {
+      &:hover {
+        background-color: var(--surface-50);
+      }
+
+      > td {
+        padding: 0.75rem 1rem;
+        border-bottom: 1px solid var(--surface-border);
+      }
+    }
+
+    .p-datatable-emptymessage > td {
+      text-align: center;
+      padding: 3rem 1rem;
+    }
+  }
+
+  .p-dropdown,
+  .p-calendar,
+  .p-inputnumber {
+    width: 100%;
+  }
+
+  .p-button {
+    font-weight: 500;
+  }
+
+  .p-inputtextarea {
+    resize: vertical;
+  }
+}
+
+.form-label {
+  font-weight: 500;
+  margin-bottom: 0.5rem;
+  color: var(--text-color);
+  display: block;
+}
+
+.text-danger {
+  color: #dc3545;
+}
+
+.table-responsive {
+  overflow-x: auto;
+}

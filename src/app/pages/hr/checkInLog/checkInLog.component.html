@@ -1,0 +1,336 @@
+<p-table
+  #dt1
+  [value]="checkInLogs"
+  [columns]="columns"
+  [globalFilterFields]="['employeeDeviceId', 'employeeName', 'logTypeArabic']"
+  [resizableColumns]="true"
+  columnResizeMode="expand"
+  dataKey="id"
+  [rows]="10"
+  styleClass="p-datatable-gridlines scroller"
+  [rowsPerPageOptions]="[10, 25, 50]"
+  [loading]="loading"
+  [paginator]="true"
+  [paginatorLocale]="activeLanguage === 'en' ? 'en-US' : 'ar-EG'"
+  sortField="time"
+  [sortOrder]="-1"
+>
+  <ng-template pTemplate="caption">
+    <div class="flex flex-col rtl:flex-row-reverse justify-between gap-2">
+      <div class="flex gap-2">
+        <p-button
+          styleClass="rounded-md w-auto text-nowrap"
+          icon="pi pi-external-link"
+          [label]="translate.instant('FINANCE.EXPORT')"
+          (onClick)="exportExcel()"
+        />
+        <p-button
+          styleClass="rounded-md w-auto text-nowrap	"
+          [label]="translate.instant('FINANCE.CLEAR_FILTERS')"
+          [outlined]="true"
+          icon="pi pi-filter-slash"
+          (onClick)="clear(dt1)"
+        />
+        <p-button
+          styleClass="rounded-md w-auto text-nowrap	"
+          label="اضافة بند حضور"
+          [outlined]="true"
+          icon="pi pi-plus"
+          (onClick)="showAddCheckInLogDialog()"
+        />
+        <p-button
+          styleClass="rounded-md w-auto text-nowrap"
+          icon="pi pi-upload"
+          label="استيراد/تصدير اكسل"
+          (onClick)="excelDialogVisible = true"
+        />
+      </div>
+
+      <ng-container *ngIf="checkInLogs.length === 0 && !loading">
+        <div class="flex justify-center items-center w-full">
+          <p
+            class="text-center font-semibold text-xl w-full flex justify-center"
+          >
+            لا يوجد بنود حضور متاحة
+          </p>
+        </div>
+      </ng-container>
+      <span class="p-input-icon-left ml-auto">
+        <i class="pi pi-search"></i>
+        <input
+          pInputText
+          type="text"
+          [(ngModel)]="searchValue"
+          (input)="filter(dt1, $event)"
+          [placeholder]="translate.instant('FINANCE.SEARCH')"
+        />
+      </span>
+    </div>
+  </ng-template>
+  <ng-template pTemplate="header" let-columns>
+    <tr>
+      <th
+        style="min-width: fit-content"
+        *ngFor="let column of columns"
+        pResizableColumn
+        [pSortableColumn]="column.field"
+      >
+        <div class="flex align-items-center">
+          {{ column.header }}
+          <p-sortIcon [field]="column.field" class="mx-1"></p-sortIcon>
+          <p-columnFilter
+            *ngIf="column.filter"
+            [type]="column.filterType"
+            [field]="column.field"
+            display="menu"
+          />
+        </div>
+      </th>
+      <th style="min-width: fit-content">
+        <div class="flex align-items-center text-base">
+          {{ "FINANCE.ACTIONS" | translate }}
+        </div>
+      </th>
+    </tr>
+  </ng-template>
+  <ng-template pTemplate="body" let-Entry>
+    <tr *ngIf="checkInLogs.length > 0">
+      <td class="text-lg rtl:text-right font-bold text-sky-700">
+        {{ Entry.employeeDeviceId || '-' }}
+      </td>
+      <td class="text-lg rtl:text-right">
+        {{ Entry.employeeName }}
+      </td>
+      <td class="text-lg rtl:text-right">
+        {{
+          Entry.time
+            ? (Entry.time | date : "yyyy/MM/dd  hh:mm a" : "" : "ar-EG")
+            : "-"
+        }}
+      </td>
+      <td class="text-lg rtl:text-right font-semibold">
+        <span
+          class="badge flex items-center gap-1 px-4 py-1 rounded"
+          [ngClass]="getTypeClass(Entry.logTypeArabic)"
+        >
+          {{ Entry.logTypeArabic }}
+        </span>
+      </td>
+      <td class="text-lg rtl:text-right">
+        {{
+          Entry.createdAt
+            ? (Entry.createdAt | date : "yyyy/MM/dd  hh:mm a" : "" : "ar-EG")
+            : "-"
+        }}
+      </td>
+      <td class="text-lg rtl:text-right flex gap-2">
+        <ng-container>
+          <p-overlayPanel #opCheckInLog [autoZIndex]="false" [baseZIndex]="80">
+            <div class="flex flex-column gap-3 w-auto p-1">
+              <p-button
+                icon="pi pi-pencil"
+                class="p-button-secondary"
+                [label]="translate.instant('FINANCE.EDIT')"
+                styleClass="rounded-lg p-button-secondary w-full"
+                (onClick)="showAddCheckInLogDialog(Entry)"
+              ></p-button>
+              <p-button
+                icon="pi pi-trash"
+                class="p-button-danger"
+                [label]="translate.instant('FINANCE.DELETE')"
+                styleClass="rounded-lg p-button-danger w-full"
+                (onClick)="confirmCheckInLogDeletion($event, Entry)"
+              ></p-button>
+            </div>
+          </p-overlayPanel>
+          <p-button
+            [text]="true"
+            (onClick)="opCheckInLog.toggle($event)"
+            severity="secondary"
+            styleClass="p-button-outlined rounded-xl"
+          >
+            <ng-template pTemplate="icon">
+              <i class="pi pi-cog text-xl"></i>
+            </ng-template>
+          </p-button>
+        </ng-container>
+      </td>
+    </tr>
+  </ng-template>
+</p-table>
+
+<p-dialog
+  [header]="checkInLogFormGroup.controls.id.value ? 'تعديل بند' : 'إضافة بند'"
+  [(visible)]="checkInLogDialogVisible"
+  [style]="{ width: '45rem', maxWidth: '95vw' }"
+  (onHide)="closeCheckInLogDialog()"
+>
+  <form
+    [formGroup]="checkInLogFormGroup"
+    (ngSubmit)="saveCheckInLog()"
+    class="flex flex-col gap-4"
+    novalidate
+  >
+    <div class="field w-full">
+      <label for="employeeId" class="block font-medium mb-1"> اسم الموظف <span class="text-red-500">*</span></label>
+      <p-dropdown
+        id="employeeId"
+        formControlName="employeeId"
+        [options]="employeeOptions"
+        [placeholder]="translate.instant('FINANCE.SELECT')"
+        [showClear]="true"
+        [filter]="true"
+        filterBy="label,name,code,deviceId,referenceNumber"
+        styleClass="w-full flex rtl:flex-row-reverse"
+        appendTo="body"
+      >
+      </p-dropdown>
+      <small
+        class="text-red-500 p-error block"
+        *ngIf="
+          checkInLogFormGroup.controls.employeeId.invalid &&
+          checkInLogFormGroup.controls.employeeId.touched
+        "
+      >
+        الموظف مطلوب
+      </small>
+    </div>
+    <div class="field w-full flex justify-between gap-4">
+      <div class="field w-full">
+        <label for="time" class="block font-medium mb-1"> الوقت والتاريخ <span class="text-red-500">*</span></label>
+        <p-calendar
+          #timeCal
+          id="time"
+          formControlName="time"
+          [showButtonBar]="true"
+          variant="filled"
+          [showIcon]="true"
+          [iconDisplay]="'input'"
+          [dateFormat]="'d/m/yy'"
+          [showTime]="true"
+          [hourFormat]="'12'"
+          [keepInvalid]="true"
+          appendTo="body"
+          styleClass="w-full shift-time-calendar"
+          inputStyleClass="shift-time-input"
+          panelStyleClass="shift-timepicker-panel"
+          placeholder="مثال: 12/10/2026 08:30 ص أو 08:30 AM"
+          (onBlur)="onTimeBlur(timeCal, $event)"
+          (keydown.enter)="onTimeEnter(timeCal, $event)"
+          (onShow)="makeTimePickerEditable(timeCal)"
+          (onSelect)="syncControlFromCal(timeCal)"
+        >
+          <ng-template pTemplate="inputicon">
+            <i class="pi pi-calendar"></i>
+          </ng-template>
+        </p-calendar>
+        <small class="text-muted block text-xs mt-1">
+          يمكنك تعديل الوقت أو التاريخ مباشرة بالكتابة (مثال: 08:30 ص أو 08:30 AM)
+        </small>
+        <small
+          class="text-red-500 p-error block"
+          *ngIf="
+            checkInLogFormGroup.controls.time.invalid &&
+            checkInLogFormGroup.controls.time.touched
+          "
+        >
+          وقت البند مطلوب
+        </small>
+      </div>
+      <div class="field w-full">
+        <label for="logType" class="block"> النوع </label>
+        <p-dropdown
+          id="logType"
+          formControlName="logType"
+          [options]="logTypeOptions"
+          [placeholder]="translate.instant('FINANCE.SELECT')"
+          [showClear]="true"
+          [filter]="true"
+          styleClass="w-full flex rtl:flex-row-reverse"
+          appendTo="body"
+        >
+        </p-dropdown>
+        <small
+          class="text-red-500 p-error block"
+          *ngIf="
+            checkInLogFormGroup.controls.logType.invalid &&
+            checkInLogFormGroup.controls.logType.touched
+          "
+        >
+          النوع مطلوب
+        </small>
+      </div>
+    </div>
+  </form>
+
+  <hr class="mt-2 mb-1" />
+
+  <p-footer>
+    <div class="flex justify-content-end gap-2">
+      <p-button
+        styleClass="rounded-md"
+        [label]="translate.instant('FINANCE.CANCEL')"
+        severity="secondary"
+        (onClick)="closeCheckInLogDialog()"
+      />
+      <p-button
+        styleClass="rounded-md"
+        [label]="translate.instant('FINANCE.SAVE')"
+        (onClick)="saveCheckInLog()"
+        [disabled]="checkInLogFormGroup.invalid"
+      />
+    </div>
+  </p-footer>
+</p-dialog>
+
+<p-dialog
+  header="استيراد/تصدير ملف حضور الموظفين"
+  [(visible)]="excelDialogVisible"
+  [style]="{ width: '35%' }"
+  (onHide)="excelDialogVisible = false"
+>
+  <div class="flex flex-col gap-3">
+    <div class="text-sm text-gray-700">
+      <b>صيغة الملف المطلوبة:</b>
+      <ul class="list-disc ml-4 mt-1">
+        <li>رقم الموظف</li>
+        <li>النوع (دخول/خروج)</li>
+        <li>
+          الوقت (yyyy-MM-dd hh:mm AM/PM)
+          <span class="text-xs text-gray-500">مثال: 2025-06-29 08:00 AM</span>
+        </li>
+      </ul>
+    </div>
+    <div
+      *ngIf="excelUploadErrors.length > 0"
+      class="bg-red-50 border border-red-300 text-red-700 rounded p-2 mb-2 text-sm"
+    >
+      <div *ngFor="let err of excelUploadErrors">{{ err }}</div>
+    </div>
+    <div class="flex gap-2">
+      <p-button
+        styleClass="rounded-md w-auto text-nowrap"
+        icon="pi pi-download"
+        label="تحميل نموذج الاكسل"
+        (onClick)="downloadTemplate()"
+      />
+      <label
+        class="rounded-md w-auto text-nowrap flex items-center cursor-pointer bg-blue-100 hover:bg-blue-200 px-3 py-2"
+        style="gap: 0.5rem"
+      >
+        <i class="pi pi-upload text-blue-700"></i>
+        <span>رفع ملف اكسل حضور</span>
+        <input
+          #excelFileInput
+          type="file"
+          accept=".xlsx, .xls"
+          (change)="onExcelUpload($event, excelFileInput)"
+          hidden
+        />
+      </label>
+    </div>
+  </div>
+</p-dialog>
+
+<p-confirmDialog> </p-confirmDialog>
+<p-toast />

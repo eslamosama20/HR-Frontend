@@ -1,0 +1,463 @@
+/* Card styling overrides */
+:host ::ng-deep {
+  .p-card {
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    border-radius: 8px;
+    overflow: hidden;
+    
+    .p-card-header {
+      padding: 0;
+    }
+    
+    .p-card-body {
+      padding: 1rem;
+    }
+    
+    .p-card-content {
+      padding: 0;
+    }
+  }
+  
+  /* Compact form fields */
+  .field {
+    margin-bottom: 0;
+  }
+  
+  /* Input number styling */
+  .p-inputnumber {
+    width: 100%;
+  }
+  
+  /* Table compact styling */
+  .p-datatable-sm .p-datatable-tbody > tr > td,
+  .p-datatable-sm .p-datatable-thead > tr > th {
+    padding: 0.5rem;
+  }
+}
+
+/* Save button modern style - matching back button */
+.save-button-modern {
+  border: none !important;
+  background: linear-gradient(135deg, #10b981 0%, #059669 50%, #047857 100%) !important;
+  color: white !important;
+  padding: 0.75rem 1.5rem !important;
+  border-radius: 12px !important;
+  box-shadow: 
+    0 4px 12px rgba(16, 185, 129, 0.3),
+    0 2px 6px rgba(5, 150, 105, 0.2),
+    inset 0 1px 0 rgba(255, 255, 255, 0.3),
+    inset 0 -2px 0 rgba(0, 0, 0, 0.1) !important;
+  font-weight: 500 !important;
+  min-height: 44px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 0.5rem !important;
+  transform: perspective(500px) translateZ(0);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+  
+  &:hover:not(:disabled) {
+    background: linear-gradient(135deg, #34d399 0%, #10b981 50%, #059669 100%) !important;
+    box-shadow: 
+      0 6px 20px rgba(16, 185, 129, 0.4),
+      0 4px 10px rgba(5, 150, 105, 0.3),
+      inset 0 1px 0 rgba(255, 255, 255, 0.4),
+      inset 0 -2px 0 rgba(0, 0, 0, 0.15) !important;
+    transform: perspective(500px) translateZ(4px) translateY(-2px);
+  }
+  
+  &:active:not(:disabled) {
+    transform: perspective(500px) translateZ(0) translateY(0);
+    box-shadow: 
+      0 2px 8px rgba(16, 185, 129, 0.3),
+      0 1px 4px rgba(5, 150, 105, 0.2),
+      inset 0 1px 0 rgba(255, 255, 255, 0.2),
+      inset 0 2px 4px rgba(0, 0, 0, 0.2) !important;
+  }
+  
+  &:focus {
+    outline: none !important;
+    box-shadow: 
+      0 4px 12px rgba(16, 185, 129, 0.3),
+      0 2px 6px rgba(5, 150, 105, 0.2),
+      inset 0 1px 0 rgba(255, 255, 255, 0.3),
+      inset 0 -2px 0 rgba(0, 0, 0, 0.1),
+      0 0 0 3px rgba(16, 185, 129, 0.3) !important;
+  }
+  
+  &:disabled {
+    background: linear-gradient(135deg, #a7f3d0 0%, #6ee7b7 50%, #34d399 100%) !important;
+    box-shadow: 
+      0 2px 6px rgba(0, 0, 0, 0.1),
+      inset 0 1px 0 rgba(255, 255, 255, 0.2) !important;
+    cursor: not-allowed;
+    opacity: 0.6;
+  }
+}
+
+/* Tax button modern style - matching save button size */
+.tax-button-modern {
+  border: none !important;
+  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 50%, #1d4ed8 100%) !important;
+  color: white !important;
+  padding: 0.75rem 1.5rem !important;
+  border-radius: 12px !important;
+  box-shadow: 
+    0 4px 12px rgba(59, 130, 246, 0.3),
+    0 2px 6px rgba(37, 99, 235, 0.2),
+    inset 0 1px 0 rgba(255, 255, 255, 0.3),
+    inset 0 -2px 0 rgba(0, 0, 0, 0.1) !important;
+  font-weight: 500 !important;
+  min-height: 44px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 0.5rem !important;
+  transform: perspective(500px) translateZ(0);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+  
+  &:hover:not(:disabled) {
+    background: linear-gradient(135deg, #60a5fa 0%, #3b82f6 50%, #2563eb 100%) !important;
+    box-shadow: 
+      0 6px 20px rgba(59, 130, 246, 0.4),
+      0 4px 10px rgba(37, 99, 235, 0.3),
+      inset 0 1px 0 rgba(255, 255, 255, 0.4),
+      inset 0 -2px 0 rgba(0, 0, 0, 0.15) !important;
+    transform: perspective(500px) translateZ(4px) translateY(-2px);
+  }
+  
+  &:active:not(:disabled) {
+    transform: perspective(500px) translateZ(0) translateY(0);
+    box-shadow: 
+      0 2px 8px rgba(59, 130, 246, 0.3),
+      0 1px 4px rgba(37, 99, 235, 0.2),
+      inset 0 1px 0 rgba(255, 255, 255, 0.2),
+      inset 0 2px 4px rgba(0, 0, 0, 0.2) !important;
+  }
+  
+  &:focus {
+    outline: none !important;
+    box-shadow: 
+      0 4px 12px rgba(59, 130, 246, 0.3),
+      0 2px 6px rgba(37, 99, 235, 0.2),
+      inset 0 1px 0 rgba(255, 255, 255, 0.3),
+      inset 0 -2px 0 rgba(0, 0, 0, 0.1),
+      0 0 0 3px rgba(59, 130, 246, 0.3) !important;
+  }
+}
+
+/* Print styles */
+@media print {
+  .print-exclude {
+    display: none !important;
+  }
+}
+
+/* ========================= 
+   RTL/LTR Dropdown Styles
+   ========================= */
+:host ::ng-deep {
+  /* RTL Dropdown (Arabic) */
+  .dropdown-rtl {
+    direction: rtl !important;
+    text-align: right !important;
+    
+    &.p-dropdown {
+      flex-direction: row-reverse !important;
+    }
+    
+    .p-dropdown-label {
+      text-align: right !important;
+      padding-right: 0.75rem !important;
+      padding-left: 0.5rem !important;
+    }
+    
+    .p-dropdown-trigger {
+      order: -1 !important;
+      margin-left: 0 !important;
+      margin-right: auto !important;
+    }
+    
+    .p-dropdown-clear-icon {
+      right: auto !important;
+      left: 2.5rem !important;
+    }
+  }
+  
+  /* LTR Dropdown (English) */
+  .dropdown-ltr {
+    direction: ltr !important;
+    text-align: left !important;
+    
+    &.p-dropdown {
+      flex-direction: row !important;
+    }
+    
+    .p-dropdown-label {
+      text-align: left !important;
+      padding-left: 0.75rem !important;
+      padding-right: 0.5rem !important;
+    }
+    
+    .p-dropdown-trigger {
+      order: 1 !important;
+      margin-right: 0 !important;
+      margin-left: auto !important;
+    }
+    
+    .p-dropdown-clear-icon {
+      left: auto !important;
+      right: 2.5rem !important;
+    }
+  }
+}
+
+
+/* ========================= 
+   Invoices Table Styles (matching payment-receipt-list)
+   ========================= */
+.invoices-table-container {
+  .p-column-resizer {
+    border-left: 3.5px solid #d9d9d9 !important;
+    opacity: 0.5 !important;
+  }
+
+  :dir(rtl) .p-column-resizer {
+    border-left: 3.5px solid #d9d9d9 !important;
+    opacity: 0.5 !important;
+    right: unset !important;
+    left: 0 !important;
+  }
+}
+
+/* Selected row styling */
+:host ::ng-deep .invoices-table-container {
+  .p-datatable .p-datatable-tbody > tr.selected-row,
+  .p-datatable .p-datatable-tbody > tr.p-highlight {
+    background-color: #dbeafe !important;
+    border-color: #93c5fd !important;
+  }
+  
+  .p-datatable .p-datatable-tbody > tr.selected-row:hover,
+  .p-datatable .p-datatable-tbody > tr.p-highlight:hover {
+    background-color: #bfdbfe !important;
+  }
+  
+  /* Radio button styling */
+  .p-radiobutton .p-radiobutton-box.p-highlight {
+    border-color: #2563eb !important;
+    background: #2563eb !important;
+  }
+  
+  .p-radiobutton .p-radiobutton-box:not(.p-disabled):not(.p-highlight):hover {
+    border-color: #2563eb !important;
+  }
+}
+
+:host {
+  --table-head-bg: #46bbeb;
+  --table-header-text: #ffffff;
+}
+
+/* Theme-aware table header colors */
+.invoices-table-container ::ng-deep .p-datatable .p-datatable-thead > tr > th {
+  background: var(--table-head-bg) !important;
+  color: var(--table-header-text) !important;
+}
+
+/* Theme overrides (consistent across app) */
+$green-sels: ".light-green-mode", '[data-bs-theme="light-green"]', "body.light-green";
+@each $sel in $green-sels {
+  :host-context(#{$sel}) {
+    --table-head-bg: #c6ecea;
+    --table-header-text: #2e2a40;
+  }
+}
+
+$indigo-sels: ".light-indigo-mode", '[data-bs-theme="light-indigo"]', "body.light-indigo";
+@each $sel in $indigo-sels {
+  :host-context(#{$sel}) {
+    --table-head-bg: #c9d0f5;
+    --table-header-text: #5d6679;
+  }
+}
+
+$darkblue-sels: ".light-darkblue-mode", '[data-bs-theme="light-darkblue"]', "body.light-darkblue";
+@each $sel in $darkblue-sels {
+  :host-context(#{$sel}) {
+    --table-head-bg: #dad7ff;
+    --table-header-text: #191d29;
+  }
+}
+
+/* =========================
+   Centered pagination (Total + pages + page/rows) all centered
+   ========================= */
+.invoices-table-container ::ng-deep .custom-paginator-table .p-paginator {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: .5rem;
+  padding: .5rem .75rem;
+  border-top: 1px solid #e5e7eb;
+  background: #fff;
+  flex-wrap: wrap;
+}
+
+/* RTL Pagination */
+.invoices-table-container[dir="rtl"] ::ng-deep .custom-paginator-table .p-paginator {
+  direction: rtl;
+  flex-direction: row;
+}
+
+/* LTR Pagination */
+.invoices-table-container[dir="ltr"] ::ng-deep .custom-paginator-table .p-paginator {
+  direction: ltr;
+  flex-direction: row;
+}
+
+/* "Total" */
+.invoices-table-container ::ng-deep .custom-paginator-table .p-paginator .p-paginator-current {
+  color: #111827;
+  font-weight: 600;
+  white-space: nowrap;
+  margin: 0;
+}
+
+/* Pages */
+.invoices-table-container ::ng-deep .custom-paginator-table .p-paginator .p-paginator-pages {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: .25rem;
+  margin: 0;
+}
+
+/* RTL Pages direction */
+.invoices-table-container[dir="rtl"] ::ng-deep .custom-paginator-table .p-paginator .p-paginator-pages {
+  direction: rtl;
+}
+
+/* LTR Pages direction */
+.invoices-table-container[dir="ltr"] ::ng-deep .custom-paginator-table .p-paginator .p-paginator-pages {
+  direction: ltr;
+}
+
+/* Page button */
+.invoices-table-container ::ng-deep .custom-paginator-table .p-paginator .p-paginator-page {
+  min-width: 34px;
+  height: 34px;
+  border-radius: 8px;
+  border: 1px solid transparent;
+  color: #374151;
+}
+
+/* Hover */
+.invoices-table-container ::ng-deep .custom-paginator-table .p-paginator .p-paginator-page:not(.p-highlight):hover {
+  background: #f3f4f6;
+  border-color: #e5e7eb;
+}
+
+/* Active */
+.invoices-table-container ::ng-deep .custom-paginator-table .p-paginator .p-paginator-page.p-highlight {
+  background: #eaf2ff;
+  border-color: #93c5fd;
+  color: #1d4ed8;
+  font-weight: 600;
+}
+
+/* Prev/Next */
+.invoices-table-container ::ng-deep .custom-paginator-table .p-paginator .p-paginator-prev,
+.invoices-table-container ::ng-deep .custom-paginator-table .p-paginator .p-paginator-next {
+  width: 34px;
+  height: 34px;
+  border-radius: 8px;
+}
+
+.invoices-table-container ::ng-deep .custom-paginator-table .p-paginator .p-paginator-prev:hover,
+.invoices-table-container ::ng-deep .custom-paginator-table .p-paginator .p-paginator-next:hover {
+  background: #f3f4f6;
+}
+
+/* Rows per page (page/ + dropdown) */
+.invoices-table-container ::ng-deep .custom-paginator-table .p-paginator .p-paginator-rpp-options {
+  display: inline-flex;
+  align-items: center;
+  gap: .35rem;
+  margin: 0;
+}
+
+/* page/ label - LTR (English) */
+.invoices-table-container[dir="ltr"] ::ng-deep .custom-paginator-table .p-paginator .p-paginator-rpp-options::before {
+  content: "page /";
+  color: #6b7280;
+  font-size: 14px;
+  white-space: nowrap;
+}
+
+/* page/ label - RTL (Arabic) */
+.invoices-table-container[dir="rtl"] ::ng-deep .custom-paginator-table .p-paginator .p-paginator-rpp-options::before {
+  content: "صفحة /";
+  color: #6b7280;
+  font-size: 14px;
+  white-space: nowrap;
+}
+
+/* Dropdown size */
+.invoices-table-container ::ng-deep .custom-paginator-table .p-paginator .p-dropdown {
+  min-width: 80px;
+}
+
+/* Ellipsis */
+.invoices-table-container ::ng-deep .custom-paginator-table .p-paginator .p-paginator-ellipsis {
+  color: #6b7280;
+  padding: 0 .25rem;
+}
+
+/* Mobile responsive */
+@media (max-width: 576px) {
+  .invoices-table-container ::ng-deep .p-paginator {
+    flex-direction: row !important;
+    flex-wrap: wrap !important;
+    gap: 0.5rem !important;
+    padding: 0.5rem !important;
+    font-size: 0.75rem !important;
+    justify-content: center !important;
+
+    .p-paginator-left-content,
+    .p-paginator-right-content {
+      width: auto !important;
+      justify-content: center !important;
+      font-size: 0.75rem !important;
+    }
+
+    .p-paginator-pages {
+      display: flex !important;
+      flex-wrap: wrap !important;
+      justify-content: center !important;
+      gap: 0.25rem !important;
+    }
+
+    .p-paginator-page,
+    .p-paginator-prev,
+    .p-paginator-next,
+    .p-paginator-first,
+    .p-paginator-last {
+      min-width: 2rem !important;
+      height: 2rem !important;
+      font-size: 0.75rem !important;
+    }
+
+    .p-dropdown {
+      font-size: 0.75rem !important;
+
+      .p-inputtext {
+        padding: 0.25rem 0.5rem !important;
+        font-size: 0.75rem !important;
+      }
+    }
+
+    .p-paginator-rpp-options {
+      font-size: 0.75rem !important;
+    }
+  }
+}
+

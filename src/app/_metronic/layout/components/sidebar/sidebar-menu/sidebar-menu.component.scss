@@ -1,0 +1,98 @@
+.custom-link {
+  color: white !important;
+  padding-left: 0.5rem;
+  padding-right: 0.5rem;
+  // hover color white
+  &:hover {
+    color: black !important;
+  }
+}
+
+.custom-link-no-hover {
+  color: white !important;
+}
+
+.menu-link.active {
+  background-color: #3b82f5 !important;
+}
+/* خلاف ذلك تبقى القيم القديمة تعمل */
+#kt_app_sidebar_menu_scroll {
+  background-color: var(--kt-app-sidebar-bg, inherit) !important;
+  color: var(--kt-app-sidebar-base-color, inherit) !important;
+}
+
+/* العناوين واللينكات داخل السايدبار */
+.custom-link {
+  color: var(--kt-app-sidebar-base-color, white) !important;
+  padding-left: 0.5rem;
+  padding-right: 0.5rem;
+
+  &:hover {
+    /* في الثيم الجديد نستخدم لون الـ active، وإلا نرجع للأسود */
+    color: var(--kt-app-sidebar-link-active-color, black) !important;
+  }
+}
+
+.custom-link-no-hover,
+.menu-icon,
+.menu-icon i {
+  color: var(--kt-app-sidebar-base-color, white) !important;
+}
+
+/* Menu Arrow Color - White */
+.menu-arrow:after {
+  filter: brightness(0) invert(1) !important;
+  opacity: 1 !important;
+}
+
+.menu-link .menu-arrow:after {
+  filter: brightness(0) invert(1) !important;
+  opacity: 1 !important;
+}
+
+.menu-item .menu-link .menu-arrow:after {
+  filter: brightness(0) invert(1) !important;
+  opacity: 1 !important;
+}
+
+/* لينك السايدبار نفسه */
+.menu-link {
+  color: var(--kt-app-sidebar-base-color, white) !important;
+
+  &:hover {
+    background-color: var(--kt-app-sidebar-link-active-bg, transparent) !important;
+    color: var(--kt-app-sidebar-link-active-color, white) !important;
+
+    .custom-link,
+    .menu-icon,
+    .menu-icon i {
+      color: var(--kt-app-sidebar-link-active-color, white) !important;
+    }
+  }
+}
+
+/* الحالة Active */
+.menu-link.active {
+  background-color: var(--kt-app-sidebar-link-active-bg, #3b82f5) !important;
+  color: var(--kt-app-sidebar-link-active-color, white) !important;
+
+  .custom-link,
+  .menu-icon,
+  .menu-icon i {
+    color: var(--kt-app-sidebar-link-active-color, white) !important;
+  }
+}
+#kt_app_sidebar {
+  background-color: var(--kt-app-sidebar-bg, #1e1e2d) !important;
+  color: var(--kt-app-sidebar-base-color, white) !important;
+}
+/* الحاوية نفسها */
+#kt_app_sidebar,
+#kt_app_sidebar_logo,
+#kt_app_sidebar_footer,
+#kt_app_sidebar_logo *,
+#kt_app_sidebar_footer * {
+  background-color: var(--kt-app-sidebar-bg, #0972EB) !important;
+  color: var(--kt-app-sidebar-base-color, white) !important;
+}
+

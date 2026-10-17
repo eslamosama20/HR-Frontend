@@ -1,0 +1,44 @@
+// Add any custom styles if needed
+.sales-header-bg {
+  background-color: #42acff !important;
+  color: #ffffff !important;
+}
+
+/* Panel header styling */
+::ng-deep .p-panel .p-panel-header {
+  background-color: #42acff !important;
+  color: #ffffff !important;
+}
+
+::ng-deep .p-panel .p-panel-header * {
+  color: #ffffff !important;
+}
+
+.clickable-table {
+  cursor: pointer;
+  transition: opacity 0.2s;
+}
+
+.clickable-table:hover {
+  opacity: 0.8;
+}
+
+/* Print styles for header */
+@media print {
+  .sales-header-bg,
+  th.sales-header-bg {
+    background-color: #42acff !important;
+    color: #ffffff !important;
+  }
+}
+
+/* Ensure all action buttons have the same width */
+.report-action-button {
+  min-width: 150px;
+}
+
+/* Hint for calendar panel to appear below the input */
+::ng-deep .sales-report-calendar-panel {
+  margin-top: 4px;
+}
+

@@ -1,0 +1,436 @@
+  <div class="w-full">
+    <div class="flex justify-center items-start gap-4 flex-col w-full px-10">
+      <div class="fixed inset-0 bg-gray-500 bg-opacity-75 flex items-center justify-center z-50" *ngIf="loading">
+        <i class="pi pi-spin pi-spinner" style="font-size: 2rem"></i>
+      </div>
+
+
+      <p-panel class="w-full" [header]="translate.instant('FINANCE.ACCOUNT_STATEMENT')">
+        <div class="flex flex-col w-full gap-4 ">
+          <div class="flex justify-between gap-2 w-full">
+            <div class="field w-full ">
+              <label for="Account" class="block">{{
+                  translate.instant("FINANCE.ACCOUNT")
+                }}</label>
+              <p-dropdown
+                id="Account"
+                [options]="accountOptions"
+                [filter]="true"
+                [(ngModel)]="selectedAccount"
+                styleClass="w-full"
+                appendTo="body"
+                variant="filled"
+              >
+              </p-dropdown>
+
+            </div>
+            <div class="field w-full">
+              <label for="startDate" class="block">{{
+                  translate.instant("FINANCE.START_DATE")
+                }}</label>
+              <p-calendar
+                id="startDate"
+                [(ngModel)]="startDate"
+                [showButtonBar]="true"
+                variant="filled"
+                [showIcon]="true"
+                [iconDisplay]="'input'"
+                [dateFormat]="'dd/mm/yy'"
+                appendTo="body"
+                styleClass="w-full"
+              >
+                <ng-template pTemplate="inputicon">
+                  <i class="pi pi-calendar "></i>
+                </ng-template>
+              </p-calendar>
+            </div>
+            <div class="field w-full">
+              <label for="endDate" class="block">{{
+                  translate.instant("FINANCE.END_DATE")
+                }}</label>
+              <p-calendar
+                id="endDate"
+                [(ngModel)]="endDate"
+                [showButtonBar]="true"
+                variant="filled"
+                [showIcon]="true"
+                [iconDisplay]="'input'"
+                [dateFormat]="'dd/mm/yy'"
+                appendTo="body"
+                styleClass="w-full"
+              >
+                <ng-template pTemplate="inputicon">
+                  <i class="pi pi-calendar "></i>
+                </ng-template>
+              </p-calendar>
+            </div>
+          </div>
+          
+          <div class="flex justify-between gap-2 w-full mb-3" [dir]="activeLanguage === 'ar' ? 'rtl' : 'ltr'">
+            <div class="field w-full md:w-1/3">
+              <label for="Project" class="block">{{ activeLanguage === 'ar' ? 'المشروع (اختياري)' : 'Project (Optional)' }}</label>
+              <p-dropdown
+                id="Project"
+                [options]="projectOptions"
+                [filter]="true"
+                [(ngModel)]="selectedProjectId"
+                [showClear]="true"
+                [placeholder]="activeLanguage === 'ar' ? 'تصفية حسب المشروع' : 'Filter by project'"
+                styleClass="w-full"
+                appendTo="body"
+                variant="filled"
+              >
+              </p-dropdown>
+            </div>
+            <div class="w-full md:w-2/3"></div>
+          </div>
+          
+          <div class="flex gap-2">
+            <p-button
+              styleClass="rounded-md"
+              [disabled]="selectedAccount === '' || startDate === '' || endDate === ''"
+              [label]="translate.instant('FINANCE.SEARCH')"
+              (onClick)="handleSubmit()"
+            />
+            <p-button
+              styleClass="rounded-md"
+              [disabled]="accountStatement.length === 0"
+              icon="pi pi-share-alt"
+              [label]="translate.instant('FINANCE.SHARE')"
+              (onClick)="openShareDialog()"
+              severity="info"
+            />
+            <p-button
+              styleClass="rounded-md"
+              [disabled]="accountStatement.length === 0"
+              icon="pi pi-print"
+              [label]="translate.instant('FINANCE.PRINT_PDF')"
+              (onClick)="printDocument()"
+              severity="warning"
+            />
+            <p-button
+              styleClass="rounded-md"
+              [disabled]="accountStatement.length === 0"
+              icon="pi pi-file-pdf"
+              [label]="translate.instant('FINANCE.DOWNLOAD_PDF')"
+              (onClick)="downloadDocument()"
+              severity="danger"
+            />
+            <p-button
+              styleClass="rounded-md p-button-success"
+              [disabled]="accountStatement.length === 0"
+              icon="pi pi-file-excel"
+              [label]="translate.instant('FINANCE.EXPORT_EXCEL')"
+              (onClick)="exportToExcel()"
+            />
+          </div>
+        </div>
+
+        <!-- Search and Sort Box -->
+        <div class="flex gap-3 items-center w-full flex-wrap" *ngIf="fullAccountStatement.length > 0">
+          <div class="field flex-1 min-w-[300px]">
+            <span class="p-input-icon-left w-full">
+              <i class="pi pi-search"></i>
+              <input 
+                type="text" 
+                pInputText 
+                [(ngModel)]="searchText"
+                (input)="filterAccountStatement()"
+                placeholder="{{translate.instant('FINANCE.SEARCH_PLACEHOLDER')}}"
+                class="w-full"
+              />
+            </span>
+          </div>
+          <div class="field" style="min-width: 200px;">
+            <p-dropdown
+              [options]="sortOptions"
+              [(ngModel)]="sortOrder"
+              (onChange)="onSortChange()"
+              styleClass="w-full"
+              appendTo="body"
+            >
+              <ng-template pTemplate="selectedItem" let-option>
+                <div class="flex items-center gap-2">
+                  <i class="pi pi-sort-alt"></i>
+                  <span>{{option.label}}</span>
+                </div>
+              </ng-template>
+              <ng-template pTemplate="item" let-option>
+                <div class="flex items-center gap-2">
+                  <i class="pi" [ngClass]="option.value === 'asc' ? 'pi-sort-amount-up' : 'pi-sort-amount-down'"></i>
+                  <span>{{option.label}}</span>
+                </div>
+              </ng-template>
+            </p-dropdown>
+          </div>
+          <p-button
+            *ngIf="searchText"
+            icon="pi pi-times"
+            styleClass="p-button-text"
+            (onClick)="searchText = ''; filterAccountStatement()"
+            [title]="'مسح البحث'"
+          />
+        </div>
+
+        <div class="flex justify-center p-5 my-4 border border-gray-300 rounded-lg text-xl w-full text-center font-bold" *ngIf="fullAccountStatement.length === 0">
+          No Data
+        </div>
+        <div class="flex flex-col my-4 border border-gray-300 rounded-lg" *ngIf="fullAccountStatement.length > 0">
+          
+          <!-- No Results Message -->
+          <div class="flex justify-center p-5 my-4 text-lg w-full text-center text-gray-500" *ngIf="accountStatement.length === 0 && searchText">
+            <i class="pi pi-search ml-2"></i>
+            لا توجد نتائج للبحث "{{searchText}}"
+          </div>
+<!--
+          <div class="flex w-full justify-start items-center gap-4 p-4">
+            <div class="flex flex-col gap-2">
+              <div class="flex justify-between gap-2">
+                <div class="font-semibold text-gray-700">
+                  {{translate.instant('FINANCE.PREVIOUS_BALANCE')}} :
+                  {{
+                    activeLanguage === "en"
+                      ? (previousBalance | number : "1.0-2")
+                      : (previousBalance |number : "1.0-2")
+                  }}
+                </div>
+              </div>
+            </div>
+          </div>
+-->
+          <table class="w-full" *ngIf="accountStatement.length > 0">
+            <thead>
+              <tr>
+                <th class="w-[5%] text-center">
+                  {{ activeLanguage === 'ar' ? 'م' : 'N' }}
+                </th>
+                <th class="w-[10%] text-center">
+                  {{translate.instant('FINANCE.TRANSACTION_NUMBER')}}
+                </th>
+                <th class="w-[10%] text-center">
+                  {{translate.instant('FINANCE.TRANSACTION_DATE')}}
+                </th>
+                <th class="w-[10%] text-center">
+                  {{translate.instant('FINANCE.DEBIT')}}
+                </th>
+                <th class="w-[10%] text-center">
+                  {{translate.instant('FINANCE.CREDIT')}}
+                </th>
+                <th class="w-[10%] text-center">
+                  {{translate.instant('FINANCE.BALANCE')}}
+                </th>
+                <th class="w-[10%] text-right">
+                  {{translate.instant('FINANCE.TRANSACTION_TYPE')}}
+                </th>
+                <th class="w-[40%] text-right">
+                  {{translate.instant('FINANCE.DESCRIPTION')}}
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let item of accountStatement; let i = index" [class]="item.isTransactionPost1 ? 'bg-slate-300' : ''">
+                <td class="text-center font-semibold">
+                  {{ hasPreviousBalance && i === 0 ? '' : (i + 1 - (hasPreviousBalance ? 1 : 0)) }}
+                </td>
+                <td 
+                  class="text-center cursor-pointer hover:text-blue-600 hover:underline transition-colors"
+                  [class.cursor-default]="hasPreviousBalance && i === 0"
+                  [class.hover:no-underline]="hasPreviousBalance && i === 0"
+                  [class.hover:text-inherit]="hasPreviousBalance && i === 0"
+                  (click)="navigateToTransactionDetails(item, i)"
+                  [title]="(hasPreviousBalance && i === 0) ? '' : 'انقر لعرض تفاصيل القيد'"
+                >
+                  {{item.transactionNumber}}
+                </td>
+                <td class="text-center">
+                  {{ hasPreviousBalance && i === 0 ? item.transactionDate :
+                  item.transactionDate | customDate: 'dd/MM/yyyy'}}
+                </td>
+                <td class="text-center">
+                  {{ item.debitAmount == 0 ? '-' :
+                      (item.debitAmount | number : "1.0-2")
+                  }}
+                </td>
+                <td class="text-center">
+                  {{ item.creditAmount == 0 ? '-' :
+                    (item.creditAmount|number : "1.0-2")
+                  }}
+                </td>
+
+                <td class="text-center font-bold text-lg" [class]="item.balance < 0 ? 'text-rose-500' : ''">
+                  {{ item.balance == 0 ? '-' :
+                    item.balance > 0 ?
+                      ( (item.balance | absoluteValue) |  number : "1.0-2") :
+                      "(" + ( (item.balance | absoluteValue) |  number : "1.0-2") + ")"
+                  }}
+                </td>
+                <td class="text-right">
+                  {{activeLanguage === 'ar' ? item.transactionTypeArabicName : item.transactionTypeEnglishName}}
+                </td>
+                <td class="text-right">
+                  {{item.description}}
+                </td>
+              </tr>
+              <tr *ngIf="accountStatement.length > 0" class="border-2">
+                <td colspan="3" class="text-center">{{translate.instant('FINANCE.TOTAL')}}</td>
+                <td class="text-center">
+                  {{
+                    activeLanguage === "en"
+                      ? (calculateTotalDebit() |number : "1.0-2")
+                      : (calculateTotalDebit() |number : "1.0-2")
+                  }}
+                </td>
+                <td class="text-center">
+                  {{
+                  activeLanguage === "en"
+                    ? (calculateTotalCredit() |number : "1.0-2")
+                    : (calculateTotalCredit() |number : "1.0-2")
+                  }}
+                </td>
+
+                <td class="text-center font-bold text-lg" [class]="accountStatement[accountStatement.length-1].balance < 0 ? 'text-rose-500' : ''">
+                  {{accountStatement[accountStatement.length-1].balance == 0 ? '-' :
+                    accountStatement[accountStatement.length-1].balance > 0 ?
+                      ( (accountStatement[accountStatement.length-1].balance | absoluteValue) |  number : "1.0-2") :
+                      "(" + ( (accountStatement[accountStatement.length-1].balance | absoluteValue) |  number : "1.0-2") + ")"
+                  }}
+                </td>
+                <td class="text-right" colspan="2"></td>
+            </tbody>
+          </table>
+        </div>
+
+      </p-panel>
+
+    </div>
+  </div>
+
+<!-- Share Dialog -->
+<p-dialog
+  *ngIf="shareDialogVisible"
+  [(visible)]="shareDialogVisible"
+  [modal]="true"
+  [dismissableMask]="true"
+  [draggable]="false"
+  [resizable]="false"
+  [style]="{ width: '520px', maxWidth: '95vw' }"
+  contentStyleClass="share-dialog"
+  [baseZIndex]="11000"
+>
+  <ng-template pTemplate="header">
+    <div class="share-header">
+      <span class="icon-chip"><i class="pi pi-share-alt"></i></span>
+      <div class="title">
+        <div class="title-main">مشاركة كشف الحساب</div>
+      </div>
+    </div>
+  </ng-template>
+
+  <p-tabView [(activeIndex)]="shareActiveTabIndex">
+    <!-- Email Tab -->
+    <p-tabPanel header="البريد الإلكتروني" leftIcon="pi pi-envelope mr-2">
+      <div class="share-tab">
+        <div class="form-row">
+          <label for="shareEmail">البريد الإلكتروني</label>
+          <input
+            id="shareEmail"
+            type="email"
+            pInputText
+            [formControl]="$any(shareForm.get('email'))"
+            placeholder="example@domain.com"
+            class="w-full"
+          />
+          <small
+            class="err"
+            *ngIf="shareForm.get('email')?.touched && shareForm.get('email')?.invalid"
+          >
+            برجاء إدخال بريد إلكتروني صحيح
+          </small>
+        </div>
+
+        <div class="actions">
+          <button
+            pButton
+            type="button"
+            class="p-button p-button-primary"
+            icon="pi pi-send"
+            label="إرسال"
+            (click)="submitShareEmail()"
+            [disabled]="shareForm.get('email')?.invalid || shareBusy"
+            [loading]="shareBusy"
+            styleClass="flex-1"
+          ></button>
+          <button
+            pButton
+            type="button"
+            class="p-button-outlined p-button-secondary"
+            icon="pi pi-times"
+            label="إلغاء"
+            (click)="closeShareDialog()"
+            [disabled]="shareBusy"
+            styleClass="flex-1"
+          ></button>
+        </div>
+      </div>
+    </p-tabPanel>
+
+    <!-- WhatsApp Tab -->
+    <p-tabPanel header="واتساب" leftIcon="pi pi-whatsapp mr-2">
+      <div class="share-tab">
+        <div class="media">
+          <span class="chip chip-whatsapp"><i class="pi pi-whatsapp"></i></span>
+          <div class="media-body">
+            <div class="media-title">إرسال عبر واتساب</div>
+            <div class="media-sub">
+              أدخل رقم الجوال (رمز الدولة + الرقم) بدون مسافات. مثال: 9665xxxxxxxx
+            </div>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <label for="sharePhone">رقم الجوال</label>
+          <input
+            id="sharePhone"
+            type="tel"
+            pInputText
+            [formControl]="$any(shareForm.get('whatsappNumber'))"
+            placeholder="9665xxxxxxxx"
+            class="w-full"
+          />
+          <small
+            class="err"
+            *ngIf="shareForm.get('whatsappNumber')?.touched && shareForm.get('whatsappNumber')?.invalid"
+          >
+            برجاء إدخال رقم صحيح (8–15 أرقام)
+          </small>
+        </div>
+
+        <div class="actions">
+          <button
+            pButton
+            type="button"
+            class="p-button p-button-success"
+            icon="pi pi-send"
+            label="إرسال"
+            (click)="submitShareWhatsApp()"
+            [disabled]="shareForm.get('whatsappNumber')?.invalid || shareBusy"
+            [loading]="shareBusy"
+            styleClass="flex-1"
+          ></button>
+          <button
+            pButton
+            type="button"
+            class="p-button-outlined p-button-secondary"
+            icon="pi pi-times"
+            label="إلغاء"
+            (click)="closeShareDialog()"
+            [disabled]="shareBusy"
+            styleClass="flex-1"
+          ></button>
+        </div>
+      </div>
+    </p-tabPanel>
+  </p-tabView>
+</p-dialog>
+
+<p-toast />

@@ -1,0 +1,378 @@
+<div class="container-fluid p-4">
+  <!-- Header Section -->
+  <div class="bg-white rounded-lg shadow-sm p-4 mb-4">
+    <div class="flex justify-between items-center mb-4">
+      <h2 class="text-2xl font-bold text-gray-800">{{ 'DATA.BOOKINGS_MANAGEMENT' | translate }}</h2>
+    </div>
+
+    <!-- Filters Section -->
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-2">{{ 'GENERAL.SEARCH' | translate }}</label>
+        <input 
+          type="text" 
+          pInputText 
+          [(ngModel)]="filters.searchTerm" 
+          (keyup.enter)="applyFilters()"
+          [placeholder]="'GENERAL.SEARCH_PLACEHOLDER' | translate"
+          class="w-full"
+        />
+      </div>
+
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-2">{{ 'DATA.STATUS' | translate }}</label>
+        <p-dropdown
+          [(ngModel)]="filters.status"
+          [options]="statusOptions"
+          optionLabel="label"
+          optionValue="value"
+          [placeholder]="'GENERAL.SELECT_STATUS' | translate"
+          (onChange)="applyFilters()"
+          [showClear]="true"
+          class="w-full"
+        ></p-dropdown>
+      </div>
+
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-2">{{ 'DATA.FROM_DATE' | translate }}</label>
+        <p-calendar
+          [(ngModel)]="filters.dateFrom"
+          [showIcon]="true"
+          dateFormat="dd/mm/yy"
+          (onSelect)="applyFilters()"
+          [placeholder]="'GENERAL.SELECT_DATE' | translate"
+          class="w-full"
+        ></p-calendar>
+      </div>
+
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-2">{{ 'DATA.TO_DATE' | translate }}</label>
+        <p-calendar
+          [(ngModel)]="filters.dateTo"
+          [showIcon]="true"
+          dateFormat="dd/mm/yy"
+          (onSelect)="applyFilters()"
+          [placeholder]="'GENERAL.SELECT_DATE' | translate"
+          class="w-full"
+        ></p-calendar>
+      </div>
+    </div>
+
+    <div class="flex justify-end mt-4 gap-2">
+      <button 
+        pButton 
+        type="button" 
+        [label]="'GENERAL.CLEAR_FILTERS' | translate"
+        icon="pi pi-filter-slash"
+        class="p-button-outlined"
+        (click)="clearFilters()"
+      ></button>
+      <button 
+        pButton 
+        type="button" 
+        [label]="'GENERAL.APPLY_FILTERS' | translate"
+        icon="pi pi-search"
+        (click)="applyFilters()"
+      ></button>
+    </div>
+  </div>
+
+  <!-- Table Section -->
+  <div class="bg-white rounded-lg shadow-sm p-4">
+    <p-table
+      #dt1
+      [value]="bookings"
+      [lazy]="false"
+      [paginator]="true"
+      [rows]="rows"
+      [totalRecords]="totalRecords"
+      [loading]="loading"
+      [showCurrentPageReport]="true"
+      currentPageReportTemplate="{{ 'GENERAL.SHOWING_ENTRIES' | translate }}"
+      [rowsPerPageOptions]="[10, 25, 50, 100]"
+      styleClass="p-datatable-gridlines"
+      [responsive]="true"
+    >
+      <!-- Loading Template -->
+      <ng-template pTemplate="loadingbody">
+        <tr *ngFor="let i of [1,2,3,4,5]">
+          <td *ngFor="let j of [1,2,3,4,5,6,7,8]">
+            <p-skeleton></p-skeleton>
+          </td>
+        </tr>
+      </ng-template>
+
+      <!-- Table Header -->
+      <ng-template pTemplate="header">
+        <tr>
+          <th style="width: 3rem" class="text-center">
+            #
+          </th>
+          <th pSortableColumn="bookingReference">
+            {{ 'DATA.BOOKING_REFERENCE' | translate }}
+            <p-sortIcon field="bookingReference"></p-sortIcon>
+          </th>
+          <th pSortableColumn="guestName">
+            {{ 'DATA.GUEST_NAME' | translate }}
+            <p-sortIcon field="guestName"></p-sortIcon>
+          </th>
+          <th pSortableColumn="hotelName">
+            {{ 'DATA.HOTEL' | translate }}
+            <p-sortIcon field="hotelName"></p-sortIcon>
+          </th>
+          <th pSortableColumn="checkInDate">
+            {{ 'DATA.CHECK_IN_DATE' | translate }}
+            <p-sortIcon field="checkInDate"></p-sortIcon>
+          </th>
+          <th pSortableColumn="checkOutDate">
+            {{ 'DATA.CHECK_OUT_DATE' | translate }}
+            <p-sortIcon field="checkOutDate"></p-sortIcon>
+          </th>
+          <th pSortableColumn="totalAmount">
+            {{ 'DATA.TOTAL_AMOUNT' | translate }}
+            <p-sortIcon field="totalAmount"></p-sortIcon>
+          </th>
+          <th pSortableColumn="status">
+            {{ 'DATA.STATUS' | translate }}
+            <p-sortIcon field="status"></p-sortIcon>
+          </th>
+          <th>{{ 'GENERAL.ACTIONS' | translate }}</th>
+        </tr>
+      </ng-template>
+
+      <!-- Table Body -->
+      <ng-template pTemplate="body" let-booking let-rowIndex="rowIndex">
+        <tr>
+          <td class="text-sm text-center">
+            {{ (dt1?.first || 0) + rowIndex + 1 }}
+          </td>
+          <td>
+            <span class="font-medium text-blue-600">{{ booking.bookingReference }}</span>
+          </td>
+          <td>
+            <div>
+              <div class="font-medium">{{ booking.guestName }}</div>
+              <div class="text-sm text-gray-500">{{ booking.guestEmail }}</div>
+              <div class="text-sm text-gray-500">{{ booking.guestPhone }}</div>
+            </div>
+          </td>
+          <td>
+            <span class="font-medium">{{ booking.hotel?.name }}</span>
+          </td>
+          <td>
+            <span>{{ booking.checkInDate | customDate: 'yyyy-MM-dd' }}</span>
+          </td>
+          <td>
+            <span>{{ booking.checkOutDate | customDate: 'yyyy-MM-dd' }}</span>
+          </td>
+          <td>
+            <span class="font-medium">{{ booking.totalAmount | number: '1.2-2' }} {{ 'GENERAL.SAR' | translate }}</span>
+          </td>
+          <td>
+            <span 
+              class="px-3 py-1 rounded-full text-xs font-semibold"
+              [ngClass]="{
+                'bg-yellow-100 text-yellow-800': booking.status === 'Pending',
+                'bg-green-100 text-green-800': booking.status === 'Confirmed',
+                'bg-red-100 text-red-800': booking.status === 'Cancelled',
+                'bg-blue-100 text-blue-800': booking.status === 'Completed'
+              }"
+            >
+              {{ getStatusLabel(booking.status) }}
+            </span>
+          </td>
+          <td>
+            <div class="flex gap-2">
+              <button
+                pButton
+                type="button"
+                icon="pi pi-eye"
+                class="p-button-rounded p-button-text p-button-info"
+                [pTooltip]="'GENERAL.VIEW_DETAILS' | translate"
+                (click)="viewBooking(booking)"
+              ></button>
+              <button
+                *ngIf="booking.status === 'Confirmed' || booking.status === 'Pending'"
+                pButton
+                type="button"
+                icon="pi pi-times"
+                class="p-button-rounded p-button-text p-button-danger"
+                [pTooltip]="'GENERAL.CANCEL' | translate"
+                (click)="cancelBooking(booking)"
+              ></button>
+            </div>
+          </td>
+        </tr>
+      </ng-template>
+
+      <!-- Empty State -->
+      <ng-template pTemplate="emptymessage">
+        <tr>
+          <td colspan="8" class="text-center py-8">
+            <div class="text-gray-400">
+              <i class="pi pi-inbox text-4xl mb-2"></i>
+              <p class="text-lg">{{ 'GENERAL.NO_DATA_FOUND' | translate }}</p>
+            </div>
+          </td>
+        </tr>
+      </ng-template>
+    </p-table>
+  </div>
+
+  <!-- Booking Details Dialog -->
+  <p-dialog
+    [(visible)]="bookingDetailsDialogVisible"
+    [header]="'DATA.BOOKING_DETAILS' | translate"
+    [modal]="true"
+    [style]="{ width: '70vw' }"
+    [closable]="true"
+    [draggable]="false"
+    [resizable]="false"
+  >
+    <div *ngIf="selectedBooking" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <!-- Booking Information -->
+      <div class="col-span-2 bg-blue-50 p-4 rounded-lg">
+        <h3 class="text-lg font-bold mb-2">{{ 'DATA.BOOKING_INFORMATION' | translate }}</h3>
+        <div class="grid grid-cols-2 gap-2">
+          <div>
+            <span class="text-sm text-gray-600">{{ 'DATA.BOOKING_REFERENCE' | translate }}:</span>
+            <p class="font-medium">{{ selectedBooking.bookingReference }}</p>
+          </div>
+          <div>
+            <span class="text-sm text-gray-600">{{ 'DATA.STATUS' | translate }}:</span>
+            <p class="font-medium">{{ getStatusLabel(selectedBooking.status) }}</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Guest Information -->
+      <div>
+        <h3 class="text-lg font-bold mb-2">{{ 'DATA.GUEST_INFORMATION' | translate }}</h3>
+        <div class="space-y-2">
+          <div>
+            <span class="text-sm text-gray-600">{{ 'DATA.NAME' | translate }}:</span>
+            <p class="font-medium">{{ selectedBooking.guestName }}</p>
+          </div>
+          <div>
+            <span class="text-sm text-gray-600">{{ 'DATA.EMAIL' | translate }}:</span>
+            <p class="font-medium">{{ selectedBooking.guestEmail }}</p>
+          </div>
+          <div>
+            <span class="text-sm text-gray-600">{{ 'DATA.PHONE' | translate }}:</span>
+            <p class="font-medium">{{ selectedBooking.guestPhone }}</p>
+          </div>
+          <div>
+            <span class="text-sm text-gray-600">{{ 'DATA.NATIONALITY' | translate }}:</span>
+            <p class="font-medium">{{ selectedBooking.guestNationality }}</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Stay Information -->
+      <div>
+        <h3 class="text-lg font-bold mb-2">{{ 'DATA.STAY_INFORMATION' | translate }}</h3>
+        <div class="space-y-2">
+          <div>
+            <span class="text-sm text-gray-600">{{ 'DATA.HOTEL' | translate }}:</span>
+            <p class="font-medium">{{ selectedBooking.hotel?.name }}</p>
+          </div>
+          <div>
+            <span class="text-sm text-gray-600">{{ 'DATA.CHECK_IN_DATE' | translate }}:</span>
+            <p class="font-medium">{{ selectedBooking.checkInDate | customDate: 'yyyy-MM-dd' }}</p>
+          </div>
+          <div>
+            <span class="text-sm text-gray-600">{{ 'DATA.CHECK_OUT_DATE' | translate }}:</span>
+            <p class="font-medium">{{ selectedBooking.checkOutDate | customDate: 'yyyy-MM-dd' }}</p>
+          </div>
+          <div>
+            <span class="text-sm text-gray-600">{{ 'DATA.NUMBER_OF_NIGHTS' | translate }}:</span>
+            <p class="font-medium">{{ selectedBooking.numberOfNights }}</p>
+          </div>
+          <div>
+            <span class="text-sm text-gray-600">{{ 'DATA.NUMBER_OF_ADULTS' | translate }}:</span>
+            <p class="font-medium">{{ selectedBooking.numberOfAdults }}</p>
+          </div>
+          <div>
+            <span class="text-sm text-gray-600">{{ 'DATA.NUMBER_OF_CHILDREN' | translate }}:</span>
+            <p class="font-medium">{{ selectedBooking.numberOfChildren }}</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Pricing Information -->
+      <div class="col-span-2">
+        <h3 class="text-lg font-bold mb-2">{{ 'DATA.PRICING_INFORMATION' | translate }}</h3>
+        <div class="grid grid-cols-2 gap-2">
+          <div>
+            <span class="text-sm text-gray-600">{{ 'DATA.TOTAL_AMOUNT' | translate }}:</span>
+            <p class="font-medium">{{ selectedBooking.totalAmount | number: '1.2-2' }} {{ 'GENERAL.SAR' | translate }}</p>
+          </div>
+          <div>
+            <span class="text-sm text-gray-600">{{ 'DATA.DISCOUNT_AMOUNT' | translate }}:</span>
+            <p class="font-medium">{{ selectedBooking.discountAmount | number: '1.2-2' }} {{ 'GENERAL.SAR' | translate }}</p>
+          </div>
+          <div>
+            <span class="text-sm text-gray-600">{{ 'DATA.FINAL_AMOUNT' | translate }}:</span>
+            <p class="font-medium text-lg text-green-600">{{ selectedBooking.finalAmount | number: '1.2-2' }} {{ 'GENERAL.SAR' | translate }}</p>
+          </div>
+          <div>
+            <span class="text-sm text-gray-600">{{ 'DATA.PAYMENT_STATUS' | translate }}:</span>
+            <p class="font-medium">{{ selectedBooking.paymentStatus }}</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Room Details -->
+      <div class="col-span-2" *ngIf="selectedBooking.bookingRooms && selectedBooking.bookingRooms.length > 0">
+        <h3 class="text-lg font-bold mb-2">{{ 'DATA.ROOMS' | translate }}</h3>
+        <div class="space-y-2">
+          <div *ngFor="let room of selectedBooking.bookingRooms" class="bg-gray-50 p-3 rounded">
+            <div class="grid grid-cols-3 gap-2">
+              <div>
+                <span class="text-sm text-gray-600">{{ 'DATA.ROOM_TYPE' | translate }}:</span>
+                <p class="font-medium">{{ room.roomType?.name }}</p>
+              </div>
+              <div>
+                <span class="text-sm text-gray-600">{{ 'DATA.QUANTITY' | translate }}:</span>
+                <p class="font-medium">{{ room.quantity }}</p>
+              </div>
+              <div>
+                <span class="text-sm text-gray-600">{{ 'DATA.TOTAL_PRICE' | translate }}:</span>
+                <p class="font-medium">{{ room.totalPrice | number: '1.2-2' }} {{ 'GENERAL.SAR' | translate }}</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Special Requests & Notes -->
+      <div class="col-span-2" *ngIf="selectedBooking.specialRequests || selectedBooking.internalNotes">
+        <h3 class="text-lg font-bold mb-2">{{ 'DATA.NOTES' | translate }}</h3>
+        <div class="space-y-2">
+          <div *ngIf="selectedBooking.specialRequests">
+            <span class="text-sm text-gray-600">{{ 'DATA.SPECIAL_REQUESTS' | translate }}:</span>
+            <p class="font-medium">{{ selectedBooking.specialRequests }}</p>
+          </div>
+          <div *ngIf="selectedBooking.internalNotes">
+            <span class="text-sm text-gray-600">{{ 'DATA.INTERNAL_NOTES' | translate }}:</span>
+            <p class="font-medium">{{ selectedBooking.internalNotes }}</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <ng-template pTemplate="footer">
+      <button 
+        pButton 
+        type="button" 
+        [label]="'GENERAL.CLOSE' | translate"
+        icon="pi pi-times"
+        class="p-button-text"
+        (click)="bookingDetailsDialogVisible = false"
+      ></button>
+    </ng-template>
+  </p-dialog>
+</div>
+
+<p-toast></p-toast>
+<p-confirmDialog></p-confirmDialog>

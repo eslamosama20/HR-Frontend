@@ -1,0 +1,313 @@
+<div class="content-container payments-container" [dir]="isRtl ? 'rtl' : 'ltr'">
+  <!-- Global Loading/Saving Overlay -->
+  <div class="loading-overlay" *ngIf="loading || saving">
+    <div class="flex flex-column align-items-center gap-3">
+      <i class="pi pi-spin pi-spinner spinner-icon"></i>
+      <span class="processing-text" *ngIf="saving">
+        {{ 'PAYMENTS.PROCESSING_PAYMENT' | translate }}
+      </span>
+      <span class="processing-text" *ngIf="loading && !saving">
+        {{ 'PAYMENTS.LOADING' | translate }}
+      </span>
+    </div>
+  </div>
+
+  <!-- Header Actions Bar -->
+  <div class="header-actions-bar" *ngIf="!loading">
+    <div class="header-title-section d-flex align-items-center gap-3">
+      <h1 class="mb-0">
+        <span style="color: var(--primary-color); font-weight: bold;">
+          {{ 'PAYMENTS.INVOICE_NUMBER' | translate }} : {{ invoice?.invoiceNo || invoiceId }}
+        </span>
+      </h1>
+
+      <!-- Payment Status Note -->
+      <div class="badge text-primary border border-primary px-3 py-2 d-none d-md-flex align-items-center" style="font-size: 0.8rem; font-weight: 500; border-style: dashed !important; background-color: #f1faff;">
+        <i class="pi pi-info-circle mx-1"></i>
+        <span>{{ 'PAYMENTS.PAYMENT_STATUS_NOTE' | translate }}</span>
+      </div>
+
+      <!-- Auto Receipt Note -->
+      <div class="badge text-success border border-success px-3 py-2 d-none d-lg-flex align-items-center" style="font-size: 0.8rem; font-weight: 500; border-style: dashed !important; background-color: #f1fff1;">
+        <i class="pi pi-receipt mx-1"></i>
+        <span>{{ 'PAYMENTS.AUTO_RECEIPT_NOTE' | translate }}</span>
+      </div>
+    </div>
+
+    <div class="actions-buttons-group">
+      <button class="btn-primary-action" (click)="togglePaymentForm()" *ngIf="!isInvoiceFullyPaid()">
+        <i class="pi" [ngClass]="isPaymentFormVisible ? 'pi-minus' : 'pi-plus'"></i>
+        <span>{{ "PAYMENTS.ADD_PAYMENT" | translate }}</span>
+      </button>
+
+      <app-back-button [modernStyle]="false"></app-back-button>
+    </div>
+  </div>
+
+      <!-- Invoice Summary Cards -->
+      <div class="row g-1">
+        <div class="col-12 col-md-6 col-lg-3">
+          <div class="summary-card">
+            <div class="summary-label">{{ 'PAYMENTS.INVOICE_TOTAL' | translate }}</div>
+            <div class="summary-value" *ngIf="!loadingInvoice">{{ formatNumber(invoiceTotal) }}</div>
+            <div class="summary-value" *ngIf="loadingInvoice"><i class="pi pi-spin pi-spinner fs-5 text-muted"></i></div>
+          </div>
+        </div>
+        <div class="col-12 col-md-6 col-lg-3">
+          <div class="summary-card">
+            <div class="summary-label">{{ 'PAYMENTS.TOTAL_PAID' | translate }}</div>
+            <div class="summary-value total-paid" *ngIf="!loadingInvoice">{{ formatNumber(totalPaid) }}</div>
+            <div class="summary-value" *ngIf="loadingInvoice"><i class="pi pi-spin pi-spinner fs-5 text-muted"></i></div>
+          </div>
+        </div>
+        <div class="col-12 col-md-6 col-lg-3">
+          <div class="summary-card">
+            <div class="summary-label">{{ 'PAYMENTS.REMAINING_AMOUNT' | translate }}</div>
+            <div class="summary-value remaining" [class.fully-paid]="isInvoiceFullyPaid()" *ngIf="!loadingInvoice">
+              {{ formatNumber(remainingAmount) }}
+            </div>
+            <div class="summary-value" *ngIf="loadingInvoice"><i class="pi pi-spin pi-spinner fs-5 text-muted"></i></div>
+          </div>
+        </div>
+        <div class="col-12 col-md-6 col-lg-3">
+          <div class="summary-card">
+            <div class="summary-label">{{ 'PAYMENTS.PAYMENT_STATUS' | translate }}</div>
+            <div class="summary-value" *ngIf="!loadingInvoice">
+              <span class="payment-status-badge" [ngClass]="getPaymentStatusClass()">
+                {{ getPaymentStatusLabel() }}
+              </span>
+            </div>
+            <div class="summary-value" *ngIf="loadingInvoice"><i class="pi pi-spin pi-spinner fs-5 text-muted"></i></div>
+          </div>
+        </div>
+      </div>
+
+    <!-- Add Payment Form Card -->
+    <div class="modern-card mt-4" *ngIf="isPaymentFormVisible" id="payment-form-card" style="animation: fadeInDown 0.3s ease-out;">
+      <div class="modern-card-header d-flex justify-content-between align-items-center">
+        <div class="modern-card-title m-0">
+          <i class="pi pi-plus-circle"></i>
+          <span>
+            {{ 'PAYMENTS.ADD_NEW_PAYMENT' | translate }}
+          </span>
+        </div>
+        <div class="d-flex align-items-center gap-2" [dir]="isRtl ? 'rtl' : 'ltr'">
+          <button type="button" class="btn btn-primary btn-sm px-3" (click)="savePayment()" [disabled]="saving || paymentForm.invalid">
+            <i class="pi" [ngClass]="saving ? 'pi-spin pi-spinner' : 'pi-save'"></i>
+            <span class="mx-1">{{ "PAYMENTS.SAVE_PAYMENT" | translate }}</span>
+          </button>
+          <button type="button" class="btn btn-danger btn-sm px-3" (click)="togglePaymentForm()">
+            <i class="pi pi-times"></i> <span class="mx-1">{{ "PAYMENTS.CANCEL_EDIT" | translate }}</span>
+          </button>
+        </div>
+      </div>
+      <div class="modern-card-body">
+        <form [formGroup]="paymentForm" (ngSubmit)="savePayment()">
+          <div class="row g-2 place-content-center">
+            <!-- Amount -->
+            <div class="col-12 col-md-6 col-lg-4 col-xl-2">
+              <label for="amount" class="form-label">
+                {{ 'PAYMENTS.AMOUNT' | translate }} <span class="text-danger">*</span>
+              </label>
+              <p-inputNumber id="amount" formControlName="amount" [minFractionDigits]="0" [maxFractionDigits]="2"
+                [min]="0" mode="decimal" [useGrouping]="false" inputStyleClass="input-like w-full" styleClass="w-full"
+                [ngClass]="{'ng-invalid ng-dirty': isFieldInvalid('amount')}">
+              </p-inputNumber>
+              <small class="text-danger" *ngIf="isFieldInvalid('amount')">
+                {{ getFieldError('amount') }}
+              </small>
+              <small class="text-danger d-block mt-1 fw-bold" style="font-size: 0.85rem;" *ngIf="remainingAmount > 0">
+                {{ 'PAYMENTS.REMAINING_AMOUNT' | translate }}: {{ formatNumber(remainingAmount) }}
+              </small>
+              <small class="text-warning d-block mt-1 text-nowrap d-flex align-items-center" style="font-size: 0.85rem; font-weight: 600;"
+                *ngIf="paymentForm.get('amount')?.value > remainingAmount && remainingAmount > 0">
+                <i class="pi pi-info-circle me-1" style="font-size: 1rem;"></i> 
+                <span [innerHTML]="getExcessAmountHint(paymentForm.get('amount')?.value)"></span>
+              </small>
+            </div>
+
+            <!-- Payment Date -->
+            <div class="col-12 col-md-6 col-lg-4 col-xl-2">
+              <label for="paymentDate" class="form-label">
+                {{ 'PAYMENTS.PAYMENT_DATE' | translate }} <span class="text-danger">*</span>
+              </label>
+              <p-calendar id="paymentDate" formControlName="paymentDate" [showIcon]="true" dateFormat="dd/mm/yy"
+                inputStyleClass="input-like w-full" styleClass="w-full"
+                [ngClass]="{'ng-invalid ng-dirty': isFieldInvalid('paymentDate')}"
+                [disabled]="isInvoiceFullyPaid()"></p-calendar>
+              <small class="text-danger" *ngIf="isFieldInvalid('paymentDate')">
+                {{ getFieldError('paymentDate') }}
+              </small>
+            </div>
+
+            <!-- Payment Method -->
+            <div class="col-12 col-md-6 col-lg-4 col-xl-2">
+              <label for="paymentMethodType" class="form-label">
+                {{ 'PAYMENTS.PAYMENT_METHOD' | translate }} <span class="text-danger">*</span>
+              </label>
+              <p-dropdown id="paymentMethodType" formControlName="paymentMethodType" [options]="paymentMethodOptions"
+                [optionLabel]="isRtl ? 'labelAr' : 'labelEn'" optionValue="value"
+                [placeholder]="'PAYMENTS.SELECT_PAYMENT_METHOD' | translate" styleClass="input-like w-full"
+                [ngClass]="{'ng-invalid ng-dirty': isFieldInvalid('paymentMethodType')}"
+                [disabled]="isInvoiceFullyPaid()"></p-dropdown>
+              <small class="text-danger" *ngIf="isFieldInvalid('paymentMethodType')">
+                {{ getFieldError('paymentMethodType') }}
+              </small>
+            </div>
+
+            <!-- Treasury -->
+            <div class="col-12 col-md-6 col-lg-4 col-xl-2">
+              <label for="treasuryId" class="form-label">
+                {{ getTreasuryLabel() }} <span class="text-danger">*</span>
+              </label>
+              <p-dropdown id="treasuryId" formControlName="treasuryId" [options]="treasuryOptions" optionLabel="label"
+                optionValue="value" [placeholder]="getSelectTreasuryPlaceholder()" styleClass="input-like w-full"
+                [loading]="loadingTreasuries" [ngClass]="{'ng-invalid ng-dirty': isFieldInvalid('treasuryId')}">
+              </p-dropdown>
+              <small class="text-danger" *ngIf="isFieldInvalid('treasuryId')">
+                {{ getTreasuryRequiredMessage() }}
+              </small>
+            </div>
+
+            <!-- Reference Number -->
+            <div class="col-12 col-md-6 col-lg-4 col-xl-2">
+              <label for="referenceNumber" class="form-label">
+                {{ 'PAYMENTS.REFERENCE_NUMBER' | translate }}
+              </label>
+              <input id="referenceNumber" type="text" pInputText formControlName="referenceNumber"
+                class="input-like w-full" [placeholder]="'PAYMENTS.REFERENCE_NUMBER_PLACEHOLDER' | translate"
+                [disabled]="isInvoiceFullyPaid()" />
+            </div>
+
+            <!-- Notes -->
+            <div class="col-12 col-md-6 col-lg-4 col-xl">
+              <label for="notes" class="form-label">{{ 'PAYMENTS.NOTES' | translate }}</label>
+              <input id="notes" pInputText formControlName="notes" class="input-like w-full"
+                [placeholder]="'PAYMENTS.NOTES_PLACEHOLDER' | translate" />
+            </div>
+          </div>
+
+        </form>
+      </div>
+    </div>
+
+    <!-- Receipts Table Card -->
+    <div class="modern-card mt-3">
+      <div class="modern-card-header">
+        <span class="modern-card-title">
+        <i class="pi pi-file-o"></i>
+        <span>{{ "PAYMENTS.ACTUAL_RECEIPTS" | translate }}</span>
+      </span>
+      </div>
+      <div class="modern-card-body p-0">
+        <div class="table-responsive">
+          <table class="table table-hover table-striped table-sm mb-0 text-center align-middle">
+            <thead>
+              <tr class="text-center align-middle">
+                <th style="width: 60px;" class="text-center">#</th>
+                <th class="text-center">{{ 'PAYMENTS.REFERENCE_NUMBER' | translate }}</th>
+                <th class="text-center">{{ 'PAYMENTS.PAYMENT_DATE' | translate }}</th>
+                <th class="text-center">{{ getTreasuryLabel() }}</th>
+                <th class="text-center">{{ 'PAYMENTS.AMOUNT' | translate }}</th>
+                <th class="text-center">{{ 'PAYMENTS.NOTES' | translate }}</th>
+                <th class="text-center">{{ getReceiptColumnLabel() }}</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let receipt of receipts; let i = index" class="text-center align-middle">
+                <td class="text-lg text-center font-bold" style="width: 60px;">{{ i + 1 }}</td>
+                <td class="text-lg text-center">{{ receipt.referenceNumber || '-' }}</td>
+                <td class="text-lg text-center" dir="ltr">{{ formatDate(receipt.receiptDate) }}</td>
+                <td class="text-lg text-center">{{ receipt.treasury?.name || '-' }}</td>
+                <td class="text-lg text-center fw-bold text-success">{{ formatNumber(receipt.amount) }}</td>
+                <td class="text-lg text-center" style="max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" [title]="receipt.description || ''">
+                  {{ translateDescription(receipt.description) }}
+                </td>
+                <td class="text-center">
+                  <button type="button" class="btn-receipt-link" (click)="navigateToViewActualReceipt(receipt.id)" [title]="getViewReceiptLabel()">
+                    <i class="pi pi-file"></i> {{ receipt.referenceNumber || getViewReceiptLabel() }}
+                  </button>
+                </td>
+              </tr>
+              <tr *ngIf="receipts.length === 0 && !loading">
+                <td colspan="7" class="text-center p-2 text-muted">
+                  <i class="pi pi-inbox empty-icon"></i>
+                  <p class="mb-0 text-muted">{{ "PAYMENTS.NO_RECEIPTS" | translate }}</p>
+                </td>
+              </tr>
+            </tbody>
+            <tfoot *ngIf="receipts.length > 0">
+              <tr style="border-top: 2px solid #e4e6ef; background-color: #f9f9f9;">
+                <td colspan="4" class="align-middle p-3" [ngClass]="isRtl ? 'text-end' : 'text-start'" style="font-weight: 700; font-size: 1.1rem; color: #5e6278;">
+                  {{ "PAYMENTS.TOTAL_COLLECTED_RECEIPTS" | translate }}
+                </td>
+                <td class="text-center align-middle p-3" style="font-weight: 900; font-size: 1.3rem; color: var(--primary-color, #009ef7);">
+                  {{ formatNumber(receiptsTotal) }}
+                </td>
+                <td colspan="2" class="p-3"></td>
+              </tr>
+            </tfoot>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- Payments Table Card -->
+    <div class="modern-card mt-3">
+      <div class="modern-card-header">
+        <div class="modern-card-title">
+          <i class="pi pi-history"></i>
+          <span>{{ 'PAYMENTS.SYSTEM_PAYMENTS' | translate }}</span>
+        </div>
+      </div>
+      <div class="modern-card-body p-0">
+        <div class="table-responsive">
+          <table class="table table-hover table-sm text-center align-middle">
+            <thead>
+              <tr class="text-center align-middle">
+                <th style="width: 60px;" class="text-center">#</th>
+                <th class="text-center">{{ 'PAYMENTS.PAYMENT_DATE' | translate }}</th>
+                <th class="text-center">{{ 'PAYMENTS.REFERENCE_NUMBER' | translate }}</th>
+                <th class="text-center">{{ 'PAYMENTS.AMOUNT' | translate }}</th>
+                <th class="text-center">{{ 'PAYMENTS.PAYMENT_METHOD' | translate }}</th>
+                <th class="text-center">{{ 'PAYMENTS.NOTES' | translate }}</th>
+                <th class="text-center">{{ getReceiptColumnLabel() }}</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let payment of payments; let i = index" class="text-center align-middle">
+                <td class="text-lg text-center font-bold" style="width: 60px;">{{ i + 1 }}</td>
+                <td class="text-lg text-center" dir="ltr">{{ formatDate(payment.paymentDate) }}</td>
+                <td class="text-lg text-center">{{ payment.referenceNumber || '-' }}</td>
+                <td class="text-lg text-center fw-bold text-success">{{ formatNumber(payment.amount) }}</td>
+
+                <td class="text-lg text-center">{{ getPaymentMethodLabel(payment.paymentMethodType) }}</td>
+                <td class="text-lg text-center" style="max-width: 150px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" [title]="payment.notes || ''">
+                  {{ translateDescription(payment.notes) }}
+                </td>
+                <td class="text-center">
+                  <ng-container *ngIf="payment.paycheckReceiptId; else noReceipt">
+                    <button type="button" class="btn-receipt-link" (click)="navigateToViewReceipt(payment)" [title]="getViewReceiptLabel()">
+                      <i class="pi pi-file"></i> {{ payment.receiptNo || getViewReceiptLabel() }}
+                    </button>
+                  </ng-container>
+                  <ng-template #noReceipt>
+                    <span class="text-muted text-sm">-</span>
+                  </ng-template>
+                </td>
+              </tr>
+              <tr *ngIf="payments.length === 0 && !loading">
+                <td colspan="7" class="text-center p-2 text-muted">
+                  <i class="pi pi-inbox empty-icon"></i>
+                  <p class="mb-0">{{ 'PAYMENTS.NO_PAYMENTS' | translate }}</p>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+</div>
+
+<p-toast></p-toast>
+<p-confirmDialog [dir]="isRtl ? 'rtl' : 'ltr'" styleClass="payment-confirm-dialog"></p-confirmDialog>

@@ -1,0 +1,31 @@
+:host {
+  height: 100%;
+  margin: 0;
+
+  .flex-root {
+    height: 100%;
+  }
+}
+
+.page-loaded {
+  app-layout {
+    opacity: 1;
+    transition: opacity 1s ease-in-out;
+  }
+}
+
+/*.wrapper-rtl {
+  margin-right: 265px !important;
+  margin-left: 0px !important;
+}*/
+
+@media (min-width: 992px) {
+  .sidebar-fixed-right {
+    position: fixed !important;
+    z-index: 105 !important;
+    top: 0 !important;
+    bottom: 0 !important;
+    right: 0 !important;
+    left: unset !important;
+  }
+}

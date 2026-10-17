@@ -1,0 +1,754 @@
+<div class="system-settings-wrapper w-full px-1 sm:px-2 md:px-3 py-2 pb-16 flex flex-col gap-3">
+
+  <!-- Loading Overlay -->
+  <div class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm flex flex-col items-center justify-center z-50 transition-all" *ngIf="loading">
+    <div class="bg-white p-5 rounded-2xl shadow-xl flex flex-col items-center gap-2 border border-slate-100">
+      <i class="pi pi-spin pi-spinner text-blue-600 text-3xl"></i>
+      <span class="text-slate-800 font-bold text-xs">{{ saving ? (activeLanguage === 'ar' ? 'جاري الحفظ...' : 'Saving...') : (activeLanguage === 'ar' ? 'جاري التحميل...' : 'Loading...') }}</span>
+    </div>
+  </div>
+
+  <!-- Page Header & Actions -->
+  <div class="bg-white border border-slate-200 rounded-xl p-3 sm:p-3.5 shadow-sm flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+    <div class="flex items-center gap-3">
+      <div class="w-10 h-10 rounded-xl bg-blue-600 text-white flex items-center justify-center shadow-sm shrink-0">
+        <i class="pi pi-sliders-h text-lg"></i>
+      </div>
+      <div>
+        <h1 class="text-base sm:text-lg font-black text-slate-900 m-0 tracking-tight">
+          {{ "DATA.SYSTEM_SETTING_PAGE_TITLE" | translate }}
+        </h1>
+        <p class="text-xs text-slate-500 font-medium m-0 mt-0.5">
+          {{ "DATA.SYSTEM_SETTING_PAGE_SUBTITLE" | translate }}
+        </p>
+      </div>
+    </div>
+
+    <!-- Header Actions (Save FIRST, Cancel SECOND, Back THIRD) -->
+    <div class="flex items-center gap-2 self-end sm:self-center">
+      <!-- Save Button -->
+      <button
+        type="button"
+        (click)="saveSystemSetting()"
+        [disabled]="loading"
+        *ngIf="!loading && hasPermission(PERMISSIONS.SystemSetting.Update)"
+        class="inline-flex items-center gap-1.5 px-4 py-2 bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white text-xs sm:text-sm font-bold rounded-lg shadow-sm hover:shadow transition-all disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer border-0">
+        <i class="pi pi-check text-xs sm:text-sm"></i>
+        <span>{{ translate.instant('FINANCE.SAVE') }}</span>
+      </button>
+
+      <!-- Cancel Button -->
+      <button
+        type="button"
+        (click)="cancel()"
+        [disabled]="loading"
+        *ngIf="!loading && hasPermission(PERMISSIONS.SystemSetting.Update)"
+        class="inline-flex items-center gap-1.5 px-3.5 py-2 bg-rose-50 hover:bg-rose-100 active:bg-rose-200 text-rose-700 hover:text-rose-800 text-xs sm:text-sm font-bold rounded-lg border border-rose-200 hover:border-rose-300 transition-all cursor-pointer">
+        <i class="pi pi-times text-xs sm:text-sm text-rose-600"></i>
+        <span>{{ activeLanguage === 'ar' ? 'إلغاء' : 'Cancel' }}</span>
+      </button>
+
+      <!-- Back Button -->
+      <button
+        type="button"
+        (click)="goBack()"
+        class="inline-flex items-center gap-1.5 px-3.5 py-2 bg-slate-100 hover:bg-slate-200 active:bg-slate-300 text-slate-700 text-xs sm:text-sm font-bold rounded-lg border border-slate-200 transition-all cursor-pointer">
+        <i class="pi text-xs sm:text-sm" [ngClass]="activeLanguage === 'ar' ? 'pi-arrow-right' : 'pi-arrow-left'"></i>
+        <span>{{ activeLanguage === 'ar' ? 'رجوع' : 'Back' }}</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- Main Settings Form -->
+  <form [formGroup]="systemSettingFormGroup" class="flex flex-col gap-3" *ngIf="!loading">
+
+    <!-- System Settings Tab Navigation Bar -->
+    <div class="system-tabs-nav" role="tablist">
+      <!-- Tab 1: General & Security -->
+      <button 
+        type="button" 
+        class="nav-tab-item" 
+        [class.active]="activeTab() === 'general'"
+        (click)="setActiveTab('general')"
+        role="tab"
+        [attr.aria-selected]="activeTab() === 'general'">
+        <div class="tab-icon-box">
+          <i class="pi pi-globe"></i>
+        </div>
+        <div class="tab-text-box">
+          <div class="flex items-center gap-1.5">
+            <span class="tab-main-title">{{ activeLanguage === 'ar' ? 'الإعدادات العامة والأمان' : 'General & Security' }}</span>
+            <span class="tab-status-dot" *ngIf="activeTab() === 'general'"></span>
+          </div>
+          <span class="tab-sub-title">{{ activeLanguage === 'ar' ? 'الوقت الإقليمي، الجلسات، ربط المخزون' : 'Timezone, Sessions, Inventory' }}</span>
+        </div>
+        <div class="tab-bottom-indicator" *ngIf="activeTab() === 'general'"></div>
+      </button>
+
+      <!-- Tab 2: Reservations -->
+      <button 
+        type="button" 
+        class="nav-tab-item" 
+        [class.active]="activeTab() === 'reservations'"
+        (click)="setActiveTab('reservations')"
+        role="tab"
+        [attr.aria-selected]="activeTab() === 'reservations'">
+        <div class="tab-icon-box">
+          <i class="pi pi-hashtag"></i>
+        </div>
+        <div class="tab-text-box">
+          <div class="flex items-center gap-1.5">
+            <span class="tab-main-title">{{ activeLanguage === 'ar' ? 'ترقيم الحجوزات' : 'Reservation Serials' }}</span>
+            <span class="tab-status-dot" *ngIf="activeTab() === 'reservations'"></span>
+          </div>
+          <span class="tab-sub-title">{{ activeLanguage === 'ar' ? 'هيكل الترقيم، التسلسل، والبادئة' : 'Serial Format, Prefix & Starting No' }}</span>
+        </div>
+        <div class="tab-bottom-indicator" *ngIf="activeTab() === 'reservations'"></div>
+      </button>
+
+      <!-- Tab 3: Print Customization -->
+      <button 
+        type="button" 
+        class="nav-tab-item" 
+        [class.active]="activeTab() === 'print'"
+        (click)="setActiveTab('print')"
+        role="tab"
+        [attr.aria-selected]="activeTab() === 'print'">
+        <div class="tab-icon-box">
+          <i class="pi pi-print"></i>
+        </div>
+        <div class="tab-text-box">
+          <div class="flex items-center gap-1.5">
+            <span class="tab-main-title">{{ activeLanguage === 'ar' ? 'تخصيص المطبوعات' : 'Print Customization' }}</span>
+            <span class="tab-status-dot" *ngIf="activeTab() === 'print'"></span>
+          </div>
+          <span class="tab-sub-title">{{ activeLanguage === 'ar' ? 'الأختام، التواقيع، البنوك، الشروط' : 'Stamps, Signatures, Banks, Terms' }}</span>
+        </div>
+        <div class="tab-bottom-indicator" *ngIf="activeTab() === 'print'"></div>
+      </button>
+    </div>
+
+
+    <!-- ================================================== -->
+    <!-- TAB 1: GENERAL & SECURITY                          -->
+    <!-- ================================================== -->
+    <div *ngIf="activeTab() === 'general'" class="tab-content-pane flex flex-col gap-3">
+      
+      <!-- Card 1: Timezone & Live Digital Clock Section -->
+      <div class="bg-white border border-slate-200 rounded-xl p-3.5 sm:p-4 shadow-sm flex flex-col gap-3">
+        
+        <!-- Header -->
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-2.5 border-b border-slate-100">
+          <div class="flex items-center gap-2.5">
+            <div class="w-9 h-9 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center font-bold border border-blue-100 shrink-0">
+              <i class="pi pi-globe text-base"></i>
+            </div>
+            <div>
+              <h2 class="text-sm sm:text-base font-extrabold text-slate-900 m-0 flex items-center gap-1.5">
+                <span>{{ translate.instant("DATA.TIME_ZONE") }}</span>
+                <span class="text-red-600 font-bold">*</span>
+              </h2>
+              <p class="text-xs text-slate-500 font-medium m-0 mt-0.5">
+                {{ "DATA.TIME_ZONE_DESC" | translate }}
+              </p>
+            </div>
+          </div>
+
+          <span class="bg-blue-50 text-blue-700 border border-blue-200 px-2.5 py-0.5 rounded-full text-xs font-bold self-start sm:self-center shrink-0">
+            {{ activeLanguage === 'ar' ? 'التوقيت القياسي للنظام' : 'Standard System Time' }}
+          </span>
+        </div>
+
+        <!-- Grid: Dropdown (7 cols) + System Live Clock Widget (5 cols) -->
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-3.5 items-stretch">
+          
+          <!-- Dropdown Area (7 cols) -->
+          <div class="lg:col-span-7 flex flex-col justify-center gap-1.5 bg-slate-50/60 p-3 rounded-xl border border-slate-200/70">
+            <label for="timeZone" class="text-xs sm:text-sm font-bold text-slate-800 m-0 flex items-center gap-1.5">
+              <i class="pi pi-map-marker text-blue-600 text-xs"></i>
+              <span>{{ activeLanguage === 'ar' ? 'اختر الدولة / النطاق الجغرافي للنظام:' : 'Select Country / Geographic Zone:' }}</span>
+            </label>
+            <p-dropdown
+              id="timeZone"
+              formControlName="timeZone"
+              [options]="timeZoneOptions"
+              [placeholder]="translate.instant('DATA.SELECT')"
+              [showClear]="false"
+              [filter]="true"
+              filterBy="label"
+              styleClass="w-full flex rtl:flex-row-reverse rounded-lg border-slate-300 text-xs font-semibold text-slate-800"
+              appendTo="body">
+            </p-dropdown>
+            <small class="text-red-600 font-bold text-xs" *ngIf="systemSettingFormGroup.controls.timeZone.invalid && systemSettingFormGroup.controls.timeZone.touched">
+              {{ translate.instant("DATA.TIME_ZONE_REQUIRED") }}
+            </small>
+            <span class="text-xs text-slate-500 mt-0.5 flex items-center gap-1">
+              <i class="pi pi-info-circle text-[11px] text-blue-500"></i>
+              <span>{{ activeLanguage === 'ar' ? 'يُطبق التوقيت تلقائياً على كل العمليات والفواتير والتقارير' : 'Timezone applies automatically to all transactions, invoices, and reports' }}</span>
+            </span>
+          </div>
+
+          <!-- System Blue Live Digital Clock Gadget (5 cols) -->
+          <div class="lg:col-span-5 system-clock-gadget">
+            <!-- Header status row -->
+            <div class="clock-top-row">
+              <span class="clock-label">
+                <span class="relative flex h-2 w-2">
+                  <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                  <span class="relative inline-flex rounded-full h-2 w-2 bg-emerald-400"></span>
+                </span>
+                {{ activeLanguage === 'ar' ? 'التوقيت الحي للنظام' : 'LIVE SYSTEM TIME' }}
+              </span>
+              <span class="clock-utc-pill">
+                {{ selectedTimezoneDetails.offset || 'UTC' }}
+              </span>
+            </div>
+
+            <!-- Main Digital Time Display -->
+            <div class="clock-time-row">
+              <span class="clock-digits">{{ clockTimeDigits }}</span>
+              <span class="clock-period">{{ clockTimePeriod }}</span>
+            </div>
+
+            <!-- Clean Bottom Meta Lines (Full width, no truncation) -->
+            <div class="clock-details-block">
+              <div class="clock-detail-line">
+                <i class="pi pi-calendar"></i>
+                <span>{{ clockDayName }}، {{ clockDate }}</span>
+              </div>
+              <div class="clock-detail-line" [title]="selectedTimezoneCleanName">
+                <i class="pi pi-map-marker"></i>
+                <span>{{ selectedTimezoneCleanName }}</span>
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+      </div>
+
+      <!-- Card 2: Session Inactivity Timeout -->
+      <div class="bg-white border border-slate-200 rounded-xl p-3.5 sm:p-4 shadow-sm flex flex-col gap-3">
+        <!-- Header -->
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-2.5 border-b border-slate-100">
+          <div class="flex items-center gap-2.5">
+            <div class="w-9 h-9 rounded-lg bg-amber-50 text-amber-600 flex items-center justify-center font-bold border border-amber-100 shrink-0">
+              <i class="pi pi-shield text-base"></i>
+            </div>
+            <div>
+              <h2 class="text-sm sm:text-base font-extrabold text-slate-900 m-0 flex items-center gap-1.5">
+                <span>{{ translate.instant("DATA.SESSION_TIMEOUT") }}</span>
+                <span class="text-red-600 font-bold">*</span>
+              </h2>
+              <p class="text-xs text-slate-500 font-medium m-0 mt-0.5">
+                {{ "DATA.SESSION_TIMEOUT_HELP" | translate }}
+              </p>
+            </div>
+          </div>
+
+          <!-- Developer Tools (if developer) -->
+          <div *ngIf="isDeveloper" class="flex items-center gap-2 self-start sm:self-center shrink-0">
+            <button
+              type="button"
+              (click)="previewIdleWarning()"
+              class="text-xs text-amber-800 hover:text-amber-950 font-bold cursor-pointer bg-amber-100 hover:bg-amber-200/80 border border-amber-300 px-2.5 py-1 rounded-md transition-colors inline-flex items-center gap-1">
+              <i class="pi pi-eye text-[11px]"></i>
+              <span>{{ activeLanguage === 'ar' ? 'معاينة تنبيه العداد' : 'Preview Warning' }}</span>
+            </button>
+            <button
+              type="button"
+              (click)="previewExpiredDialog()"
+              class="text-xs text-red-800 hover:text-red-950 font-bold cursor-pointer bg-red-100 hover:bg-red-200/80 border border-red-300 px-2.5 py-1 rounded-md transition-colors inline-flex items-center gap-1">
+              <i class="pi pi-sign-out text-[11px]"></i>
+              <span>{{ activeLanguage === 'ar' ? 'معاينة الخروج' : 'Preview Logout' }}</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Field -->
+        <div class="flex flex-col gap-1.5 bg-slate-50/60 p-3 rounded-xl border border-slate-200/70 max-w-xl">
+          <label for="sessionTimeoutMinutes" class="text-xs sm:text-sm font-bold text-slate-800 m-0 flex items-center gap-1.5">
+            <i class="pi pi-clock text-amber-600 text-xs"></i>
+            <span>{{ activeLanguage === 'ar' ? 'مهلة الخمول قبل تسجيل الخروج التلقائي:' : 'Inactivity timeout duration:' }}</span>
+          </label>
+          <p-dropdown
+            id="sessionTimeoutMinutes"
+            formControlName="sessionTimeoutMinutes"
+            [options]="sessionTimeoutOptions"
+            [placeholder]="translate.instant('DATA.SELECT')"
+            styleClass="w-full flex rtl:flex-row-reverse rounded-lg border-slate-300 text-xs font-semibold text-slate-800"
+            appendTo="body">
+          </p-dropdown>
+          <span class="text-xs text-slate-500 mt-0.5 flex items-center gap-1">
+            <i class="pi pi-info-circle text-[11px] text-amber-500"></i>
+            <span>{{ activeLanguage === 'ar' ? 'يظهر عداد تنبيه تحذيري قبل دقيقتين من تسجيل الخروج' : 'A warning countdown appears 2 minutes before logout' }}</span>
+          </span>
+        </div>
+      </div>
+
+      <!-- Card 3: Inventory Linking -->
+      <div class="bg-white border border-slate-200 rounded-xl p-3.5 sm:p-4 shadow-sm flex items-center justify-between gap-4"
+           [ngClass]="systemSettingFormGroup.get('isLinkedToInventory')?.value ? 'border-emerald-300 bg-emerald-50/20' : ''">
+        <div class="flex items-center gap-3">
+          <div class="w-9 h-9 rounded-lg flex items-center justify-center shrink-0 border"
+               [ngClass]="systemSettingFormGroup.get('isLinkedToInventory')?.value ? 'bg-emerald-100 text-emerald-700 border-emerald-200' : 'bg-slate-100 text-slate-600 border-slate-200'">
+            <i class="pi pi-sync text-base"></i>
+          </div>
+          <div>
+            <div class="flex items-center gap-2">
+              <h2 class="text-sm sm:text-base font-extrabold text-slate-900 m-0">
+                {{ "DATA.SYSTEM_SETTING_LINK_SALES_TO_INVENTORY" | translate }}
+              </h2>
+              <span class="px-2.5 py-0.5 rounded-full text-xs font-bold"
+                    [ngClass]="systemSettingFormGroup.get('isLinkedToInventory')?.value ? 'bg-emerald-100 text-emerald-800 border border-emerald-300' : 'bg-slate-100 text-slate-600 border border-slate-200'">
+                {{ systemSettingFormGroup.get('isLinkedToInventory')?.value ? ( "DATA.SYSTEM_SETTING_STATUS_ENABLED" | translate ) : ( "DATA.SYSTEM_SETTING_STATUS_DISABLED" | translate ) }}
+              </span>
+            </div>
+            <p class="text-xs text-slate-500 font-medium m-0 mt-0.5">
+              {{ activeLanguage === 'ar' ? 'إنشاء أذونات الصرف وخصم الكميات من المستودع تلقائياً عند اعتماد فواتير المبيعات.' : 'Auto-generate warehouse issue permits on sales invoice confirmation.' }}
+            </p>
+          </div>
+        </div>
+
+        <p-inputSwitch
+          formControlName="isLinkedToInventory"
+          (onChange)="onIsLinkedToInventoryChange($event)">
+        </p-inputSwitch>
+      </div>
+
+    </div>
+
+
+    <!-- ================================================== -->
+    <!-- TAB 2: RESERVATIONS NUMBERING                      -->
+    <!-- ================================================== -->
+    <div *ngIf="activeTab() === 'reservations'" class="tab-content-pane bg-white border border-slate-200 rounded-xl p-3.5 sm:p-4 shadow-sm flex flex-col gap-3">
+      
+      <!-- Header -->
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-2.5 border-b border-slate-100">
+        <div class="flex items-center gap-2.5">
+          <div class="w-9 h-9 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center font-bold border border-blue-100 shrink-0">
+            <i class="pi pi-hashtag text-base"></i>
+          </div>
+          <div>
+            <h2 class="text-sm sm:text-base font-extrabold text-slate-900 m-0">
+              {{ activeLanguage === 'ar' ? 'إعدادات وهيكل ترقيم الحجوزات' : 'Reservation Numbering Structure' }}
+            </h2>
+            <p class="text-xs text-slate-500 font-medium m-0 mt-0.5">
+              {{ activeLanguage === 'ar' ? 'تحديد صيغة التسلسل ورقم البداية والبادئة لجميع حجوزات النظام' : 'Configure serial format, starting number, and prefix for all reservations' }}
+            </p>
+          </div>
+        </div>
+
+        <span class="px-2.5 py-0.5 rounded-full text-xs font-bold self-start sm:self-center shrink-0"
+              [ngClass]="canEditReservationPrefix() ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-slate-100 text-slate-700 border border-slate-200'">
+          {{ canEditReservationPrefix() ? (activeLanguage === 'ar' ? 'متاح للتعديل' : 'Editable') : (activeLanguage === 'ar' ? 'مقفل (يوجد حجوزات)' : 'Locked') }}
+        </span>
+      </div>
+
+      <!-- Dev Mode Warning -->
+      <div class="bg-amber-50 border-r-4 border-amber-400 text-amber-950 p-2.5 rounded-lg flex items-start gap-2 text-xs sm:text-sm"
+        *ngIf="devModeBypassLock && reservationsCount() > 0">
+        <i class="pi pi-exclamation-triangle text-amber-700 text-sm mt-0.5 shrink-0"></i>
+        <div>
+          <strong class="font-bold">{{ "DATA.SYSTEM_SETTING_DEV_MODE_ACTIVE" | translate }}:</strong>
+          {{ "DATA.SYSTEM_SETTING_DEV_MODE_BYPASS_MESSAGE" | translate:{ count: reservationsCount() } }}
+        </div>
+      </div>
+
+      <!-- Lock Warning -->
+      <div class="bg-slate-100 border-r-4 border-slate-400 text-slate-800 p-2.5 rounded-lg flex items-center justify-between gap-2 text-xs sm:text-sm font-semibold"
+        *ngIf="!canEditReservationPrefix() && !devModeBypassLock">
+        <div class="flex items-center gap-2">
+          <i class="pi pi-lock text-slate-600"></i>
+          <span>{{ "DATA.SERIAL_CONFIG_LOCKED" | translate }}</span>
+        </div>
+        <span class="text-slate-600 text-xs">
+          {{ "DATA.SYSTEM_SETTING_CURRENT_RESERVATIONS_COUNT" | translate }}: <strong class="text-slate-900">{{ reservationsCount() }}</strong>
+        </span>
+      </div>
+
+      <!-- Inputs Grid -->
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-3.5 pt-1">
+        <!-- Format -->
+        <div class="flex flex-col gap-1.5 bg-slate-50/60 p-3 rounded-xl border border-slate-200/70">
+          <label for="reservationSerialNumberFormat" class="text-xs sm:text-sm font-bold text-slate-800 m-0 flex items-center gap-1.5">
+            <i class="pi pi-sliders-v text-blue-600 text-xs"></i>
+            <span>{{ "DATA.SERIAL_FORMAT" | translate }}</span>
+            <span class="text-red-600 font-bold">*</span>
+          </label>
+          <p-dropdown
+            id="reservationSerialNumberFormat"
+            formControlName="reservationSerialNumberFormat"
+            [options]="serialFormatOptions"
+            optionLabel="label"
+            optionValue="value"
+            [placeholder]="translate.instant('DATA.SELECT')"
+            styleClass="w-full flex rtl:flex-row-reverse rounded-lg border-slate-300 text-xs font-semibold text-slate-800"
+            appendTo="body"
+            [disabled]="!canEditReservationPrefix()">
+          </p-dropdown>
+          <small class="text-slate-500 text-xs mt-0.5 flex items-center gap-1">
+            <i class="pi pi-info-circle text-[11px] text-blue-500"></i>
+            <span>{{ "DATA.SYSTEM_SETTING_SERIAL_FORMAT_HELP" | translate }}</span>
+          </small>
+        </div>
+
+        <!-- Start Number -->
+        <div class="flex flex-col gap-1.5 bg-slate-50/60 p-3 rounded-xl border border-slate-200/70">
+          <label for="reservationSerialStartNumber" class="text-xs sm:text-sm font-bold text-slate-800 m-0 flex items-center gap-1.5">
+            <i class="pi pi-sort-numeric-up text-blue-600 text-xs"></i>
+            <span>{{ "DATA.SERIAL_START_NUMBER" | translate }}</span>
+            <span class="text-red-600 font-bold">*</span>
+          </label>
+          <p-inputNumber
+            id="reservationSerialStartNumber"
+            formControlName="reservationSerialStartNumber"
+            [min]="1"
+            [showButtons]="true"
+            styleClass="w-full text-xs font-semibold"
+            [disabled]="!canEditReservationPrefix()">
+          </p-inputNumber>
+          <small class="text-slate-500 text-xs mt-0.5 flex items-center gap-1">
+            <i class="pi pi-info-circle text-[11px] text-blue-500"></i>
+            <span>{{ "DATA.SERIAL_START_NUMBER_INFO" | translate }}</span>
+          </small>
+        </div>
+      </div>
+
+      <!-- Prefix Field (conditional) -->
+      <div class="flex flex-col gap-1.5 bg-blue-50/40 p-3 rounded-xl border border-blue-200/70 max-w-xl"
+        *ngIf="systemSettingFormGroup.get('reservationSerialNumberFormat')?.value === ReservationSerialNumberFormat.PrefixWithNumbers">
+        <label for="reservationSerialPrefix" class="text-xs sm:text-sm font-bold text-slate-800 m-0 flex items-center gap-1.5">
+          <i class="pi pi-tag text-blue-600 text-xs"></i>
+          <span>{{ "DATA.SERIAL_PREFIX" | translate }}</span>
+          <span class="text-red-600 font-bold">*</span>
+        </label>
+        <input
+          pInputText
+          type="text"
+          id="reservationSerialPrefix"
+          formControlName="reservationSerialPrefix"
+          class="w-full rounded-lg border-slate-300 text-xs font-semibold text-slate-800 py-1.5"
+          [placeholder]="translate.instant('DATA.SERIAL_PREFIX_PLACEHOLDER')"
+          [disabled]="!canEditReservationPrefix()" />
+        <small class="text-red-600 font-bold text-xs" *ngIf="systemSettingFormGroup.controls.reservationSerialPrefix.invalid && systemSettingFormGroup.controls.reservationSerialPrefix.touched">
+          {{ "DATA.SERIAL_PREFIX_REQUIRED" | translate }}
+        </small>
+      </div>
+
+    </div>
+
+
+    <!-- ================================================== -->
+    <!-- TAB 3: PRINT CUSTOMIZATION                         -->
+    <!-- ================================================== -->
+    <div *ngIf="activeTab() === 'print'" class="tab-content-pane flex flex-col gap-3">
+      
+      <!-- 1. Invoice Prints -->
+      <div class="bg-white border border-slate-200 rounded-xl p-3.5 sm:p-4 shadow-sm flex flex-col gap-3">
+        <!-- Header -->
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-2.5 border-b border-slate-100">
+          <div class="flex items-center gap-2.5">
+            <div class="w-9 h-9 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center font-bold border border-blue-100 shrink-0">
+              <i class="pi pi-file text-base"></i>
+            </div>
+            <div>
+              <h2 class="text-sm sm:text-base font-extrabold text-slate-900 m-0">
+                {{ activeLanguage === 'ar' ? 'مستندات الفواتير وعروض الأسعار' : 'Invoice & Quotation Documents' }}
+              </h2>
+              <p class="text-xs text-slate-500 font-medium m-0 mt-0.5">
+                {{ activeLanguage === 'ar' ? 'تخصيص ظهور الأختام والتواقيع والشروط والحسابات البنكية على الفواتير' : 'Customize stamps, signatures, terms, and bank accounts on invoices' }}
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Switches Grid -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2.5">
+          <!-- 1. Stamp -->
+          <div class="p-3 bg-slate-50 hover:bg-slate-100/70 border border-slate-200 rounded-xl flex items-center justify-between gap-3 transition-colors shadow-xs">
+            <div class="flex items-center gap-3">
+              <div class="w-9 h-9 rounded-lg bg-indigo-50 text-indigo-600 flex items-center justify-center shrink-0 border border-indigo-100">
+                <i class="pi pi-verified text-base"></i>
+              </div>
+              <div>
+                <span class="block text-slate-800 font-bold text-xs sm:text-sm">
+                  {{ activeLanguage === 'ar' ? 'ختم الشركة' : 'Company Stamp' }}
+                </span>
+                <span class="block text-slate-500 font-normal text-xs mt-0.5 leading-tight">
+                  {{ activeLanguage === 'ar' ? 'إظهار الختم الرسمي للشركة' : 'Show official company stamp' }}
+                </span>
+              </div>
+            </div>
+            <p-inputSwitch id="showStamp" [ngModel]="showStamp" [ngModelOptions]="{standalone: true}" (onChange)="onShowStampChange($event.checked)"></p-inputSwitch>
+          </div>
+
+          <!-- 2. Company Signature -->
+          <div class="p-3 bg-slate-50 hover:bg-slate-100/70 border border-slate-200 rounded-xl flex items-center justify-between gap-3 transition-colors shadow-xs">
+            <div class="flex items-center gap-3">
+              <div class="w-9 h-9 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0 border border-emerald-100">
+                <i class="pi pi-pencil text-base"></i>
+              </div>
+              <div>
+                <span class="block text-slate-800 font-bold text-xs sm:text-sm">
+                  {{ activeLanguage === 'ar' ? 'توقيع الشركة' : 'Company Signature' }}
+                </span>
+                <span class="block text-slate-500 font-normal text-xs mt-0.5 leading-tight">
+                  {{ activeLanguage === 'ar' ? 'إظهار مربع توقيع الشركة' : 'Show company signature block' }}
+                </span>
+              </div>
+            </div>
+            <p-inputSwitch id="showCompanySignature" [ngModel]="showCompanySignature" [ngModelOptions]="{standalone: true}" (onChange)="onShowCompanySignatureChange($event.checked)"></p-inputSwitch>
+          </div>
+
+          <!-- 3. Customer Signature -->
+          <div class="p-3 bg-slate-50 hover:bg-slate-100/70 border border-slate-200 rounded-xl flex items-center justify-between gap-3 transition-colors shadow-xs">
+            <div class="flex items-center gap-3">
+              <div class="w-9 h-9 rounded-lg bg-amber-50 text-amber-600 flex items-center justify-center shrink-0 border border-amber-100">
+                <i class="pi pi-user text-base"></i>
+              </div>
+              <div>
+                <span class="block text-slate-800 font-bold text-xs sm:text-sm">
+                  {{ activeLanguage === 'ar' ? 'توقيع العميل' : 'Customer Signature' }}
+                </span>
+                <span class="block text-slate-500 font-normal text-xs mt-0.5 leading-tight">
+                  {{ activeLanguage === 'ar' ? 'إظهار مربع توقيع العميل' : 'Show customer signature block' }}
+                </span>
+              </div>
+            </div>
+            <p-inputSwitch id="showCustomerSignature" [ngModel]="showCustomerSignature" [ngModelOptions]="{standalone: true}" (onChange)="onShowCustomerSignatureChange($event.checked)"></p-inputSwitch>
+          </div>
+
+          <!-- 4. Signatures in Print 2 -->
+          <div class="p-3 bg-blue-50/50 hover:bg-blue-50 border border-blue-200 rounded-xl flex items-center justify-between gap-3 transition-colors shadow-xs">
+            <div class="flex items-center gap-3">
+              <div class="w-9 h-9 rounded-lg bg-blue-100 text-blue-700 flex items-center justify-center shrink-0 border border-blue-200">
+                <i class="pi pi-file-pdf text-base"></i>
+              </div>
+              <div>
+                <span class="block text-slate-800 font-bold text-xs sm:text-sm">
+                  {{ activeLanguage === 'ar' ? 'توقيعات طباعة 2' : 'Signatures in Print 2' }}
+                </span>
+                <span class="block text-blue-700 font-normal text-xs mt-0.5 leading-tight">
+                  {{ activeLanguage === 'ar' ? 'إظهار توقيع الشركة والعميل' : 'Show company and customer signatures' }}
+                </span>
+              </div>
+            </div>
+            <p-inputSwitch id="showSignaturesInInvoicePrint" formControlName="showSignaturesInInvoicePrint"></p-inputSwitch>
+          </div>
+
+          <!-- 5. Terms in Print 2 -->
+          <div class="p-3 bg-purple-50/40 hover:bg-purple-50 border border-purple-200 rounded-xl flex items-center justify-between gap-3 transition-colors shadow-xs">
+            <div class="flex items-center gap-3">
+              <div class="w-9 h-9 rounded-lg bg-purple-100 text-purple-700 flex items-center justify-center shrink-0 border border-purple-200">
+                <i class="pi pi-list text-base"></i>
+              </div>
+              <div>
+                <span class="block text-slate-800 font-bold text-xs sm:text-sm">
+                  {{ activeLanguage === 'ar' ? 'الشروط والأحكام في طباعة 2' : 'Terms & Conditions in Print 2' }}
+                </span>
+                <span class="block text-purple-700 font-normal text-xs mt-0.5 leading-tight">
+                  {{ activeLanguage === 'ar' ? 'إظهار الشروط والأحكام في طباعة 2' : 'Show terms & conditions in Print 2' }}
+                </span>
+              </div>
+            </div>
+            <p-inputSwitch id="showTermsInPrint2" formControlName="showTermsInPrint2" (onChange)="onShowTermsInPrint2Change($event.checked)"></p-inputSwitch>
+          </div>
+        </div>
+
+        <!-- 2 Lists -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+          <!-- Policies -->
+          <div class="border border-slate-200 rounded-xl p-3 bg-slate-50/50">
+            <div class="flex items-center justify-between pb-2 border-b border-slate-200 mb-2">
+              <span class="text-xs sm:text-sm font-bold text-slate-800">{{ activeLanguage === 'ar' ? 'الشروط والأحكام الافتراضية' : 'Default Terms' }}</span>
+              <span class="text-xs font-bold text-slate-600 bg-slate-200 px-2.5 py-0.5 rounded-full">{{ selectedPolicies.length }}</span>
+            </div>
+            <div class="flex flex-col gap-1 max-h-[150px] overflow-y-auto">
+              <div *ngFor="let policy of selectedPolicies; let idx = index" class="flex items-center gap-2 p-1.5 bg-white border border-slate-200 rounded-lg text-xs sm:text-sm">
+                <input [id]="'settingPolicyCheckbox_' + idx" type="checkbox" [(ngModel)]="policy.checked" [ngModelOptions]="{standalone: true}" (change)="onPolicyToggle()" class="accent-blue-600 cursor-pointer" />
+                <label [for]="'settingPolicyCheckbox_' + idx" class="m-0 cursor-pointer font-medium text-slate-700 truncate">{{ policy.name }}</label>
+              </div>
+              <div *ngIf="selectedPolicies.length === 0" class="text-center text-slate-400 text-xs sm:text-sm py-3">
+                {{ activeLanguage === 'ar' ? 'لا توجد شروط مسجلة' : 'No terms registered' }}
+              </div>
+            </div>
+          </div>
+
+          <!-- Banks -->
+          <div class="border border-slate-200 rounded-xl p-3 bg-slate-50/50">
+            <div class="flex items-center justify-between pb-2 border-b border-slate-200 mb-2">
+              <span class="text-xs sm:text-sm font-bold text-slate-800">{{ activeLanguage === 'ar' ? 'الحسابات البنكية الافتراضية' : 'Default Bank Accounts' }}</span>
+              <span class="text-xs font-bold text-slate-600 bg-slate-200 px-2.5 py-0.5 rounded-full">{{ selectedBanks.length }}</span>
+            </div>
+            <div class="flex flex-col gap-1 max-h-[150px] overflow-y-auto">
+              <div *ngFor="let bank of selectedBanks; let idx = index" class="flex items-center gap-2 p-1.5 bg-white border border-slate-200 rounded-lg text-xs sm:text-sm">
+                <input [id]="'settingBankCheckbox_' + idx" type="checkbox" [(ngModel)]="bank.checked" [ngModelOptions]="{standalone: true}" (change)="onBankToggle()" class="accent-blue-600 cursor-pointer" />
+                <label [for]="'settingBankCheckbox_' + idx" class="m-0 cursor-pointer font-medium text-slate-700 truncate">
+                  <strong>{{ bank.bankName }}</strong> - <span class="font-mono text-slate-500 text-xs">{{ bank.accountNumber }}</span>
+                </label>
+              </div>
+              <div *ngIf="selectedBanks.length === 0" class="text-center text-slate-400 text-xs sm:text-sm py-3">
+                {{ activeLanguage === 'ar' ? 'لا توجد حسابات مسجلة' : 'No bank accounts registered' }}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 2. Reservation Prints -->
+      <div class="bg-white border border-slate-200 rounded-xl p-3.5 sm:p-4 shadow-sm flex flex-col gap-3">
+        <!-- Header -->
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-2.5 border-b border-slate-100">
+          <div class="flex items-center gap-2.5">
+            <div class="w-9 h-9 rounded-lg bg-orange-50 text-orange-600 flex items-center justify-center font-bold border border-orange-200 shrink-0">
+              <i class="pi pi-calendar text-base"></i>
+            </div>
+            <div>
+              <h2 class="text-sm sm:text-base font-extrabold text-slate-900 m-0">
+                {{ activeLanguage === 'ar' ? 'مستندات الحجوزات المطبوعة (تأكيد الحجز، شيت التكلفة، طلب الفندق)' : 'Reservation Printed Documents' }}
+              </h2>
+              <p class="text-xs text-slate-500 font-medium m-0 mt-0.5">
+                {{ activeLanguage === 'ar' ? 'تخصيص ظهور الأختام والتواقيع والشروط والبنوك على وثائق الحجز' : 'Customize stamps, signatures, terms, and banks on reservation documents' }}
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Switches Grid -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2.5">
+          <!-- 1. Reservation Stamp -->
+          <div class="p-3 bg-white hover:bg-orange-50/30 border border-orange-200/80 rounded-xl flex items-center justify-between gap-3 transition-colors shadow-xs">
+            <div class="flex items-center gap-3">
+              <div class="w-9 h-9 rounded-lg bg-orange-50 text-orange-600 flex items-center justify-center shrink-0 border border-orange-200">
+                <i class="pi pi-verified text-base"></i>
+              </div>
+              <div>
+                <span class="block text-slate-800 font-bold text-xs sm:text-sm">
+                  {{ activeLanguage === 'ar' ? 'إظهار ختم الشركة' : 'Show Stamp' }}
+                </span>
+                <span class="block text-slate-500 font-normal text-xs mt-0.5 leading-tight">
+                  {{ activeLanguage === 'ar' ? 'إظهار الختم الرسمي للشركة على مستندات الحجوزات' : 'Show official company stamp on reservation documents' }}
+                </span>
+              </div>
+            </div>
+            <p-inputSwitch id="showReservationStamp" [ngModel]="showReservationStamp" [ngModelOptions]="{standalone: true}" (onChange)="onShowReservationStampChange($event.checked)"></p-inputSwitch>
+          </div>
+
+          <!-- 2. Reservation Company Signature -->
+          <div class="p-3 bg-white hover:bg-orange-50/30 border border-orange-200/80 rounded-xl flex items-center justify-between gap-3 transition-colors shadow-xs">
+            <div class="flex items-center gap-3">
+              <div class="w-9 h-9 rounded-lg bg-orange-50 text-orange-600 flex items-center justify-center shrink-0 border border-orange-200">
+                <i class="pi pi-pencil text-base"></i>
+              </div>
+              <div>
+                <span class="block text-slate-800 font-bold text-xs sm:text-sm">
+                  {{ activeLanguage === 'ar' ? 'إظهار توقيع الشركة' : 'Show Company Signature' }}
+                </span>
+                <span class="block text-slate-500 font-normal text-xs mt-0.5 leading-tight">
+                  {{ activeLanguage === 'ar' ? 'إظهار مربع توقيع الشركة على مستندات الحجوزات' : 'Show company signature block on reservation documents' }}
+                </span>
+              </div>
+            </div>
+            <p-inputSwitch id="showReservationCompanySignature" [ngModel]="showReservationCompanySignature" [ngModelOptions]="{standalone: true}" (onChange)="onShowReservationCompanySignatureChange($event.checked)"></p-inputSwitch>
+          </div>
+
+          <!-- 3. Reservation Customer Signature -->
+          <div class="p-3 bg-white hover:bg-orange-50/30 border border-orange-200/80 rounded-xl flex items-center justify-between gap-3 transition-colors shadow-xs">
+            <div class="flex items-center gap-3">
+              <div class="w-9 h-9 rounded-lg bg-orange-50 text-orange-600 flex items-center justify-center shrink-0 border border-orange-200">
+                <i class="pi pi-user text-base"></i>
+              </div>
+              <div>
+                <span class="block text-slate-800 font-bold text-xs sm:text-sm">
+                  {{ activeLanguage === 'ar' ? 'إظهار توقيع العميل' : 'Show Customer Signature' }}
+                </span>
+                <span class="block text-slate-500 font-normal text-xs mt-0.5 leading-tight">
+                  {{ activeLanguage === 'ar' ? 'إظهار مربع توقيع العميل على مستندات الحجوزات' : 'Show customer signature block on reservation documents' }}
+                </span>
+              </div>
+            </div>
+            <p-inputSwitch id="showReservationCustomerSignature" [ngModel]="showReservationCustomerSignature" [ngModelOptions]="{standalone: true}" (onChange)="onShowReservationCustomerSignatureChange($event.checked)"></p-inputSwitch>
+          </div>
+        </div>
+
+        <!-- 2 Lists -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+          <!-- Reservation Policies -->
+          <div class="border border-orange-200 rounded-xl p-3 bg-orange-50/20">
+            <div class="flex items-center justify-between pb-2 border-b border-orange-200 mb-2">
+              <span class="text-xs sm:text-sm font-bold text-slate-800">{{ activeLanguage === 'ar' ? 'شروط وأحكام الحجوزات' : 'Reservation Terms' }}</span>
+              <span class="text-xs font-bold text-orange-800 bg-orange-100 px-2.5 py-0.5 rounded-full">{{ reservationSelectedPolicies.length }}</span>
+            </div>
+            <div class="flex flex-col gap-1 max-h-[150px] overflow-y-auto">
+              <div *ngFor="let policy of reservationSelectedPolicies; let idx = index" class="flex items-center gap-2 p-1.5 bg-white border border-orange-200 rounded-lg text-xs sm:text-sm">
+                <input [id]="'settingReservationPolicyCheckbox_' + idx" type="checkbox" [(ngModel)]="policy.checked" [ngModelOptions]="{standalone: true}" (change)="onReservationPolicyToggle()" class="accent-orange-600 cursor-pointer" />
+                <label [for]="'settingReservationPolicyCheckbox_' + idx" class="m-0 cursor-pointer font-medium text-slate-700 truncate">{{ policy.name }}</label>
+              </div>
+              <div *ngIf="reservationSelectedPolicies.length === 0" class="text-center text-slate-400 text-xs sm:text-sm py-3">
+                {{ activeLanguage === 'ar' ? 'لا توجد شروط مسجلة' : 'No terms registered' }}
+              </div>
+            </div>
+          </div>
+
+          <!-- Reservation Banks -->
+          <div class="border border-orange-200 rounded-xl p-3 bg-orange-50/20">
+            <div class="flex items-center justify-between pb-2 border-b border-orange-200 mb-2">
+              <span class="text-xs sm:text-sm font-bold text-slate-800">{{ activeLanguage === 'ar' ? 'حسابات بنوك الحجوزات' : 'Reservation Bank Accounts' }}</span>
+              <span class="text-xs font-bold text-orange-800 bg-orange-100 px-2.5 py-0.5 rounded-full">{{ reservationSelectedBanks.length }}</span>
+            </div>
+            <div class="flex flex-col gap-1 max-h-[150px] overflow-y-auto">
+              <div *ngFor="let bank of reservationSelectedBanks; let idx = index" class="flex items-center gap-2 p-1.5 bg-white border border-orange-200 rounded-lg text-xs sm:text-sm">
+                <input [id]="'settingReservationBankCheckbox_' + idx" type="checkbox" [(ngModel)]="bank.checked" [ngModelOptions]="{standalone: true}" (change)="onReservationBankToggle()" class="accent-orange-600 cursor-pointer" />
+                <label [for]="'settingReservationBankCheckbox_' + idx" class="m-0 cursor-pointer font-medium text-slate-700 truncate">
+                  <strong>{{ bank.bankName }}</strong> - <span class="font-mono text-slate-500 text-xs">{{ bank.accountNumber }}</span>
+                </label>
+              </div>
+              <div *ngIf="reservationSelectedBanks.length === 0" class="text-center text-slate-400 text-xs sm:text-sm py-3">
+                {{ activeLanguage === 'ar' ? 'لا توجد حسابات مسجلة' : 'No bank accounts registered' }}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- ================================================== -->
+    <!-- BOTTOM ACTION BAR (Save FIRST, then Cancel)        -->
+    <!-- ================================================== -->
+    <div class="bg-white border border-slate-200 rounded-xl p-3 sm:p-3.5 shadow-sm flex flex-col sm:flex-row items-center justify-between gap-3 mt-1 mb-12"
+         *ngIf="!loading && hasPermission(PERMISSIONS.SystemSetting.Update)">
+      <div class="flex items-center gap-2 text-xs sm:text-sm text-slate-600 font-semibold">
+        <i class="pi pi-check-circle text-emerald-600 text-base"></i>
+        <span>{{ activeLanguage === 'ar' ? 'تُطبق الإعدادات فور الحفظ على جميع المستخدمين' : 'Settings apply immediately on save across all users' }}</span>
+      </div>
+      <div class="flex items-center gap-2 self-end sm:self-center">
+        <!-- Save Button (First) -->
+        <button
+          type="button"
+          (click)="saveSystemSetting()"
+          [disabled]="loading"
+          class="inline-flex items-center gap-1.5 px-5 py-2 bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white text-xs sm:text-sm font-bold rounded-lg shadow-sm hover:shadow transition-all disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer border-0">
+          <i class="pi pi-check text-xs sm:text-sm"></i>
+          <span>{{ translate.instant('FINANCE.SAVE') }}</span>
+        </button>
+
+        <!-- Cancel Button (Second) -->
+        <button
+          type="button"
+          (click)="cancel()"
+          [disabled]="loading"
+          class="inline-flex items-center gap-1.5 px-4 py-2 bg-rose-50 hover:bg-rose-100 active:bg-rose-200 text-rose-700 hover:text-rose-800 text-xs sm:text-sm font-bold rounded-lg border border-rose-200 hover:border-rose-300 transition-all cursor-pointer">
+          <i class="pi pi-times text-xs sm:text-sm text-rose-600"></i>
+          <span>{{ activeLanguage === 'ar' ? 'إلغاء' : 'Cancel' }}</span>
+        </button>
+      </div>
+    </div>
+
+  </form>
+</div>
+
+<p-toast></p-toast>
+<p-confirmDialog></p-confirmDialog>

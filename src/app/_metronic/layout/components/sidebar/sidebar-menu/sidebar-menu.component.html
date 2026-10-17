@@ -1,0 +1,243 @@
+<!--begin::Menu wrapper-->
+<div class="scroll-y my-5 mx-3" data-kt-scroll="true" data-kt-scroll-activate="true"
+  data-kt-scroll-dependencies="#kt_app_sidebar_logo, #kt_app_sidebar_footer" data-kt-scroll-height="auto"
+  data-kt-scroll-offset="5px" data-kt-scroll-save-state="true" data-kt-scroll-wrappers="#kt_app_sidebar_menu"
+  id="kt_app_sidebar_menu_scroll">
+  <!--begin::Menu-->
+  <div class="menu menu-column menu-rounded menu-sub-indention fw-semibold fs-6" data-kt-menu="true"
+    data-kt-menu-expand="false" id="#kt_app_sidebar_menu">
+
+    <!-- Dashboard -->
+    <div class="menu-item">
+      <a class="menu-link without-sub" routerLink="/dashboard" routerLinkActive="active">
+        <span class="menu-icon">
+          <i class="pi pi-home custom-link-no-hover" style="font-size: 1.5rem; color: #3b82f6"></i>
+        </span>
+        <span class="menu-title custom-link">لوحة التحكم</span>
+      </a>
+    </div>
+
+    <!-- قسم الموظفين وشؤون العاملين -->
+    <div
+      class="menu-item menu-accordion"
+      data-kt-menu-trigger="click"
+      routerLinkActive="here show"
+      *ngIf="userHasAnyPermission(['Employee.Read', 'EmploymentType.Read', 'Shift.Read'])"
+    >
+      <span class="menu-link">
+        <span class="menu-icon">
+          <i class="pi pi-users custom-link-no-hover" style="font-size: 1.5rem; color: #10b981"></i>
+        </span>
+        <span class="menu-title custom-link">شؤون الموظفين</span>
+        <span class="menu-arrow"></span>
+      </span>
+
+      <div class="menu-sub menu-sub-accordion" routerLinkActive="menu-active-bg">
+        <div *ngIf="userHasPermission('Employee.Read')" class="menu-item">
+          <a class="menu-link without-sub" routerLink="/hr/employees" routerLinkActive="active">
+            <span class="menu-bullet">
+              <i class="pi pi-address-book custom-link-no-hover" style="font-size: 1.2rem; color: #708090"></i>
+            </span>
+            <span class="menu-title custom-link">دليل الموظفين</span>
+          </a>
+        </div>
+        <div *ngIf="userHasPermission('EmploymentType.Read')" class="menu-item">
+          <a class="menu-link without-sub" routerLink="/hr/employment-types" routerLinkActive="active">
+            <span class="menu-bullet">
+              <i class="pi pi-briefcase custom-link-no-hover" style="font-size: 1.2rem; color: #708090"></i>
+            </span>
+            <span class="menu-title custom-link">المسميات والوظائف</span>
+          </a>
+        </div>
+        <div *ngIf="userHasPermission('Shift.Read')" class="menu-item">
+          <a class="menu-link without-sub" routerLink="/hr/shifts" routerLinkActive="active">
+            <span class="menu-bullet">
+              <i class="pi pi-clock custom-link-no-hover" style="font-size: 1.2rem; color: #708090"></i>
+            </span>
+            <span class="menu-title custom-link">مواعيد الدوام والورديات</span>
+          </a>
+        </div>
+      </div>
+    </div>
+
+    <!-- قسم الحضور والانصراف والبصمة -->
+    <div
+      class="menu-item menu-accordion"
+      data-kt-menu-trigger="click"
+      routerLinkActive="here show"
+      *ngIf="userHasAnyPermission(['Attendance.Read', 'CheckInLog.Read', 'FingerprintDeviceSettings.Read'])"
+    >
+      <span class="menu-link">
+        <span class="menu-icon">
+          <i class="pi pi-calendar-check custom-link-no-hover" style="font-size: 1.5rem; color: #6366f1"></i>
+        </span>
+        <span class="menu-title custom-link">الحضور والبصمة</span>
+        <span class="menu-arrow"></span>
+      </span>
+
+      <div class="menu-sub menu-sub-accordion" routerLinkActive="menu-active-bg">
+        <div *ngIf="userHasPermission('Attendance.Read')" class="menu-item">
+          <a class="menu-link without-sub" routerLink="/hr/attendances" routerLinkActive="active">
+            <span class="menu-bullet">
+              <i class="pi pi-calendar custom-link-no-hover" style="font-size: 1.2rem; color: #708090"></i>
+            </span>
+            <span class="menu-title custom-link">سجل الحضور والانصراف</span>
+          </a>
+        </div>
+        <div *ngIf="userHasPermission('CheckInLog.Read')" class="menu-item">
+          <a class="menu-link without-sub" routerLink="/hr/check-in-logs" routerLinkActive="active">
+            <span class="menu-bullet">
+              <i class="pi pi-book custom-link-no-hover" style="font-size: 1.2rem; color: #708090"></i>
+            </span>
+            <span class="menu-title custom-link">حركات الدخول والخروج</span>
+          </a>
+        </div>
+        <div *ngIf="userHasPermission('FingerprintDeviceSettings.Read')" class="menu-item">
+          <a class="menu-link without-sub" routerLink="/hr/fingerprint-device-settings" routerLinkActive="active">
+            <span class="menu-bullet">
+              <i class="pi pi-cog custom-link-no-hover" style="font-size: 1.2rem; color: #708090"></i>
+            </span>
+            <span class="menu-title custom-link">إعدادات أجهزة البصمة</span>
+          </a>
+        </div>
+      </div>
+    </div>
+
+    <!-- قسم الرواتب والمستحقات والبدلات -->
+    <div
+      class="menu-item menu-accordion"
+      data-kt-menu-trigger="click"
+      routerLinkActive="here show"
+      *ngIf="userHasAnyPermission(['PaymentCalculator.Read', 'OvertimePaymentCalculator.Read', 'MonthlyLoan.Read', 'Bonus.Read', 'Penalty.Read', 'OvertimeHours.Read'])"
+    >
+      <span class="menu-link">
+        <span class="menu-icon">
+          <i class="pi pi-money-bill custom-link-no-hover" style="font-size: 1.5rem; color: #f59e0b"></i>
+        </span>
+        <span class="menu-title custom-link">الرواتب والبدلات</span>
+        <span class="menu-arrow"></span>
+      </span>
+
+      <div class="menu-sub menu-sub-accordion" routerLinkActive="menu-active-bg">
+        <div *ngIf="userHasPermission('PaymentCalculator.Read')" class="menu-item">
+          <a class="menu-link without-sub" routerLink="/hr/payment-calculator" routerLinkActive="active">
+            <span class="menu-bullet">
+              <i class="pi pi-wallet custom-link-no-hover" style="font-size: 1.2rem; color: #708090"></i>
+            </span>
+            <span class="menu-title custom-link">حساب المرتبات</span>
+          </a>
+        </div>
+        <div *ngIf="userHasPermission('MonthlyLoan.Read')" class="menu-item">
+          <a class="menu-link without-sub" routerLink="/hr/monthly-loans" routerLinkActive="active">
+            <span class="menu-bullet">
+              <i class="pi pi-credit-card custom-link-no-hover" style="font-size: 1.2rem; color: #708090"></i>
+            </span>
+            <span class="menu-title custom-link">السُلف الشهرية</span>
+          </a>
+        </div>
+        <div *ngIf="userHasPermission('OvertimeHours.Read')" class="menu-item">
+          <a class="menu-link without-sub" routerLink="/hr/overtime-hours" routerLinkActive="active">
+            <span class="menu-bullet">
+              <i class="pi pi-clock custom-link-no-hover" style="font-size: 1.2rem; color: #708090"></i>
+            </span>
+            <span class="menu-title custom-link">الساعات الإضافية</span>
+          </a>
+        </div>
+        <div *ngIf="userHasPermission('OvertimePaymentCalculator.Read')" class="menu-item">
+          <a class="menu-link without-sub" routerLink="/hr/overtime-payment-calculator" routerLinkActive="active">
+            <span class="menu-bullet">
+              <i class="pi pi-calculator custom-link-no-hover" style="font-size: 1.2rem; color: #708090"></i>
+            </span>
+            <span class="menu-title custom-link">حساب الأوفر تايم</span>
+          </a>
+        </div>
+        <div *ngIf="userHasPermission('Bonus.Read')" class="menu-item">
+          <a class="menu-link without-sub" routerLink="/hr/bonuses" routerLinkActive="active">
+            <span class="menu-bullet">
+              <i class="pi pi-plus-circle custom-link-no-hover" style="font-size: 1.2rem; color: #708090"></i>
+            </span>
+            <span class="menu-title custom-link">المكافآت</span>
+          </a>
+        </div>
+        <div *ngIf="userHasPermission('Penalty.Read')" class="menu-item">
+          <a class="menu-link without-sub" routerLink="/hr/penalties" routerLinkActive="active">
+            <span class="menu-bullet">
+              <i class="pi pi-exclamation-triangle custom-link-no-hover" style="font-size: 1.2rem; color: #708090"></i>
+            </span>
+            <span class="menu-title custom-link">الجزاءات والخصومات</span>
+          </a>
+        </div>
+      </div>
+    </div>
+
+    <!-- قسم الوثائق والطلبات -->
+    <div
+      class="menu-item menu-accordion"
+      data-kt-menu-trigger="click"
+      routerLinkActive="here show"
+      *ngIf="userHasAnyPermission(['LeaveApplication.Read', 'ResignationRequest.Read', 'EmploymentApplication.Read', 'HrTrustReceipt.Read', 'SalarySlip.Read', 'BankDocument.Read', 'InsuranceRecord.Read', 'HRAttachment.Read'])"
+    >
+      <span class="menu-link">
+        <span class="menu-icon">
+          <i class="pi pi-folder custom-link-no-hover" style="font-size: 1.5rem; color: #8b5cf6"></i>
+        </span>
+        <span class="menu-title custom-link">الوثائق والطلبات</span>
+        <span class="menu-arrow"></span>
+      </span>
+
+      <div class="menu-sub menu-sub-accordion" routerLinkActive="menu-active-bg">
+        <div class="menu-item" *ngIf="userHasPermission('LeaveApplication.Read')">
+          <a class="menu-link without-sub" routerLink="/leave-applications" routerLinkActive="active">
+            <span class="menu-bullet"><span class="bullet bullet-dot"></span></span>
+            <span class="menu-title custom-link">طلبات الإجازة</span>
+          </a>
+        </div>
+        <div class="menu-item" *ngIf="userHasPermission('EmploymentApplication.Read')">
+          <a class="menu-link without-sub" routerLink="/employment-applications" routerLinkActive="active">
+            <span class="menu-bullet"><span class="bullet bullet-dot"></span></span>
+            <span class="menu-title custom-link">طلبات التوظيف</span>
+          </a>
+        </div>
+        <div class="menu-item" *ngIf="userHasPermission('ResignationRequest.Read')">
+          <a class="menu-link without-sub" routerLink="/resignation-requests" routerLinkActive="active">
+            <span class="menu-bullet"><span class="bullet bullet-dot"></span></span>
+            <span class="menu-title custom-link">طلبات الاستقالة</span>
+          </a>
+        </div>
+        <div class="menu-item" *ngIf="userHasPermission('SalarySlip.Read')">
+          <a class="menu-link without-sub" routerLink="/salary-slips" routerLinkActive="active">
+            <span class="menu-bullet"><span class="bullet bullet-dot"></span></span>
+            <span class="menu-title custom-link">مفردات المرتب</span>
+          </a>
+        </div>
+        <div class="menu-item" *ngIf="userHasPermission('HrTrustReceipt.Read')">
+          <a class="menu-link without-sub" routerLink="/hr-trust-receipts" routerLinkActive="active">
+            <span class="menu-bullet"><span class="bullet bullet-dot"></span></span>
+            <span class="menu-title custom-link">إيصالات أمانة الموظفين</span>
+          </a>
+        </div>
+        <div class="menu-item" *ngIf="userHasPermission('BankDocument.Read')">
+          <a class="menu-link without-sub" routerLink="/bank-documents" routerLinkActive="active">
+            <span class="menu-bullet"><span class="bullet bullet-dot"></span></span>
+            <span class="menu-title custom-link">ورقيات البنوك</span>
+          </a>
+        </div>
+        <div class="menu-item" *ngIf="userHasPermission('InsuranceRecord.Read')">
+          <a class="menu-link without-sub" routerLink="/insurance-records" routerLinkActive="active">
+            <span class="menu-bullet"><span class="bullet bullet-dot"></span></span>
+            <span class="menu-title custom-link">سجلات التأمينات</span>
+          </a>
+        </div>
+        <div class="menu-item" *ngIf="userHasPermission('HRAttachment.Read')">
+          <a class="menu-link without-sub" routerLink="/hr/attachments" routerLinkActive="active">
+            <span class="menu-bullet"><span class="bullet bullet-dot"></span></span>
+            <span class="menu-title custom-link">المرفقات والوثائق</span>
+          </a>
+        </div>
+      </div>
+    </div>
+
+  </div>
+  <!--end::Menu-->
+</div>
+<!--end::Menu wrapper-->

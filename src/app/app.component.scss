@@ -1,0 +1,23 @@
+
+:host {
+  height: 100%;
+  margin: 0;
+}
+
+// ========== Global Table Hover Effects ==========
+// Dark Mode Hover
+::ng-deep .dark {
+  .p-datatable .p-datatable-tbody > tr:hover .p-button {
+    background-color: #1f2937 !important;
+    color: #ffffff !important;
+  }
+  
+}
+
+::ng-deep .p-datatable .p-datatable-tbody > tr {
+  transition: all 0.2s ease-in-out;
+}
+
+::ng-deep .p-datatable .p-datatable-tbody > tr.hover\:bg-gray-200:hover {
+  background-color: inherit !important;
+}

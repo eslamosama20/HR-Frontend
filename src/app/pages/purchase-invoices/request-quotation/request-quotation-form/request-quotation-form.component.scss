@@ -1,0 +1,65 @@
+/* Force validation error messages to be red in all themes */
+.text-danger,
+.text-danger small,
+.text-danger .small,
+.validation-error,
+.validation-error small,
+.validation-error .small {
+  color: #dc3545 !important;
+}
+
+[data-theme="dark"] .text-danger,
+[data-theme="dark"] .text-danger small,
+[data-theme="dark"] .text-danger .small,
+[data-theme="dark"] .validation-error,
+[data-theme="dark"] .validation-error small,
+[data-theme="dark"] .validation-error .small {
+  color: #ff6b6b !important;
+}
+
+small.text-danger,
+.small.text-danger,
+div.text-danger small,
+div.text-danger .small {
+  color: #dc3545 !important;
+  font-weight: 500;
+}
+
+/* Main content container */
+.content-container {
+  padding-bottom: 70px; /* Height of the footer to avoid overlap */
+}
+.bg-yellow {
+  background-color: #fff5cc !important;
+}
+/* Read-only price field styling */
+::ng-deep .readonly-price-field {
+  .p-inputnumber-input {
+    background-color: #e9ecef !important;
+    cursor: not-allowed !important;
+    opacity: 0.7;
+  }
+}
+
+[data-theme="dark"] ::ng-deep .readonly-price-field {
+  .p-inputnumber-input {
+    background-color: #343a40 !important;
+    color: #adb5bd !important;
+  }
+}
+
+/* Badge styling */
+.badge {
+  font-weight: 500;
+  border-radius: 4px;
+}
+
+/* Lock icon positioning */
+.position-relative {
+  position: relative;
+
+  .pi-lock {
+    font-size: 0.875rem;
+    z-index: 10;
+  }
+}

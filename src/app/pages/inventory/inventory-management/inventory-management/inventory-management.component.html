@@ -1,0 +1,354 @@
+<div class="container-fluid">
+<p-toast></p-toast>
+<p-confirmDialog></p-confirmDialog>
+
+<!-- Header Row: Title + Tabs + Search + Tools -->
+<div class="inventory-management-header d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4 p-3 bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700">
+  <!-- Right Side: Title + Search + Tabs -->
+  <div class="d-flex flex-wrap align-items-center gap-3">
+    <h2 class="page-title m-0 text-xl font-bold text-gray-800 dark:text-gray-100">{{ 'DATA.INVENTORY_MANAGEMENT' | translate }}</h2>
+
+    <span class="p-input-icon-left header-search-box">
+      <i class="pi pi-search"></i>
+      <input
+        pInputText
+        type="text"
+        class="p-inputtext-sm rounded-lg"
+        [formControl]="globalSearchControl"
+        placeholder="بحث في المخزن..."
+      />
+    </span>
+
+    <!-- Custom Tab Buttons -->
+    <div class="custom-tabs d-flex align-items-center gap-2">
+      <p-button 
+        [label]="translate.instant('DATA.MAIN_PURCHASE_CLASSES')"
+        [severity]="activeTabIndex === 0 ? 'primary' : 'secondary'"
+        [outlined]="activeTabIndex !== 0"
+        styleClass="rounded-md p-button-sm font-semibold shadow-sm"
+        (onClick)="activeTabIndex = 0">
+      </p-button>
+      <p-button 
+        [label]="translate.instant('DATA.MAIN_SALES_CLASSES')"
+        [severity]="activeTabIndex === 1 ? 'primary' : 'secondary'"
+        [outlined]="activeTabIndex !== 1"
+        styleClass="rounded-md p-button-sm font-semibold shadow-sm"
+        (onClick)="activeTabIndex = 1">
+      </p-button>
+    </div>
+  </div>
+
+  <!-- Left Side: Tools -->
+  <div class="d-flex flex-wrap align-items-center gap-2">
+    <div class="btn-group-wrapper d-flex align-items-center gap-2">
+      <p-button 
+        styleClass="rounded-md p-button-sm shadow-sm"
+        severity="success" 
+        icon="pi pi-file-excel" 
+        label="تصدير Excel"
+        pTooltip="تصدير إلى Excel"
+        tooltipPosition="bottom"
+        (onClick)="exportToExcel()"
+        [disabled]="(activeTabIndex === 0 && (!mainPurchaseClasses || mainPurchaseClasses.length === 0)) || (activeTabIndex === 1 && (!mainSalesClasses || mainSalesClasses.length === 0))">
+      </p-button>
+
+      <p-button 
+        styleClass="rounded-md p-button-sm shadow-sm"
+        severity="danger" 
+        icon="pi pi-file-pdf" 
+        label="تنزيل PDF"
+        pTooltip="تنزيل PDF"
+        tooltipPosition="bottom"
+        (onClick)="downloadPDF()"
+        [loading]="loadingPdf"
+        [disabled]="(activeTabIndex === 0 && (!mainPurchaseClasses || mainPurchaseClasses.length === 0)) || (activeTabIndex === 1 && (!mainSalesClasses || mainSalesClasses.length === 0))">
+      </p-button>
+
+      <p-button 
+        styleClass="rounded-md p-button-sm shadow-sm"
+        severity="info" 
+        icon="pi pi-share-alt" 
+        label="مشاركة"
+        pTooltip="مشاركة التقرير"
+        tooltipPosition="bottom"
+        (onClick)="openShareDialog()"
+        [disabled]="(activeTabIndex === 0 && (!mainPurchaseClasses || mainPurchaseClasses.length === 0)) || (activeTabIndex === 1 && (!mainSalesClasses || mainSalesClasses.length === 0))">
+      </p-button>
+
+      <p-button 
+        styleClass="rounded-md p-button-sm shadow-sm"
+        severity="warning" 
+        icon="pi pi-print" 
+        label="طباعة"
+        pTooltip="طباعة التقرير"
+        tooltipPosition="bottom"
+        (onClick)="printReport()"
+        [loading]="loadingPdf"
+        [disabled]="(activeTabIndex === 0 && (!mainPurchaseClasses || mainPurchaseClasses.length === 0)) || (activeTabIndex === 1 && (!mainSalesClasses || mainSalesClasses.length === 0))">
+      </p-button>
+
+      <p-button 
+        styleClass="rounded-md p-button-sm shadow-sm"
+        severity="secondary" 
+        icon="pi pi-refresh" 
+        label="تحديث"
+        pTooltip="تحديث البيانات"
+        tooltipPosition="bottom"
+        (onClick)="loadAll()"
+        [loading]="loading">
+      </p-button>
+    </div>
+  </div>
+</div>
+
+<!-- Purchase Classes Table -->
+<div *ngIf="activeTabIndex === 0">
+  <p-table
+    #dtPurchase
+    [value]="mainPurchaseClasses"
+    [resizableColumns]="true"
+    columnResizeMode="expand"
+    dataKey="id"
+    [rows]="10"
+    styleClass="p-datatable-sm p-datatable-striped"
+    [rowsPerPageOptions]="[10, 25, 50]"
+    [loading]="loading"
+    [paginator]="true"
+    [paginatorLocale]="activeLanguage === 'en' ? 'en-US' : 'ar-SA'"
+    [showCurrentPageReport]="true"
+    currentPageReportTemplate="عرض {first} إلى {last} من {totalRecords} سجل"
+    [sortField]="'createdAt'"
+    [sortOrder]="-1"
+    [globalFilterFields]="[
+      'referenceCode',
+      'englishName',
+      'arabicName',
+      'measurementUnit.englishName',
+      'measurementUnit.arabicName'
+    ]"
+  >
+    <ng-template pTemplate="header">
+      <tr>
+        <th style="width: 60px; text-align: center;">#</th>
+        <th style="text-align: right;">{{ 'DATA.CLASS' | translate }}</th>
+        <th style="text-align: center;">{{ 'DATA.MEASUREMENT_UNIT' | translate }}</th>
+        <th style="text-align: center;">{{ 'DATA.PRODUCT_UNITS_COUNT' | translate }}</th>
+        <th style="text-align: center;">{{ 'DATA.CREATED_AT' | translate }}</th>
+        <th style="width: 100px; text-align: center;">{{ 'DATA.ACTIONS' | translate }}</th>
+      </tr>
+    </ng-template>
+
+    <ng-template pTemplate="body" let-entry let-rowIndex="rowIndex">
+      <tr class="hover:bg-gray-200 transition-colors duration-200">
+        <td style="text-align: center; width: 60px;">
+          {{ (dtPurchase?.first || 0) + rowIndex + 1 }}
+        </td>
+
+        <td style="text-align: right;">
+          {{
+            activeLanguage === 'en'
+              ? entry.referenceCode + ' | ' + entry.englishName
+              : entry.referenceCode + ' | ' + entry.arabicName
+          }}
+        </td>
+
+        <td style="text-align: center;">
+          {{
+            activeLanguage === 'en'
+              ? entry.measurementUnit.englishName + ' (' + entry.measurementUnit.englishSymbol + ')'
+              : entry.measurementUnit.arabicName + ' (' + entry.measurementUnit.arabicSymbol + ')'
+          }}
+        </td>
+
+        <td style="text-align: center;">{{ entry.productUnitsCount | number }}</td>
+
+        <td style="text-align: center;">
+          {{
+            entry.createdAt
+              ? (entry.createdAt | customDate : 'yyyy/MM/dd' : '' : (activeLanguage === 'en' ? 'en-US' : 'ar-SA'))
+              : '-'
+          }}
+        </td>
+
+        <td style="text-align: center;">
+          <div class="flex justify-center gap-2">
+            <button
+              pButton
+              type="button"
+              icon="pi pi-plus"
+              class="p-button-secondary p-button-sm p-button-text"
+              pTooltip="إضافة إذن دخول"
+              tooltipPosition="top"
+              (click)="navigateToInventoryEntryPermitCreation()"
+            ></button>
+          </div>
+        </td>
+      </tr>
+    </ng-template>
+
+    <ng-template pTemplate="emptymessage">
+      <tr>
+        <td colspan="6" class="text-center py-5">
+          <i class="pi pi-inbox" style="font-size: 3rem; color: var(--surface-400, #94a3b8);"></i>
+          <p class="mt-3 text-muted">{{ 'DATA.NO_MAIN_PURCHASE_CLASSES' | translate }}</p>
+        </td>
+      </tr>
+    </ng-template>
+  </p-table>
+</div>
+
+<!-- Sales Classes Table -->
+<div *ngIf="activeTabIndex === 1">
+  <p-table
+    #dtSales
+    [value]="mainSalesClasses"
+    [resizableColumns]="true"
+    columnResizeMode="expand"
+    dataKey="id"
+    [rows]="10"
+    styleClass="p-datatable-sm p-datatable-striped"
+    [rowsPerPageOptions]="[10, 25, 50]"
+    [loading]="loading"
+    [paginator]="true"
+    [paginatorLocale]="activeLanguage === 'en' ? 'en-US' : 'ar-SA'"
+    [showCurrentPageReport]="true"
+    currentPageReportTemplate="عرض {first} إلى {last} من {totalRecords} سجل"
+    [sortField]="'createdAt'"
+    [sortOrder]="-1"
+    [globalFilterFields]="[
+      'referenceCode',
+      'englishName',
+      'arabicName',
+      'measurementUnit.englishName',
+      'measurementUnit.arabicName',
+      'classType'
+    ]"
+  >
+    <ng-template pTemplate="header">
+      <tr>
+        <th style="width: 60px; text-align: center;">#</th>
+        <th style="text-align: right;">{{ 'DATA.CLASS' | translate }}</th>
+        <th style="text-align: center;">{{ 'DATA.MEASUREMENT_UNIT' | translate }}</th>
+        <th style="text-align: center;">{{ 'DATA.PRODUCT_UNITS_COUNT' | translate }}</th>
+        <th style="text-align: center;">{{ 'DATA.CLASS_TYPE' | translate }}</th>
+        <th style="text-align: center;">{{ 'DATA.CREATED_AT' | translate }}</th>
+        <th style="width: 100px; text-align: center;">{{ 'DATA.ACTIONS' | translate }}</th>
+      </tr>
+    </ng-template>
+
+    <ng-template pTemplate="body" let-entry let-rowIndex="rowIndex">
+      <tr class="hover:bg-gray-200 transition-colors duration-200">
+        <td style="text-align: center; width: 60px;">
+          {{ (dtSales?.first || 0) + rowIndex + 1 }}
+        </td>
+
+        <td style="text-align: right;">
+          {{
+            activeLanguage === 'en'
+              ? entry.referenceCode + ' | ' + entry.englishName
+              : entry.referenceCode + ' | ' + entry.arabicName
+          }}
+        </td>
+
+        <td style="text-align: center;">
+          {{
+            activeLanguage === 'en'
+              ? entry.measurementUnit.englishName + ' (' + entry.measurementUnit.englishSymbol + ')'
+              : entry.measurementUnit.arabicName + ' (' + entry.measurementUnit.arabicSymbol + ')'
+          }}
+        </td>
+
+        <td style="text-align: center;">{{ entry.productUnitsCount | number }}</td>
+
+        <td style="text-align: center;">
+          {{ (entry.classType === 'Direct' ? 'DATA.DIRECT' : 'DATA.COMPOUND') | translate }}
+        </td>
+
+        <td style="text-align: center;">
+          {{
+            entry.createdAt
+              ? (entry.createdAt | customDate : 'yyyy/MM/dd' : '' : (activeLanguage === 'en' ? 'en-US' : 'ar-SA'))
+              : '-'
+          }}
+        </td>
+
+        <td style="text-align: center;"></td>
+      </tr>
+    </ng-template>
+
+    <ng-template pTemplate="emptymessage">
+      <tr>
+        <td colspan="7" class="text-center py-5">
+          <i class="pi pi-inbox" style="font-size: 3rem; color: var(--surface-400, #94a3b8);"></i>
+          <p class="mt-3 text-muted">{{ 'DATA.NO_MAIN_SALES_CLASSES' | translate }}</p>
+        </td>
+      </tr>
+    </ng-template>
+  </p-table>
+</div>
+</div>
+
+<!-- Share Dialog -->
+<p-dialog
+  [(visible)]="shareDialogVisible"
+  header="مشاركة التقرير"
+  [modal]="true"
+  [style]="{width: '450px'}"
+  [draggable]="false"
+  [resizable]="false">
+  
+  <div class="d-flex flex-column gap-3">
+    <div class="field">
+      <label class="form-label">طريقة المشاركة</label>
+      <p-dropdown
+        [options]="shareMethodOptions"
+        [(ngModel)]="selectedShareMethod"
+        optionLabel="label"
+        optionValue="value"
+        placeholder="اختر طريقة المشاركة"
+        styleClass="w-100">
+      </p-dropdown>
+    </div>
+    
+    <div class="field" *ngIf="selectedShareMethod === 'email'">
+      <label class="form-label">البريد الإلكتروني</label>
+      <input
+        type="email"
+        pInputText
+        [(ngModel)]="shareEmail"
+        placeholder="example@email.com"
+        class="w-100" />
+    </div>
+    
+    <div class="field" *ngIf="selectedShareMethod === 'whatsapp'">
+      <label class="form-label">رقم الواتساب</label>
+      <input
+        type="tel"
+        pInputText
+        [(ngModel)]="sharePhone"
+        placeholder="+966xxxxxxxxx"
+        class="w-100" />
+    </div>
+  </div>
+  
+  <ng-template pTemplate="footer">
+    <button
+      pButton
+      type="button"
+      label="إلغاء"
+      icon="pi pi-times"
+      class="p-button-text"
+      (click)="shareDialogVisible = false">
+    </button>
+    <button
+      pButton
+      type="button"
+      label="إرسال"
+      icon="pi pi-send"
+      (click)="shareReport()"
+      [loading]="loadingShare"
+      [disabled]="!canShare()">
+    </button>
+  </ng-template>
+</p-dialog>
+

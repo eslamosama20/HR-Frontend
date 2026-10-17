@@ -1,0 +1,504 @@
+﻿<div class="returns-shell">
+  <p-toast></p-toast>
+  
+  <!-- Preview Status and Redirect Banner -->
+  <div class="preview-mode-banner no-print-hide">
+    <div class="banner-icon"><i class="pi pi-exclamation-triangle"></i></div>
+    <div class="banner-content">
+      <h3>شاشة مرتجعات تجريبية (Preview & Simulation Mode)</h3>
+      <p>عمليات الاسترجاع التفصيلية للأصناف في هذه الشاشة هي محاكاة محلية ومغلقة فقط. لإجراء مرتجعات حقيقية وآمنة تؤثر على حسابات الخزينة والمخزن الفعلي، يرجى التوجه حصرياً إلى لوحة <strong>التحكم بالفواتير (Invoice Control)</strong> الرسمية.</p>
+    </div>
+    <button pButton type="button" icon="pi pi-arrow-left" label="الانتقال إلى التحكم بالفواتير" class="p-button-warning banner-btn" routerLink="/cashier/invoice-control"></button>
+  </div>
+  
+  <div class="loading-layer" *ngIf="loading()">
+    <div class="loading-card">
+      <i class="pi pi-spin pi-spinner"></i>
+      <span>{{ 'CASHIER_RETURNS.LOADING' | translate }}</span>
+    </div>
+  </div>
+
+  <header class="returns-header">
+    <div class="header-brand">
+      <span class="brand-icon">
+        <i class="pi pi-undo"></i>
+      </span>
+      <div>
+        <h1>{{ 'CASHIER_RETURNS.PAGE_TITLE' | translate }}</h1>
+        <p>{{ 'CASHIER_RETURNS.PAGE_SUBTITLE' | translate }}</p>
+      </div>
+    </div>
+
+    <div class="session-card" [class.is-active]="currentSession()">
+      <i class="pi" [ngClass]="currentSession() ? 'pi-check-circle' : 'pi-exclamation-triangle'"></i>
+      <div>
+        <strong>{{ currentSession() ? ('CASHIER_RETURNS.ACTIVE_SESSION' | translate) : ('CASHIER_RETURNS.NO_SESSION' | translate) }}</strong>
+        <span>{{ currentSession()?.cashierUserName || ('CASHIER_RETURNS.SESSION_MSG' | translate) }}</span>
+      </div>
+    </div>
+
+    <div class="stats-grid">
+      <article class="metric-card">
+        <span>{{ 'CASHIER_RETURNS.COMPLETED' | translate }}</span>
+        <strong>{{ completedRefundsCount }}</strong>
+      </article>
+      <article class="metric-card warning">
+        <span>{{ 'CASHIER_RETURNS.PENDING' | translate }}</span>
+        <strong>{{ pendingRefundsCount }}</strong>
+      </article>
+      <article class="metric-card danger">
+        <span>{{ 'CASHIER_RETURNS.REJECTED' | translate }}</span>
+        <strong>{{ rejectedRefundsCount }}</strong>
+      </article>
+      <article class="metric-card success">
+        <span>{{ 'CASHIER_RETURNS.TOTAL_REFUNDED' | translate }}</span>
+        <strong>{{ totalRefundsAmount | number:'1.2-2' }}</strong>
+      </article>
+    </div>
+  </header>
+
+  <main class="returns-main">
+    <section class="creation-column">
+      <article class="returns-card search-card">
+        <div class="card-head">
+          <h2>{{ 'CASHIER_RETURNS.SEARCH_INVOICE_TITLE' | translate }}</h2>
+          <p>{{ 'CASHIER_RETURNS.SEARCH_INVOICE_SUB' | translate }}</p>
+        </div>
+
+        <div class="search-row">
+          <span class="search-input-wrap">
+            <i class="pi pi-search"></i>
+            <input
+              pInputText
+              type="text"
+              [(ngModel)]="invoiceSearchTerm"
+              (keyup.enter)="searchInvoice()"
+              [placeholder]="'CASHIER_RETURNS.SEARCH_PLACEHOLDER' | translate"
+            />
+          </span>
+
+          <button
+            pButton
+            type="button"
+            icon="pi pi-search"
+            [label]="'CASHIER_RETURNS.SEARCH_BTN' | translate"
+            class="search-btn"
+            (click)="searchInvoice()"
+            [loading]="loading()"
+          ></button>
+
+          <button
+            pButton
+            type="button"
+            icon="pi pi-refresh"
+            [label]="'CASHIER_RETURNS.RESET_BTN' | translate"
+            class="reset-btn"
+            (click)="resetReturnForm()"
+            [disabled]="!invoiceSearchTerm && !foundInvoice()"
+          ></button>
+        </div>
+      </article>
+
+      <article class="returns-card invoice-card" *ngIf="foundInvoice() as invoice">
+        <div class="card-head">
+          <h2>{{ 'CASHIER_RETURNS.INVOICE_DETAILS_TITLE' | translate }}</h2>
+          <p>{{ 'CASHIER_RETURNS.INVOICE_DETAILS_SUB' | translate }}</p>
+        </div>
+
+        <div class="invoice-meta">
+          <div class="meta-item">
+            <span>{{ 'CASHIER_RETURNS.INVOICE_NO' | translate }}</span>
+            <strong>{{ invoice.invoiceNo }}</strong>
+          </div>
+          <div class="meta-item">
+            <span>{{ 'CASHIER_RETURNS.DATE' | translate }}</span>
+            <strong>{{ invoice.invoiceDate | customDate: 'yyyy/MM/dd - hh:mm a' }}</strong>
+          </div>
+          <div class="meta-item">
+            <span>{{ 'CASHIER_RETURNS.CUSTOMER' | translate }}</span>
+            <strong>{{ invoice.customerName || ('CASHIER_RETURNS.CASH_CUSTOMER' | translate) }}</strong>
+          </div>
+          <div class="meta-item">
+            <span>{{ 'CASHIER_RETURNS.ORIGINAL_PAYMENT' | translate }}</span>
+            <strong>{{ getPaymentMethodLabel(invoice.paymentMethod) }}</strong>
+          </div>
+          <div class="meta-item">
+            <span>{{ 'CASHIER_RETURNS.INVOICE_TOTAL' | translate }}</span>
+            <strong>{{ invoice.totalAmount | number:'1.2-2' }}</strong>
+          </div>
+          <div class="meta-item">
+            <span>{{ 'CASHIER_RETURNS.PAID_AMOUNT' | translate }}</span>
+            <strong>{{ invoice.paidAmount | number:'1.2-2' }}</strong>
+          </div>
+        </div>
+
+        <div class="items-toolbar">
+          <button
+            pButton
+            type="button"
+            icon="pi pi-check-square"
+            [label]="allItemsSelected ? ('CASHIER_RETURNS.DESELECT_ALL' | translate) : ('CASHIER_RETURNS.SELECT_ALL' | translate)"
+            class="table-action-btn"
+            (click)="selectAllItems()"
+          ></button>
+
+          <span class="toolbar-chip">
+            <i class="pi pi-list"></i>
+            {{ 'CASHIER_RETURNS.SELECTED_ITEMS' | translate }}: {{ selectedItemsCount }}
+          </span>
+
+          <span class="toolbar-chip highlighted">
+            <i class="pi pi-box"></i>
+            {{ 'CASHIER_RETURNS.TOTAL_RETURN_QTY' | translate }}: {{ refundTotalItems }}
+          </span>
+        </div>
+
+        <p-table [value]="invoice.items" responsiveLayout="scroll" styleClass="invoice-items-table">
+          <ng-template pTemplate="header">
+            <tr>
+              <th class="text-center">{{ 'CASHIER_RETURNS.TABLE_SELECT' | translate }}</th>
+              <th>{{ 'CASHIER_RETURNS.TABLE_ITEM' | translate }}</th>
+              <th>{{ 'CASHIER_RETURNS.TABLE_CODE' | translate }}</th>
+              <th class="text-center">{{ 'CASHIER_RETURNS.TABLE_ORIGINAL_QTY' | translate }}</th>
+              <th class="text-center">{{ 'CASHIER_RETURNS.TABLE_MAX_RETURN' | translate }}</th>
+              <th class="text-center">{{ 'CASHIER_RETURNS.TABLE_RETURN_QTY' | translate }}</th>
+              <th class="text-end">{{ 'CASHIER_RETURNS.TABLE_UNIT_PRICE' | translate }}</th>
+              <th class="text-end">{{ 'CASHIER_RETURNS.TABLE_RETURN_VALUE' | translate }}</th>
+            </tr>
+          </ng-template>
+
+          <ng-template pTemplate="body" let-item>
+            <tr [class.row-muted]="!item.selected">
+              <td class="text-center">
+                <p-checkbox
+                  [(ngModel)]="item.selected"
+                  [binary]="true"
+                  (onChange)="onItemSelectionChange(item)"
+                ></p-checkbox>
+              </td>
+              <td>
+                <div class="item-main">
+                  <strong>{{ item.itemName }}</strong>
+                  <small>{{ item.unitName || ('CASHIER_RETURNS.UNIT' | translate) }}</small>
+                </div>
+              </td>
+              <td>{{ item.itemCode || '-' }}</td>
+              <td class="text-center">{{ item.quantity }}</td>
+              <td class="text-center">{{ item.maxReturnQty }}</td>
+              <td class="qty-cell">
+                <p-inputNumber
+                  [(ngModel)]="item.returnQty"
+                  (ngModelChange)="onReturnQtyChange(item, $event)"
+                  [showButtons]="true"
+                  buttonLayout="horizontal"
+                  [min]="0"
+                  [max]="item.maxReturnQty"
+                  [minFractionDigits]="0"
+                  [maxFractionDigits]="2"
+                  [disabled]="!item.selected"
+                ></p-inputNumber>
+              </td>
+              <td class="text-end">{{ item.unitPrice | number:'1.2-2' }}</td>
+              <td class="text-end amount-cell">{{ getItemRefundAmount(item) | number:'1.2-2' }}</td>
+            </tr>
+          </ng-template>
+        </p-table>
+      </article>
+
+      <article class="returns-card no-result-card" *ngIf="searchPerformed() && !foundInvoice()">
+        <i class="pi pi-times-circle"></i>
+        <h3>{{ 'CASHIER_RETURNS.INVOICE_NOT_FOUND' | translate }}</h3>
+        <p>{{ 'CASHIER_RETURNS.INVOICE_NOT_FOUND_SUB' | translate }}</p>
+      </article>
+
+      <article class="returns-card config-card" *ngIf="foundInvoice()">
+        <div class="card-head">
+          <h2>{{ 'CASHIER_RETURNS.CONFIG_TITLE' | translate }}</h2>
+          <p>{{ 'CASHIER_RETURNS.CONFIG_SUB' | translate }}</p>
+        </div>
+
+        <div class="config-grid">
+          <label>
+            {{ 'CASHIER_RETURNS.RETURN_REASON' | translate }}
+            <p-dropdown
+              [options]="reasonOptions"
+              optionLabel="label"
+              optionValue="value"
+              [(ngModel)]="returnReason"
+              [showClear]="false"
+              [placeholder]="'CASHIER_RETURNS.REASON_PLACEHOLDER' | translate"
+            ></p-dropdown>
+          </label>
+
+          <label>
+            {{ 'CASHIER_RETURNS.REFUND_METHOD' | translate }}
+            <p-dropdown
+              [options]="refundMethodOptions"
+              optionLabel="label"
+              optionValue="value"
+              [(ngModel)]="refundMethod"
+              [showClear]="false"
+              [placeholder]="'CASHIER_RETURNS.REFUND_PLACEHOLDER' | translate"
+            ></p-dropdown>
+          </label>
+        </div>
+
+        <label class="notes-field">
+          {{ 'CASHIER_RETURNS.ADDITIONAL_NOTES' | translate }}
+          <textarea
+            pInputTextarea
+            rows="3"
+            [(ngModel)]="returnNotes"
+            [placeholder]="'CASHIER_RETURNS.NOTES_PLACEHOLDER' | translate"
+          ></textarea>
+        </label>
+
+        <div class="summary-box">
+          <div class="summary-row">
+            <span>{{ 'CASHIER_RETURNS.SUBTOTAL' | translate }}</span>
+            <strong>{{ refundSubtotal | number:'1.2-2' }}</strong>
+          </div>
+          <div class="summary-row">
+            <span>{{ 'CASHIER_RETURNS.TAX' | translate }}</span>
+            <strong>{{ refundTaxAmount | number:'1.2-2' }}</strong>
+          </div>
+          <div class="summary-row total">
+            <span>{{ 'CASHIER_RETURNS.REFUND_AMOUNT' | translate }}</span>
+            <strong>{{ refundTotalAmount | number:'1.2-2' }}</strong>
+          </div>
+
+          <div class="summary-tags">
+            <p-tag [value]="isFullRefund ? ('CASHIER_RETURNS.FULL_REFUND' | translate) : ('CASHIER_RETURNS.PARTIAL_REFUND' | translate)" [severity]="isFullRefund ? 'danger' : 'info'"></p-tag>
+            <p-tag [value]="('CASHIER_RETURNS.ITEMS_TAG' | translate) + ': ' + selectedItemsCount" severity="success"></p-tag>
+            <p-tag [value]="('CASHIER_RETURNS.QUANTITY_TAG' | translate) + ': ' + refundTotalItems" severity="warning"></p-tag>
+          </div>
+        </div>
+
+        <div class="action-row">
+          <button
+            pButton
+            type="button"
+            icon="pi pi-check"
+            [label]="'CASHIER_RETURNS.EXECUTE_RETURN' | translate"
+            class="confirm-btn"
+            (click)="openConfirmDialog()"
+            [disabled]="selectedItemsCount === 0 || !currentSession()"
+          ></button>
+
+          <button
+            pButton
+            type="button"
+            icon="pi pi-times"
+            [label]="'CASHIER_RETURNS.CANCEL_PROCESS' | translate"
+            class="cancel-btn"
+            (click)="cancelReturn()"
+          ></button>
+        </div>
+      </article>
+
+      <article class="returns-card hint-card" *ngIf="!searchPerformed() && !foundInvoice()">
+        <i class="pi pi-info-circle"></i>
+        <h3>{{ 'CASHIER_RETURNS.START_HINT_TITLE' | translate }}</h3>
+        <p>{{ 'CASHIER_RETURNS.START_HINT_SUB' | translate }}</p>
+      </article>
+    </section>
+
+    <aside class="history-column">
+      <article class="returns-card history-filters-card">
+        <div class="card-head">
+          <h2>{{ 'CASHIER_RETURNS.HISTORY_TITLE' | translate }}</h2>
+          <p>{{ 'CASHIER_RETURNS.HISTORY_SUB' | translate }}</p>
+        </div>
+
+        <div class="history-filters">
+          <span class="search-input-wrap">
+            <i class="pi pi-search"></i>
+            <input
+              pInputText
+              type="text"
+              [(ngModel)]="historySearchTerm"
+              [placeholder]="'CASHIER_RETURNS.HISTORY_SEARCH_PLACEHOLDER' | translate"
+            />
+          </span>
+
+          <p-dropdown
+            [options]="statusFilterOptions"
+            optionLabel="label"
+            optionValue="value"
+            [(ngModel)]="historyFilterStatus"
+          ></p-dropdown>
+        </div>
+      </article>
+
+      <article class="returns-card history-table-card">
+        <p-table
+          [value]="filteredHistory"
+          [paginator]="filteredHistory.length > 10"
+          [rows]="10"
+          responsiveLayout="scroll"
+          styleClass="history-table"
+        >
+          <ng-template pTemplate="header">
+            <tr>
+              <th>{{ 'CASHIER_RETURNS.TABLE_REFUND_NO' | translate }}</th>
+              <th>{{ 'CASHIER_RETURNS.TABLE_INVOICE_NO' | translate }}</th>
+              <th>{{ 'CASHIER_RETURNS.TABLE_CUSTOMER' | translate }}</th>
+              <th>{{ 'CASHIER_RETURNS.TABLE_DATE' | translate }}</th>
+              <th class="text-end">{{ 'CASHIER_RETURNS.TABLE_AMOUNT' | translate }}</th>
+              <th class="text-center">{{ 'CASHIER_RETURNS.TABLE_STATUS' | translate }}</th>
+              <th class="text-center">{{ 'CASHIER_RETURNS.TABLE_ACTION' | translate }}</th>
+            </tr>
+          </ng-template>
+
+          <ng-template pTemplate="body" let-record>
+            <tr>
+              <td>{{ record.refundNo }}</td>
+              <td>{{ record.originalInvoiceNo }}</td>
+              <td>{{ record.customerName || '-' }}</td>
+              <td>{{ record.refundDate | customDate: 'yyyy/MM/dd - hh:mm a' }}</td>
+              <td class="text-end amount-cell">{{ record.refundTotalAmount | number:'1.2-2' }}</td>
+              <td class="text-center">
+                <p-tag [value]="getStatusLabel(record.status)" [severity]="getStatusSeverity(record.status)"></p-tag>
+              </td>
+              <td class="text-center">
+                <button
+                  pButton
+                  type="button"
+                  icon="pi pi-eye"
+                  class="p-button-rounded p-button-text detail-btn"
+                  [pTooltip]="'CASHIER_RETURNS.VIEW_DETAILS' | translate"
+                  tooltipPosition="top"
+                  (click)="viewRefundDetails(record)"
+                ></button>
+              </td>
+            </tr>
+          </ng-template>
+        </p-table>
+
+        <div class="empty-state" *ngIf="filteredHistory.length === 0">
+          <i class="pi pi-inbox"></i>
+          <h3>{{ 'CASHIER_RETURNS.NO_HISTORY_MATCH' | translate }}</h3>
+          <p>{{ 'CASHIER_RETURNS.NO_HISTORY_SUB' | translate }}</p>
+        </div>
+      </article>
+    </aside>
+  </main>
+</div>
+
+<p-dialog
+  [(visible)]="showConfirmDialog"
+  [modal]="true"
+  [draggable]="false"
+  [resizable]="false"
+  [closable]="!processing"
+  [style]="{ width: '520px', maxWidth: '95vw' }"
+  styleClass="confirm-dialog"
+  [header]="'CASHIER_RETURNS.CONFIRM_TITLE' | translate"
+>
+  <div class="confirm-body">
+    <div class="confirm-row">
+      <span>{{ 'CASHIER_RETURNS.CONFIRM_ORIGINAL' | translate }}</span>
+      <strong>{{ foundInvoice()?.invoiceNo }}</strong>
+    </div>
+    <div class="confirm-row">
+      <span>{{ 'CASHIER_RETURNS.CONFIRM_ITEMS_COUNT' | translate }}</span>
+      <strong>{{ selectedItemsCount }}</strong>
+    </div>
+    <div class="confirm-row">
+      <span>{{ 'CASHIER_RETURNS.CONFIRM_TOTAL_QTY' | translate }}</span>
+      <strong>{{ refundTotalItems }}</strong>
+    </div>
+    <div class="confirm-row">
+      <span>{{ 'CASHIER_RETURNS.CONFIRM_METHOD' | translate }}</span>
+      <strong>{{ getRefundMethodLabel(refundMethod) }}</strong>
+    </div>
+    <div class="confirm-row total">
+      <span>{{ 'CASHIER_RETURNS.CONFIRM_REFUND' | translate }}</span>
+      <strong>{{ refundTotalAmount | number:'1.2-2' }}</strong>
+    </div>
+    <p class="confirm-note" *ngIf="isFullRefund">
+      {{ 'CASHIER_RETURNS.CONFIRM_FULL_MSG' | translate }}
+    </p>
+  </div>
+
+  <ng-template pTemplate="footer">
+    <button
+      pButton
+      type="button"
+      icon="pi pi-times"
+      [label]="'CASHIER_RETURNS.BACK' | translate"
+      class="p-button-outlined"
+      (click)="showConfirmDialog = false"
+      [disabled]="processing"
+    ></button>
+    <button
+      pButton
+      type="button"
+      icon="pi pi-check"
+      [label]="'CASHIER_RETURNS.CONFIRM_BTN' | translate"
+      class="p-button-success"
+      [loading]="processing"
+      (click)="confirmRefund()"
+    ></button>
+  </ng-template>
+</p-dialog>
+
+<p-dialog
+  [(visible)]="showRefundDetailDialog"
+  [modal]="true"
+  [draggable]="false"
+  [resizable]="false"
+  [style]="{ width: '620px', maxWidth: '95vw' }"
+  styleClass="detail-dialog"
+  [header]="'CASHIER_RETURNS.DETAIL_TITLE' | translate"
+>
+  <div class="detail-body" *ngIf="selectedRefund as refund">
+    <div class="detail-grid">
+      <div class="detail-item">
+        <span>{{ 'CASHIER_RETURNS.DETAIL_REFUND_NO' | translate }}</span>
+        <strong>{{ refund.refundNo }}</strong>
+      </div>
+      <div class="detail-item">
+        <span>{{ 'CASHIER_RETURNS.DETAIL_INVOICE_NO' | translate }}</span>
+        <strong>{{ refund.originalInvoiceNo }}</strong>
+      </div>
+      <div class="detail-item">
+        <span>{{ 'CASHIER_RETURNS.DETAIL_CUSTOMER' | translate }}</span>
+        <strong>{{ refund.customerName || '-' }}</strong>
+      </div>
+      <div class="detail-item">
+        <span>{{ 'CASHIER_RETURNS.DETAIL_DATE' | translate }}</span>
+        <strong>{{ refund.refundDate | customDate: 'yyyy/MM/dd - hh:mm a' }}</strong>
+      </div>
+      <div class="detail-item">
+        <span>{{ 'CASHIER_RETURNS.DETAIL_REASON' | translate }}</span>
+        <strong>{{ refund.reasonText }}</strong>
+      </div>
+      <div class="detail-item">
+        <span>{{ 'CASHIER_RETURNS.DETAIL_METHOD' | translate }}</span>
+        <strong>{{ getRefundMethodLabel(refund.refundMethod) }}</strong>
+      </div>
+      <div class="detail-item">
+        <span>{{ 'CASHIER_RETURNS.DETAIL_CASHIER' | translate }}</span>
+        <strong>{{ refund.cashierName || '-' }}</strong>
+      </div>
+      <div class="detail-item">
+        <span>{{ 'CASHIER_RETURNS.DETAIL_STATUS' | translate }}</span>
+        <p-tag [value]="getStatusLabel(refund.status)" [severity]="getStatusSeverity(refund.status)"></p-tag>
+      </div>
+      <div class="detail-item">
+        <span>{{ 'CASHIER_RETURNS.DETAIL_ITEMS' | translate }}</span>
+        <strong>{{ refund.itemsCount }}</strong>
+      </div>
+      <div class="detail-item">
+        <span>{{ 'CASHIER_RETURNS.DETAIL_TOTAL' | translate }}</span>
+        <strong>{{ refund.refundTotalAmount | number:'1.2-2' }}</strong>
+      </div>
+    </div>
+
+    <div class="detail-notes" *ngIf="refund.notes">
+      <span>{{ 'CASHIER_RETURNS.DETAIL_NOTES' | translate }}</span>
+      <p>{{ refund.notes }}</p>
+    </div>
+  </div>
+</p-dialog>

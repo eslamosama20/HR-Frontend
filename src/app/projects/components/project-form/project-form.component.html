@@ -1,0 +1,554 @@
+<p-toast></p-toast>
+<form [formGroup]="projectForm" (ngSubmit)="onSubmit()">
+  <div class="card">
+    <div class="card-header d-flex justify-content-between align-items-center flex-wrap gap-2">
+      <h3 class="m-0">{{ isEditMode ? ('DATA.EDIT_PROJECT' | translate) : ('DATA.ADD_NEW_PROJECT' | translate) }}</h3>
+      <div class="header-actions d-flex align-items-center gap-2">
+        <button
+          *ngIf="isEditMode ? hasPermission(PERMISSIONS.Projects.Update) : hasPermission(PERMISSIONS.Projects.Create)"
+          pButton
+          type="button"
+          label="حفظ ومتابعة"
+          icon="pi pi-arrow-right"
+          class="p-button-primary"
+          [loading]="loading"
+          [disabled]="loading"
+          (click)="onSubmit(true)">
+        </button>
+        <button
+          *ngIf="isEditMode ? hasPermission(PERMISSIONS.Projects.Update) : hasPermission(PERMISSIONS.Projects.Create)"
+          pButton
+          type="button"
+          [label]="isEditMode ? ('DATA.SAVE_CHANGES' | translate) : ('DATA.CREATE' | translate)"
+          icon="pi pi-check"
+          class="p-button-success"
+          [loading]="loading"
+          [disabled]="loading"
+          (click)="onSubmit(false)">
+        </button>
+        <button
+          pButton
+          type="button"
+          [label]="'DATA.CANCEL' | translate"
+          icon="pi pi-times"
+          class="p-button-secondary"
+          (click)="cancel()"
+          [disabled]="loading">
+        </button>
+      </div>
+    </div>
+
+    <div class="card-body">
+      <div class="form-grid">
+        <!-- Row 1: Project Name and Project Number -->
+        <div class="form-field">
+          <label for="projectName" class="required">
+            {{ 'DATA.PROJECT_NAME' | translate }}
+          </label>
+          <input
+            id="projectName"
+            type="text"
+            pInputText
+            formControlName="projectName"
+            [ngClass]="{'p-invalid': submitted && f['projectName'].errors}"
+          />
+          <small
+            class="p-error"
+            *ngIf="submitted && f['projectName'].errors?.['required']">
+            {{ 'DATA.PROJECT_NAME_REQUIRED' | translate }}
+          </small>
+          <small
+            class="p-error"
+            *ngIf="submitted && f['projectName'].errors?.['maxlength']">
+            {{ 'DATA.MAX_500_CHARACTERS' | translate }}
+          </small>
+        </div>
+
+        <div class="form-field">
+          <label for="projectNumber">رقم المشروع</label>
+          <input
+            id="projectNumber"
+            type="text"
+            pInputText
+            formControlName="projectNumber"
+            [ngClass]="{'p-invalid': submitted && f['projectNumber'].errors}"
+          />
+          <small
+            class="p-error"
+            *ngIf="submitted && f['projectNumber'].errors?.['maxlength']">
+            {{ 'DATA.MAX_100_CHARACTERS' | translate }}
+          </small>
+        </div>
+
+        <!-- Row 2: File Number and Status -->
+        <div class="form-field">
+          <label for="fileNumber">رقم الملف</label>
+          <input
+            id="fileNumber"
+            type="text"
+            pInputText
+            formControlName="fileNumber"
+            [ngClass]="{'p-invalid': submitted && f['fileNumber'].errors}"
+          />
+          <small
+            class="p-error"
+            *ngIf="submitted && f['fileNumber'].errors?.['maxlength']">
+            {{ 'DATA.MAX_100_CHARACTERS' | translate }}
+          </small>
+        </div>
+
+        <div class="form-field" style="display: flex; flex-direction: column;">
+          <label for="status" class="required mb-1 block">
+            {{ 'DATA.STATUS' | translate }}
+          </label>
+          <div style="display: flex; gap: 10px; width: 100%; align-items: center;">
+            <select
+              id="status"
+              formControlName="status"
+              class="custom-status-select"
+              [ngClass]="{'is-invalid': submitted && f['status'].errors}"
+              style="flex: 1; height: 34px; border-radius: 6px; border: 1px solid #cbd5e1; padding: 0 10px; font-size: 0.85rem; font-weight: 500; background-color: #ffffff; color: #1e293b; text-align: right; direction: rtl; cursor: pointer; box-sizing: border-box;">
+              <option *ngFor="let st of statuses" [value]="st" style="background-color: #ffffff; color: #1e293b; font-weight: 500;">{{ st }}</option>
+            </select>
+            <button
+              type="button"
+              pButton
+              label="إضافة حالة"
+              icon="pi pi-plus"
+              class="p-button-outlined p-button-primary p-button-sm"
+              style="width: 125px; height: 34px; min-height: 34px; max-height: 34px; padding: 0; font-size: 0.825rem; white-space: nowrap; border-radius: 6px; display: inline-flex; align-items: center; justify-content: center; box-sizing: border-box;"
+              title="إضافة حالة جديدة للمشروع"
+              [disabled]="isFormDisabled"
+              (click)="openAddStatusModal()">
+            </button>
+          </div>
+          <small
+            class="p-error"
+            *ngIf="submitted && f['status'].errors?.['required']">
+            {{ 'DATA.STATUS_REQUIRED' | translate }}
+          </small>
+        </div>
+
+        <div class="form-field">
+          <label for="isFinancialSolvency" class="mb-1 block">
+            الملاءة المالية
+          </label>
+          <p-dropdown
+            id="isFinancialSolvency"
+            formControlName="isFinancialSolvency"
+            [options]="solvencyOptions"
+            optionLabel="label"
+            optionValue="value"
+            placeholder="الملاءة المالية"
+            [style]="{'width': '100%'}">
+          </p-dropdown>
+        </div>
+
+
+        <!-- Row 3: Total Amount and Execution Amount -->
+        <div class="form-field">
+          <label for="totalAmount">المبلغ الإجمالي (ريال)</label>
+          <input
+            id="totalAmount"
+            type="number"
+            pInputText
+            formControlName="totalAmount"
+            [ngClass]="{'p-invalid': submitted && f['totalAmount'].errors}"
+          />
+          <small
+            class="p-error"
+            *ngIf="submitted && f['totalAmount'].errors?.['min']">
+            المبلغ يجب أن يكون صفر أو أكثر
+          </small>
+        </div>
+
+        <div class="form-field">
+          <label for="executionAmount">مبلغ التنفيذ (ريال)</label>
+          <input
+            id="executionAmount"
+            type="number"
+            pInputText
+            formControlName="executionAmount"
+            [ngClass]="{'p-invalid': submitted && f['executionAmount'].errors}"
+          />
+          <small
+            class="p-error"
+            *ngIf="submitted && f['executionAmount'].errors?.['min']">
+            المبلغ يجب أن يكون صفر أو أكثر
+          </small>
+        </div>
+
+        <!-- Profit Input (Percentage or Value) -->
+        <div class="form-field" style="display: flex; flex-direction: column;">
+          <label for="profitInput">
+            الربح ({{ profitFormType === 'percentage' ? '%' : 'ريال' }})
+          </label>
+          <div style="display: flex; gap: 10px; width: 100%;">
+            <input
+              id="profitInput"
+              type="number"
+              pInputText
+              formControlName="profitInput"
+              style="flex: 1;"
+              [ngClass]="{'p-invalid': submitted && f['profitInput'].errors}"
+              [placeholder]="profitFormType === 'percentage' ? 'ادخل النسبة' : 'ادخل المبلغ'"
+            />
+            <p-dropdown
+              [options]="profitTypeOptions"
+              formControlName="profitType"
+              [style]="{'width': '125px'}"
+              (onChange)="onProfitTypeChange()">
+            </p-dropdown>
+          </div>
+          <small
+            class="p-error"
+            *ngIf="submitted && profitFormType === 'percentage' && (f['profitInput'].value < 0 || f['profitInput'].value > 100)">
+            النسبة يجب أن تكون بين 0 و 100
+          </small>
+        </div>
+
+        <!-- Executing Company & Country & Supervising & Department -->
+        <div class="form-field">
+          <label for="companyDetailsId">الشركة التابعة</label>
+          <p-dropdown
+            id="companyDetailsId"
+            formControlName="companyDetailsId"
+            [options]="companies"
+            optionLabel="arabicName"
+            optionValue="id"
+            placeholder="اختر الشركة"
+            [showClear]="true">
+          </p-dropdown>
+        </div>
+
+        <div class="form-field">
+          <label for="country">دولة التنفيذ / دول العمل</label>
+          <p-multiSelect
+            id="country"
+            formControlName="countriesList"
+            [options]="countryOptions"
+            optionLabel="label"
+            optionValue="value"
+            [filter]="true"
+            [showToggleAll]="true"
+            placeholder="اختر الدول"
+            selectedItemsLabel="{0} دول مختارة">
+          </p-multiSelect>
+        </div>
+
+        <div class="form-field">
+          <label for="executingCompanyName">الشركة المنفذة</label>
+          <p-dropdown
+            id="executingCompanyName"
+            formControlName="executingCompanyName"
+            [options]="executingCompanies"
+            placeholder="اختر الشركة المنفذة"
+            [showClear]="true">
+          </p-dropdown>
+        </div>
+
+        <div class="form-field">
+          <label for="supervisingEntityName">الجهة المشرفة</label>
+          <p-dropdown
+            id="supervisingEntityName"
+            formControlName="supervisingEntityName"
+            [options]="projectCustomers"
+            optionLabel="arabicName"
+            optionValue="arabicName"
+            [filter]="true"
+            placeholder="اختر الجهة المشرفة"
+            [showClear]="true">
+          </p-dropdown>
+        </div>
+
+        <div class="form-field">
+          <label for="departmentName">الإدارة</label>
+          <p-dropdown
+            id="departmentName"
+            formControlName="departmentName"
+            [options]="departmentOptions"
+            optionLabel="label"
+            optionValue="value"
+            [filter]="true"
+            placeholder="اختر الإدارة"
+            [showClear]="true"
+            [disabled]="departmentOptions.length === 0">
+          </p-dropdown>
+        </div>
+
+        <!-- Row: Quote Number & Quote Date -->
+        <div class="form-field">
+          <label for="quoteNumber">رقم العرض</label>
+          <input
+            id="quoteNumber"
+            type="text"
+            pInputText
+            formControlName="quoteNumber"
+          />
+        </div>
+
+        <div class="form-field">
+          <label for="quoteDate">تاريخ عرض السعر</label>
+          <p-calendar
+            id="quoteDate"
+            formControlName="quoteDate"
+            [showIcon]="true"
+            dateFormat="dd/mm/yy">
+          </p-calendar>
+        </div>
+
+        <!-- Row: Assignment Number & Assignment Date -->
+        <div class="form-field">
+          <label for="assignmentNumber">رقم التعميد</label>
+          <input
+            id="assignmentNumber"
+            type="text"
+            pInputText
+            formControlName="assignmentNumber"
+          />
+        </div>
+
+        <div class="form-field">
+          <label for="assignmentApprovalDate">تاريخ التعميد</label>
+          <p-calendar
+            id="assignmentApprovalDate"
+            formControlName="assignmentApprovalDate"
+            [showIcon]="true"
+            dateFormat="dd/mm/yy">
+          </p-calendar>
+        </div>
+
+        <!-- Row: Execution Duration & Financial Solvency -->
+        <div class="form-field" style="display: flex; flex-direction: column;">
+          <label for="executionDuration">مدة التنفيذ</label>
+          <div style="display: flex; gap: 10px; width: 100%;">
+            <input
+              id="executionDuration"
+              type="number"
+              pInputText
+              formControlName="executionDuration"
+              style="flex: 1;"
+            />
+            <p-dropdown
+              id="executionDurationUnit"
+              formControlName="executionDurationUnit"
+              [options]="[{label: 'يوم', value: 'Day'}, {label: 'أسبوع', value: 'Week'}, {label: 'شهر', value: 'Month'}, {label: 'سنة', value: 'Year'}]"
+              optionLabel="label"
+              optionValue="value"
+              [style]="{'width': '125px'}">
+            </p-dropdown>
+          </div>
+        </div>
+
+
+        <!-- Dynamic Checks List Section -->
+        <div class="form-field full-width">
+          <div class="d-flex justify-content-between align-items-center mb-2">
+            <h6 class="m-0 font-weight-bold d-flex align-items-center gap-2" style="color: #1e293b; font-size: 1rem;">
+              <i class="pi pi-credit-card" style="color: #3b82f6;"></i>
+              دفعات ومقبوضات المشروع
+            </h6>
+            <button type="button" pButton label="إضافة دفعة جديدة" icon="pi pi-plus" class="p-button-outlined p-button-sm" [disabled]="isFormDisabled" (click)="addCheck()"></button>
+          </div>
+          
+          <div class="card p-2 border shadow-sm bg-white" *ngIf="checks.length > 0; else noChecks">
+            <p-table [value]="checks" styleClass="p-datatable-gridlines p-datatable-sm" [responsive]="true">
+              <ng-template pTemplate="header">
+                <tr>
+                  <th style="width: 120px;">رقم الدفعة</th>
+                  <th style="width: 130px;">طريقة الدفع</th>
+                  <th style="width: 170px;">تفاصيل الدفع</th>
+                  <th style="width: 120px;">المبلغ (ريال)</th>
+                  <th style="width: 150px;">تاريخ الاستلام</th>
+                  <th>حساب الخزينة / البنك (المدين)</th>
+                  <th>حساب القبض / العميل (الدائن)</th>
+                  <th style="width: 45px; text-align: center;">إجراء</th>
+                </tr>
+              </ng-template>
+              <ng-template pTemplate="body" let-check let-i="rowIndex">
+                <tr>
+                  <td>
+                    <input type="text" pInputText [(ngModel)]="check.checkNumber" [ngModelOptions]="{standalone: true}" [disabled]="isFormDisabled" style="width: 100%;" placeholder="رقم الدفعة" />
+                  </td>
+                  <td>
+                    <p-dropdown [options]="paymentMethodOptions" [(ngModel)]="check.paymentMethodType" (onChange)="onCheckPaymentMethodChange(check)" [ngModelOptions]="{standalone: true}" [disabled]="isFormDisabled" optionLabel="label" optionValue="value" placeholder="طريقة الدفع" [style]="{'width': '100%'}" appendTo="body"></p-dropdown>
+                  </td>
+                  <td>
+                    <div [ngSwitch]="check.paymentMethodType">
+                      <!-- Cheque -->
+                      <input *ngSwitchCase="2" type="text" pInputText [(ngModel)]="check.checkNumberDetail" [ngModelOptions]="{standalone: true}" [disabled]="isFormDisabled" style="width: 100%;" placeholder="رقم الشيك" />
+                      
+                      <!-- Transfer -->
+                      <div *ngSwitchCase="4" class="d-flex flex-column gap-1">
+                        <input type="text" pInputText [(ngModel)]="check.bankName" [ngModelOptions]="{standalone: true}" [disabled]="isFormDisabled" style="width: 100%; margin-bottom: 2px;" placeholder="اسم البنك" />
+                        <input type="text" pInputText [(ngModel)]="check.bankReferenceNumber" [ngModelOptions]="{standalone: true}" [disabled]="isFormDisabled" style="width: 100%;" placeholder="الرقم المرجعي" />
+                      </div>
+                      
+                      <!-- Cash -->
+                      <input *ngSwitchCase="1" type="text" pInputText [(ngModel)]="check.voucherNumber" [ngModelOptions]="{standalone: true}" [disabled]="isFormDisabled" style="width: 100%;" placeholder="رقم السند" />
+                      
+                      <!-- Card -->
+                      <input *ngSwitchCase="3" type="text" pInputText [(ngModel)]="check.transactionNumber" [ngModelOptions]="{standalone: true}" [disabled]="isFormDisabled" style="width: 100%;" placeholder="رقم العملية" />
+                    </div>
+                  </td>
+                  <td>
+                    <input type="number" pInputText [(ngModel)]="check.checkAmount" [ngModelOptions]="{standalone: true}" [disabled]="isFormDisabled" style="width: 100%;" placeholder="المبلغ" />
+                  </td>
+                  <td>
+                    <p-calendar [(ngModel)]="check.checkReceiptDate" [ngModelOptions]="{standalone: true}" [disabled]="isFormDisabled" [showIcon]="true" dateFormat="dd/mm/yy" appendTo="body" [style]="{'width': '100%'}"></p-calendar>
+                  </td>
+                  <td>
+                    <p-dropdown [options]="getTreasuryOptionsForCheck(check)" [(ngModel)]="check.treasuryId" [ngModelOptions]="{standalone: true}" [disabled]="isFormDisabled" optionLabel="name" optionValue="id" placeholder="اختر الخزينة/البنك" [style]="{'width': '100%'}" [filter]="true" appendTo="body"></p-dropdown>
+                  </td>
+                  <td>
+                    <p-dropdown [options]="mainAccounts" [(ngModel)]="check.mainAccountId" [ngModelOptions]="{standalone: true}" [disabled]="isFormDisabled" optionLabel="arabicName" optionValue="id" placeholder="اختر حساب الدائن" [style]="{'width': '100%'}" [filter]="true" appendTo="body"></p-dropdown>
+                  </td>
+                  <td class="text-center">
+                    <button type="button" pButton icon="pi pi-trash" class="p-button-danger p-button-text p-button-sm" [disabled]="isFormDisabled" (click)="removeCheck(i)"></button>
+                  </td>
+                </tr>
+              </ng-template>
+            </p-table>
+            
+            <div class="d-flex align-items-center gap-2 mt-2 p-2 rounded" style="background-color: #e0f2fe; border: 1px solid #bae6fd; font-weight: 700; color: #0369a1; font-size: 0.875rem;">
+              <span>إجمالي المبالغ المدخلة:</span>
+              <span style="font-size: 0.95rem; color: #0284c7;">{{ getChecksTotalAmount() }} ريال</span>
+            </div>
+          </div>
+          <ng-template #noChecks>
+            <div class="d-flex align-items-center justify-content-center gap-2 p-2 bg-light rounded border border-dashed text-muted" style="font-size: 0.8rem; background-color: #f8fafc !important;">
+              <i class="pi pi-info-circle" style="font-size: 0.95rem; color: #64748b;"></i>
+              <span>لا توجد دفعات مضافة لهذا المشروع حالياً. اضغط على زر "إضافة دفعة جديدة" للبدء.</span>
+            </div>
+          </ng-template>
+        </div>
+
+        <!-- Milestones Section (مراحل المشروع) -->
+        <div class="form-section full-width mt-2" style="grid-column: 1 / -1;">
+          <div class="section-header d-flex justify-content-between align-items-center mb-1">
+            <h6 class="m-0 font-weight-bold d-flex align-items-center gap-2" style="color: #1e293b; font-size: 0.95rem;">
+              <i class="pi pi-map-marker" style="color: #3b82f6;"></i>
+              مخطط مراحل تنفيذ المشروع بالتفصيل
+            </h6>
+            <button type="button" pButton label="إضافة مرحلة جديدة" icon="pi pi-plus" class="p-button-outlined p-button-sm" [disabled]="isFormDisabled" (click)="addMilestone()"></button>
+          </div>
+
+          <div *ngIf="milestones && milestones.length > 0; else noMilestones" class="card p-2 border shadow-sm bg-white mb-2">
+            <p-table [value]="milestones" responsiveLayout="scroll" styleClass="p-datatable-gridlines p-datatable-sm">
+              <ng-template pTemplate="header">
+                <tr>
+                  <th style="width: 80px; text-align: center;">الترتيب</th>
+                  <th>اسم المرحلة</th>
+                  <th style="width: 140px; text-align: center;">المدة</th>
+                  <th style="width: 140px; text-align: center;">الوحدة</th>
+                  <th style="width: 45px; text-align: center;">إجراء</th>
+                </tr>
+              </ng-template>
+              <ng-template pTemplate="body" let-milestone let-i="rowIndex">
+                <tr>
+                  <td style="text-align: center; font-weight: bold;">
+                    {{ milestone.sequenceOrder }}
+                  </td>
+                  <td>
+                    <input type="text" pInputText [(ngModel)]="milestone.milestoneName" name="milestoneName_{{i}}" [ngModelOptions]="{standalone: true}" [disabled]="isFormDisabled" placeholder="مثال: تجهيز المواد، الحفر والتأسيس..." style="width: 100%;" required />
+                  </td>
+                  <td>
+                    <input type="number" pInputText [(ngModel)]="milestone.duration" name="milestoneDuration_{{i}}" [ngModelOptions]="{standalone: true}" [disabled]="isFormDisabled" min="1" style="width: 100%; text-align: center;" required />
+                  </td>
+                  <td>
+                    <p-dropdown [(ngModel)]="milestone.durationUnit" name="milestoneUnit_{{i}}" [ngModelOptions]="{standalone: true}" [disabled]="isFormDisabled" [options]="[{label: 'يوم', value: 'Day'}, {label: 'أسبوع', value: 'Week'}, {label: 'شهر', value: 'Month'}, {label: 'سنة', value: 'Year'}]" optionLabel="label" optionValue="value" appendTo="body" [style]="{'width': '100%'}"></p-dropdown>
+                  </td>
+                  <td style="text-align: center;">
+                    <button type="button" pButton icon="pi pi-trash" class="p-button-danger p-button-text p-button-sm" [disabled]="isFormDisabled" (click)="removeMilestone(i)"></button>
+                  </td>
+                </tr>
+              </ng-template>
+            </p-table>
+          </div>
+          <ng-template #noMilestones>
+            <div class="d-flex align-items-center justify-content-center gap-2 p-2 bg-light rounded border border-dashed text-muted mb-2" style="font-size: 0.8rem; background-color: #f8fafc !important;">
+              <i class="pi pi-info-circle" style="font-size: 0.95rem; color: #64748b;"></i>
+              <span>لم يتم تقسيم مدة المشروع إلى مراحل تنفيذية بعد. اضغط على زر "إضافة مرحلة جديدة" لتقسيم المدة وضبط خطة التنفيذ.</span>
+            </div>
+          </ng-template>
+        </div>
+
+        <!-- Clearing Details -->
+        <div class="form-field full-width">
+          <label for="clearingDetails">تفاصيل المقاصة والتحويل المالي</label>
+          <textarea
+            id="clearingDetails"
+            pInputTextarea
+            [rows]="3"
+            formControlName="clearingDetails"
+            [ngClass]="{'p-invalid': submitted && f['clearingDetails'].errors}"
+            style="width: 100%;">
+          </textarea>
+        </div>
+
+      </div>
+
+      <!-- Bottom Action Buttons -->
+        <div class="form-actions d-flex justify-content-end align-items-center gap-2 mt-3 pt-2 border-top">
+          <button
+            *ngIf="isEditMode ? hasPermission(PERMISSIONS.Projects.Update) : hasPermission(PERMISSIONS.Projects.Create)"
+            pButton
+            type="button"
+            label="حفظ ومتابعة"
+            icon="pi pi-arrow-right"
+            class="p-button-primary p-button-sm"
+            [loading]="loading"
+            [disabled]="loading"
+            (click)="onSubmit(true)">
+          </button>
+          <button
+            *ngIf="isEditMode ? hasPermission(PERMISSIONS.Projects.Update) : hasPermission(PERMISSIONS.Projects.Create)"
+            pButton
+            type="button"
+            [label]="isEditMode ? ('DATA.SAVE_CHANGES' | translate) : ('DATA.CREATE' | translate)"
+            icon="pi pi-check"
+            class="p-button-success p-button-sm"
+            [loading]="loading"
+            [disabled]="loading"
+            (click)="onSubmit(false)">
+          </button>
+          <button
+            pButton
+            type="button"
+            [label]="'DATA.CANCEL' | translate"
+            icon="pi pi-times"
+            class="p-button-secondary p-button-sm"
+            (click)="cancel()"
+            [disabled]="loading">
+          </button>
+        </div>
+      </div>
+    </div>
+  </form>
+
+<p-dialog header="سبب إلغاء الدفعة" [(visible)]="cancellationDialogVisible" [modal]="true" [style]="{width: '450px'}" [draggable]="false" [resizable]="false" appendTo="body">
+  <div class="p-fluid">
+    <div class="p-field">
+      <label for="cancellationReason" class="font-bold mb-2 block">يرجى إدخال سبب إلغاء الدفعة (سيتم إنشاء حركة عكسية تلقائياً):</label>
+      <textarea id="cancellationReason" pInputTextarea [(ngModel)]="cancellationReason" rows="3" class="w-full border p-2 rounded" placeholder="مثال: تم إلغاء الاتفاق أو تعديل الدفعة"></textarea>
+    </div>
+  </div>
+  <ng-template pTemplate="footer">
+    <button pButton type="button" label="تأكيد الإلغاء" icon="pi pi-check" class="p-button-danger rounded-md" (click)="confirmCheckCancellation()"></button>
+    <button pButton type="button" label="تراجع" icon="pi pi-times" class="p-button-secondary p-button-text rounded-md" (click)="cancellationDialogVisible = false"></button>
+  </ng-template>
+</p-dialog>
+
+<p-dialog header="إضافة حالة جديدة للمشروع" [(visible)]="addStatusDialogVisible" [modal]="true" [style]="{width: '400px'}" [draggable]="false" [resizable]="false" appendTo="body">
+  <div class="p-fluid dir-rtl" dir="rtl">
+    <div class="p-field my-2">
+      <label for="newStatusName" class="font-bold mb-2 block required">اسم الحالة الجديدة:</label>
+      <input id="newStatusName" type="text" pInputText [(ngModel)]="newStatusName" class="w-full border p-2 rounded" placeholder="أدخل اسم الحالة (مثال: قيد المراجعة)" (keyup.enter)="saveNewStatus()" />
+    </div>
+  </div>
+  <ng-template pTemplate="footer">
+    <button pButton type="button" label="إضافة وإعتماد" icon="pi pi-check" class="p-button-success p-button-sm rounded-md" (click)="saveNewStatus()"></button>
+    <button pButton type="button" label="إلغاء" icon="pi pi-times" class="p-button-secondary p-button-text p-button-sm rounded-md" (click)="addStatusDialogVisible = false"></button>
+  </ng-template>
+</p-dialog>
+

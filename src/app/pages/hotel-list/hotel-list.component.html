@@ -1,0 +1,302 @@
+<div class="min-h-screen bg-gray-50">
+  <!-- Search Header -->
+  <div class="bg-gradient-to-r from-blue-600 to-blue-800 text-white py-12">
+    <div class="container mx-auto px-4">
+      <h1 class="text-4xl font-bold mb-6 text-center">ابحث عن فندقك المثالي</h1>
+      
+      <div class="bg-white rounded-lg shadow-xl p-6 max-w-5xl mx-auto">
+        <div class="grid grid-cols-1 md:grid-cols-5 gap-4">
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">الوجهة</label>
+            <p-dropdown
+              [options]="cities"
+              [(ngModel)]="selectedCity"
+              (onChange)="applyFilters()"
+              placeholder="اختر المدينة"
+              [showClear]="true"
+              styleClass="w-full"
+            ></p-dropdown>
+          </div>
+
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">تاريخ الوصول</label>
+            <p-calendar
+              [(ngModel)]="searchFilters.checkInDate"
+              [showIcon]="true"
+              [minDate]="today"
+              dateFormat="dd/mm/yy"
+              placeholder="اختر التاريخ"
+              styleClass="w-full"
+            ></p-calendar>
+          </div>
+
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">تاريخ المغادرة</label>
+            <p-calendar
+              [(ngModel)]="searchFilters.checkOutDate"
+              [showIcon]="true"
+              [minDate]="searchFilters.checkInDate"
+              dateFormat="dd/mm/yy"
+              placeholder="اختر التاريخ"
+              styleClass="w-full"
+            ></p-calendar>
+          </div>
+
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">عدد الضيوف</label>
+            <p-inputNumber
+              [(ngModel)]="searchFilters.numberOfGuests"
+              [min]="1"
+              [showButtons]="true"
+              buttonLayout="horizontal"
+              spinnerMode="horizontal"
+              inputStyleClass="w-full"
+              styleClass="w-full"
+            ></p-inputNumber>
+          </div>
+
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">عدد الغرف</label>
+            <p-inputNumber
+              [(ngModel)]="searchFilters.numberOfRooms"
+              [min]="1"
+              [showButtons]="true"
+              buttonLayout="horizontal"
+              spinnerMode="horizontal"
+              inputStyleClass="w-full"
+              styleClass="w-full"
+            ></p-inputNumber>
+          </div>
+        </div>
+
+        <p-button
+          label="بحث"
+          icon="pi pi-search"
+          (onClick)="applyFilters()"
+          styleClass="w-full mt-4"
+          severity="primary"
+        ></p-button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Filters and Results -->
+  <div class="container mx-auto px-4 py-8">
+    <div class="grid grid-cols-1 lg:grid-cols-4 gap-6">
+      <!-- Filter Sidebar -->
+      <div class="lg:col-span-1">
+        <div class="bg-white rounded-lg shadow-md p-6 sticky top-4">
+          <div class="flex justify-between items-center mb-4">
+            <h3 class="text-xl font-bold">تصفية النتائج</h3>
+            <p-button
+              label="إعادة تعيين"
+              icon="pi pi-filter-slash"
+              severity="secondary"
+              [text]="true"
+              size="small"
+              (onClick)="clearFilters()"
+            ></p-button>
+          </div>
+
+          <!-- Price Range Slider -->
+          <div class="mb-6">
+            <label class="block font-semibold mb-3">نطاق السعر (ريال/ليلة)</label>
+            <p-slider
+              [(ngModel)]="priceRange"
+              [range]="true"
+              [min]="0"
+              [max]="5000"
+              [step]="50"
+              (onSlideEnd)="onPriceRangeChange()"
+              styleClass="w-full"
+            ></p-slider>
+            <div class="flex justify-between mt-2 text-sm text-gray-600">
+              <span>{{ priceRange[0] }} ريال</span>
+              <span>{{ priceRange[1] }} ريال</span>
+            </div>
+          </div>
+
+          <!-- Star Rating Filter -->
+          <div class="mb-6">
+            <label class="block font-semibold mb-3">تصنيف النجوم</label>
+            <div class="space-y-2">
+              <div *ngFor="let star of starOptions" class="flex items-center">
+                <p-checkbox
+                  [(ngModel)]="selectedStars"
+                  [value]="star"
+                  [inputId]="'star-' + star"
+                  (onChange)="onStarFilterChange()"
+                ></p-checkbox>
+                <label [for]="'star-' + star" class="ml-2 cursor-pointer flex items-center">
+                  <p-rating
+                    [ngModel]="star"
+                    [readonly]="true"
+                    [cancel]="false"
+                    [stars]="5"
+                    styleClass="text-sm"
+                  ></p-rating>
+                </label>
+              </div>
+            </div>
+          </div>
+
+          <!-- Amenities Filter -->
+          <div class="mb-6">
+            <label class="block font-semibold mb-3">المرافق</label>
+            <div class="space-y-2">
+              <div *ngFor="let amenity of amenities" class="flex items-center">
+                <p-checkbox
+                  [(ngModel)]="amenity.checked"
+                  [binary]="true"
+                  [inputId]="amenity.name"
+                  (onChange)="onAmenityChange()"
+                ></p-checkbox>
+                <label [for]="amenity.name" class="ml-2 cursor-pointer flex items-center">
+                  <i [class]="amenity.icon + ' mr-2'"></i>
+                  {{ amenity.name }}
+                </label>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Hotels Grid -->
+      <div class="lg:col-span-3">
+        <div class="mb-4 flex justify-between items-center">
+          <h2 class="text-2xl font-bold">{{ filteredHotels.length }} فندق متاح</h2>
+          <p-dropdown
+            [options]="sortOptions"
+            [(ngModel)]="selectedSort"
+            (onChange)="onSortChange()"
+            optionLabel="label"
+            optionValue="value"
+            placeholder="ترتيب حسب"
+            styleClass="w-64"
+          ></p-dropdown>
+        </div>
+
+        <!-- Loading -->
+        <div *ngIf="loading" class="flex justify-center items-center py-20">
+          <div class="animate-spin rounded-full h-16 w-16 border-b-2 border-blue-600"></div>
+        </div>
+
+        <!-- Hotels List -->
+        <div class="space-y-6">
+          <div *ngFor="let hotel of filteredHotels" 
+               class="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-xl transition-shadow">
+            
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-0">
+              <!-- Hotel Image Carousel -->
+              <div class="relative md:col-span-1">
+                <p-carousel
+                  [value]="getHotelImages(hotel)"
+                  [numVisible]="1"
+                  [numScroll]="1"
+                  [circular]="true"
+                  [responsiveOptions]="carouselResponsiveOptions"
+                  [showIndicators]="true"
+                  styleClass="hotel-carousel"
+                >
+                  <ng-template let-image pTemplate="item">
+                    <div class="h-64 md:h-full bg-gray-200">
+                      <img [src]="image" [alt]="hotel.name" class="w-full h-full object-cover">
+                    </div>
+                  </ng-template>
+                </p-carousel>
+                
+                <p-tag
+                  *ngIf="hotel.isFeatured"
+                  value="مميز"
+                  severity="warning"
+                  styleClass="absolute top-3 left-3 z-10"
+                ></p-tag>
+              </div>
+
+              <!-- Hotel Info -->
+              <div class="md:col-span-2 p-6">
+                <div class="flex justify-between items-start mb-3">
+                  <div class="flex-1">
+                    <h3 class="text-2xl font-bold text-gray-900 mb-2">{{ hotel.name }}</h3>
+                    <div class="flex items-center gap-3 mb-2">
+                      <p-rating
+                        [ngModel]="hotel.stars"
+                        [readonly]="true"
+                        [cancel]="false"
+                        [stars]="5"
+                      ></p-rating>
+                      <span *ngIf="hotel.averageRating" class="text-sm text-gray-600">
+                        ({{ hotel.averageRating }}/10)
+                      </span>
+                    </div>
+                    <p class="text-gray-600 flex items-center">
+                      <i class="pi pi-map-marker mr-2"></i>
+                      {{ hotel.city }}
+                    </p>
+                  </div>
+                </div>
+
+                <p *ngIf="hotel.description" class="text-gray-700 mb-4 line-clamp-2">
+                  {{ hotel.description }}
+                </p>
+
+                <!-- Amenities Icons -->
+                <div class="flex flex-wrap gap-3 mb-4">
+                  <span *ngIf="hasAmenity(hotel, 'واي فاي')" class="flex items-center text-sm text-gray-600">
+                    <i class="pi pi-wifi mr-1"></i> واي فاي
+                  </span>
+                  <span *ngIf="hasAmenity(hotel, 'مسبح')" class="flex items-center text-sm text-gray-600">
+                    <i class="pi pi-sun mr-1"></i> مسبح
+                  </span>
+                  <span *ngIf="hasAmenity(hotel, 'موقف سيارات')" class="flex items-center text-sm text-gray-600">
+                    <i class="pi pi-car mr-1"></i> موقف
+                  </span>
+                  <span *ngIf="hasAmenity(hotel, 'مطعم')" class="flex items-center text-sm text-gray-600">
+                    <i class="pi pi-shopping-bag mr-1"></i> مطعم
+                  </span>
+                </div>
+
+                <!-- Price and Button -->
+                <div class="flex justify-between items-end pt-4 border-t">
+                  <div>
+                    <p class="text-sm text-gray-600 mb-1">
+                      {{ calculateNights() }} ليلة، {{ searchFilters.numberOfGuests }} ضيف
+                    </p>
+                    <div class="flex items-baseline gap-2">
+                      <span class="text-3xl font-bold text-blue-600">
+                        {{ getMinPrice(hotel) * calculateNights() }}
+                      </span>
+                      <span class="text-sm text-gray-600">ريال</span>
+                    </div>
+                    <p class="text-xs text-gray-500 mt-1">
+                      ({{ getMinPrice(hotel) }} ريال/ليلة)
+                    </p>
+                  </div>
+                  <p-button
+                    label="عرض التفاصيل"
+                    icon="pi pi-arrow-left"
+                    (onClick)="viewHotelDetails(hotel.id)"
+                    size="large"
+                  ></p-button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Empty State -->
+        <div *ngIf="!loading && filteredHotels.length === 0" class="text-center py-20">
+          <i class="pi pi-inbox text-6xl text-gray-300 mb-4"></i>
+          <h3 class="text-2xl font-bold text-gray-700 mb-2">لا توجد فنادق متاحة</h3>
+          <p class="text-gray-500 mb-4">جرب تغيير معايير البحث</p>
+          <p-button
+            label="إعادة تعيين الفلاتر"
+            icon="pi pi-refresh"
+            (onClick)="clearFilters()"
+            severity="secondary"
+          ></p-button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

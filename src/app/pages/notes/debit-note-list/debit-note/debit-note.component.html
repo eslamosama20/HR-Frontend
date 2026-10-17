@@ -1,0 +1,517 @@
+<p-panel  [header]="isEditMode ? translate.instant('FINANCE.EDIT_NOTE') : translate.instant('FINANCE.ADD_NOTE')">
+  <div class="mb-3" style=" justify-self: left;">
+    <app-back-button></app-back-button>
+  </div>
+  
+  <!-- Detail Actions Menu (only in edit mode) -->
+  <app-detail-actions-menu
+    *ngIf="isEditMode"
+    class="no-print mb-3"
+    [showPrint]="true"
+    [showEdit]="false"
+    [showCopy]="false"
+    [showDelete]="true"
+    [navigationControls]="navigationControls"
+    [documentTitle]="'FINANCE.DEBIT_NOTE' | translate"
+    (onPrint)="onPrintClick()"
+    (onDelete)="onDeleteClick()">
+  </app-detail-actions-menu>
+  
+  <div class="fixed inset-0 bg-gray-500 bg-opacity-75 flex items-center justify-center z-50" *ngIf="loading">
+    <i class="pi pi-spin pi-spinner" style="font-size: 2rem"></i>
+  </div>
+  <form
+    *ngIf="!loading"
+    [formGroup]="debitNoteFormGroup"
+    class="flex flex-col gap-4 p-2 py-4  border-l-1 border-gray-300"
+    novalidate
+
+  >
+    <ng-container *ngIf="debitNoteFormGroup.get('transactionId').value ">
+      <a target="_blank" class="text-2xl font-semibold cursor-pointer" [href]="'/accounting/journal-transactions/transaction/'+debitNoteFormGroup.get('transactionId').value">
+        {{ "FINANCE.GO_TO_TRANSACTION" | translate}}
+      </a>
+    </ng-container>
+
+    <div class="flex justify-between gap-2 w-full">
+      <div class="w-[50%] flex gap-2 justify-between items-center">
+
+        <div class="field w-full" >
+
+          <label for="amount" class="block">{{
+              translate.instant("FINANCE.AMOUNT")
+            }}</label>
+          <p-inputNumber
+            formControlName="amount"
+            inputId="amount"
+            id="amount"
+            mode="decimal"
+            [min]="0.01"
+            [minFractionDigits]="0"
+            [maxFractionDigits]="2"
+            [allowEmpty]="true"
+            placeholder="0"
+            class="w-full"
+            styleClass="h-24 w-full text-3xl font-bold"
+          />
+          <small
+            class="text-red-500 p-error block"
+            *ngIf="
+            debitNoteFormGroup.get('amount').invalid &&
+            (debitNoteFormGroup.get('amount').touched || isSubmitted)
+          "
+          >
+            {{ translate.instant("FINANCE.AMOUNT_REQUIRED") }}
+          </small>
+        </div>
+        <div *ngIf="debitNoteFormGroup.get('tax').value > 0" class="field w-full flex-col items-start"  >
+          <p>After Tax</p>
+          <p class="h-full w-full  text-3xl font-bold m-0 p-w">
+            {{debitNoteFormGroup.get('amount').value
+              + (debitNoteFormGroup.get('amount').value * debitNoteFormGroup.get('tax').value)}}
+          </p>
+        </div>
+      </div>
+
+
+      <div class="flex justify-between gap-2 w-[50%]">
+        <div class="field w-full">
+          <label for="receiptDate" class="block">{{
+              translate.instant("FINANCE.NOTE_DATE")
+            }}</label>
+          <p-calendar
+            id="receiptDate"
+            inputId="receiptDate"
+            [showButtonBar]="true"
+            variant="filled"
+            formControlName="receiptDate"
+            [showIcon]="true"
+            [iconDisplay]="'input'"
+            [dateFormat]="'dd/mm/yy'"
+            appendTo="body"
+            styleClass="w-full"
+          >
+            <ng-template pTemplate="inputicon">
+              <i class="pi pi-calendar "></i>
+            </ng-template>
+
+          </p-calendar>
+          <small
+            class="text-red-500 p-error block"
+            *ngIf="
+            debitNoteFormGroup.get('receiptDate').invalid &&
+            (debitNoteFormGroup.get('receiptDate').touched || isSubmitted)
+          "
+          >
+            <span *ngIf="debitNoteFormGroup.get('receiptDate').errors?.['required']">
+              {{ translate.instant("FINANCE.NOTE_DATE_REQUIRED") }}
+            </span>
+            <span *ngIf="debitNoteFormGroup.get('receiptDate').errors?.['futureDate']">
+              {{ translate.instant("FINANCE.FUTURE_DATE_NOT_ALLOWED") }}
+            </span>
+          </small>
+        </div>
+
+      </div>
+
+
+
+    </div>
+    <div class="flex w-full justify-between gap-4">
+      <div class="field w-full">
+        <label for="description" class="block">{{
+            translate.instant("FINANCE.DESCRIPTION")
+          }}</label>
+        <textarea
+          rows="4"
+          cols="30"
+          pInputTextarea
+          id="description"
+          class="w-full"
+          styleClass="w-full"
+          formControlName="description"
+        >
+      </textarea>
+      </div>
+
+      <div class="flex flex-col w-full items-center justify-center gap-3">
+        <div class="field w-full">
+          <label for="supplierDetailsId" class="block">{{
+              translate.instant("FINANCE.SUPPLIER_DETAILS")
+            }}</label>
+          <p-dropdown
+            id="supplierDetailsId"
+            formControlName="supplierDetailsId"
+            [options]="supplierDetailsOptions"
+            [placeholder]="translate.instant('FINANCE.SELECT')"
+            [showClear]="true"
+            [filter]="true"
+            styleClass="w-full flex rtl:flex-row-reverse"
+            class="w-full"
+            appendTo="body"
+          >
+          </p-dropdown>
+          <small
+            class="text-red-500 p-error block"
+            *ngIf="
+            debitNoteFormGroup.get('supplierDetailsId').invalid &&
+            (debitNoteFormGroup.get('supplierDetailsId').touched || isSubmitted)
+          "
+          >
+            {{ translate.instant("FINANCE.SUPPLIER_DETAILS_REQUIRED") }}
+          </small>
+        </div>
+
+        <div class="field w-full print-exclude">
+          <button type="button" class="btn btn-custom w-full" (click)="openTaxModal()"> {{ "FINANCE.TAX" | translate
+            }}</button>
+        </div>
+      </div>
+    </div>
+    <div class="flex w-full justify-between items-center gap-4">
+      <div *ngIf="!isTableVisible" class="field w-[50%]">
+        <label for="selectedSingularAccountId" class="block"
+        >{{ "FINANCE.SUBACCOUNT" | translate }}</label>
+        <p-dropdown
+          appendTo="body"
+          id="selectedSingularAccountId"
+          [options]="mainAccountsOptions"
+          [placeholder]="translate.instant('FINANCE.SELECT')"
+          [showClear]="true"
+          [filter]="true"
+          formControlName="selectedSingularAccountId"
+          (onChange)="handleSingularAccount($event)"
+          styleClass="w-full flex rtl:flex-row-reverse"
+          class="w-full"
+          appendTo="body"
+        >
+        </p-dropdown>
+      </div>
+       <div class="field w-[25%]" >
+         <p-button *ngIf="currentNote" 
+                 (click)="printDocument()" 
+                 [label]="translate.instant('FINANCE.PRINT')"
+                 styleClass="print-exclude rounded-md w-full"
+                 severity="info">
+       </p-button>
+       </div>
+      <div class="field w-[50%] flex gap-2" *ngIf="!isEditMode">
+        <p-button (click)="saveDebitNote()" class="flex-1 print-exclude" styleClass="w-full rounded-md" [label]="translate.instant('FINANCE.SUBMIT')" [disabled]="!isFormValid" />
+        <p-button (click)="saveAndContinue()" class="flex-1 print-exclude" styleClass="w-full rounded-md" severity="success" [label]="translate.instant('FINANCE.SAVE_AND_CONTINUE')" [disabled]="!isFormValid">
+          <ng-template pTemplate="icon">
+            <i class="pi pi-save"></i>
+          </ng-template>
+        </p-button>
+      </div>
+      <div class="field w-[50%] flex gap-2" *ngIf="isEditMode">
+        <p-button (click)="navigateToDebitNotesPage()" class="flex-1 print-exclude" styleClass="w-full rounded-md p-button-secondary" [label]="translate.instant('FINANCE.CANCEL')" />
+        <p-button (click)="saveDebitNote()" class="flex-1 print-exclude" styleClass="w-full rounded-md" [label]="translate.instant('FINANCE.SAVE')" [disabled]="!isFormValid" />
+      </div>
+
+    </div>
+
+    <div class="form-check col-1 mt-3">
+      <input class="form-check-input" type="checkbox" id="toggleTable" (change)="toggleTableVisibility()">
+      <label class="form-check-label" for="toggleTable">{{ "FINANCE.MULTIPLE" | translate }}</label>
+    </div>
+
+  </form>
+  <div class="card mb-4"  *ngIf="isTableVisible">
+    <div class="card-body">
+      <div class="table-responsive">
+        <table class="table table-bordered text-center">
+          <thead class="bg-yellow">
+          <tr>
+            <th scope="col">{{ "FINANCE.SUBACCOUNT" | translate }}</th>
+            <th scope="col">{{ "FINANCE.DESCRIPTION" | translate }}</th>
+            <th scope="col">{{ "FINANCE.PRICEAMOUNT" | translate }}</th>
+            <th></th>
+          </tr>
+          </thead>
+          <tbody>
+          <tr *ngFor="let row of rows; let i = index">
+            <td>
+              <p-dropdown
+                appendTo="body"
+                [options]="mainAccountsOptions" placeholder="{{ 'FINANCE.CHOOSEACCOUNT' | translate }}"
+                optionLabel="label" optionValue="value" [filter]="true"
+                styleClass="w-full" [(ngModel)]="row.mainAccountId" >
+              </p-dropdown>
+
+            </td>
+            <td>
+              <input class="form-control" type="text" placeholder="{{ 'FINANCE.ADD_DESCRIPTION' | translate }}"
+                     [(ngModel)]="row.description"  />
+            </td>
+            <td>
+              <p-inputNumber
+                mode="decimal"
+                [min]="0"
+                [minFractionDigits]="0"
+                [maxFractionDigits]="2"
+                class="w-full"
+                styleClass="w-full font-bold"
+                [(ngModel)]="row.amount"
+                placeholder="{{ 'FINANCE.PRICEAMOUNT' | translate }}"
+              />
+            </td>
+
+
+            <td>
+              <i class="bi bi-dash-circle text-danger big-icon" (click)="removeRow(i)"></i>
+            </td>
+          </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="text-right">
+        <button type="button" class="btn btn-success" (click)="addRow()">{{ "FINANCE.ADD_ACCOUNT" | translate
+          }}</button>
+      </div>
+    </div>
+  </div>
+
+</p-panel>
+<ng-template #taxModal let-modal>
+  <div class="modal-header">
+    <h5 class="modal-title">إضافة ضريبة</h5>
+    <button type="button" class="close" (click)="modal.dismiss('Cross click')">
+      <span>&times;</span>
+    </button>
+  </div>
+  <div class="modal-body">
+    <div class="form-group">
+      <label>{{ "FINANCE.TAX1" | translate }}</label>
+      <p-dropdown
+        [options]="availableTaxOptions" placeholder="اختر الضريبة الأولى" optionLabel="label"
+        optionValue="value" [(ngModel)]="tax1.amount" styleClass="w-full" (onChange)="onPriceOrTaxChange()">
+      </p-dropdown>
+    </div>
+    <div class="form-group">
+      <label>{{ "FINANCE.TAX2" | translate }}</label>
+      <p-dropdown
+        [options]="availableTaxOptions" placeholder="اختر الضريبة الثانية" optionLabel="label"
+        optionValue="value" [(ngModel)]="tax2.amount" styleClass="w-full" (onChange)="onPriceOrTaxChange()">
+      </p-dropdown>
+    </div>
+    <div class="form-group text-right mt-8">
+      <input type="number" class="w-full form-control mt-2" placeholder="مبلغ الضريبة"
+             [value]="this.debitNoteFormGroup.get('amount').value * this.debitNoteFormGroup.get('tax').value"
+             readonly />
+
+      <button type="button" class="btn btn-danger mt-2" (click)="removeTax()">حذف الضريبة</button>
+    </div>
+  </div>
+  <div class="modal-footer">
+    <button type="button" class="btn btn-secondary" (click)="modal.dismiss('Close click')">إغلاق</button>
+    <button type="button" class="btn btn-primary" (click)="saveTax()">حفظ</button>
+  </div>
+</ng-template>
+
+<ng-container *ngIf="isEditMode">
+  <div class="absolute top-0 left-[-100%]" *ngIf="docData && docColumns.length > 0">
+    <app-print-document
+      #printComponent
+      [headerTemplate]="headerTemplate"
+      [footerTemplate]="footerTemplate"
+      [bodyTemplate]="bodyTemplate"
+      [data]="docData"
+      [columns]="docColumns"
+      >
+    </app-print-document>
+
+    <!-- Header Template -->
+    <ng-template #headerTemplate>
+      <div class="w-full flex flex-col  rounded-lg p-8">
+
+        @if (companyDetails) {
+          <ng-container class="container m-0 p-0">
+            <div class="py-1 px-1 flex justify-between ">
+              <div class="w-full ltr:text-left text-right">
+                <p class="font-semibold text-lg m-0 p-0">
+                  {{companyDetails.arabicName}}
+                </p>
+                <p class="font-semibold text-lg m-0 p-0"  *ngIf="companyDetails.city">
+                  {{companyDetails.city}}
+                </p>
+                <p class="font-semibold text-lg m-0 p-0">
+                  {{companyDetails.phone}}
+                </p>
+                <p class="font-semibold text-lg m-0 p-0">
+                  {{ "INVOICE.TAXNUMBER"| translate}}: {{companyDetails.taxNumber}}
+                </p>
+              </div>
+              <div
+                class="flex w-full justify-center items-center"
+              >
+                <img
+                  [src]="companyDetails?.logoUrl || ''"
+                  alt="company-logo"
+                  width="100"
+                  height="100"
+                >
+              </div>
+              <div class="w-full ltr:text-right text-left">
+                <p class="font-semibold text-lg m-0 p-0">
+                  {{companyDetails.englishName}}
+                </p>
+                <p class="font-semibold text-lg m-0 p-0" *ngIf="companyDetails.city">
+                  {{companyDetails.city}}
+                </p>
+                <p class="font-semibold text-lg m-0 p-0">
+                  {{companyDetails.phone}}
+                </p>
+                <p class="font-semibold text-lg m-0 p-0">
+                  TAX No: {{companyDetails.taxNumber}}
+                </p>
+              </div>
+            </div>
+
+          </ng-container>
+        }
+        <div class="flex-1 w-full text-center">
+          <h2 class="text-4xl font-bold">{{ "FINANCE.DEBIT_NOTE" | translate}} ({{currentNote.referenceNumber}})</h2>
+        </div>
+      </div>
+    </ng-template>
+
+    <!-- Body Template -->
+    <ng-template #bodyTemplate>
+      <div class="flex justify-between w-full gap-4">
+        <p class="w-full text-end text-lg font-semibold">استلمنا من</p>
+        <p class="w-full text-center"></p>
+        <p class="w-full text-start  text-lg font-semibold">Received From</p>
+      </div>
+      <div class="flex justify-between w-full gap-4">
+        <p class="w-full text-end  text-lg font-semibold">مبلغاً وقدره</p>
+        <p class="w-full text-center border border-gray-900 rounded-lg  text-lg font-semibold">{{(currentNote.amount + (currentNote.amount*currentNote.tax)) |  currency : "SAR" : "symbol-narrow" : "1.0-2" : "ar-SA"}}</p>
+        <p class="w-full text-start  text-lg font-semibold">The Sum Of</p>
+      </div>
+      <div class="flex justify-between w-full gap-4">
+        <p class="font-semibold text-lg m-0">{{"FINANCE.NOTE_DATE"| translate}}: {{currentNote.receiptDate | customDate}}</p>
+        <p class="font-semibold text-lg m-0">{{"FINANCE.SUPPLIER_DETAILS"| translate}}: {{currentNote.supplierDetails.arabicName}}</p>
+      </div>
+      <div class="flex justify-between w-full gap-4">
+        <p class="font-semibold text-lg m-0">{{"FINANCE.NOTE_DATE"| translate}}: {{currentNote.receiptDate | customDate}}</p>
+        <p class="font-semibold text-lg m-0">{{"FINANCE.SUPPLIER_DETAILS"| translate}}: {{currentNote.supplierDetails.arabicName}}</p>
+      </div>
+
+      <p *ngIf="currentNote.description" class="font-semibold text-lg m-0">{{"FINANCE.DESCRIPTION"| translate}}: {{currentNote.description}}</p>
+      <div class="flex justify-center w-full gap-8">
+        <p class="m-0">{{"FINANCE.TOTAL"| translate}}: {{currentNote.amount |  currency : "SAR" : "symbol-narrow" : "1.0-2" : "ar-SA"}}</p>
+        <p class="m-0" *ngIf="currentNote.tax>0">After Tax: {{(currentNote.amount + (currentNote.amount*currentNote.tax))|  currency : "SAR" : "symbol-narrow" : "1.0-2" : "ar-SA"}}</p>
+      </div>
+
+    </ng-template>
+
+    <!-- Footer Template -->
+    <ng-template #footerTemplate>
+      <div class="w-full border border-slate-900 rounded-2xl flex justify-between">
+        <div class="h-auto w-[100%] text-center font-semibold text-lg flex flex-row-reverse justify-between gap-8 items-center">
+          <div class="m-0 p-0 w-full text-end ltr:text-start flex flex-col justify-center items-center">
+            <p class="m-0 p-0">
+              {{activeLanguage=='en'?companyDetails.englishName:companyDetails.arabicName}}
+            </p>
+            <p class="m-0 p-0 w-full text-end ltr:text-start">
+              {{ "INVOICE.MANAGER_SIGNATURE" | translate}}: <span class="text-sm font-light">..................................</span>
+            </p>
+          </div>
+          <div class="m-0 p-0 w-full text-end ltr:text-start flex flex-col justify-center items-center">
+            <p class="m-0 p-0">
+              {{ "INVOICE.RECIPIENT_EMPLOYEE_SIGNATURE" | translate}}: <span class="text-sm font-light">..................................</span>
+            </p>
+          </div>
+          <div class="m-0 p-0 w-full text-end ltr:text-start flex flex-col justify-center items-center">
+            <p class="m-0 p-0">
+              {{ "INVOICE.TREASURY_KEEPER_SIGNATURE" | translate}}: <span class="text-sm font-light">..................................</span>
+            </p>
+          </div>
+        </div>
+      </div>
+      <div class="w-full flex flex-row-reverse justify-between gap-8 items-center mt-2" *ngIf="companyDetails?.stampUrl">
+        <div class="w-full flex justify-center">
+          <img [src]="companyDetails?.stampUrl || ''" alt="company-stamp" width="120" height="120">
+        </div>
+        <div class="w-full"></div>
+        <div class="w-full"></div>
+      </div>
+      <div class="w-full border-t border-slate-900 rounded-2xl flex justify-center border absolute" style="bottom: 0;">
+        {{companyDetails?.getFullAddress()}}
+      </div>
+    </ng-template>
+  </div>
+</ng-container>
+
+<div class="p-5 mt-5" *ngIf="isEditMode">
+  <!-- File Upload -->
+  <div class="mb-4">
+    <p-fileUpload
+      name="file"
+      id="file"
+      mode="basic"
+      chooseIcon="pi pi-upload"
+      accept="application/pdf"
+      (uploadHandler)="onFileSelected($event)"
+      customUpload="true"
+      [auto]="true"
+      chooseLabel="ارفع ملف جديد"/>
+  </div>
+
+  <!-- List of PDFs -->
+  <div>
+    <table class="min-w-full bg-white shadow-md rounded border border-gray-200">
+      <thead>
+      <tr class="bg-gray-100">
+        <th class="text-center p-3">اسم الملف</th>
+        <th class="text-center p-3">العمليات</th>
+      </tr>
+      </thead>
+      <tbody>
+      <tr *ngFor="let pdf of attachments" class="border-t">
+        <td class="p-3">{{ pdf.fileName }}</td>
+        <td class="p-3 flex justify-center">
+          <button
+            pButton
+            label="عرض"
+            icon="pi pi-eye"
+            class="p-button-text text-blue-500 mr-2"
+            (click)="onView(pdf)"
+          ></button>
+          <p-fileUpload
+            mode="basic"
+            chooseIcon="pi pi-upload"
+            accept="application/pdf"
+            (uploadHandler)="onUpdate($event,pdf)"
+            customUpload="true"
+            [auto]="true"
+            chooseLabel="تعديل"/>
+          <button
+            pButton
+            label="مسح"
+            icon="pi pi-trash"
+            class="p-button-text text-red-500"
+            (click)="onDelete(pdf)"
+          ></button>
+        </td>
+      </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- View PDF Dialog -->
+<p-dialog
+  [(visible)]="viewDialog"
+  [header]="'View PDF'"
+  [style]="{ width: '70vw' , height: '70vh' }"
+>
+  <ng-container *ngIf="currentPdfUrl">
+    <a [href]="currentPdfUrl" target="_blank">
+      <button pButton type="button"  icon="pi pi-download">افتح الملف في نافذة جديدة</button>
+    </a>
+    <embed  [src]="currentPdfUrl" type="application/pdf" width="100%" height="500px" />
+  </ng-container>
+</p-dialog>
+
+<p-toast></p-toast>

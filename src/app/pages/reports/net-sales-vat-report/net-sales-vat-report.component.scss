@@ -1,0 +1,258 @@
+// Sales header background color
+.sales-header-bg {
+  background-color: #42acff !important;
+  color: #ffffff !important;
+}
+
+/* Panel header styling */
+::ng-deep .p-panel .p-panel-header {
+  background-color: #42acff !important;
+  color: #ffffff !important;
+}
+
+::ng-deep .p-panel .p-panel-header * {
+  color: #ffffff !important;
+}
+
+/* Print styles for header */
+@media print {
+  .sales-header-bg,
+  th.sales-header-bg {
+    background-color: #42acff !important;
+    color: #ffffff !important;
+  }
+}
+
+.net-sales-vat-report-container {
+  padding: 1.5rem;
+  direction: rtl;
+
+  .report-header {
+    margin-bottom: 1.5rem;
+    text-align: center;
+
+    h2 {
+      color: #2c3e50;
+      font-size: 1.8rem;
+      font-weight: 600;
+      margin-bottom: 0.5rem;
+    }
+
+    .report-subtitle {
+      color: #7f8c8d;
+      font-size: 0.95rem;
+      margin: 0;
+    }
+  }
+
+  .filter-card {
+    margin-bottom: 1.5rem;
+
+    .filter-section {
+      display: flex;
+      align-items: flex-end;
+      gap: 1rem;
+      flex-wrap: wrap;
+
+      .date-range-wrapper {
+        flex: 1;
+        min-width: 250px;
+
+        label {
+          display: block;
+          margin-bottom: 0.5rem;
+          font-weight: 500;
+          color: #495057;
+        }
+
+        .date-picker {
+          width: 100%;
+        }
+      }
+
+      button {
+        height: 42px;
+      }
+    }
+  }
+
+  .report-content {
+    .summary-cards {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 1rem;
+      margin-bottom: 1.5rem;
+
+      .summary-card {
+        border-radius: 8px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        transition: transform 0.2s, box-shadow 0.2s;
+
+        &:hover {
+          transform: translateY(-4px);
+          box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        }
+
+        .card-content {
+          display: flex;
+          align-items: center;
+          gap: 1rem;
+
+          .card-icon {
+            font-size: 2.5rem;
+            padding: 0.8rem;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.2);
+          }
+
+          .card-details {
+            flex: 1;
+
+            h3 {
+              margin: 0 0 0.5rem 0;
+              font-size: 0.95rem;
+              font-weight: 500;
+              color: #fff;
+            }
+
+            .amount {
+              margin: 0;
+              font-size: 1.5rem;
+              font-weight: 700;
+              color: #fff;
+            }
+          }
+        }
+
+        &.sales-card {
+          background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+          color: white;
+        }
+
+        &.returns-card {
+          background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+          color: white;
+        }
+
+        &.net-card {
+          &.positive {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+          }
+
+          &.negative {
+            background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
+          }
+
+          color: white;
+
+          .net-amount {
+            font-size: 1.8rem;
+          }
+        }
+      }
+    }
+
+    .table-card {
+      margin-bottom: 1.5rem;
+
+      .card-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 1rem 0;
+
+        h3 {
+          margin: 0;
+          color: #2c3e50;
+          font-size: 1.3rem;
+        }
+
+        .date-info {
+          color: #7f8c8d;
+          font-size: 0.9rem;
+        }
+      }
+
+      ::ng-deep {
+        .p-datatable {
+          .p-datatable-thead > tr > th {
+            background: #f8f9fa;
+            color: #495057;
+            font-weight: 600;
+            border-bottom: 2px solid #dee2e6;
+          }
+
+          .p-datatable-tbody {
+            > tr {
+              &.row-net {
+                background: #e8f5e9;
+                font-weight: 600;
+
+                td {
+                  border-top: 2px solid #4caf50;
+                  border-bottom: 2px solid #4caf50;
+                }
+              }
+
+              &:hover {
+                background: #f8f9fa;
+              }
+            }
+
+            .negative-amount {
+              color: #e74c3c;
+            }
+          }
+        }
+      }
+
+      .note-section {
+        padding: 1rem;
+        background: #fff3cd;
+        border-radius: 4px;
+        margin-top: 1rem;
+
+        p {
+          margin: 0;
+          color: #856404;
+          font-size: 0.9rem;
+        }
+      }
+    }
+
+    .action-buttons {
+      display: flex;
+      gap: 1rem;
+      justify-content: center;
+      flex-wrap: wrap;
+
+      button {
+        min-width: 150px;
+      }
+    }
+  }
+
+  .empty-state {
+    text-align: center;
+    padding: 3rem;
+    color: #95a5a6;
+
+    i {
+      font-size: 4rem;
+      margin-bottom: 1rem;
+      opacity: 0.5;
+    }
+
+    p {
+      font-size: 1.1rem;
+      margin: 0;
+    }
+  }
+}
+
+/* Larger table text (1.125rem) as requested */
+:host ::ng-deep .p-datatable .p-datatable-thead > tr > th,
+:host ::ng-deep .p-datatable .p-datatable-tbody > tr > td {
+  font-size: 1.125rem !important;
+}
+

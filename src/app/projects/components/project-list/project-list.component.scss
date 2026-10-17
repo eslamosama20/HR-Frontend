@@ -1,0 +1,453 @@
+.card {
+  background: #fff;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  margin: 20px 0;
+}
+
+.card-header {
+  padding: 20px;
+  border-bottom: 1px solid #e0e0e0;
+
+  .header-top-bar {
+    display: flex !important;
+    justify-content: space-between !important;
+    align-items: center !important;
+    width: 100% !important;
+
+    h4 {
+      font-size: 1.5rem;
+      color: #2c3e50;
+    }
+  }
+
+  .add-project-btn {
+    border-radius: 6px !important;
+    font-weight: 500 !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 6px !important;
+
+    .p-button-icon-left,
+    .p-button-icon-right,
+    .pi {
+      margin-left: 4px;
+      margin-right: 4px;
+    }
+  }
+}
+
+.header-actions {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.header-actions h3 {
+  margin: 0;
+  font-size: 1.5rem;
+  color: #333;
+}
+
+.card-body {
+  padding: 20px;
+}
+
+.filters-section {
+  margin-bottom: 20px;
+}
+
+// Skeleton Loading Styles
+::ng-deep {
+  .p-skeleton {
+    background-color: #f0f0f0;
+    border-radius: 4px;
+    animation: skeleton-loading 1.5s ease-in-out infinite;
+  }
+  
+  @keyframes skeleton-loading {
+    0% {
+      opacity: 0.6;
+    }
+    50% {
+      opacity: 1;
+    }
+    100% {
+      opacity: 0.6;
+    }
+  }
+  
+  // Table Cyan-Blue Header & Gridlines Styling (Matching Sales Invoices)
+  .p-datatable {
+    border: 1px solid #dee2e6 !important;
+
+    .p-datatable-thead > tr > th {
+      background-color: #46bbeb !important;
+      color: #ffffff !important;
+      border: 1px solid #38aadc !important;
+      font-weight: 600 !important;
+      white-space: nowrap !important;
+
+      span {
+        color: #ffffff !important;
+        white-space: nowrap !important;
+      }
+
+      .p-sortable-column-icon,
+      .p-column-filter-menu-button,
+      .pi {
+        color: #ffffff !important;
+
+        &:hover {
+          color: #e0f2fe !important;
+        }
+      }
+    }
+
+    .p-datatable-tbody > tr {
+      transition: background-color 0.2s ease-in-out;
+      &:hover {
+        background-color: #f1f5f9 !important;
+      }
+      
+      > td {
+        border: 1px solid #dee2e6 !important;
+        padding: 0.6rem 0.5rem !important;
+      }
+    }
+  }
+
+  // Dropdown clear icon (X) styling - Red Color
+  .p-dropdown-clear-icon,
+  .p-inputgroup-addon .pi-times,
+  .p-dropdown .pi-times {
+    color: #ef4444 !important;
+    font-weight: bold !important;
+
+    &:hover {
+      color: #dc2626 !important;
+    }
+  }
+
+  // تحسين مظهر الجدول أثناء التحميل
+  .p-datatable-loading-overlay {
+    background-color: rgba(255, 255, 255, 0.8);
+  }
+}
+
+::ng-deep .p-datatable-resizable {
+  th {
+    position: relative !important;
+  }
+
+  .p-column-resizer {
+    position: absolute !important;
+    top: 0 !important;
+    bottom: 0 !important;
+    left: 0 !important;
+    right: auto !important;
+    width: 8px !important;
+    cursor: col-resize !important;
+    margin: 0 !important;
+    z-index: 10 !important;
+  }
+
+  .p-column-resizer-helper {
+    background-color: #3b82f6 !important;
+    width: 2px !important;
+  }
+}
+
+.project-name,
+.table-text-val {
+  font-weight: 500;
+  color: #2c3e50;
+  font-size: 0.9rem;
+}
+
+.project-name {
+  font-weight: 700;
+  font-size: 0.95rem;
+}
+
+.status-badge {
+  display: inline-block;
+  padding: 4px 12px;
+  border-radius: 12px;
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+.status-new {
+  background-color: #e3f2fd;
+  color: #1976d2;
+}
+
+.status-assigning {
+  background-color: #fff3e0;
+  color: #f57c00;
+}
+
+.status-assigned {
+  background-color: #e8f5e9;
+  color: #388e3c;
+}
+
+.status-executing {
+  background-color: #fce4ec;
+  color: #c2185b;
+}
+
+.status-completed {
+  background-color: #c8e6c9;
+  color: #2e7d32;
+}
+
+.status-pending {
+  background-color: #fff9c4;
+  color: #f9a825;
+}
+
+.status-cancelled {
+  background-color: #ffcdd2;
+  color: #c62828;
+}
+.status-archived {
+  background-color: #eceff1;
+  color: #546e7a;
+}
+
+.status-default {
+  background-color: #f5f5f5;
+  color: #757575;
+}
+
+.amount-text {
+  font-weight: 600;
+  color: #2c3e50;
+  font-size: 0.95rem;
+}
+
+.profit-badge {
+  display: inline-block;
+  padding: 4px 12px;
+  border-radius: 12px;
+  font-size: 0.875rem;
+  font-weight: 600;
+}
+
+.profit-high {
+  background-color: #c8e6c9;
+  color: #2e7d32;
+}
+
+.profit-medium {
+  background-color: #fff9c4;
+  color: #f9a825;
+}
+
+.profit-low {
+  background-color: #ffecb3;
+  color: #ef6c00;
+}
+
+.profit-zero {
+  background-color: #f5f5f5;
+  color: #757575;
+}
+
+.profit-negative {
+  background-color: #ffcdd2;
+  color: #c62828;
+}
+
+.action-buttons {
+  display: flex;
+  gap: 5px;
+  justify-content: center;
+}
+
+.empty-state {
+  padding: 40px;
+  text-align: center;
+  color: #999;
+}
+
+.empty-state p {
+  margin-top: 10px;
+  font-size: 1.1rem;
+}
+
+::ng-deep {
+  .p-datatable {
+    .p-datatable-thead > tr > th {
+      background-color: #f8f9fa;
+      color: #495057;
+      font-weight: 600;
+    }
+
+  .p-datatable-tbody > tr {
+      &:hover {
+        background-color: #f8f9fa;
+      }
+    }
+  }
+
+  .p-badge {
+    font-size: 0.875rem;
+    min-width: 1.5rem;
+    height: 1.5rem;
+    line-height: 1.5rem;
+  }
+}
+
+/* =========================
+   New centered pagination (Total + pages + page/rows) all centered
+   ========================= */
+::ng-deep .custom-paginator-table .p-paginator {
+  direction: rtl;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: .5rem;
+  padding: .5rem .75rem;
+  border-top: 1px solid #e5e7eb;
+  background: #fff;
+  flex-wrap: wrap;
+}
+
+/* "Total" */
+::ng-deep .custom-paginator-table .p-paginator .p-paginator-current {
+  color: #111827;
+  font-weight: 600;
+  white-space: nowrap;
+  margin: 0;
+}
+
+/* Pages */
+::ng-deep .custom-paginator-table .p-paginator .p-paginator-pages {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: .25rem;
+  direction: ltr;
+  margin: 0;
+}
+
+/* Page button */
+::ng-deep .custom-paginator-table .p-paginator .p-paginator-page {
+  min-width: 34px;
+  height: 34px;
+  border-radius: 8px;
+  border: 1px solid transparent;
+  color: #374151;
+}
+
+/* Hover */
+::ng-deep .custom-paginator-table .p-paginator .p-paginator-page:not(.p-highlight):hover {
+  background: #f3f4f6;
+  border-color: #e5e7eb;
+}
+
+/* Active */
+::ng-deep .custom-paginator-table .p-paginator .p-paginator-page.p-highlight {
+  background: #eaf2ff;
+  border-color: #93c5fd;
+  color: #1d4ed8;
+  font-weight: 600;
+}
+
+/* Prev/Next */
+::ng-deep .custom-paginator-table .p-paginator .p-paginator-prev,
+::ng-deep .custom-paginator-table .p-paginator .p-paginator-next {
+  width: 34px;
+  height: 34px;
+  border-radius: 8px;
+}
+
+::ng-deep .custom-paginator-table .p-paginator .p-paginator-prev:hover,
+::ng-deep .custom-paginator-table .p-paginator .p-paginator-next:hover {
+  background: #f3f4f6;
+}
+
+/* Rows per page (page/ + dropdown) */
+::ng-deep .custom-paginator-table .p-paginator .p-paginator-rpp-options {
+  display: inline-flex;
+  align-items: center;
+  gap: .35rem;
+  margin: 0;
+}
+
+/* page/ label */
+::ng-deep .custom-paginator-table .p-paginator .p-paginator-rpp-options::before {
+  content: "page /";
+  color: #6b7280;
+  font-size: 14px;
+  white-space: nowrap;
+}
+
+/* Dropdown size */
+::ng-deep .custom-paginator-table .p-paginator .p-dropdown {
+  min-width: 80px;
+}
+
+/* Ellipsis */
+::ng-deep .custom-paginator-table .p-paginator .p-paginator-ellipsis {
+  color: #6b7280;
+  padding: 0 .25rem;
+}
+
+@media (max-width: 576px) {
+  ::ng-deep .p-paginator {
+    flex-direction: row !important;
+    flex-wrap: wrap !important;
+    gap: 0.5rem !important;
+    padding: 0.5rem !important;
+    font-size: 0.75rem !important;
+    justify-content: center !important;
+
+    .p-paginator-left-content,
+    .p-paginator-right-content {
+      width: auto !important;
+      justify-content: center !important;
+      font-size: 0.75rem !important;
+    }
+
+    .p-paginator-pages {
+      display: flex !important;
+      flex-wrap: wrap !important;
+      justify-content: center !important;
+      gap: 0.25rem !important;
+    }
+
+    .p-paginator-page,
+    .p-paginator-prev,
+    .p-paginator-next,
+    .p-paginator-first,
+    .p-paginator-last {
+      min-width: 2rem !important;
+      height: 2rem !important;
+      font-size: 0.75rem !important;
+    }
+
+    .p-dropdown {
+      font-size: 0.75rem !important;
+
+      .p-inputtext {
+        padding: 0.25rem 0.5rem !important;
+        font-size: 0.75rem !important;
+      }
+    }
+
+    .p-paginator-rpp-options {
+      font-size: 0.75rem !important;
+    }
+  }
+}
+
+/* Larger table text (1.125rem) as requested */
+:host ::ng-deep .p-datatable .p-datatable-thead > tr > th,
+:host ::ng-deep .p-datatable .p-datatable-tbody > tr > td {
+  font-size: 1.125rem !important;
+}
+

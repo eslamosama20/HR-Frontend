@@ -1,0 +1,121 @@
+/* =======================
+   THEME SKINS FOR HEADER
+   Only apply when theme classes are present.
+   Default (no theme) stays untouched.
+   ======================= */
+
+@mixin header-skin($bg, $text: #ffffff) {
+  /* يغطي الحاويات المحلية داخل هذا الكمبوننت */
+  #kt_app_header_container
+  
+   {
+    background: $bg !important;
+    background-repeat: no-repeat !important;
+    background-size: cover !important;
+    color: $text !important;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1) !important;
+  }
+
+  /* يغطي الهيدر الكامل مترو-نك عبر اختراق حدود الستايل */
+  :host ::ng-deep .app-header {
+    background: $bg !important;
+    color: $text !important;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1) !important;
+  }
+
+  /* نصوص شائعة داخل الهيدر */
+  .username-text,
+  .user-name,
+  .page-heading,
+  .page-desc,
+  .breadcrumb,
+  .breadcrumb a {
+    color: $text !important;
+  }
+
+  /* نقط فواصل البريـدكرم */
+  .breadcrumb .bullet {
+    background-color: rgba(255, 255, 255, 0.7) !important;
+  }
+
+  /* خلفية خفيفة لصندوق معلومات المستخدم */
+  .user-info-container {
+    background: rgba(255, 255, 255, 0.08) !important;
+    border: 1px solid rgba(255, 255, 255, 0.15) !important;
+  }
+}
+
+/* ========== Light-DarkBlue Theme ========== */
+$darkblue-sels: ".light-darkblue-mode", '[data-bs-theme="light-darkblue"]',
+  "body.light-darkblue";
+@each $sel in $darkblue-sels {
+  :host-context(#{$sel}) {
+    @include header-skin(linear-gradient(90deg, #dad0f7, #e2bfd9), #111111);
+  }
+}
+
+/* ========== Light-Indigo Theme ========== */
+$indigo-sels: ".light-indigo-mode", '[data-bs-theme="light-indigo"]',
+  "body.light-indigo";
+@each $sel in $indigo-sels {
+  :host-context(#{$sel}) {
+    @include header-skin(linear-gradient(90deg, #c9d0f5, #ffd5d1), #111111);
+  }
+}
+
+/* ========== Light-Green Theme ========== */
+$green-sels: ".light-green-mode", '[data-bs-theme="light-green"]',
+  "body.light-green";
+@each $sel in $green-sels {
+  :host-context(#{$sel}) {
+    @include header-skin(linear-gradient(90deg, #b8e9ee, #fffad8), #111111);
+  }
+}
+@mixin header-skin($bg, $text: #ffffff) {
+  // النافبار
+  #kt_app_header_container,
+  .app-navbar,
+  .navbar {
+    background: $bg !important;
+    background-repeat: no-repeat !important;
+    background-size: cover !important;
+    color: $text !important;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1) !important;
+  }
+
+  // الهيدر بالكامل
+  :host ::ng-deep .app-header {
+    background: $bg !important;
+    color: $text !important;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1) !important;
+  }
+
+  // القوائم (dropdowns)
+  :host ::ng-deep .menu-sub-dropdown {
+    background: $bg !important;
+    color: $text !important;
+    border: 1px solid rgba(255, 255, 255, 0.15) !important;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1) !important;
+  }
+
+  // النصوص
+  .username-text,
+  .user-name,
+  .page-heading,
+  .page-desc,
+  .breadcrumb,
+  .breadcrumb a {
+    color: $text !important;
+  }
+
+  // نقط البريـدكرم
+  .breadcrumb .bullet {
+    background-color: rgba(255, 255, 255, 0.7) !important;
+  }
+
+  // معلومات المستخدم
+  .user-info-container {
+    background: rgba(255, 255, 255, 0.08) !important;
+    border: 1px solid rgba(255, 255, 255, 0.15) !important;
+  }
+}

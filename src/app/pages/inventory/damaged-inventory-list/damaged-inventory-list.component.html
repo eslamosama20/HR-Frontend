@@ -1,0 +1,449 @@
+﻿<div class="container-fluid">
+  <p-toast></p-toast>
+  
+  <!-- Header: Title on Right, Tools on Left -->
+  <div class="damaged-inventory-header d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4 p-3 bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700">
+    <div class="d-flex flex-wrap align-items-center gap-3">
+      <h2 class="page-title m-0 text-xl font-bold text-gray-800 dark:text-gray-100">المخزون التالف</h2>
+
+      <span class="p-input-icon-left header-search-box">
+        <i class="pi pi-search"></i>
+        <input
+          pInputText
+          type="text"
+          class="p-inputtext-sm rounded-lg"
+          (input)="dt.filterGlobal($any($event.target).value, 'contains')"
+          placeholder="بحث في التالف..."
+        />
+      </span>
+    </div>
+
+    <div class="d-flex flex-wrap align-items-center gap-2">
+      <!-- Export & Report Tools Group -->
+      <div class="btn-group-wrapper d-flex align-items-center gap-2">
+        <p-button 
+          styleClass="rounded-md p-button-sm shadow-sm"
+          severity="success" 
+          icon="pi pi-file-excel" 
+          label="تصدير Excel"
+          pTooltip="تصدير إلى Excel"
+          tooltipPosition="bottom"
+          (onClick)="exportToExcel()"
+          [disabled]="!damagedItems() || damagedItems().length === 0">
+        </p-button>
+
+        <p-button 
+          styleClass="rounded-md p-button-sm shadow-sm"
+          severity="danger" 
+          icon="pi pi-file-pdf" 
+          label="تنزيل PDF"
+          pTooltip="تنزيل PDF"
+          tooltipPosition="bottom"
+          (onClick)="exportToPdf()"
+          [loading]="loading"
+          [disabled]="!damagedItems() || damagedItems().length === 0">
+        </p-button>
+
+        <p-button 
+          styleClass="rounded-md p-button-sm shadow-sm"
+          severity="info" 
+          icon="pi pi-share-alt" 
+          label="مشاركة"
+          pTooltip="مشاركة التقرير"
+          tooltipPosition="bottom"
+          (onClick)="openShareDialog()"
+          [disabled]="!damagedItems() || damagedItems().length === 0">
+        </p-button>
+
+        <p-button 
+          styleClass="rounded-md p-button-sm shadow-sm"
+          severity="warning" 
+          icon="pi pi-print" 
+          label="طباعة"
+          pTooltip="طباعة التقرير"
+          tooltipPosition="bottom"
+          (onClick)="printPDF()"
+          [disabled]="!damagedItems() || damagedItems().length === 0">
+        </p-button>
+
+        <p-button 
+          styleClass="rounded-md p-button-sm shadow-sm"
+          severity="secondary" 
+          icon="pi pi-refresh" 
+          label="تحديث"
+          pTooltip="تحديث البيانات"
+          tooltipPosition="bottom"
+          (onClick)="refreshData()"
+          [loading]="loading">
+        </p-button>
+      </div>
+
+      <!-- Divider between tool groups -->
+      <div class="header-divider d-none d-md-block"></div>
+
+      <!-- Main Creation Actions -->
+      <div class="d-flex align-items-center gap-2">
+        <p-button 
+          styleClass="rounded-md p-button-sm font-bold shadow-sm"
+          severity="success"
+          icon="pi pi-plus" 
+          label="إضافة تالف جديد"
+          (onClick)="openAddDialog()">
+        </p-button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Damaged Items Table -->
+  <p-table 
+    #dt
+    [value]="damagedItems() || []" 
+    dataKey="id"
+    [loading]="loading"
+    [paginator]="true" 
+    [rows]="15"
+    [showCurrentPageReport]="true"
+    currentPageReportTemplate="عرض {first} إلى {last} من {totalRecords} سجل"
+    [rowsPerPageOptions]="[15, 30, 50]"
+    [globalFilterFields]="['productName', 'storeName', 'reason', 'reportedBy']"
+    styleClass="p-datatable-sm p-datatable-striped">
+    
+    <ng-template pTemplate="header">
+      <tr>
+        <th style="width: 60px; text-align: center;">م</th>
+        <th style="text-align: center;">تاريخ التلف</th>
+        <th style="text-align: center;">منتج</th>
+        <th style="text-align: center;">وحدة</th>
+        <th style="text-align: center;">المخزن</th>
+        <th style="text-align: center;">الكمية التالفة</th>
+        <th style="text-align: center;">السبب</th>
+        <th style="text-align: center;">أبلغ عنه</th>
+        <th style="text-align: center;">إجراءات</th>
+      </tr>
+    </ng-template>
+    
+    <ng-template pTemplate="body" let-item let-i="rowIndex">
+      <tr>
+        <td style="text-align: center;">{{ i + 1 }}</td>
+        <td style="text-align: center;">{{ item.damageDate | customDate: 'dd/MM/yyyy' }}</td>
+        <td style="text-align: center;">
+          <div>{{ item.productName }}</div>
+          <small class="text-muted" *ngIf="item.batchNo">دفعة: {{ item.batchNo }}</small>
+        </td>
+        <td style="text-align: center;">{{ item.unitName }}</td>
+        <td style="text-align: center;">{{ item.storeName }}</td>
+        <td class="text-danger fw-bold" style="text-align: center;">{{ item.quantity }}</td>
+        <td style="text-align: center;">{{ item.reason || '-' }}</td>
+        <td style="text-align: center;">{{ item.reportedBy || '-' }}</td>
+        <td style="text-align: center;">
+          <button 
+            pButton 
+            type="button" 
+            icon="pi pi-trash" 
+            class="p-button-danger p-button-sm p-button-text"
+            pTooltip="حذف"
+            tooltipPosition="top">
+          </button>
+        </td>
+      </tr>
+    </ng-template>
+    
+    <ng-template pTemplate="emptymessage">
+      <tr>
+        <td colspan="9" class="text-center py-5">
+          <i class="pi pi-inbox" style="font-size: 3rem; color: #94a3b8;"></i>
+          <p class="mt-3 text-muted">لا توجد عناصر تالفة</p>
+        </td>
+      </tr>
+    </ng-template>
+  </p-table>
+</div>
+
+<!-- Add Damaged Item Dialog -->
+<p-dialog 
+  [(visible)]="showDialog" 
+  [modal]="true" 
+  [closable]="true"
+  [style]="{ width: '90vw', maxWidth: '1200px' }"
+  header="إضافة تالف جديد"
+  styleClass="rtl-dialog">
+  
+  <div class="row g-3">
+    <!-- Store and Date Selection -->
+    <div class="col-md-6">
+      <label class="form-label">موقع العمل <span class="text-danger">*</span></label>
+      <p-dropdown 
+        [(ngModel)]="selectedStore"
+        [options]="stores"
+        optionLabel="arabicName"
+        placeholder="اختر موقع العمل"
+        [filter]="true"
+        filterBy="arabicName"
+        [showClear]="true"
+        (onChange)="onStoreChange()"
+        styleClass="w-100">
+      </p-dropdown>
+    </div>
+
+    <div class="col-md-6">
+      <label class="form-label">تاريخ التلف <span class="text-danger">*</span></label>
+      <p-calendar 
+        [(ngModel)]="damageDate"
+        dateFormat="dd/mm/yy"
+        [showIcon]="true"
+        placeholder="اختر التاريخ"
+        styleClass="w-100">
+      </p-calendar>
+    </div>
+
+    <!-- Product Search -->
+    <div class="col-12">
+      <label class="form-label">البحث بالاسم</label>
+      <div class="p-inputgroup">
+        <span class="p-inputgroup-addon">
+          <i class="pi pi-search"></i>
+        </span>
+        <input 
+          type="text" 
+          pInputText 
+          [(ngModel)]="searchText"
+          (input)="onSearchProduct()"
+          placeholder="ابحث عن المنتج..."
+          class="w-100">
+      </div>
+    </div>
+
+    <!-- Product Selection Table -->
+    <div class="col-12">
+      <label class="form-label">اختيار المنتج <span class="text-danger">*</span></label>
+      <div *ngIf="!selectedStore" class="alert alert-info">
+        <i class="pi pi-info-circle me-2"></i>
+        يرجى اختيار المخزن أولاً لعرض المنتجات المتاحة
+      </div>
+      <p-table 
+        *ngIf="selectedStore"
+        [value]="products || []" 
+        dataKey="permitEntryId"
+        [paginator]="true" 
+        [rows]="5"
+        selectionMode="single"
+        [(selection)]="selectedProduct"
+        (onRowSelect)="onProductSelect($event.data)"
+        [scrollable]="true"
+        scrollHeight="300px"
+        styleClass="p-datatable-sm">
+        
+        <ng-template pTemplate="header">
+          <tr>
+            <th style="width: 3rem"></th>
+            <th>الكود</th>
+            <th>المنتج</th>
+            <th>الكمية المتاحة</th>
+            <th>الوحدة</th>
+            <th>تاريخ الصلاحية</th>
+            <th>الموقع</th>
+          </tr>
+        </ng-template>
+        
+        <ng-template pTemplate="body" let-product>
+          <tr [pSelectableRow]="product">
+            <td>
+              <p-tableRadioButton [value]="product"></p-tableRadioButton>
+            </td>
+            <td>{{ product.productCode }}</td>
+            <td>
+              <div>{{ product.productName }}</div>
+              <small class="text-muted" *ngIf="product.batchNo">دفعة: {{ product.batchNo }}</small>
+            </td>
+            <td class="fw-bold text-success">{{ product.availableQuantity }}</td>
+            <td>{{ product.unitName }}</td>
+            <td>
+              <span *ngIf="product.expiryDate" class="text-info">{{ product.expiryDate | customDate: 'yyyy-MM-dd' }}</span>
+              <span *ngIf="!product.expiryDate" class="text-muted">-</span>
+            </td>
+            <td>
+              <div class="text-sm">
+                <span *ngIf="product.shelfNumber">رف: {{ product.shelfNumber }}</span>
+                <span *ngIf="product.shelfNumber && product.rowNumber"> / </span>
+                <span *ngIf="product.rowNumber">صف: {{ product.rowNumber }}</span>
+                <span *ngIf="!product.shelfNumber && !product.rowNumber" class="text-muted">-</span>
+              </div>
+            </td>
+          </tr>
+        </ng-template>
+
+        <ng-template pTemplate="emptymessage">
+          <tr>
+            <td colspan="7" class="text-center py-3">
+              <i class="pi pi-inbox" style="font-size: 2rem; color: #94a3b8;"></i>
+              <p class="mt-2 text-muted">لا توجد منتجات متاحة في هذا المخزن</p>
+            </td>
+          </tr>
+        </ng-template>
+      </p-table>
+    </div>
+
+    <!-- Quantity -->
+    <div class="col-md-4" *ngIf="selectedProduct">
+      <label class="form-label">
+        الكمية <span class="text-danger">*</span>
+        <small class="text-muted">(المتاح: {{ selectedProduct.availableQuantity }})</small>
+      </label>
+      <p-inputNumber 
+        [(ngModel)]="quantity"
+        [min]="0.01"
+        [max]="selectedProduct.availableQuantity"
+        [minFractionDigits]="2"
+        [maxFractionDigits]="2"
+        placeholder="أدخل الكمية"
+        styleClass="w-100">
+      </p-inputNumber>
+    </div>
+
+    <!-- Reported By -->
+    <div class="col-md-4">
+      <label class="form-label">أبلغ عنه</label>
+      <input 
+        type="text" 
+        pInputText 
+        [(ngModel)]="reportedBy"
+        placeholder="اسم المبلغ"
+        class="w-100">
+    </div>
+
+    <!-- Reason -->
+    <div class="col-12">
+      <label class="form-label">السبب</label>
+      <textarea 
+        pInputTextarea 
+        [(ngModel)]="reason"
+        placeholder="سبب التلف..."
+        rows="3"
+        class="w-100">
+      </textarea>
+    </div>
+  </div>
+
+  <ng-template pTemplate="footer">
+    <div class="d-flex gap-2 justify-content-end">
+      <button 
+        pButton 
+        type="button" 
+        label="إلغاء" 
+        icon="pi pi-times" 
+        class="p-button-text"
+        (click)="closeDialog()">
+      </button>
+      <button 
+        pButton 
+        type="button" 
+        label="إضافة" 
+        icon="pi pi-check" 
+        class="p-button-success"
+        [loading]="loading"
+        (click)="saveDamagedItem()">
+      </button>
+    </div>
+  </ng-template>
+</p-dialog>
+<!-- Share Dialog -->
+<p-dialog 
+  [(visible)]="shareDialogVisible" 
+  [modal]="true" 
+  [style]="{ width: '500px' }"
+  [draggable]="false" 
+  [resizable]="false"
+  [closable]="true"
+  (onHide)="closeShareDialog()">
+  <ng-template pTemplate="header">
+    <span class="text-xl font-semibold">مشاركة تقرير المخزون التالف</span>
+  </ng-template>
+
+  <form [formGroup]="shareForm">
+    <p-tabView [(activeIndex)]="shareActiveTabIndex">
+      <!-- Email Tab -->
+      <p-tabPanel header="بريد إلكتروني">
+        <div class="mb-3">
+          <label for="shareEmail" class="form-label">عنوان البريد الإلكتروني</label>
+          <input 
+            id="shareEmail"
+            type="email"
+            pInputText
+            formControlName="email"
+            placeholder="example@domain.com"
+            class="w-100"
+            [disabled]="shareBusy" />
+          <small 
+            class="p-error" 
+            *ngIf="shareForm.get('email')?.invalid && shareForm.get('email')?.touched">
+            برجاء إدخال بريد إلكتروني صحيح
+          </small>
+        </div>
+
+        <div class="d-flex gap-2 justify-content-end mt-4">
+          <button 
+            pButton 
+            type="button" 
+            label="إلغاء" 
+            icon="pi pi-times" 
+            class="p-button-text"
+            [disabled]="shareBusy"
+            (click)="closeShareDialog()">
+          </button>
+          <button 
+            pButton 
+            type="button" 
+            label="إرسال" 
+            icon="pi pi-send" 
+            class="p-button-primary"
+            [loading]="shareBusy"
+            [disabled]="shareForm.get('email')?.invalid"
+            (click)="shareReport()">
+          </button>
+        </div>
+      </p-tabPanel>
+
+      <!-- WhatsApp Tab -->
+      <p-tabPanel header="واتساب">
+        <div class="mb-3">
+          <label for="shareWhatsApp" class="form-label">رقم الجوال (واتساب)</label>
+          <input 
+            id="shareWhatsApp"
+            type="text"
+            pInputText
+            formControlName="whatsappNumber"
+            placeholder="5xxxxxxxx"
+            class="w-100"
+            [disabled]="shareBusy" />
+          <small 
+            class="p-error" 
+            *ngIf="shareForm.get('whatsappNumber')?.invalid && shareForm.get('whatsappNumber')?.touched">
+            برجاء إدخال رقم جوال صحيح (8-15 رقم)
+          </small>
+        </div>
+
+        <div class="d-flex gap-2 justify-content-end mt-4">
+          <button 
+            pButton 
+            type="button" 
+            label="إلغاء" 
+            icon="pi pi-times" 
+            class="p-button-text"
+            [disabled]="shareBusy"
+            (click)="closeShareDialog()">
+          </button>
+          <button 
+            pButton 
+            type="button" 
+            label="فتح واتساب" 
+            icon="pi pi-whatsapp" 
+            class="p-button-success"
+            [loading]="shareBusy"
+            [disabled]="shareForm.get('whatsappNumber')?.invalid"
+            (click)="shareReport()">
+          </button>
+        </div>
+      </p-tabPanel>
+    </p-tabView>
+  </form>
+</p-dialog>

@@ -1,0 +1,471 @@
+﻿<div class="container-fluid bg-light min-vh-100 py-0" *ngIf="!loading && hotel?.id">
+  <!-- Back Button -->
+  <div class="container py-3">
+    <button class="btn btn-link text-primary p-0" (click)="goBack()">
+      <i class="pi pi-arrow-right me-2"></i>
+      العودة للبحث
+    </button>
+  </div>
+
+  <!-- Hotel Header with Images -->
+  <div class="container mb-4">
+    <div class="row">
+      <div class="col-12">
+        <!-- Hotel Title and Rating -->
+        <div class="mb-3">
+          <div class="d-flex align-items-start justify-content-between mb-2">
+            <div>
+              <p-tag *ngIf="hotel.isFeatured" value="فندق مميز" severity="warning" styleClass="mb-2"></p-tag>
+              <h1 class="mb-2 fs-2 fw-bold">{{ hotel.name }}</h1>
+              <div class="d-flex align-items-center gap-3 mb-2">
+                <p-rating [ngModel]="hotel.stars" [readonly]="true" [cancel]="false" [stars]="5"></p-rating>
+                <span class="text-muted">|</span>
+                <p class="text-muted mb-0">
+                  <i class="pi pi-map-marker me-1"></i>
+                  {{ hotel.city }}, {{ hotel.address }}
+                </p>
+              </div>
+            </div>
+            <div class="text-end">
+              <p class="text-muted small mb-1">
+                <i class="pi pi-calendar me-1"></i>
+                {{ checkInDate | customDate: 'dd/MM/yyyy' }} - {{ checkOutDate | customDate: 'dd/MM/yyyy' }}
+              </p>
+              <p class="text-muted small mb-0">
+                <i class="pi pi-users me-1"></i>
+                {{ numberOfGuests }} ضيف · {{ numberOfRooms }} غرفة
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Image Gallery -->
+        <div class="hotel-images-grid mb-4" *ngIf="hotelImages.length > 0">
+          <div class="row g-2">
+            <!-- Main Large Image -->
+            <div class="col-md-6">
+              <div class="image-container h-100">
+                <img [src]="hotelImages[0]" 
+                     [alt]="hotel.name" 
+                     class="w-100 h-100 object-fit-cover rounded-start cursor-pointer"
+                     style="max-height: 450px;"
+                     (click)="showImageGallery()">
+              </div>
+            </div>
+            <!-- Grid of 4 smaller images -->
+            <div class="col-md-6">
+              <div class="row g-2 h-100">
+                <div class="col-6" *ngIf="hotelImages.length > 1">
+                  <div class="image-container" style="height: 220px;">
+                    <img [src]="hotelImages[1]" 
+                         [alt]="hotel.name" 
+                         class="w-100 h-100 object-fit-cover cursor-pointer"
+                         (click)="showImageGallery()">
+                  </div>
+                </div>
+                <div class="col-6" *ngIf="hotelImages.length > 2">
+                  <div class="image-container" style="height: 220px;">
+                    <img [src]="hotelImages[2]" 
+                         [alt]="hotel.name" 
+                         class="w-100 h-100 object-fit-cover rounded-end cursor-pointer"
+                         (click)="showImageGallery()">
+                  </div>
+                </div>
+                <div class="col-6" *ngIf="hotelImages.length > 3">
+                  <div class="image-container" style="height: 220px;">
+                    <img [src]="hotelImages[3]" 
+                         [alt]="hotel.name" 
+                         class="w-100 h-100 object-fit-cover cursor-pointer"
+                         (click)="showImageGallery()">
+                  </div>
+                </div>
+                <div class="col-6" *ngIf="hotelImages.length > 4">
+                  <div class="image-container position-relative" style="height: 220px;">
+                    <img [src]="hotelImages[4]" 
+                         [alt]="hotel.name" 
+                         class="w-100 h-100 object-fit-cover rounded-end cursor-pointer"
+                         (click)="showImageGallery()">
+                    <div class="overlay position-absolute top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center rounded-end cursor-pointer"
+                         style="background: rgba(0,0,0,0.6);"
+                         (click)="showImageGallery()"
+                         *ngIf="hotelImages.length > 5">
+                      <span class="text-white fw-bold fs-4">+{{ hotelImages.length - 5 }} صورة</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Hotel Information Section -->
+        <div class="row mb-4">
+          <!-- Description -->
+          <div class="col-md-8" *ngIf="hotel.descriptionAr || hotel.description">
+            <div class="card shadow-sm border-0 h-100">
+              <div class="card-header bg-white border-bottom">
+                <h5 class="mb-0 fw-bold text-secondary">
+                  <i class="pi pi-info-circle me-2"></i>عن الفندق
+                </h5>
+              </div>
+              <div class="card-body">
+                <p class="text-muted mb-0" style="white-space: pre-line; line-height: 1.8;">
+                  {{ hotel.descriptionAr || hotel.description }}
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Hotel Details Card -->
+          <div class="col-md-4">
+            <div class="card shadow-sm border-0 h-100">
+              <div class="card-header bg-white border-bottom">
+                <h5 class="mb-0 fw-bold text-secondary">
+                  <i class="pi pi-building me-2"></i>معلومات الفندق
+                </h5>
+              </div>
+              <div class="card-body">
+                <!-- Check-in/Check-out Times -->
+                <div class="mb-3" *ngIf="hotel.checkInTime || hotel.checkOutTime">
+                  <h6 class="fw-bold text-dark mb-2">
+                    <i class="pi pi-clock me-2 text-primary"></i>أوقات تسجيل الدخول والخروج
+                  </h6>
+                  <div class="ms-4">
+                    <p class="mb-1" *ngIf="hotel.checkInTime">
+                      <span class="text-muted">تسجيل الدخول:</span>
+                      <strong class="ms-2">{{ hotel.checkInTime }}</strong>
+                    </p>
+                    <p class="mb-0" *ngIf="hotel.checkOutTime">
+                      <span class="text-muted">تسجيل الخروج:</span>
+                      <strong class="ms-2">{{ hotel.checkOutTime }}</strong>
+                    </p>
+                  </div>
+                </div>
+
+                <!-- Contact Information -->
+                <div class="mb-3" *ngIf="hotel.phone || hotel.email">
+                  <h6 class="fw-bold text-dark mb-2">
+                    <i class="pi pi-phone me-2 text-primary"></i>معلومات الاتصال
+                  </h6>
+                  <div class="ms-4">
+                    <p class="mb-1" *ngIf="hotel.phone">
+                      <i class="pi pi-mobile text-muted me-2"></i>
+                      <a [href]="'tel:' + hotel.phone" class="text-decoration-none">{{ hotel.phone }}</a>
+                    </p>
+                    <p class="mb-1" *ngIf="hotel.email">
+                      <i class="pi pi-envelope text-muted me-2"></i>
+                      <a [href]="'mailto:' + hotel.email" class="text-decoration-none">{{ hotel.email }}</a>
+                    </p>
+                    <p class="mb-0" *ngIf="hotel.website">
+                      <i class="pi pi-globe text-muted me-2"></i>
+                      <a [href]="hotel.website" target="_blank" class="text-decoration-none">الموقع الإلكتروني</a>
+                    </p>
+                  </div>
+                </div>
+
+                <!-- Address -->
+                <div class="mb-3" *ngIf="hotel.addressAr || hotel.address">
+                  <h6 class="fw-bold text-dark mb-2">
+                    <i class="pi pi-map-marker me-2 text-primary"></i>العنوان
+                  </h6>
+                  <p class="ms-4 mb-0 text-muted">
+                    {{ hotel.addressAr || hotel.address }}
+                    <span *ngIf="hotel.city">, {{ hotel.city }}</span>
+                    <span *ngIf="hotel.country">, {{ hotel.country }}</span>
+                  </p>
+                </div>
+
+                <!-- Location Map Link -->
+                <div *ngIf="hotel.latitude && hotel.longitude">
+                  <a [href]="'https://maps.google.com/?q=' + hotel.latitude + ',' + hotel.longitude" 
+                     target="_blank" 
+                     class="btn btn-outline-primary w-100">
+                    <i class="pi pi-map me-2"></i>عرض على الخريطة
+                  </a>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Policies Section -->
+        <div class="row mb-4" *ngIf="hotel.policies">
+          <div class="col-12">
+            <div class="card shadow-sm border-0">
+              <div class="card-header bg-white border-bottom">
+                <h5 class="mb-0 fw-bold text-secondary">
+                  <i class="pi pi-shield me-2"></i>سياسات الفندق
+                </h5>
+              </div>
+              <div class="card-body">
+                <p class="text-muted mb-0" style="white-space: pre-line; line-height: 1.8;">
+                  {{ hotel.policies }}
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Amenities Tags with Icons -->
+        <div class="amenities-section mb-4">
+          <h5 class="mb-3 fw-bold text-secondary">
+            <i class="pi pi-star me-2"></i>المرافق والخدمات
+          </h5>
+          <div class="d-flex flex-wrap gap-2">
+            <div *ngFor="let amenity of getAmenities()" 
+                 class="amenity-tag">
+              <i class="pi {{getAmenityIcon(amenity)}} me-2"></i>
+              {{ getAmenityLabel(amenity) }}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Filters Section -->
+    <div class="row mb-4">
+      <div class="col-12">
+        <div class="card shadow-sm border-0 filter-card">
+          <div class="card-header bg-white border-bottom">
+            <h5 class="mb-0 fw-bold text-primary">
+              <i class="pi pi-filter me-2"></i>تصفية الغرف حسب احتياجاتك
+            </h5>
+          </div>
+          <div class="card-body">
+            <div class="row align-items-end g-3">
+              <div class="col-md-3">
+                <label class="form-label fw-bold text-secondary">
+                  <i class="pi pi-dollar me-1"></i>حسب السعر الأقصى
+                </label>
+                <input type="number" 
+                       class="form-control" 
+                       [(ngModel)]="filterMaxPrice"
+                       (ngModelChange)="applyFilters()"
+                       min="0"
+                       placeholder="أقصى سعر (ريال)">
+                <small class="text-muted">الغرف الأقل من السعر المحدد</small>
+              </div>
+              
+              <div class="col-md-3">
+                <label class="form-label fw-bold text-secondary">
+                  <i class="pi pi-users me-1"></i>حسب عدد الضيوف
+                </label>
+                <input type="number" 
+                       class="form-control" 
+                       [(ngModel)]="filterMinGuests"
+                       (ngModelChange)="applyFilters()"
+                       min="1"
+                       placeholder="عدد الأشخاص">
+                <small class="text-muted">الغرف التي تستوعب هذا العدد فقط</small>
+              </div>
+              
+              <div class="col-md-3">
+                <label class="form-label fw-bold text-secondary">
+                  <i class="pi pi-eye me-1"></i>حسب نوع الإطلالة
+                </label>
+                <select class="form-select" 
+                        [(ngModel)]="filterViewType"
+                        (ngModelChange)="applyFilters()">
+                  <option value="">الكل</option>
+                  <option *ngFor="let view of viewTypes" [value]="view">{{view}}</option>
+                </select>
+                <small class="text-muted">إطلالة الغرفة</small>
+              </div>
+              
+              <div class="col-md-3">
+                <label class="form-label fw-bold text-secondary">
+                  <i class="pi pi-credit-card me-1"></i>حسب خيار الدفع
+                </label>
+                <select class="form-select" 
+                        [(ngModel)]="filterPaymentOption"
+                        (ngModelChange)="applyFilters()">
+                  <option value="">الكل</option>
+                  <option value="payNow">ادفع الآن</option>
+                  <option value="payAtHotel">ادفع في الفندق</option>
+                </select>
+                <small class="text-muted">طريقة الدفع المفضلة</small>
+              </div>
+              
+              <div class="col-12 text-end">
+                <button class="btn btn-outline-secondary" (click)="resetFilters()">
+                  <i class="pi pi-refresh me-2"></i>إعادة تعيين الفلاتر
+                </button>
+                <span class="ms-3 text-muted fw-bold">
+                  <i class="pi pi-check-circle me-1 text-success"></i>
+                  عرض {{filteredRoomTypes.length}} من {{roomTypes.length}} غرفة
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Room Types Table -->
+    <div class="row">
+      <div class="col-12">
+        <div class="card shadow border-0">
+          <div class="card-header bg-white border-bottom py-3">
+            <h3 class="mb-0 fw-bold">الغرف المتاحة</h3>
+          </div>
+          <div class="card-body p-0">
+            <p-table [value]="filteredRoomTypes" styleClass="p-datatable-striped"
+                     [paginator]="filteredRoomTypes.length > 5" 
+                     [rows]="5"
+                     [rowsPerPageOptions]="[5,10,20]">
+              <ng-template pTemplate="header">
+                <tr>
+                  <th class="fw-bold text-end" style="width: 25%;">نوع الغرفة</th>
+                  <th class="text-center fw-bold" style="width: 12%;">عدد الضيوف</th>
+                  <th class="text-center fw-bold" style="width: 15%;">سعر اليوم</th>
+                  <th class="fw-bold text-end" style="width: 33%;">الخيارات</th>
+                  <th class="text-center fw-bold" style="width: 15%;">اختر الغرف</th>
+                </tr>
+              </ng-template>
+              <ng-template pTemplate="body" let-room>
+                <tr class="align-top">
+                  <!-- Room Type Name -->
+                  <td class="py-3 text-end">
+                    <div>
+                      <a href="javascript:void(0)" class="text-primary fw-bold text-decoration-none fs-6">
+                        {{ room.name }}
+                      </a>
+                      <div class="mt-2">
+                        <p class="text-muted small mb-1" *ngIf="room.viewType" style="direction: rtl;">
+                          <i class="pi pi-eye ms-1"></i>{{ room.viewType }}
+                        </p>
+                        <p class="text-muted small mb-1" *ngIf="room.sizeInSqMeters" style="direction: rtl;">
+                          <i class="pi pi-arrows-alt ms-1"></i>{{ room.sizeInSqMeters }} متر مربع
+                        </p>
+                        <p class="text-muted small mb-0" style="direction: rtl;">
+                          <i class="pi pi-home ms-1"></i>{{ room.numberOfBeds }} سرير {{ room.bedType }}
+                        </p>
+                      </div>
+                    </div>
+                  </td>
+
+                  <!-- Max Guests -->
+                  <td class="text-center py-3">
+                    <i class="pi pi-users fs-5 text-muted"></i>
+                    <div class="mt-1">
+                      <span class="fw-bold">{{ room.maxGuests }}</span>
+                    </div>
+                  </td>
+
+                  <!-- Price -->
+                  <td class="text-center py-3">
+                    <div>
+                      <div class="fw-bold text-dark fs-4">SAR {{ calculateTotalPrice(room) | number:'1.0-0' }}</div>
+                      <p class="text-muted small mb-0" style="direction: rtl;">+SAR {{ getTaxesAndFees(room) | number:'1.0-0' }} ضرائب ورسوم</p>
+                    </div>
+                  </td>
+
+                  <!-- Payment Options -->
+                  <td class="py-3">
+                    <div class="d-flex flex-column gap-3">
+                      <!-- Pay Now Option -->
+                      <div *ngIf="room.payNow" class="border rounded p-3 bg-light text-end" style="direction: rtl;">
+                        <div class="d-flex align-items-start">
+                          <div class="flex-grow-1">
+                            <p class="mb-2 fw-semibold">
+                              <i class="pi pi-coffee ms-1"></i>إفطار جيد جداً بسعر SAR 75
+                            </p>
+                            <p class="mb-2 text-success small">
+                              <i class="pi pi-check ms-1"></i>شامل خصم بقيمة 20% على الطعام/الشراب
+                            </p>
+                            <p class="mb-2 text-danger small">
+                              <i class="pi pi-times-circle ms-1"></i>غير قابل للاسترداد
+                            </p>
+                            <p class="mb-0 small">
+                              <i class="pi pi-credit-card ms-1"></i>ادفع عبر الإنترنت
+                            </p>
+                          </div>
+                          <i class="pi pi-check-circle text-success ms-2 mt-1 fs-5"></i>
+                        </div>
+                      </div>
+
+                      <!-- Pay at Hotel Option -->
+                      <div *ngIf="room.payAtHotel" class="border rounded p-3 bg-light text-end" style="direction: rtl;">
+                        <div class="d-flex align-items-start">
+                          <div class="flex-grow-1">
+                            <p class="mb-2 fw-semibold">
+                              <i class="pi pi-coffee ms-1"></i>إفطار جيد جداً مشمول
+                            </p>
+                            <p class="mb-2 text-success small">
+                              <i class="pi pi-calendar-times ms-1"></i>إلغاء مجاني
+                            </p>
+                            <p class="mb-0 small text-muted">
+                              <i class="pi pi-building ms-1"></i>لا حاجة لأي دفعة مسبقة، ستدفع في مكان الإقامة
+                            </p>
+                          </div>
+                          <i class="pi pi-check-circle text-success ms-2 mt-1 fs-5"></i>
+                        </div>
+                      </div>
+                    </div>
+                  </td>
+
+                  <!-- Book Button -->
+                  <td class="text-center py-3">
+                    <div class="d-flex flex-column gap-2 align-items-center">
+                      <button *ngIf="room.payNow" 
+                              class="btn btn-primary fw-bold px-4 py-2 w-100" 
+                              style="max-width: 180px;"
+                              (click)="selectRoom(room.id, 'payNow')">
+                        احجز الآن
+                      </button>
+                      <button *ngIf="room.payAtHotel" 
+                              class="btn btn-outline-primary fw-bold px-4 py-2 w-100" 
+                              style="max-width: 180px;"
+                              (click)="selectRoom(room.id, 'payAtHotel')">
+                        سوف أحجز
+                      </button>
+                      <p class="text-muted small mb-0" style="direction: rtl;">• لن يتم خصم أي مبلغ منك بعد</p>
+                    </div>
+                  </td>
+                </tr>
+              </ng-template>
+              <ng-template pTemplate="emptymessage">
+                <tr>
+                  <td colspan="5" class="text-center py-4">
+                    <i class="pi pi-info-circle me-2"></i>
+                    لا توجد غرف متاحة في الوقت الحالي
+                  </td>
+                </tr>
+              </ng-template>
+            </p-table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Image Gallery Modal -->
+  <p-galleria [value]="hotelImages" 
+              [(visible)]="displayGalleria"
+              [responsiveOptions]="responsiveOptions" 
+              [containerStyle]="{'max-width': '90%'}"
+              [numVisible]="5"
+              [circular]="true"
+              [fullScreen]="true"
+              [showItemNavigators]="true"
+              [showThumbnails]="true">
+    <ng-template pTemplate="item" let-item>
+      <img [src]="item" [alt]="hotel?.name" style="width: 100%; display: block;" />
+    </ng-template>
+    <ng-template pTemplate="thumbnail" let-item>
+      <div class="grid grid-nogutter justify-content-center">
+        <img [src]="item" [alt]="hotel?.name" style="width: 100%; display: block;" />
+      </div>
+    </ng-template>
+  </p-galleria>
+</div>
+
+<!-- Loading State -->
+<div *ngIf="loading" class="min-vh-100 d-flex align-items-center justify-content-center">
+  <div class="text-center">
+    <div class="spinner-border text-primary mb-3" role="status">
+      <span class="visually-hidden">جاري التحميل...</span>
+    </div>
+    <p class="text-muted">جاري تحميل تفاصيل الفندق...</p>
+  </div>
+</div>

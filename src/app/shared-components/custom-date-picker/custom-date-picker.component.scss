@@ -1,0 +1,84 @@
+:host {
+  display: block;
+  width: 100%;
+}
+
+.custom-calendar-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 8px;
+  background-color: #f1f5f9;
+  border-bottom: 1px solid #cbd5e1;
+
+  .custom-nav-btn {
+    background: transparent;
+    border: none;
+    color: #3b82f6;
+    cursor: pointer;
+    padding: 4px 6px;
+    border-radius: 4px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    transition: background-color 0.2s;
+
+    &:hover {
+      background-color: rgba(59, 130, 246, 0.15);
+    }
+  }
+
+  .custom-header-controls {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin: 0 auto;
+  }
+
+  .custom-month-select {
+    border: 1px solid #cbd5e1;
+    border-radius: 4px;
+    padding: 3px 6px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: #1e293b;
+    background-color: #ffffff;
+    cursor: pointer;
+    outline: none;
+
+    &:focus {
+      border-color: #3b82f6;
+    }
+  }
+
+  .custom-year-input {
+    border: 1px solid #cbd5e1;
+    border-radius: 4px;
+    padding: 3px 6px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: #1e293b;
+    width: 65px;
+    text-align: center;
+    background-color: #ffffff;
+    outline: none;
+
+    &:focus {
+      border-color: #3b82f6;
+    }
+  }
+}
+
+// Hide PrimeNG's default header title/arrows bar so only our custom header shows
+::ng-deep {
+  .p-datepicker-header {
+    padding: 0 !important;
+    border-bottom: none !important;
+
+    .p-datepicker-title,
+    > button.p-datepicker-prev,
+    > button.p-datepicker-next {
+      display: none !important;
+    }
+  }
+}

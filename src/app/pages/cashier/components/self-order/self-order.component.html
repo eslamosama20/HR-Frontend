@@ -1,0 +1,514 @@
+﻿<div class="self-shell" *ngIf="table() as currentTable; else invalidToken">
+  <p-toast position="top-center"></p-toast>
+
+  <!-- Top Floating Customer Header -->
+  <header class="self-header">
+    <div class="header-brand">
+      <div class="brand-avatar">
+        <i class="pi pi-compass"></i>
+      </div>
+      <div class="brand-text">
+        <div class="table-badge-row">
+          <h1>طاولة {{ currentTable.tableNumber }}</h1>
+          <span class="area-pill"><i class="pi pi-map-marker"></i> {{ currentTable.areaName }}</span>
+        </div>
+        <p class="welcome-msg">مرحباً بك! اختر أصنافك المفضلة وأرسل الطلب مباشرة إلى المطبخ</p>
+      </div>
+    </div>
+
+    <div class="header-meta-actions">
+      <div class="seats-info">
+        <i class="pi pi-users"></i>
+        <span>{{ currentTable.seats }} مقاعد</span>
+      </div>
+
+      <!-- Mobile Cart Trigger Button -->
+      <button
+        type="button"
+        class="mobile-cart-btn"
+        (click)="showMobileCart.set(true)">
+        <i class="pi pi-shopping-cart"></i>
+        <span class="mobile-cart-badge" *ngIf="itemsCount > 0">{{ itemsCount }}</span>
+        <span class="mobile-cart-price">{{ subtotal | number:'1.2-2' }} ر.س</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- Order Success Notification Banner -->
+  <div class="last-order-banner" *ngIf="lastOrderNo">
+    <div class="banner-icon-ring">
+      <i class="pi pi-check"></i>
+    </div>
+    <div class="banner-content">
+      <strong>تم إرسال طلبك بنجاح! رقم الطلب #{{ lastOrderNo }}</strong>
+      <span>طلبك الآن قيد المراجعة والتحضير في المطبخ</span>
+    </div>
+    <button type="button" class="close-banner-btn" (click)="lastOrderNo = ''">
+      <i class="pi pi-times"></i>
+    </button>
+  </div>
+
+  <!-- Active Orders Live Tracking Stepper -->
+  <section class="orders-progress-section" *ngIf="hasOpenOrders">
+    <div class="progress-section-head">
+      <div class="title-wrap">
+        <i class="pi pi-clock"></i>
+        <h2>متابعة حالة طلباتك الحالية</h2>
+      </div>
+      <span class="orders-count-badge">{{ tableOrders().length }} طلب نشط</span>
+    </div>
+
+    <div class="progress-cards-grid">
+      <article class="progress-ticket-card" *ngFor="let order of tableOrders()">
+        <div class="ticket-header">
+          <div class="ticket-id">
+            <i class="pi pi-ticket"></i>
+            <strong>طلب #{{ order.orderNo }}</strong>
+          </div>
+          <span class="ticket-status-pill" [ngClass]="order.status">
+            {{ getOrderStatusLabel(order.status) }}
+          </span>
+        </div>
+
+        <div class="ticket-meta">
+          <span>{{ order.items.length }} أصناف</span>
+          <span class="dot">•</span>
+          <span class="ticket-amount">{{ order.totalAmount | number:'1.2-2' }} ريال</span>
+          <span class="dot">•</span>
+          <span class="ticket-time">{{ order.createdAt | customDate: 'shortTime' }}</span>
+        </div>
+
+        <div class="prep-timer-pill" *ngIf="order.status !== orderStatus.Paid && order.status !== orderStatus.Cancelled">
+          <i class="pi pi-stopwatch"></i>
+          <span>{{ getPreparationStatus(order) }}</span>
+        </div>
+      </article>
+    </div>
+  </section>
+
+  <!-- Bill Requested Notice -->
+  <div class="bill-requested-banner" *ngIf="isBillRequested">
+    <i class="pi pi-wallet"></i>
+    <span>تم إرسال طلب الحساب للكاشير، سيقوم الكاشير أو الويتر بزيارة طاولتك خلال لحظات.</span>
+  </div>
+
+  <!-- Main Content Layout -->
+  <main class="self-main-layout">
+    <!-- Left / Center: Menu Catalog -->
+    <section class="menu-section">
+      <!-- Search & Filters Toolbar -->
+      <div class="menu-toolbar">
+        <div class="search-input-box">
+          <i class="pi pi-search search-icon"></i>
+          <input
+            pInputText
+            type="text"
+            [(ngModel)]="searchTerm"
+            placeholder="ابحث عن وجبة، مشروب، أو صنف..." />
+          <button
+            *ngIf="searchTerm"
+            type="button"
+            class="clear-btn"
+            (click)="searchTerm = ''">
+            <i class="pi pi-times"></i>
+          </button>
+        </div>
+
+        <div class="toolbar-controls">
+          <!-- View Mode Toggle -->
+          <div class="view-mode-toggle">
+            <button
+              type="button"
+              class="toggle-btn"
+              [class.active]="viewMode() === 'grid'"
+              (click)="switchViewMode('grid')"
+              pTooltip="عرض شبكي">
+              <i class="pi pi-th-large"></i>
+            </button>
+            <button
+              type="button"
+              class="toggle-btn"
+              [class.active]="viewMode() === 'list'"
+              (click)="switchViewMode('list')"
+              pTooltip="عرض قائمة">
+              <i class="pi pi-list"></i>
+            </button>
+          </div>
+
+          <!-- Images Toggle -->
+          <button
+            type="button"
+            class="image-toggle-btn"
+            *ngIf="viewMode() === 'grid'"
+            (click)="toggleProductImages()"
+            pTooltip="إظهار / إخفاء الصور">
+            <i [class]="showProductImages() ? 'pi pi-eye' : 'pi pi-eye-slash'"></i>
+            <span>{{ showProductImages() ? 'الصور مفعلة' : 'بدون صور' }}</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Category Filter Chips Carousel -->
+      <div class="category-chips-carousel" *ngIf="categories.length > 0">
+        <button
+          type="button"
+          class="category-chip"
+          [class.active]="selectedCategory() === null"
+          (click)="selectCategory(null)">
+          <span class="cat-emoji">🍽️</span>
+          <span>جميع الأصناف</span>
+          <span class="cat-badge">{{ menu().length }}</span>
+        </button>
+        <button
+          *ngFor="let cat of categories"
+          type="button"
+          class="category-chip"
+          [class.active]="selectedCategory() === cat.id"
+          (click)="selectCategory(cat.id)">
+          <span class="cat-emoji">{{ getCategoryIcon(cat.name) }}</span>
+          <span>{{ cat.name }}</span>
+          <span class="cat-badge">{{ cat.count }}</span>
+        </button>
+      </div>
+
+      <!-- Products Grid View -->
+      <div
+        *ngIf="viewMode() === 'grid'"
+        class="products-grid-container"
+        [class.no-images]="!showProductImages()">
+        <article
+          *ngFor="let product of filteredMenu"
+          class="menu-food-card"
+          [class.has-in-cart]="getItemQuantity(product.id) > 0"
+          [class.out-of-stock]="product.availableQuantity <= 0">
+
+          <!-- Product Image -->
+          <div class="food-media" *ngIf="showProductImages() && product.image">
+            <img
+              [src]="product.image"
+              [alt]="product.nameAr || product.nameEn"
+              loading="lazy"
+              class="food-img"
+            />
+            <span class="food-cat-tag" *ngIf="product.categoryNameAr">
+              {{ product.categoryNameAr }}
+            </span>
+          </div>
+
+          <!-- Product Details -->
+          <div class="food-details">
+            <div class="food-title-row">
+              <h3 class="food-title">{{ product.nameAr || product.nameEn }}</h3>
+            </div>
+
+            <div class="food-pricing-row">
+              <div class="price-display">
+                <strong class="price-number">{{ getProductPrice(product) | number:'1.2-2' }}</strong>
+                <span class="currency-text">ر.س</span>
+              </div>
+              <span class="unit-tag" *ngIf="product.unitName">{{ product.unitName }}</span>
+            </div>
+
+            <!-- Card Bottom Add to Cart Button / Counter -->
+            <div class="card-action-wrap">
+              <!-- If Not in Cart: Single Add Button -->
+              <button
+                *ngIf="getItemQuantity(product.id) === 0"
+                type="button"
+                class="add-food-btn"
+                [disabled]="product.availableQuantity <= 0"
+                (click)="addToCart(product)">
+                <i class="pi pi-plus"></i>
+                <span>إضافة للسلة</span>
+              </button>
+
+              <!-- If Already in Cart: Interactive Quantity Stepper -->
+              <div class="food-stepper-pill" *ngIf="getItemQuantity(product.id) > 0">
+                <button
+                  type="button"
+                  class="step-btn decrease"
+                  (click)="decreaseProduct(product.id)">
+                  <i class="pi pi-minus"></i>
+                </button>
+                <span class="step-count">{{ getItemQuantity(product.id) }}</span>
+                <button
+                  type="button"
+                  class="step-btn increase"
+                  (click)="increaseProduct(product.id, product)">
+                  <i class="pi pi-plus"></i>
+                </button>
+              </div>
+            </div>
+          </div>
+        </article>
+      </div>
+
+      <!-- Products List View (Table Mode) -->
+      <div *ngIf="viewMode() === 'list'" class="products-list-container">
+        <div
+          class="list-food-row"
+          *ngFor="let product of filteredMenu"
+          [class.has-in-cart]="getItemQuantity(product.id) > 0">
+          <div class="list-item-left">
+            <div class="list-thumb" *ngIf="showProductImages() && product.image">
+              <img [src]="product.image" [alt]="product.nameAr || product.nameEn" />
+            </div>
+            <div class="list-text">
+              <h4>{{ product.nameAr || product.nameEn }}</h4>
+              <span class="list-cat">{{ product.categoryNameAr || 'صنف' }}</span>
+            </div>
+          </div>
+
+          <div class="list-item-right">
+            <div class="list-price">
+              <strong>{{ getProductPrice(product) | number:'1.2-2' }}</strong>
+              <small>ر.س</small>
+            </div>
+
+            <div class="list-action">
+              <button
+                *ngIf="getItemQuantity(product.id) === 0"
+                type="button"
+                class="quick-add-circle"
+                (click)="addToCart(product)">
+                <i class="pi pi-plus"></i>
+              </button>
+
+              <div class="food-stepper-pill compact" *ngIf="getItemQuantity(product.id) > 0">
+                <button
+                  type="button"
+                  class="step-btn"
+                  (click)="decreaseProduct(product.id)">
+                  <i class="pi pi-minus"></i>
+                </button>
+                <span class="step-count">{{ getItemQuantity(product.id) }}</span>
+                <button
+                  type="button"
+                  class="step-btn"
+                  (click)="increaseProduct(product.id, product)">
+                  <i class="pi pi-plus"></i>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Right Sidebar: Customer Cart & Checkout Panel -->
+    <aside class="cart-sidebar-panel">
+      <div class="cart-card">
+        <!-- Cart Head -->
+        <div class="cart-head">
+          <div class="cart-title-wrap">
+            <i class="pi pi-shopping-bag cart-icon"></i>
+            <div>
+              <h3>سلة الطلبات</h3>
+              <p>طاولة {{ currentTable.tableNumber }}</p>
+            </div>
+          </div>
+          <span class="cart-count-bubble">{{ itemsCount }} أصناف</span>
+        </div>
+
+        <!-- Customer Name Field -->
+        <div class="customer-name-box">
+          <label class="field-label">
+            <i class="pi pi-user"></i>
+            <span>اسم العميل (اختياري)</span>
+          </label>
+          <input
+            pInputText
+            type="text"
+            [(ngModel)]="customerName"
+            placeholder="اكتب اسمك ليظهر على الطلب..."
+            class="name-input" />
+        </div>
+
+        <!-- Cart Items List -->
+        <div class="cart-items-scroll">
+          <div class="cart-item-card" *ngFor="let item of cart()">
+            <div class="item-main-info">
+              <h4 class="item-title">{{ item.name }}</h4>
+              <span class="item-unit-price">{{ item.unitPrice | number:'1.2-2' }} ريال</span>
+            </div>
+
+            <div class="item-controls">
+              <div class="item-stepper">
+                <button type="button" class="stepper-btn" (click)="decrease(item)">
+                  <i class="pi pi-minus"></i>
+                </button>
+                <span class="stepper-val">{{ item.quantity }}</span>
+                <button type="button" class="stepper-btn" (click)="increase(item)">
+                  <i class="pi pi-plus"></i>
+                </button>
+              </div>
+
+              <strong class="item-total-price">{{ (item.quantity * item.unitPrice) | number:'1.2-2' }} <small>ر.س</small></strong>
+
+              <button type="button" class="item-delete-btn" (click)="remove(item)" pTooltip="حذف الصنف">
+                <i class="pi pi-trash"></i>
+              </button>
+            </div>
+          </div>
+
+          <!-- Empty Cart State -->
+          <div class="empty-cart-state" *ngIf="cart().length === 0">
+            <div class="empty-cart-icon">
+              <i class="pi pi-shopping-cart"></i>
+            </div>
+            <h4>سلة الطلبات فارغة</h4>
+            <p>اختر الأصناف التي تفضلها من القائمة لإضافتها إلى سلتك</p>
+          </div>
+        </div>
+
+        <!-- Perforated Divider -->
+        <div class="cart-divider"></div>
+
+        <!-- Cart Financial Totals -->
+        <div class="cart-totals-section">
+          <div class="total-row">
+            <span>المجموع الفرعي:</span>
+            <strong>{{ subtotal | number:'1.2-2' }} <small>ر.س</small></strong>
+          </div>
+          <div class="total-row grand">
+            <span>الإجمالي المطلوب:</span>
+            <strong class="grand-price">{{ subtotal | number:'1.2-2' }} <small>ر.س</small></strong>
+          </div>
+        </div>
+
+        <!-- Cart Submit Actions -->
+        <div class="cart-submit-actions">
+          <button
+            pButton
+            type="button"
+            icon="pi pi-send"
+            label="إرسال الطلب إلى المطبخ"
+            class="submit-order-btn"
+            [loading]="submitting"
+            [disabled]="cart().length === 0 || submitting"
+            (click)="submitOrder()">
+          </button>
+
+          <button
+            pButton
+            type="button"
+            icon="pi pi-wallet"
+            [label]="isBillRequested ? 'تذكير بطلب الحساب' : 'طلب الحساب من الكاشير'"
+            class="request-bill-btn"
+            [disabled]="!canRequestBill || requestingBill"
+            (click)="requestBill()">
+          </button>
+
+          <p class="bill-help-note" *ngIf="!canRequestBill">
+            💡 زر طلب الحساب يُتاح بعد إرسال طلبك الأول للمطبخ.
+          </p>
+        </div>
+      </div>
+    </aside>
+  </main>
+
+  <!-- Mobile Floating Bottom Bar -->
+  <div class="mobile-bottom-bar" *ngIf="cart().length > 0">
+    <div class="bottom-bar-info">
+      <span class="items-bubble">{{ itemsCount }} أصناف</span>
+      <div class="price-wrap">
+        <span class="label">الإجمالي:</span>
+        <strong class="amount">{{ subtotal | number:'1.2-2' }} ر.س</strong>
+      </div>
+    </div>
+    <button
+      type="button"
+      class="mobile-submit-btn"
+      (click)="showMobileCart.set(true)">
+      <span>عرض السلة وتأكيد الطلب</span>
+      <i class="pi pi-arrow-left"></i>
+    </button>
+  </div>
+</div>
+
+<!-- Mobile Cart Modal Dialog -->
+<p-dialog
+  [(visible)]="showMobileCart"
+  [modal]="true"
+  [draggable]="false"
+  [resizable]="false"
+  [style]="{width: '460px', maxWidth: '95vw'}"
+  styleClass="mobile-cart-dialog"
+  header="سلة الطلبات">
+  <div class="mobile-dialog-cart-body" *ngIf="table() as currentTable">
+    <div class="customer-name-box">
+      <label class="field-label">
+        <i class="pi pi-user"></i>
+        <span>اسم العميل (اختياري)</span>
+      </label>
+      <input
+        pInputText
+        type="text"
+        [(ngModel)]="customerName"
+        placeholder="اكتب اسمك..."
+        class="name-input" />
+    </div>
+
+    <div class="cart-items-scroll dialog-scroll">
+      <div class="cart-item-card" *ngFor="let item of cart()">
+        <div class="item-main-info">
+          <h4 class="item-title">{{ item.name }}</h4>
+          <span class="item-unit-price">{{ item.unitPrice | number:'1.2-2' }} ريال</span>
+        </div>
+
+        <div class="item-controls">
+          <div class="item-stepper">
+            <button type="button" class="stepper-btn" (click)="decrease(item)">
+              <i class="pi pi-minus"></i>
+            </button>
+            <span class="stepper-val">{{ item.quantity }}</span>
+            <button type="button" class="stepper-btn" (click)="increase(item)">
+              <i class="pi pi-plus"></i>
+            </button>
+          </div>
+
+          <strong class="item-total-price">{{ (item.quantity * item.unitPrice) | number:'1.2-2' }} <small>ر.س</small></strong>
+
+          <button type="button" class="item-delete-btn" (click)="remove(item)">
+            <i class="pi pi-trash"></i>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <div class="cart-totals-section">
+      <div class="total-row grand">
+        <span>الإجمالي النهائي:</span>
+        <strong class="grand-price">{{ subtotal | number:'1.2-2' }} <small>ر.س</small></strong>
+      </div>
+    </div>
+  </div>
+
+  <ng-template pTemplate="footer">
+    <div class="dialog-cart-actions">
+      <button
+        pButton
+        type="button"
+        icon="pi pi-send"
+        label="إرسال الطلب للمطبخ"
+        class="submit-order-btn"
+        [loading]="submitting"
+        [disabled]="cart().length === 0 || submitting"
+        (click)="submitOrder(); showMobileCart.set(false)">
+      </button>
+    </div>
+  </ng-template>
+</p-dialog>
+
+<!-- Invalid Table Token Template -->
+<ng-template #invalidToken>
+  <div class="invalid-token-container">
+    <div class="invalid-token-card">
+      <div class="error-icon-ring">
+        <i class="pi pi-times-circle"></i>
+      </div>
+      <h2>رابط الطاولة غير صالح</h2>
+      <p>يرجى التأكد من مسح رمز الاستجابة السريعة (QR Code) الصحيح المثبت على طاولتك بالمطعم.</p>
+    </div>
+  </div>
+</ng-template>

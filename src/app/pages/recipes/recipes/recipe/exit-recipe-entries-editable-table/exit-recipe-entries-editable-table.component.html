@@ -1,0 +1,132 @@
+<div class="recipe-table-card">
+  <form [formGroup]="tableForm">
+    <div class="table-responsive-wrapper">
+      <table class="recipe-erp-table">
+        <thead>
+          <tr>
+            <th class="th-index text-center">#</th>
+            <th class="th-class text-center">{{ "DATA.CLASS" | translate }}</th>
+            <th class="th-unit text-center">{{ "DATA.MEASUREMENT_UNIT" | translate }}</th>
+            <th class="th-qty text-center">{{ "DATA.ALL_PERSONS_QUANTITY" | translate }}</th>
+            <th class="th-qty-person text-center">{{ "DATA.QUANTITY_PER_PERSON" | translate }}</th>
+            <th class="th-price text-center">{{ "DATA.LAST_PRICE" | translate }}</th>
+            <th class="th-total text-center">{{ "FINANCE.TOTAL_AMOUNT" | translate }}</th>
+            <th class="th-amount-person text-center">{{ "FINANCE.AMOUNT_PER_PERSON" | translate }}</th>
+            <th class="th-action text-center" *ngIf="!isReadOnly"></th>
+          </tr>
+        </thead>
+        <tbody>
+          <!-- Empty State -->
+          <tr *ngIf="rowGroups.length === 0">
+            <td [attr.colspan]="isReadOnly ? 8 : 9" class="empty-state-cell text-center py-8">
+              <div class="flex flex-col items-center justify-center text-gray-400 dark:text-gray-500">
+                <i class="pi pi-inbox text-4xl mb-2"></i>
+                <p class="text-sm font-medium">لا توجد بنود محملة لإذن الصرف</p>
+              </div>
+            </td>
+          </tr>
+
+          <!-- Rows -->
+          <tr *ngFor="let row of rowGroups; let rowIndex = index; trackBy: trackByFn" [formGroup]="row" class="table-data-row">
+            <!-- Row Index -->
+            <td class="td-index text-center font-bold text-gray-500 dark:text-gray-400">
+              {{ rowIndex + 1 }}
+            </td>
+
+            <!-- Dynamic Columns -->
+            <ng-container *ngFor="let col of columns; let colIndex = index">
+              <!-- Item Class Dropdown -->
+              <td *ngIf="col.field === 'mainPurchaseClassId'" class="td-class">
+                <div class="dropdown-cell-container w-full">
+                  <p-dropdown
+                    [readonly]="isReadOnly"
+                    appendTo="body"
+                    [options]="mainPurchaseClassOptions"
+                    [filter]="true"
+                    filterBy="label"
+                    [placeholder]="translate.instant('FINANCE.SELECT')"
+                    formControlName="mainPurchaseClassId"
+                    (onChange)="goNextCell(rowIndex, colIndex)"
+                    [class.invalid]="isInvalid(rowIndex, colIndex)"
+                    styleClass="w-full h-10 text-sm border-none rounded-lg custom-table-dropdown"
+                    class="w-full block"
+                    #inputCell
+                  >
+                  </p-dropdown>
+                  <small *ngIf="isInvalid(rowIndex, colIndex)" class="error-text">
+                    {{ 'DATA.CLASS_REQUIRED' | translate }}
+                  </small>
+                </div>
+              </td>
+
+              <!-- Measurement Unit Badge -->
+              <td *ngIf="col.field === 'measurementUnit'" class="td-unit text-center">
+                <span class="unit-chip">
+                  {{ getRowMeasurementUnit(row) || '-' }}
+                </span>
+              </td>
+
+              <!-- Quantity Input -->
+              <td *ngIf="col.field === 'quantity'" class="td-qty text-center">
+                <div class="input-cell-container">
+                  <p-inputNumber
+                    [readonly]="isReadOnly"
+                    min="0"
+                    class="w-full"
+                    styleClass="h-10 w-full custom-table-input"
+                    formControlName="{{ col.field }}"
+                    minFractionDigits="0"
+                    maxFractionDigits="3"
+                    (keydown)="onEnter($event, rowIndex, colIndex)"
+                    (input)="formatInputNumber($event)"
+                    [class.invalid]="isInvalid(rowIndex, colIndex)"
+                    #inputCell
+                  />
+                  <small *ngIf="isInvalid(rowIndex, colIndex)" class="error-text">
+                    {{ 'DATA.QUANTITY_REQUIRED' | translate }}
+                  </small>
+                </div>
+              </td>
+
+              <!-- Quantity Per Person -->
+              <td *ngIf="col.field === 'quantityPerPerson'" class="td-qty-person text-center">
+                <span class="qty-person-chip">
+                  {{ (getRowQuantityPerPerson(row) | number : '1.0-3') || '0' }}
+                </span>
+              </td>
+            </ng-container>
+
+            <!-- Last Price -->
+            <td class="td-price text-center text-gray-700 dark:text-gray-300">
+              {{ (getRowLastPrice(row) | number : "1.2-2") || '0.00' }}
+            </td>
+
+            <!-- Total Amount -->
+            <td class="td-total text-center text-blue-600 dark:text-blue-400">
+              {{ (getRowTotal(row) | number : "1.2-2") || '0.00' }}
+            </td>
+
+            <!-- Amount Per Person -->
+            <td class="td-amount-person text-center text-emerald-600 dark:text-emerald-400">
+              {{ (getRowAmountPerPerson(row) | number : "1.2-2") || '0.00' }}
+            </td>
+
+            <!-- Action: Delete -->
+            <td class="td-action text-center" *ngIf="!isReadOnly">
+              <button
+                pButton
+                type="button"
+                [disabled]="isReadOnly"
+                (click)="deleteRow(rowIndex)"
+                class="p-button-danger p-button-text p-button-rounded table-delete-btn"
+                icon="pi pi-trash"
+                [attr.aria-label]="'Delete Row'"
+              ></button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </form>
+</div>
+

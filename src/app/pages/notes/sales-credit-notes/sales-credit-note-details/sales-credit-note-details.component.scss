@@ -1,0 +1,25 @@
+.btn-primary {
+    background-color: #007bff;
+    border-color: #007bff;
+    color: white;
+}
+
+.btn-primary:hover {
+    background-color: #0056b3;
+    border-color: #004085;
+}
+
+/* Hide company details in normal (non-print) view */
+.company-details {
+    display: none;
+}
+
+.sales-header-bg {
+  background-color: #42acff !important;
+}
+
+.sales-header-bg th,
+.sales-header-bg th.text-white {
+  background-color: #42acff !important;
+  color: white !important;
+}

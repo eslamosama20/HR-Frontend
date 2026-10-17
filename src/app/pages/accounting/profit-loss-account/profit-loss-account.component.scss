@@ -1,0 +1,14 @@
+table, th, td {
+  border: 1px solid black;
+  border-collapse: collapse;
+}
+th, td {
+  border-color: #494949;
+  padding: 5px;
+}
+
+/* Larger table text (1.125rem) as requested */
+table th,
+table td {
+  font-size: 1.125rem !important;
+}

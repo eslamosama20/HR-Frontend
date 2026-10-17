@@ -1,0 +1,98 @@
+<!--begin::App-->
+<div class="d-flex flex-column flex-root app-root" id="kt_app_root">
+  <!--begin::Page-->
+  <div class="app-page flex-column flex-column-fluid" id="kt_app_page">
+    <ng-container *ngIf="appHeaderDisplay">
+      <!--begin::Header-->
+      <app-header
+        [ngClass]="appHeaderDefaultClass"
+        [ngClass]="activeLanguage === 'ar' ? 'app-header-rtl' : ''"
+        class="app-header"
+        data-kt-sticky="true"
+        data-kt-sticky-activate="{default: true, lg: true}"
+        data-kt-sticky-animation="false"
+        data-kt-sticky-name="app-header-minimize"
+        data-kt-sticky-offset="{default: '200px', lg: '0'}"
+        id="kt_app_header"
+      >
+      </app-header>
+      <!--end::Header-->
+    </ng-container>
+
+    <!--begin::Wrapper-->
+    <div
+      [ngClass]="activeLanguage === 'ar' ? 'wrapper-rtl' : ''"
+      class="app-wrapper flex-column flex-row-fluid"
+      id="kt_app_wrapper"
+    >
+      <ng-container *ngIf="appSidebarPanelDisplay">
+        <!-- TODO: app sidebar panel -->
+      </ng-container>
+      <!--begin::Main-->
+      <div class="app-main flex-column flex-row-fluid" id="kt_app_main">
+        <!--begin::Content wrapper-->
+        <div class="d-flex flex-column flex-column-fluid">
+          <!--<ng-container *ngIf="appToolbarDisplay">
+            <app-toolbar [appToolbarLayout]="appToolbarLayout" [ngClass]="appToolbarCSSClass" class="app-toolbar"
+                         id="kt_app_toolbar"></app-toolbar>
+          </ng-container>-->
+          <app-content
+            [appContentContainerClass]="appContentContainerClass"
+            [appContentContiner]="appContentContiner"
+            [contentContainerCSSClass]="contentContainerCSSClass"
+            [ngClass]="contentCSSClasses"
+            class="app-content"
+            id=" kt_app_content"
+          >
+          </app-content>
+        </div>
+        <!--end::Content wrapper-->
+        <ng-container *ngIf="appFooterDisplay">
+          <app-footer
+            [appFooterContainerCSSClass]="appFooterContainerCSSClass"
+            [ngClass]="appFooterCSSClass"
+            class="app-footer"
+            id="kt_app_footer"
+          ></app-footer>
+        </ng-container>
+      </div>
+      <!--end:::Main-->
+
+      <ng-container *ngIf="appSidebarDisplay">
+        <!--begin::sidebar-->
+        <app-sidebar
+          #ktSidebar
+          [ngClass]="appSidebarDefaultClass + ' ' + (activeLanguage === 'ar' ? 'app-sidebar-rtl sidebar-fixed-right' : '')"
+          class="app-sidebar flex-column"
+          id="kt_app_sidebar"
+          [style]="{ 'background-color': '#0972eb' }"
+        >
+        </app-sidebar>
+        <!--end::sidebar-->
+      </ng-container>
+    </div>
+    <!--end::Wrapper-->
+  </div>
+  <!--end::Page-->
+</div>
+<!--end::App-->
+
+<app-scripts-init></app-scripts-init>
+<ng-container>
+  <app-scroll-top
+    class="scrolltop"
+    data-kt-scrolltop="true"
+    id="kt_scrolltop"
+  ></app-scroll-top>
+</ng-container>
+<!-- begin:: Drawers -->
+<!-- <app-activity-drawer></app-activity-drawer> -->
+<!-- <app-messenger-drawer></app-messenger-drawer> -->
+<!-- end:: Drawers -->
+
+<!-- begin:: Modals -->
+<app-main-modal></app-main-modal>
+<app-invite-users-modal></app-invite-users-modal>
+<app-upgrade-plan-modal></app-upgrade-plan-modal>
+<!-- end:: Modals -->
+<app-toast-container></app-toast-container>

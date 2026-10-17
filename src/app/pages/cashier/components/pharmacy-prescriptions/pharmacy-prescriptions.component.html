@@ -1,0 +1,1093 @@
+﻿<div class="pos-shell pharmacy-page prescriptions-theme">
+  <p-toast></p-toast>
+
+  <div class="session-unified-card mb-2">
+    <!-- 1. Header (Matching cashier/session & pharmacy-patients) -->
+    <header class="session-header">
+      <!-- Top Row: Page Title on Right | Action Buttons on Left -->
+      <div class="session-header-top">
+        <div class="header-title">
+          <div>
+            <h1>{{ 'PHARMACY_PRESCRIPTIONS.PAGE_TITLE' | translate }}</h1>
+            <p>{{ 'PHARMACY_PRESCRIPTIONS.PAGE_SUBTITLE' | translate }}</p>
+          </div>
+        </div>
+
+        <div class="header-actions">
+          <button pButton type="button" icon="pi pi-refresh" label="تحديث البيانات" class="action-btn soft-btn" (click)="refreshOrders()"></button>
+          <button *ngIf="canDispensePrescription" pButton type="button" icon="pi pi-bolt" label="صرف مباشر" class="action-btn soft-btn" (click)="openDirectDispense()"></button>
+          <button *ngIf="canSyncWasfaty" pButton type="button" icon="pi pi-cloud-download" [label]="'PHARMACY_PRESCRIPTIONS.BTN_WASFATY' | translate" class="hero-btn edit-stores-btn" (click)="showWasfatyDialog = true"></button>
+          <button *ngIf="canCreatePrescription" pButton type="button" icon="pi pi-plus" [label]="'PHARMACY_PRESCRIPTIONS.BTN_NEW_RX' | translate" class="hero-btn open-btn" (click)="openNewPrescription()"></button>
+        </div>
+      </div>
+    </header>
+  </div>
+
+  <!-- 2. KPI / Summary Cards Grid (Matching cashier/session summary-card style) -->
+  <section class="session-meta-panel mb-2">
+    <div class="summary-grid">
+      <!-- Total Prescriptions -->
+      <article class="summary-card cash" (click)="selectedStatus = 'all'; selectedPriority = 'all'">
+        <div class="summary-card-head">
+          <i class="pi pi-file-edit"></i>
+          <span>إجمالي الروشتات</span>
+        </div>
+        <div class="summary-val">{{ totalPrescriptionsCount }} <small>روشتة</small></div>
+      </article>
+
+      <!-- New Prescriptions -->
+      <article class="summary-card credit" (click)="selectedStatus = 'new'">
+        <div class="summary-card-head">
+          <i class="pi pi-inbox"></i>
+          <span>{{ 'PHARMACY_PRESCRIPTIONS.NEW_PRESCRIPTIONS' | translate }}</span>
+        </div>
+        <div class="summary-val">{{ newCount }} <small>جديدة</small></div>
+      </article>
+
+      <!-- Dispensing in Progress -->
+      <article class="summary-card card" (click)="selectedStatus = 'dispensing'">
+        <div class="summary-card-head">
+          <i class="pi pi-spin pi-cog"></i>
+          <span>{{ 'PHARMACY_PRESCRIPTIONS.DISPENSING' | translate }}</span>
+        </div>
+        <div class="summary-val">{{ dispensingCount }} <small>قيد الصرف</small></div>
+      </article>
+
+      <!-- Ready for Delivery -->
+      <article class="summary-card sales" (click)="selectedStatus = 'ready'">
+        <div class="summary-card-head">
+          <i class="pi pi-check-circle"></i>
+          <span>{{ 'PHARMACY_PRESCRIPTIONS.READY_FOR_DELIVERY' | translate }}</span>
+        </div>
+        <div class="summary-val">{{ readyCount }} <small>جاهزة</small></div>
+      </article>
+
+      <!-- Urgent Prescriptions -->
+      <article class="summary-card tx" (click)="selectedPriority = 'urgent'">
+        <div class="summary-card-head">
+          <i class="pi pi-bolt"></i>
+          <span>روشتات عاجلة</span>
+        </div>
+        <div class="summary-val">{{ urgentCount }} <small>عاجل</small></div>
+      </article>
+
+      <!-- Insurance Prescriptions -->
+      <article class="summary-card expected" (click)="selectedStatus = 'all'">
+        <div class="summary-card-head">
+          <i class="pi pi-shield"></i>
+          <span>روشتات التأمين</span>
+        </div>
+        <div class="summary-val">{{ insuranceOrdersCount }} <small>تأمين</small></div>
+      </article>
+    </div>
+  </section>
+
+  <!-- 3. History / Table Panel (Matching sales invoice & pharmacy-patients style) -->
+  <section class="history-panel">
+    <div class="history-card">
+      <div class="history-header">
+        <div class="panel-title">
+          <h2>
+            <i class="pi pi-list"></i>
+            <span>سجل الوصفات الطبية</span>
+          </h2>
+          <p>عرض تفصيلي لكافة الوصفات المسجلة وحالات الصرف والتأمين</p>
+        </div>
+
+        <div class="panel-filters">
+          <!-- Search Input -->
+          <div class="filter-search-box">
+            <i class="pi pi-search"></i>
+            <input 
+              pInputText 
+              type="text" 
+              [(ngModel)]="searchTerm" 
+              [placeholder]="'PHARMACY_PRESCRIPTIONS.SEARCH_PLACEHOLDER' | translate" 
+              class="search-input" />
+            <button *ngIf="searchTerm" type="button" class="btn-clear" (click)="searchTerm = ''">
+              <i class="pi pi-times"></i>
+            </button>
+          </div>
+
+          <!-- Dropdown Filters (Status, Priority, Payment Type) -->
+          <div class="header-dropdown-filters">
+            <!-- Status Dropdown -->
+            <p-dropdown
+              [options]="statusOptions"
+              [(ngModel)]="selectedStatus"
+              optionLabel="label"
+              optionValue="value"
+              appendTo="body"
+              [autoDisplayFirst]="true"
+              styleClass="header-filter-dropdown"
+              [placeholder]="'PHARMACY_PRESCRIPTIONS.TABLE_STATUS' | translate">
+            </p-dropdown>
+
+            <!-- Priority Dropdown -->
+            <p-dropdown
+              [options]="priorityOptions"
+              [(ngModel)]="selectedPriority"
+              optionLabel="label"
+              optionValue="value"
+              appendTo="body"
+              [autoDisplayFirst]="true"
+              styleClass="header-filter-dropdown"
+              [placeholder]="'PHARMACY_PRESCRIPTIONS.TABLE_PRIORITY' | translate">
+            </p-dropdown>
+
+            <!-- Payment Type Dropdown -->
+            <p-dropdown
+              [options]="filterPaymentOptions"
+              [(ngModel)]="selectedPaymentType"
+              optionLabel="label"
+              optionValue="value"
+              appendTo="body"
+              [autoDisplayFirst]="true"
+              styleClass="header-filter-dropdown"
+              placeholder="طريقة السداد">
+            </p-dropdown>
+
+            <!-- Clear Filters Button -->
+            <button 
+              *ngIf="searchTerm || selectedStatus !== 'all' || selectedPriority !== 'all' || selectedPaymentType !== 'all'"
+              pButton 
+              type="button" 
+              icon="pi pi-filter-slash" 
+              label="إعادة ضبط" 
+              class="clear-filters-btn" 
+              (click)="clearAllFilters()">
+            </button>
+          </div>
+
+          <span class="count-pill">{{ filteredOrders.length }} روشتة</span>
+        </div>
+      </div>
+
+      <!-- Scrollable Horizontal Table -->
+      <div class="table-container scrollable-table-wrapper">
+        <p-table 
+          #dtPrescriptions
+          [value]="filteredOrders" 
+          [paginator]="true" 
+          [rows]="10" 
+          [rowsPerPageOptions]="[10, 25, 50]"
+          [showCurrentPageReport]="true"
+          currentPageReportTemplate="عرض {first} إلى {last} من أصل {totalRecords} وصفة طبية"
+          [scrollable]="true"
+          scrollHeight="flex"
+          styleClass="session-table p-datatable-gridlines p-datatable-sm" 
+          [loading]="loading()">
+          <ng-template pTemplate="header">
+            <tr>
+              <!-- 0. الترقيم -->
+              <th style="width: 48px; min-width: 48px; text-align: center;">
+                <span class="th-label">#</span>
+              </th>
+
+              <!-- 1. رقم الوصفة -->
+              <th pSortableColumn="rxNo" pResizableColumn style="min-width: 140px;">
+                <div class="th-content">
+                  <span class="th-label">{{ 'PHARMACY_PRESCRIPTIONS.TABLE_RX_NO' | translate }}</span>
+                  <div class="th-icons">
+                    <p-sortIcon field="rxNo"></p-sortIcon>
+                    <p-columnFilter type="text" field="rxNo" display="menu"></p-columnFilter>
+                  </div>
+                </div>
+              </th>
+
+              <!-- 2. اسم المريض -->
+              <th pSortableColumn="patientName" pResizableColumn style="min-width: 180px;">
+                <div class="th-content">
+                  <span class="th-label">{{ 'PHARMACY_PRESCRIPTIONS.TABLE_PATIENT' | translate }}</span>
+                  <div class="th-icons">
+                    <p-sortIcon field="patientName"></p-sortIcon>
+                    <p-columnFilter type="text" field="patientName" display="menu"></p-columnFilter>
+                  </div>
+                </div>
+              </th>
+
+              <!-- 3. الطبيب المعالج -->
+              <th pSortableColumn="doctorName" pResizableColumn style="min-width: 160px;">
+                <div class="th-content">
+                  <span class="th-label">{{ 'PHARMACY_PRESCRIPTIONS.TABLE_DOCTOR' | translate }}</span>
+                  <div class="th-icons">
+                    <p-sortIcon field="doctorName"></p-sortIcon>
+                    <p-columnFilter type="text" field="doctorName" display="menu"></p-columnFilter>
+                  </div>
+                </div>
+              </th>
+
+              <!-- 4. طريقة السداد -->
+              <th pSortableColumn="paymentType" pResizableColumn style="min-width: 130px;">
+                <div class="th-content">
+                  <span class="th-label">{{ 'PHARMACY_PRESCRIPTIONS.TABLE_PAYMENT_TYPE' | translate }}</span>
+                  <div class="th-icons">
+                    <p-sortIcon field="paymentType"></p-sortIcon>
+                    <p-columnFilter type="text" field="paymentType" display="menu"></p-columnFilter>
+                  </div>
+                </div>
+              </th>
+
+              <!-- 5. جهة التأمين -->
+              <th pSortableColumn="insuranceName" pResizableColumn style="min-width: 150px;">
+                <div class="th-content">
+                  <span class="th-label">{{ 'PHARMACY_PRESCRIPTIONS.TABLE_INSURANCE' | translate }}</span>
+                  <div class="th-icons">
+                    <p-sortIcon field="insuranceName"></p-sortIcon>
+                    <p-columnFilter type="text" field="insuranceName" display="menu"></p-columnFilter>
+                  </div>
+                </div>
+              </th>
+
+              <!-- 6. حالة التأمين -->
+              <th pSortableColumn="insuranceStatus" pResizableColumn style="min-width: 130px;">
+                <div class="th-content">
+                  <span class="th-label">{{ 'PHARMACY_PRESCRIPTIONS.TABLE_INSURANCE_STATUS' | translate }}</span>
+                  <div class="th-icons">
+                    <p-sortIcon field="insuranceStatus"></p-sortIcon>
+                    <p-columnFilter type="text" field="insuranceStatus" display="menu"></p-columnFilter>
+                  </div>
+                </div>
+              </th>
+
+              <!-- 7. عدد الأدوية -->
+              <th pSortableColumn="itemsCount" pResizableColumn style="min-width: 100px; text-align: center;">
+                <div class="th-content" style="justify-content: center;">
+                  <span class="th-label">{{ 'PHARMACY_PRESCRIPTIONS.TABLE_ITEMS' | translate }}</span>
+                  <div class="th-icons">
+                    <p-sortIcon field="itemsCount"></p-sortIcon>
+                  </div>
+                </div>
+              </th>
+
+              <!-- 8. إجمالي المبلغ -->
+              <th pSortableColumn="financials.grandTotal" pResizableColumn style="min-width: 130px; text-align: center;">
+                <div class="th-content" style="justify-content: center;">
+                  <span class="th-label">{{ 'PHARMACY_PRESCRIPTIONS.TABLE_AMOUNT' | translate }}</span>
+                  <div class="th-icons">
+                    <p-sortIcon field="financials.grandTotal"></p-sortIcon>
+                    <p-columnFilter type="numeric" field="financials.grandTotal" display="menu" currency="SAR"></p-columnFilter>
+                  </div>
+                </div>
+              </th>
+
+              <!-- 9. الأولوية -->
+              <th pSortableColumn="priority" pResizableColumn style="min-width: 120px; text-align: center;">
+                <div class="th-content" style="justify-content: center;">
+                  <span class="th-label">{{ 'PHARMACY_PRESCRIPTIONS.TABLE_PRIORITY' | translate }}</span>
+                  <div class="th-icons">
+                    <p-sortIcon field="priority"></p-sortIcon>
+                    <p-columnFilter type="text" field="priority" display="menu"></p-columnFilter>
+                  </div>
+                </div>
+              </th>
+
+              <!-- 10. حالة الصرف -->
+              <th pSortableColumn="status" pResizableColumn style="min-width: 130px; text-align: center;">
+                <div class="th-content" style="justify-content: center;">
+                  <span class="th-label">{{ 'PHARMACY_PRESCRIPTIONS.TABLE_STATUS' | translate }}</span>
+                  <div class="th-icons">
+                    <p-sortIcon field="status"></p-sortIcon>
+                    <p-columnFilter type="text" field="status" display="menu"></p-columnFilter>
+                  </div>
+                </div>
+              </th>
+
+              <!-- 11. الصيدلي المسؤول -->
+              <th pSortableColumn="dispensedBy" pResizableColumn style="min-width: 140px;">
+                <div class="th-content">
+                  <span class="th-label">{{ 'PHARMACY_PRESCRIPTIONS.TABLE_DISPENSED_BY' | translate }}</span>
+                  <div class="th-icons">
+                    <p-sortIcon field="dispensedBy"></p-sortIcon>
+                    <p-columnFilter type="text" field="dispensedBy" display="menu"></p-columnFilter>
+                  </div>
+                </div>
+              </th>
+
+              <!-- 12. وقت وتاريخ التسجيل -->
+              <th pSortableColumn="createdAt" pResizableColumn style="min-width: 160px;">
+                <div class="th-content">
+                  <span class="th-label">{{ 'PHARMACY_PRESCRIPTIONS.TABLE_TIME' | translate }}</span>
+                  <div class="th-icons">
+                    <p-sortIcon field="createdAt"></p-sortIcon>
+                    <p-columnFilter type="date" field="createdAt" display="menu"></p-columnFilter>
+                  </div>
+                </div>
+              </th>
+
+              <!-- 13. الإجراءات -->
+              <th style="min-width: 90px; text-align: center;">
+                <span class="th-label">{{ 'PHARMACY_PRESCRIPTIONS.TABLE_ACTIONS' | translate }}</span>
+              </th>
+            </tr>
+          </ng-template>
+      <ng-template pTemplate="body" let-order let-rowIndex="rowIndex">
+        <tr>
+          <!-- 0. الترقيم -->
+          <td style="text-align: center; font-weight: 700; color: #64748b;">
+            {{ rowIndex + 1 }}
+          </td>
+          <td>{{ order.rxNo }}</td>
+          <td>{{ order.patientName }}</td>
+          <td>{{ order.doctorName }}</td>
+          <td>{{ getPaymentTypeLabel(order.paymentType) }}</td>
+          <td>{{ order.insuranceName }}</td>
+          <td>
+            <p-tag [value]="getInsuranceStatusLabel(order.insuranceStatus)" [severity]="getInsuranceStatusSeverity(order.insuranceStatus)"></p-tag>
+          </td>
+          <td>{{ order.itemsCount }}</td>
+          <td>{{ order.financials.grandTotal | number:'1.2-2' }}</td>
+          <td>
+            <p-tag [value]="order.priority === 'urgent' ? ('PHARMACY_PRESCRIPTIONS.PRIORITY_URGENT' | translate) : ('PHARMACY_PRESCRIPTIONS.PRIORITY_NORMAL' | translate)" [severity]="getPrioritySeverity(order.priority)"></p-tag>
+          </td>
+          <td>
+            <p-tag [value]="getStatusLabel(order.status)" [severity]="getStatusSeverity(order.status)"></p-tag>
+          </td>
+          <td>{{ order.dispensedBy }}</td>
+          <td>{{ order.createdAt | customDate: 'yyyy/MM/dd - hh:mm a' }}</td>
+          <td class="actions-col" style="text-align: center;">
+            <button 
+              pButton 
+              type="button" 
+              icon="pi pi-ellipsis-v" 
+              class="p-button-text p-button-rounded p-button-secondary action-menu-trigger" 
+              [pTooltip]="'COMMON.ACTIONS' | translate"
+              tooltipPosition="top"
+              (click)="openActionsMenu($event, actionsMenu, order)">
+            </button>
+          </td>
+        </tr>
+      </ng-template>
+    </p-table>
+      </div>
+    </div>
+
+    <!-- Global Actions Dropdown Menu -->
+    <p-menu #actionsMenu [model]="actionMenuItems" [popup]="true" appendTo="body" styleClass="prescription-actions-menu"></p-menu>
+  </section>
+</div>
+
+<p-dialog [(visible)]="showDetailsDialog" [modal]="true" [draggable]="false" [resizable]="false" [style]="{width:'620px', maxWidth:'95vw'}" [header]="'PHARMACY_PRESCRIPTIONS.DETAILS_TITLE' | translate" appendTo="body">
+  <div *ngIf="selectedOrder() as order" class="details-grid">
+    <div><span>{{ 'PHARMACY_PRESCRIPTIONS.TABLE_RX_NO' | translate }}</span><strong>{{ order.rxNo }}</strong></div>
+    <div><span>{{ 'PHARMACY_PRESCRIPTIONS.TABLE_PATIENT' | translate }}</span><strong>{{ order.patientName }}</strong></div>
+    <div><span>{{ 'PHARMACY_PRESCRIPTIONS.TABLE_DOCTOR' | translate }}</span><strong>{{ order.doctorName }}</strong></div>
+    <div><span>{{ 'PHARMACY_PRESCRIPTIONS.TABLE_PAYMENT_TYPE' | translate }}</span><strong>{{ getPaymentTypeLabel(order.paymentType) }}</strong></div>
+    <div><span>{{ 'PHARMACY_PRESCRIPTIONS.TABLE_INSURANCE' | translate }}</span><strong>{{ order.insuranceName }}</strong></div>
+    <div><span>{{ 'PHARMACY_PRESCRIPTIONS.TABLE_INSURANCE_STATUS' | translate }}</span><strong>{{ getInsuranceStatusLabel(order.insuranceStatus) }}</strong></div>
+    <div><span>{{ 'PHARMACY_PRESCRIPTIONS.ITEMS_COUNT' | translate }}</span><strong>{{ order.itemsCount || order.items.length }}</strong></div>
+    <div><span>{{ 'PHARMACY_PRESCRIPTIONS.TABLE_STATUS' | translate }}</span><strong>{{ getStatusLabel(order.status) }}</strong></div>
+    <div><span>{{ 'PHARMACY_PRESCRIPTIONS.TABLE_AMOUNT' | translate }}</span><strong>{{ (order.financials?.grandTotal || 0) | number:'1.2-2' }} ريال</strong></div>
+    <div *ngIf="order.paymentType === 'insurance' && (order.financials?.insuranceCovered || 0) > 0">
+      <span>تغطية التأمين (المبلغ المغطى)</span>
+      <strong class="text-green-600">- {{ (order.financials?.insuranceCovered || 0) | number:'1.2-2' }} ريال</strong>
+    </div>
+    <div *ngIf="order.paymentType === 'insurance'">
+      <span>المطلوب دفعه من المريض</span>
+      <strong class="text-primary font-bold">{{ (order.financials?.patientPayable ?? order.financials?.grandTotal ?? 0) | number:'1.2-2' }} ريال</strong>
+    </div>
+    <div><span>أنشئت / صُرفت بواسطة</span><strong>{{ order.dispensedBy || 'المستخدم الحالي' }}</strong></div>
+    <div class="notes-box">
+      <span>{{ 'PHARMACY_PRESCRIPTIONS.MEDICATIONS' | translate }} ({{ order.items.length }})</span>
+      <div class="item-preview" *ngFor="let item of order.items">
+        <div class="flex justify-content-between align-items-center mb-1">
+          <strong>{{ item.itemName }}</strong>
+          <span class="badge font-bold">الكمية: {{ item.requestedQuantity }}</span>
+        </div>
+        <small class="block">{{ item.itemCode || '-' }} | السعر: {{ (item.unitPrice || 0) | number:'1.2-2' }} ريال | الإجمالي: {{ ((item.unitPrice || 0) * (item.requestedQuantity || 1)) | number:'1.2-2' }} ريال</small>
+        <small class="block text-muted" *ngIf="item.batchNo">التشغيلة: {{ item.batchNo }} | الصلاحية: {{ item.expiryDate || '-' }}</small>
+      </div>
+      <div *ngIf="!order.items.length" class="text-muted p-2">لا توجد أدوية مدرجة في هذه الوصفة</div>
+    </div>
+    <div class="notes-box" *ngIf="order.notes"><span>{{ 'PHARMACY_PRESCRIPTIONS.NOTES' | translate }}</span><p>{{ order.notes }}</p></div>
+  </div>
+</p-dialog>
+
+<p-dialog [(visible)]="showPrescriptionDialog" [modal]="true" [draggable]="false" [resizable]="false" [style]="{width:'980px', maxWidth:'96vw'}" [header]="(editingOrderId ? 'PHARMACY_PRESCRIPTIONS.TOOLTIP_EDIT' : 'PHARMACY_PRESCRIPTIONS.BTN_NEW_RX') | translate" appendTo="body">
+  <p-tabView styleClass="prescription-tabs">
+    <!-- Tab 1: Basic Info -->
+    <p-tabPanel [header]="'PHARMACY_PRESCRIPTIONS.TAB_BASIC_INFO' | translate">
+      <!-- Wasfaty Import Banner -->
+      <div *ngIf="isWasfatyImported" class="wasfaty-imported-banner">
+        <i class="pi pi-shield"></i>
+        <span>{{ 'PHARMACY_PRESCRIPTIONS.WASFATY_BANNER' | translate }}</span>
+      </div>
+      <div class="form-grid">
+        <div class="form-field">
+          <label>{{ 'PHARMACY_PRESCRIPTIONS.FIELD_RX_NO' | translate }} <small *ngIf="!editingOrderId" class="text-muted">{{ 'PHARMACY_PRESCRIPTIONS.FIELD_RX_NO_OPTIONAL' | translate }}</small></label>
+          <input pInputText [(ngModel)]="prescriptionDraft.rxNo" [readonly]="isWasfatyImported" [placeholder]="'PHARMACY_PRESCRIPTIONS.FIELD_RX_NO_PLACEHOLDER' | translate" />
+        </div>
+        <div class="form-field">
+          <label>{{ 'PHARMACY_PRESCRIPTIONS.FIELD_DATE' | translate }}</label>
+          <input pInputText type="date" [(ngModel)]="prescriptionDraft.issueDate" [readonly]="isWasfatyImported" />
+        </div>
+        <div class="form-field">
+          <label>{{ 'PHARMACY_PRESCRIPTIONS.FIELD_PATIENT_NAME' | translate }}</label>
+          <p-dropdown
+            *ngIf="!isWasfatyImported"
+            [options]="patientOptions"
+            optionLabel="label"
+            optionValue="value"
+            [(ngModel)]="prescriptionDraft.patientName"
+            [filter]="true"
+            filterBy="label,value"
+            filterPlaceholder="ابحث باسم المريض أو رقم الهوية..."
+            [showClear]="true"
+            (onChange)="onPatientSelect($event.value)"
+            placeholder="اختر المريض من السجل..."
+            styleClass="w-full"
+            appendTo="body">
+          </p-dropdown>
+          <input *ngIf="isWasfatyImported" pInputText [(ngModel)]="prescriptionDraft.patientName" [readonly]="true" />
+        </div>
+        <div class="form-field">
+          <label>{{ 'PHARMACY_PRESCRIPTIONS.FIELD_DOCTOR_NAME' | translate }}</label>
+          <input pInputText [(ngModel)]="prescriptionDraft.doctorName" [readonly]="isWasfatyImported" />
+        </div>
+        <div class="form-field">
+          <label>{{ 'PHARMACY_PRESCRIPTIONS.FIELD_PRIORITY' | translate }}</label>
+          <p-dropdown [options]="priorityOptions" optionLabel="label" optionValue="value" [(ngModel)]="prescriptionDraft.priority" appendTo="body"></p-dropdown>
+        </div>
+        <div class="form-field full-span">
+          <label>{{ 'PHARMACY_PRESCRIPTIONS.FIELD_NOTES' | translate }}</label>
+          <textarea pInputTextarea rows="3" [(ngModel)]="prescriptionDraft.notes"></textarea>
+        </div>
+      </div>
+    </p-tabPanel>
+
+    <!-- Tab 2: Medications -->
+    <p-tabPanel [header]="'PHARMACY_PRESCRIPTIONS.TAB_MEDICATIONS' | translate">
+      <div class="lookup-card embedded">
+        <div class="lookup-head">
+          <div>
+            <strong>{{ 'PHARMACY_PRESCRIPTIONS.ADD_ITEM_TITLE' | translate }}</strong>
+            <small>{{ 'PHARMACY_PRESCRIPTIONS.ADD_ITEM_SUBTITLE' | translate }}</small>
+          </div>
+          <p-dropdown
+            [options]="pharmacyStoreOptions"
+            optionLabel="label"
+            optionValue="value"
+            [(ngModel)]="selectedPharmacyStoreDetailsId"
+            (onChange)="onPharmacyStoreChange($event.value)"
+            appendTo="body"
+            [loading]="pharmacyStoresLoading"
+            [placeholder]="'PHARMACY_PRESCRIPTIONS.FIELD_STORE' | translate">
+          </p-dropdown>
+          <div class="filter-search-box lookup-search-box">
+            <i class="pi pi-search"></i>
+            <input 
+              pInputText 
+              type="text" 
+              [(ngModel)]="productSearchTerm" 
+              (ngModelChange)="onMedicationSearchInput()" 
+              [disabled]="!selectedPharmacyStoreDetailsId" 
+              class="search-input"
+              [placeholder]="!selectedPharmacyStoreDetailsId ? ('PHARMACY_PRESCRIPTIONS.STORE_SELECT_FIRST' | translate) : ('PHARMACY_PRESCRIPTIONS.FIELD_SEARCH_MED' | translate)" />
+            <button *ngIf="productSearchTerm" type="button" class="btn-clear" (click)="productSearchTerm = ''; onMedicationSearchInput()">
+              <i class="pi pi-times"></i>
+            </button>
+          </div>
+        </div>
+        <div *ngIf="!selectedPharmacyStoreDetailsId" class="catalog-empty p-3">
+          {{ 'PHARMACY_PRESCRIPTIONS.STORE_SELECT_FIRST_MSG' | translate }}
+        </div>
+        <div *ngIf="inventoryLookupLoading" class="catalog-loading p-3 text-center text-muted">
+          <i class="pi pi-spin pi-spinner mr-2"></i>
+          {{ 'PHARMACY_PRESCRIPTIONS.LOADING_INVENTORY' | translate }}
+        </div>
+        <ng-container *ngIf="selectedPharmacyStoreDetailsId && !inventoryLookupLoading">
+          <div *ngIf="!medicationLookupResults.length" class="catalog-empty p-3">
+            <p class="mb-2"><strong>{{ 'PHARMACY_PRESCRIPTIONS.NO_MEDS_FOUND' | translate }}</strong></p>
+            <ul class="mb-0 ps-3 text-muted small">
+              <li>{{ 'PHARMACY_PRESCRIPTIONS.NO_MEDS_HELP' | translate }}</li>
+            </ul>
+          </div>
+          <div class="flex gap-2 align-items-center mb-2" *ngIf="medicationLookupResults.length">
+            <span class="font-bold text-sm text-muted">نوع التسعير:</span>
+            <button type="button" pButton [label]="'قطاعي'" class="p-button-sm" [class.p-button-outlined]="pricingMode() !== 'retail'" (click)="switchPricingMode('retail')"></button>
+            <button type="button" pButton [label]="'جملة'" class="p-button-sm" [class.p-button-outlined]="pricingMode() !== 'wholesale'" (click)="switchPricingMode('wholesale')"></button>
+            <button type="button" pButton [label]="'جملة الجملة'" class="p-button-sm" [class.p-button-outlined]="pricingMode() !== 'bulk'" (click)="switchPricingMode('bulk')"></button>
+          </div>
+          <div class="lookup-table-wrap mini-table" *ngIf="medicationLookupResults.length">
+            <table class="lookup-table">
+              <thead>
+                <tr>
+                  <th>{{ 'PHARMACY_PRESCRIPTIONS.COL_MED' | translate }}</th>
+                  <th>{{ 'PHARMACY_PRESCRIPTIONS.COL_STORE' | translate }}</th>
+                  <th>رقم الباتش</th>
+                  <th>{{ 'PHARMACY_PRESCRIPTIONS.COL_AVAIL' | translate }}</th>
+                  <th>{{ 'PHARMACY_PRESCRIPTIONS.COL_PRICE' | translate }}</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let product of medicationLookupResults">
+                  <td>
+                    <div class="d-flex flex-column">
+                      <strong class="text-dark">{{ product.itemName }}</strong>
+                      <small class="text-muted" *ngIf="product.expiryDate || product.defaultExpiryDate">
+                        <i class="pi pi-calendar text-xs mr-1"></i> صلاحية: {{ product.expiryDate || product.defaultExpiryDate }}
+                      </small>
+                    </div>
+                  </td>
+                  <td>{{ product.storeName || '—' }}</td>
+                  <td>
+                    <span class="batch-pill-badge" *ngIf="product.batchNo || product.defaultBatchNo">
+                      <i class="pi pi-tag"></i> {{ product.batchNo || product.defaultBatchNo }}
+                    </span>
+                    <span *ngIf="!product.batchNo && !product.defaultBatchNo" class="text-muted">—</span>
+                  </td>
+                  <td>
+                    <span class="stock-badge" [class.low-stock]="product.availableQuantity <= 5">
+                      {{ product.availableQuantity }}
+                    </span>
+                  </td>
+                  <td>{{ getItemPrice(product) | number:'1.2-2' }}</td>
+                  <td><button pButton icon="pi pi-plus" class="p-button-text p-button-sm" (click)="selectLookupProduct(product)" title="إضافة للوصفة"></button></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </ng-container>
+      </div>
+
+      <div class="medication-entry-form" *ngIf="itemDraft.itemName">
+        <div class="form-grid compact">
+          <div class="form-field">
+            <label>{{ 'PHARMACY_PRESCRIPTIONS.FIELD_SELECTED_MED' | translate }}</label>
+            <input pInputText [value]="itemDraft.itemName" readonly class="highlight-input" />
+          </div>
+          <div class="form-field">
+            <label>{{ 'PHARMACY_PRESCRIPTIONS.FIELD_REQ_QTY' | translate }}</label>
+            <input pInputText type="number" [(ngModel)]="itemDraft.requestedQuantity" />
+          </div>
+          <div class="form-field">
+            <label>{{ 'PHARMACY_PRESCRIPTIONS.FIELD_BATCH_SELECT' | translate }}</label>
+            <p-dropdown
+              [options]="itemBatchOptions"
+              optionLabel="label"
+              optionValue="value"
+              [(ngModel)]="itemDraft.selectedBatchKey"
+              (onChange)="onBatchSelectionChange($event.value)"
+              appendTo="body"
+              [disabled]="!itemBatchOptions.length"
+              [placeholder]="'PHARMACY_PRESCRIPTIONS.FIELD_BATCH_PLACEHOLDER' | translate">
+            </p-dropdown>
+          </div>
+          <div class="form-field">
+            <label>{{ 'PHARMACY_PRESCRIPTIONS.FIELD_PRICE_DISPLAY' | translate }}</label>
+            <input pInputText [value]="itemDraft.unitPrice" readonly />
+          </div>
+          <div class="form-field">
+            <label>{{ 'PHARMACY_PRESCRIPTIONS.FIELD_BATCH_AVAIL' | translate }}</label>
+            <input pInputText [value]="itemDraft.availableQuantity" readonly />
+          </div>
+          <div class="form-field">
+            <label>{{ 'PHARMACY_PRESCRIPTIONS.FIELD_EXPIRY' | translate }}</label>
+            <input pInputText [value]="itemDraft.expiryDate || '-'" readonly />
+          </div>
+          <div class="form-field full-span">
+            <button pButton type="button" [label]="'PHARMACY_PRESCRIPTIONS.BTN_CONFIRM_LINE' | translate" icon="pi pi-check" (click)="addItemToDraft()"></button>
+          </div>
+        </div>
+      </div>
+
+      <div class="prescription-items-table mt-3">
+        <p-table [value]="prescriptionDraft.items" styleClass="p-datatable-sm" [tableStyle]="{'width': '100%', 'table-layout': 'fixed'}">
+          <ng-template pTemplate="header">
+            <tr>
+              <th style="width: 30%; text-align: right;" class="text-right">{{ 'PHARMACY_PRESCRIPTIONS.COL_MED' | translate }}</th>
+              <th style="width: 12%; text-align: center;" class="text-center">{{ 'PHARMACY_PRESCRIPTIONS.COL_REQ' | translate }}</th>
+              <th style="width: 18%; text-align: center;" class="text-center">{{ 'PHARMACY_PRESCRIPTIONS.COL_BATCH' | translate }}</th>
+              <th style="width: 14%; text-align: center;" class="text-center">{{ 'PHARMACY_PRESCRIPTIONS.COL_TOTAL' | translate }}</th>
+              <th style="width: 14%; text-align: center;" class="text-center">{{ 'PHARMACY_PRESCRIPTIONS.COL_STATUS' | translate }}</th>
+              <th style="width: 12%; text-align: center;" class="text-center">{{ 'COMMON.ACTIONS' | translate }}</th>
+            </tr>
+          </ng-template>
+          <ng-template pTemplate="body" let-item>
+            <tr>
+              <td style="width: 30%; text-align: right;" class="text-right">
+                <div class="font-bold text-dark" style="font-size: 0.95rem;">{{ item.itemName }}</div>
+                <small class="d-block text-muted">{{ resolveStoreName(item.storeName || item.storeId) }}</small>
+              </td>
+              <td style="width: 12%; text-align: center;" class="text-center font-bold">{{ item.requestedQuantity }}</td>
+              <td style="width: 18%; text-align: center;" class="text-center">
+                <span class="batch-badge">{{ item.batchNo || ('PHARMACY_PRESCRIPTIONS.BATCH_NONE' | translate) }}</span>
+                <small *ngIf="item.expiryDate" class="d-block text-muted mt-1">{{ item.expiryDate }}</small>
+              </td>
+              <td style="width: 14%; text-align: center;" class="text-center font-bold">{{ item.totalAmount | number:'1.2-2' }}</td>
+              <td style="width: 14%; text-align: center;" class="text-center"><p-tag [value]="getItemStatusLabel(item.status)" [severity]="getItemStatusSeverity(item.status)"></p-tag></td>
+              <td style="width: 12%; text-align: center;" class="text-center">
+                <div class="flex gap-1 justify-content-center">
+                  <button pButton icon="pi pi-sync" class="p-button-text p-button-sm" [pTooltip]="'PHARMACY_PRESCRIPTIONS.TOOLTIP_SUBSTITUTES' | translate" (click)="suggestSubstitute(item)"></button>
+                  <button pButton icon="pi pi-trash" class="p-button-text p-button-sm p-button-danger" [pTooltip]="'PHARMACY_PRESCRIPTIONS.TOOLTIP_DELETE' | translate" (click)="removeItemFromDraft(item.id)"></button>
+                </div>
+              </td>
+            </tr>
+          </ng-template>
+        </p-table>
+      </div>
+    </p-tabPanel>
+
+    <!-- Tab 3: Insurance -->
+    <p-tabPanel [header]="'PHARMACY_PRESCRIPTIONS.TAB_INSURANCE' | translate">
+      <div class="form-grid">
+        <div class="form-field">
+          <label>{{ 'PHARMACY_PRESCRIPTIONS.FIELD_PAYMENT_TYPE' | translate }}</label>
+          <p-dropdown [options]="paymentOptions" optionLabel="label" optionValue="value" [(ngModel)]="prescriptionDraft.paymentType" appendTo="body"></p-dropdown>
+        </div>
+        <ng-container *ngIf="prescriptionDraft.paymentType === 'insurance'">
+          <div class="form-field">
+            <label>{{ 'PHARMACY_PRESCRIPTIONS.FIELD_INSURANCE_CO' | translate }}</label>
+            <p-dropdown
+              [options]="insuranceCompanyOptions"
+              optionLabel="label"
+              optionValue="value"
+              [(ngModel)]="prescriptionDraft.insuranceCompanyId"
+              (onChange)="onInsuranceCompanyChange($event.value)"
+              appendTo="body"
+              [filter]="true"
+              [placeholder]="'PHARMACY_PRESCRIPTIONS.FIELD_INSURANCE_CO_PLACEHOLDER' | translate">
+            </p-dropdown>
+          </div>
+          <div class="form-field">
+            <label>{{ 'PHARMACY_PRESCRIPTIONS.FIELD_INSURANCE_CO_DISPLAY' | translate }}</label>
+            <input pInputText [(ngModel)]="prescriptionDraft.insuranceName" />
+          </div>
+          <div class="form-field">
+            <label>{{ 'PHARMACY_PRESCRIPTIONS.FIELD_MEMBER_NO' | translate }}</label>
+            <input pInputText [(ngModel)]="prescriptionDraft.insuranceMemberNo" />
+          </div>
+          <div class="form-field">
+            <label>{{ 'PHARMACY_PRESCRIPTIONS.FIELD_APPROVAL_NO' | translate }}</label>
+            <input pInputText [(ngModel)]="prescriptionDraft.insuranceApprovalNo" />
+          </div>
+          <div class="form-field">
+            <label>{{ 'PHARMACY_PRESCRIPTIONS.FIELD_COVERAGE' | translate }}</label>
+            <input pInputText type="number" [(ngModel)]="prescriptionDraft.insuranceCoverage" />
+          </div>
+          <div class="form-field full-span">
+            <button pButton type="button" [label]="'PHARMACY_PRESCRIPTIONS.BTN_VERIFY_INSURANCE' | translate" icon="pi pi-shield" class="p-button-outlined" (click)="verifyDraftInsurance()"></button>
+          </div>
+        </ng-container>
+      </div>
+
+      <div class="financial-summary-card mt-3">
+        <h3>{{ 'PHARMACY_PRESCRIPTIONS.COST_SUMMARY' | translate }}</h3>
+        <div class="summary-line"><span>{{ 'PHARMACY_PRESCRIPTIONS.COST_BEFORE_TAX' | translate }}</span> <strong>{{ totalRequestedAmount | number:'1.2-2' }}</strong></div>
+        <div class="summary-line"><span>{{ 'PHARMACY_PRESCRIPTIONS.TAX_AMOUNT' | translate }}</span> <strong>{{ taxAmount | number:'1.2-2' }}</strong></div>
+        <div class="summary-line highlight"><span>{{ 'PHARMACY_PRESCRIPTIONS.NET_VALUE' | translate }}</span> <strong>{{ grandTotal | number:'1.2-2' }}</strong></div>
+        <hr>
+        <div class="summary-line" *ngIf="prescriptionDraft.paymentType === 'insurance' && !isInsuranceApproved">
+          <small class="text-orange-600 font-bold"><i class="pi pi-info-circle mr-1"></i> التأمين قيد الموافقة (بدون رقم تفويض): يتحمل المريض كامل المبلغ حتى يتم إدخال رقم الموافقة.</small>
+        </div>
+        <div class="summary-line" *ngIf="prescriptionDraft.paymentType === 'insurance'"><span>{{ 'PHARMACY_PRESCRIPTIONS.INSURANCE_SHARE' | translate:{cov: (isInsuranceApproved ? prescriptionDraft.insuranceCoverage : 0)} }}</span> <strong [class.text-success]="isInsuranceApproved" [class.text-muted]="!isInsuranceApproved">{{ insuranceShare | number:'1.2-2' }}</strong></div>
+        <div class="summary-line"><span>{{ 'PHARMACY_PRESCRIPTIONS.PATIENT_SHARE' | translate }}</span> <strong class="text-primary">{{ patientShare | number:'1.2-2' }}</strong></div>
+      </div>
+    </p-tabPanel>
+
+    <!-- Tab 4: Attachments -->
+    <p-tabPanel [header]="'PHARMACY_PRESCRIPTIONS.TAB_ATTACHMENTS' | translate">
+      <div class="attachment-area text-center p-4">
+        <input #rxFileInput type="file" multiple accept="image/*,application/pdf" style="display: none;" (change)="onUpload($event); rxFileInput.value = ''">
+        <button
+          pButton
+          type="button"
+          icon="pi pi-upload"
+          [label]="'PHARMACY_PRESCRIPTIONS.UPLOAD_RX_IMAGE' | translate"
+          class="p-button-primary p-button-raised"
+          (click)="rxFileInput.click()">
+        </button>
+        
+        <div class="files-grid mt-4" *ngIf="prescriptionDraft.attachments?.length">
+          <div class="file-card" *ngFor="let file of prescriptionDraft.attachments">
+            <div class="file-thumb-wrap" (click)="viewAttachment(file)" style="cursor: pointer;">
+              <img *ngIf="file.previewUrl || file.url" [src]="file.previewUrl || file.url" class="file-thumb-img" alt="attachment" />
+              <i *ngIf="!file.previewUrl && !file.url" class="pi pi-file-image"></i>
+            </div>
+            <div class="file-info" (click)="viewAttachment(file)" style="cursor: pointer;">
+              <span [title]="file.fileName">{{ file.fileName }}</span>
+              <small>{{ file.fileSize }}</small>
+            </div>
+            <div class="flex gap-1">
+              <button pButton icon="pi pi-eye" class="p-button-text p-button-sm p-button-info" [pTooltip]="'معاينة الصورة'" (click)="viewAttachment(file)"></button>
+              <button pButton icon="pi pi-trash" class="p-button-text p-button-sm p-button-danger" [pTooltip]="'حذف'" (click)="removeAttachment(file.id)"></button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </p-tabPanel>
+
+  </p-tabView>
+  <ng-template pTemplate="footer">
+    <div class="dialog-actions">
+      <button pButton type="button" [label]="'PHARMACY_PRESCRIPTIONS.BTN_CANCEL' | translate" class="p-button-text" (click)="showPrescriptionDialog = false"></button>
+      <button pButton type="button" [label]="'PHARMACY_PRESCRIPTIONS.BTN_SAVE_RX' | translate" icon="pi pi-check" [loading]="savingPrescription" [disabled]="savingPrescription" (click)="savePrescription()"></button>
+    </div>
+  </ng-template>
+</p-dialog>
+
+<p-dialog [(visible)]="showItemsDialog" [modal]="true" [draggable]="false" [resizable]="false" [style]="{width:'900px', maxWidth:'96vw'}" [header]="'PHARMACY_PRESCRIPTIONS.DIALOG_MANAGE_ITEMS' | translate" appendTo="body">
+  <div *ngIf="selectedOrder() as order" class="items-dialog">
+    <div class="order-caption">
+      <strong>{{ order.rxNo }}</strong>
+      <span>{{ order.patientName }}</span>
+    </div>
+
+    <div class="lookup-card">
+      <div class="lookup-head">
+        <div>
+          <strong>{{ 'PHARMACY_PRESCRIPTIONS.ADD_ITEM_TITLE' | translate }}</strong>
+          <span>{{ 'PHARMACY_PRESCRIPTIONS.SEARCH_MEDS_HINT' | translate }}</span>
+        </div>
+        <span class="filter-input lookup-search">
+          <i class="pi pi-search"></i>
+          <input pInputText type="text" [(ngModel)]="productSearchTerm" (ngModelChange)="onMedicationSearchInput()" [placeholder]="'PHARMACY_PRESCRIPTIONS.SEARCH_MEDS_PLACEHOLDER' | translate" />
+        </span>
+      </div>
+
+      <div *ngIf="inventoryLookupLoading" class="catalog-loading p-3 text-center text-muted">
+        <i class="pi pi-spin pi-spinner mr-2"></i>
+        {{ 'PHARMACY_PRESCRIPTIONS.SEARCHING' | translate }}
+      </div>
+      <ng-container *ngIf="!inventoryLookupLoading">
+        <div *ngIf="!medicationLookupResults.length" class="catalog-empty p-3">
+          <p class="mb-2"><strong>{{ 'PHARMACY_PRESCRIPTIONS.NO_RESULTS' | translate }}</strong></p>
+          <p class="text-muted small mb-0">{{ 'PHARMACY_PRESCRIPTIONS.NO_RESULTS_HELP' | translate }}</p>
+        </div>
+        <div class="flex gap-2 align-items-center mb-2" *ngIf="medicationLookupResults.length">
+          <span class="font-bold text-sm text-muted">نوع التسعير:</span>
+          <button type="button" pButton [label]="'قطاعي'" class="p-button-sm" [class.p-button-outlined]="pricingMode() !== 'retail'" (click)="switchPricingMode('retail')"></button>
+          <button type="button" pButton [label]="'جملة'" class="p-button-sm" [class.p-button-outlined]="pricingMode() !== 'wholesale'" (click)="switchPricingMode('wholesale')"></button>
+          <button type="button" pButton [label]="'جملة الجملة'" class="p-button-sm" [class.p-button-outlined]="pricingMode() !== 'bulk'" (click)="switchPricingMode('bulk')"></button>
+        </div>
+        <div class="lookup-table-wrap" *ngIf="medicationLookupResults.length">
+          <table class="lookup-table">
+            <thead>
+              <tr>
+                <th>{{ 'PHARMACY_PRESCRIPTIONS.COL_CODE' | translate }}</th>
+                <th>{{ 'PHARMACY_PRESCRIPTIONS.COL_MED' | translate }}</th>
+                <th>{{ 'PHARMACY_PRESCRIPTIONS.COL_STORE' | translate }}</th>
+                <th>رقم الباتش</th>
+                <th>{{ 'PHARMACY_PRESCRIPTIONS.COL_AVAIL' | translate }}</th>
+                <th>{{ 'PHARMACY_PRESCRIPTIONS.COL_PRICE' | translate }}</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let product of medicationLookupResults">
+                <td>{{ product.itemCode }}</td>
+                <td>
+                  <div class="d-flex flex-column">
+                    <strong class="text-dark">{{ product.itemName }}</strong>
+                    <small class="text-muted" *ngIf="product.expiryDate || product.defaultExpiryDate">
+                      <i class="pi pi-calendar text-xs mr-1"></i> صلاحية: {{ product.expiryDate || product.defaultExpiryDate }}
+                    </small>
+                  </div>
+                </td>
+                <td>{{ product.storeName || '—' }}</td>
+                <td>
+                  <span class="batch-pill-badge" *ngIf="product.batchNo || product.defaultBatchNo">
+                    <i class="pi pi-tag"></i> {{ product.batchNo || product.defaultBatchNo }}
+                  </span>
+                  <span *ngIf="!product.batchNo && !product.defaultBatchNo" class="text-muted">—</span>
+                </td>
+                <td>
+                  <span class="stock-badge" [class.low-stock]="product.availableQuantity <= 5">
+                    {{ product.availableQuantity }}
+                  </span>
+                </td>
+                <td>{{ getItemPrice(product) | number:'1.0-2' }}</td>
+                <td>
+                  <button pButton type="button" [label]="'PHARMACY_PRESCRIPTIONS.SELECT_BTN' | translate" class="p-button-sm" (click)="selectLookupProduct(product)"></button>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </ng-container>
+    </div>
+
+    <div class="interaction-alerts" *ngIf="currentInteractionAlerts.length">
+      <div class="interaction-alert" *ngFor="let alert of currentInteractionAlerts" [class.high]="alert.severity === 'high'">
+        <strong>{{ alert.severity === 'high' ? ('PHARMACY_PRESCRIPTIONS.ALERT_IMPORTANT' | translate) : ('PHARMACY_PRESCRIPTIONS.ALERT_NORMAL' | translate) }}</strong>
+        <span>{{ alert.message }}</span>
+      </div>
+    </div>
+
+    <div class="form-grid compact">
+      <div class="form-field">
+        <label>{{ 'PHARMACY_PRESCRIPTIONS.FIELD_ITEM_CODE' | translate }}</label>
+        <input pInputText [(ngModel)]="itemDraft.itemCode" readonly />
+      </div>
+      <div class="form-field">
+        <label>{{ 'PHARMACY_PRESCRIPTIONS.FIELD_ITEM_NAME' | translate }}</label>
+        <input pInputText [(ngModel)]="itemDraft.itemName" readonly />
+      </div>
+      <div class="form-field">
+        <label>{{ 'PHARMACY_PRESCRIPTIONS.FIELD_REQ_QTY' | translate }}</label>
+        <input pInputText type="number" [(ngModel)]="itemDraft.requestedQuantity" />
+      </div>
+      <div class="form-field">
+        <label>{{ 'PHARMACY_PRESCRIPTIONS.COL_STORE' | translate }}</label>
+        <input pInputText [(ngModel)]="itemDraft.storeName" readonly />
+      </div>
+      <div class="form-field">
+        <label>{{ 'PHARMACY_PRESCRIPTIONS.COL_BATCH' | translate }}</label>
+        <p-dropdown
+          [options]="itemBatchOptions"
+          optionLabel="label"
+          optionValue="value"
+          [(ngModel)]="itemDraft.selectedBatchKey"
+          (onChange)="onBatchSelectionChange($event.value)"
+          appendTo="body"
+          [disabled]="!itemBatchOptions.length"
+          [placeholder]="'PHARMACY_PRESCRIPTIONS.FIELD_BATCH_PLACEHOLDER' | translate">
+        </p-dropdown>
+      </div>
+      <div class="form-field">
+        <label>{{ 'PHARMACY_PRESCRIPTIONS.FIELD_BATCH_AVAIL' | translate }}</label>
+        <input pInputText type="number" [(ngModel)]="itemDraft.availableQuantity" readonly />
+      </div>
+      <div class="form-field">
+        <label>{{ 'PHARMACY_PRESCRIPTIONS.FIELD_EXPIRY' | translate }}</label>
+        <input pInputText [value]="itemDraft.expiryDate || '-'" readonly />
+      </div>
+      <div class="form-field">
+        <label>{{ 'PHARMACY_PRESCRIPTIONS.COL_PRICE' | translate }}</label>
+        <input pInputText type="number" [(ngModel)]="itemDraft.unitPrice" />
+      </div>
+      <div class="form-field full-span">
+        <label>{{ 'PHARMACY_PRESCRIPTIONS.FIELD_INSTRUCTIONS' | translate }}</label>
+        <textarea pInputTextarea rows="2" [(ngModel)]="itemDraft.instructions"></textarea>
+      </div>
+      <div class="form-check full-span">
+        <input id="allowAlternative" type="checkbox" [(ngModel)]="itemDraft.allowAlternative" />
+        <label for="allowAlternative">{{ 'PHARMACY_PRESCRIPTIONS.FIELD_ALLOW_ALT' | translate }}</label>
+      </div>
+    </div>
+
+    <div class="dialog-actions border-top">
+      <button pButton type="button" [label]="'PHARMACY_PRESCRIPTIONS.BTN_ADD_ITEM' | translate" icon="pi pi-plus" (click)="addItemToOrder()"></button>
+    </div>
+
+    <div class="mt-4" *ngIf="selectedOrder()?.items?.length; else noItemsYetExisting">
+      <h4 class="font-bold mb-2 text-sm text-secondary">الأدوية المضافة بالوصفة:</h4>
+      <div class="lookup-table-wrap">
+        <table class="lookup-table">
+          <thead>
+            <tr>
+              <th>كود الصنف</th>
+              <th>اسم الدواء</th>
+              <th>المستودع</th>
+              <th>التشغيلة</th>
+              <th>تاريخ الصلاحية</th>
+              <th>الكمية المطلوبة</th>
+              <th>السعر</th>
+              <th>الإجمالي</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let item of selectedOrder()?.items">
+              <td><code>{{ item.itemCode || '—' }}</code></td>
+              <td><strong>{{ item.itemName }}</strong></td>
+              <td>{{ item.storeName || '—' }}</td>
+              <td><span class="p-tag p-tag-info">{{ item.batchNo || '—' }}</span></td>
+              <td>{{ (item.expiryDate | slice:0:10) || '—' }}</td>
+              <td><span class="p-tag p-tag-success">{{ item.requestedQuantity }}</span></td>
+              <td>{{ (item.unitPrice || 0) | number:'1.2-2' }}</td>
+              <td><strong>{{ ((item.unitPrice || 0) * (item.requestedQuantity || 1)) | number:'1.2-2' }}</strong></td>
+              <td>
+                <button pButton type="button" icon="pi pi-trash" class="p-button-text p-button-danger p-button-sm" (click)="removeItemFromOrder(order, item.id)"></button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <ng-template #noItemsYetExisting>
+      <div class="empty-box">{{ 'PHARMACY_PRESCRIPTIONS.NO_ITEMS_YET' | translate }}</div>
+    </ng-template>
+  </div>
+</p-dialog>
+
+<p-dialog [(visible)]="showDispenseDialog" [modal]="true" [draggable]="false" [resizable]="false" [style]="{width:'620px', maxWidth:'96vw'}" [header]="'PHARMACY_PRESCRIPTIONS.DIALOG_DISPENSE' | translate" appendTo="body">
+  <div class="form-grid compact">
+    <div class="form-field">
+      <label>{{ 'PHARMACY_PRESCRIPTIONS.FIELD_DISPENSE_PAY' | translate }}</label>
+      <p-dropdown [options]="paymentOptions" optionLabel="label" optionValue="value" [(ngModel)]="dispenseDraft.paymentMethod" (onChange)="onDispensePaymentMethodChange()" appendTo="body"></p-dropdown>
+    </div>
+    <div class="form-field full-span">
+      <label>{{ 'PHARMACY_PRESCRIPTIONS.FIELD_DISPENSE_AMOUNT' | translate }}</label>
+      <input pInputText type="number" step="0.01" [(ngModel)]="dispenseDraft.amount" />
+    </div>
+    <div class="form-field full-span">
+      <label>{{ 'PHARMACY_PRESCRIPTIONS.FIELD_ALLOCATION_MODE' | translate }}</label>
+      <input pInputText [value]="getAllocationModeLabel(allocationPreview?.mode)" readonly />
+    </div>
+  </div>
+
+  <div class="allocation-loading text-center p-3" *ngIf="allocationPreviewLoading" style="text-align: center; padding: 1.5rem;">
+    <i class="pi pi-spin pi-spinner" style="font-size: 2rem; color: #1174cf; display: block; margin-bottom: 0.5rem;"></i>
+    <span style="font-weight: 700; color: #475569; font-size: 0.88rem;">جاري فحص المخزون والتشغيلات وتجهيز بيانات الصرف...</span>
+  </div>
+
+  <div class="allocation-preview-card" *ngIf="!allocationPreviewLoading && allocationPreview as preview">
+    <div class="allocation-summary-grid">
+      <div><span>{{ 'PHARMACY_PRESCRIPTIONS.ALLOC_SUMMARY_LINES' | translate }}</span><strong>{{ preview.summary.totalLines }}</strong></div>
+      <div><span>{{ 'PHARMACY_PRESCRIPTIONS.ALLOC_SUMMARY_QTY' | translate }}</span><strong>{{ preview.summary.totalDispensedQuantity }}</strong></div>
+      <div><span>{{ 'PHARMACY_PRESCRIPTIONS.COL_STORE' | translate }}</span><strong>{{ preview.summary.distinctStores }}</strong></div>
+      <div><span>{{ 'PHARMACY_PRESCRIPTIONS.ALLOC_SUMMARY_BATCHES' | translate }}</span><strong>{{ preview.summary.distinctBatches }}</strong></div>
+    </div>
+
+    <div class="allocation-errors" *ngIf="preview.errors.length">
+      <strong>{{ 'PHARMACY_PRESCRIPTIONS.ALLOC_PREVENT' | translate }}</strong>
+      <ul>
+        <li *ngFor="let error of preview.errors">{{ error }}</li>
+      </ul>
+    </div>
+
+    <div class="allocation-lines">
+      <div class="allocation-line" *ngFor="let line of preview.state.lines">
+        <div>
+          <strong>{{ line.itemName }}</strong>
+          <small>{{ line.storeName || '-' }} | {{ 'PHARMACY_PRESCRIPTIONS.COL_BATCH' | translate }} {{ line.batchNo || 'N/A' }} | {{ 'PHARMACY_PRESCRIPTIONS.FIELD_EXPIRY' | translate }} {{ line.expiryDate || '-' }}</small>
+          <small>{{ 'PHARMACY_PRESCRIPTIONS.COL_REQ' | translate }} {{ line.requestedQuantity }} | {{ 'PHARMACY_PRESCRIPTIONS.COL_AVAIL' | translate }} {{ line.availableQuantity }}</small>
+        </div>
+        <p-tag [value]="getAllocationLineStatusLabel(line.status)" [severity]="getAllocationLineStatusSeverity(line.status)"></p-tag>
+      </div>
+    </div>
+  </div>
+  <ng-template pTemplate="footer">
+    <div class="dialog-actions">
+      <button pButton type="button" [label]="'PHARMACY_PRESCRIPTIONS.BTN_CANCEL' | translate" class="p-button-text" (click)="showDispenseDialog = false"></button>
+      <button pButton type="button" [label]="'PHARMACY_PRESCRIPTIONS.BTN_DIRECT' | translate" icon="pi pi-check" [disabled]="allocationPreviewLoading || !allocationPreview?.canProceed" (click)="confirmDispense()"></button>
+    </div>
+  </ng-template>
+</p-dialog>
+
+<p-dialog [(visible)]="showInsuranceDialog" [modal]="true" [draggable]="false" [resizable]="false" [style]="{width:'620px', maxWidth:'96vw'}" [header]="'PHARMACY_PRESCRIPTIONS.DIALOG_INSURANCE' | translate" appendTo="body">
+  <div class="form-grid compact">
+    <div class="form-field">
+      <label>{{ 'PHARMACY_PRESCRIPTIONS.FIELD_INSURANCE_CO_NAME' | translate }}</label>
+      <input pInputText [(ngModel)]="insuranceDraft.insuranceName" />
+    </div>
+    <div class="form-field">
+      <label>{{ 'PHARMACY_PRESCRIPTIONS.FIELD_MEMBER_NO' | translate }}</label>
+      <input pInputText [(ngModel)]="insuranceDraft.memberNo" />
+    </div>
+    <div class="form-field">
+      <label>{{ 'PHARMACY_PRESCRIPTIONS.FIELD_APPROVAL_NO' | translate }}</label>
+      <input pInputText [(ngModel)]="insuranceDraft.approvalNo" />
+    </div>
+    <div class="form-field">
+      <label>{{ 'PHARMACY_PRESCRIPTIONS.FIELD_INSURANCE_COVERED_AMT' | translate }}</label>
+      <input pInputText type="number" [(ngModel)]="insuranceDraft.coveredAmount" />
+    </div>
+    <div class="form-field">
+      <label>{{ 'PHARMACY_PRESCRIPTIONS.FIELD_INSURANCE_PATIENT_SHARE' | translate }}</label>
+      <input pInputText type="number" [(ngModel)]="insuranceDraft.patientShare" />
+    </div>
+  </div>
+  <ng-template pTemplate="footer">
+    <div class="dialog-actions">
+      <button pButton type="button" [label]="'PHARMACY_PRESCRIPTIONS.BTN_CANCEL' | translate" class="p-button-text" (click)="showInsuranceDialog = false"></button>
+      <button pButton type="button" [label]="'PHARMACY_PRESCRIPTIONS.BTN_SAVE_INSURANCE' | translate" icon="pi pi-check" (click)="saveInsurance()"></button>
+    </div>
+  </ng-template>
+</p-dialog>
+
+<p-dialog [(visible)]="showCancelDialog" [modal]="true" [draggable]="false" [resizable]="false" [style]="{width:'560px', maxWidth:'96vw'}" [header]="'PHARMACY_PRESCRIPTIONS.DIALOG_CANCEL' | translate" appendTo="body">
+  <div class="form-grid compact">
+    <div class="form-field full-span">
+      <label>{{ 'PHARMACY_PRESCRIPTIONS.FIELD_CANCEL_REASON' | translate }}</label>
+      <textarea pInputTextarea rows="4" [(ngModel)]="cancelReason"></textarea>
+    </div>
+  </div>
+  <ng-template pTemplate="footer">
+    <div class="dialog-actions">
+      <button pButton type="button" [label]="'PHARMACY_PRESCRIPTIONS.BTN_BACK' | translate" class="p-button-text" (click)="showCancelDialog = false"></button>
+      <button pButton type="button" [label]="'PHARMACY_PRESCRIPTIONS.BTN_CONFIRM_CANCEL' | translate" icon="pi pi-times" class="p-button-danger" (click)="confirmCancelPrescription()"></button>
+    </div>
+  </ng-template>
+</p-dialog>
+
+<!-- ✅ Wasfaty Import Dialog — Saudi Market MVP -->
+<p-dialog
+  [(visible)]="showWasfatyDialog"
+  [modal]="true"
+  [draggable]="false"
+  [resizable]="false"
+  [style]="{width:'480px', maxWidth:'95vw'}"
+  [header]="'PHARMACY_PRESCRIPTIONS.DIALOG_WASFATY' | translate"
+  appendTo="body">
+  <div class="wasfaty-dialog-body">
+    <div class="wasfaty-logo-row">
+      <i class="pi pi-shield wasfaty-icon"></i>
+      <div>
+        <strong>{{ 'PHARMACY_PRESCRIPTIONS.WASFATY_MOHE_DESC' | translate }}</strong>
+        <small>{{ 'PHARMACY_PRESCRIPTIONS.WASFATY_MOHE_HINT' | translate }}</small>
+      </div>
+    </div>
+    <div class="form-grid compact">
+      <div class="form-field full-span">
+        <label>{{ 'PHARMACY_PRESCRIPTIONS.FIELD_NATIONAL_ID' | translate }}</label>
+        <input pInputText [(ngModel)]="wasfatyLookup.nationalId" placeholder="10 أرقام" />
+      </div>
+      <div class="form-field full-span">
+        <label>{{ 'PHARMACY_PRESCRIPTIONS.FIELD_WASFATY_RX' | translate }}</label>
+        <input pInputText [(ngModel)]="wasfatyLookup.rxNumber" placeholder="مثال: WAS-2026-XXXXX" />
+      </div>
+    </div>
+  </div>
+  <ng-template pTemplate="footer">
+    <div class="dialog-actions">
+      <button pButton type="button" [label]="'PHARMACY_PRESCRIPTIONS.BTN_CANCEL' | translate" class="p-button-text" (click)="showWasfatyDialog = false"></button>
+      <button pButton type="button" [label]="'PHARMACY_PRESCRIPTIONS.BTN_FETCH_RX' | translate" icon="pi pi-cloud-download" class="p-button-info" (click)="importFromWasfaty()"></button>
+    </div>
+  </ng-template>
+</p-dialog>
+
+<!-- ✅ Custom Controlled Warning Dialog Modal -->
+<p-dialog
+  [(visible)]="showControlledWarningDialog"
+  [modal]="true"
+  [draggable]="false"
+  [resizable]="false"
+  [style]="{width:'480px', maxWidth:'95vw'}"
+  [header]="'تنبيه: أدوية مقيدة! / Warning: Controlled Drugs!'"
+  appendTo="body">
+  <div class="p-4 text-center" style="text-align: center; padding: 1.5rem;">
+    <i class="pi pi-exclamation-triangle block mb-3" style="font-size: 3.5rem; color: #f59e0b; display: block; margin-bottom: 1rem;"></i>
+    <p class="font-bold mb-2" style="font-size: 1.25rem; font-weight: bold; margin-bottom: 0.5rem; color: #1f2937;">تحتوي هذه الوصفة على أدوية مقيدة!</p>
+    <p class="text-muted mb-4" style="color: #6b7280; font-size: 0.95rem; margin-bottom: 1.5rem; line-height: 1.4;">Warning: This prescription contains controlled drugs! Do you want to proceed and save?</p>
+  </div>
+  <ng-template pTemplate="footer">
+    <div class="dialog-actions" style="display: flex; justify-content: flex-end; gap: 0.5rem; border-top: 1px solid #e5e7eb; padding-top: 1rem;">
+      <button pButton type="button" [label]="'إلغاء / Cancel'" class="p-button-text p-button-secondary" (click)="showControlledWarningDialog = false"></button>
+      <button pButton type="button" [label]="'تأكيد وحفظ / Confirm & Save'" icon="pi pi-check" class="p-button-warning" (click)="savePrescription(true)"></button>
+    </div>
+  </ng-template>
+</p-dialog>
+
+<!-- ✅ Image Preview Dialog Modal -->
+<p-dialog
+  [(visible)]="showImagePreviewDialog"
+  [modal]="true"
+  [header]="previewImageTitle"
+  [style]="{ width: '60vw', maxWidth: '800px' }"
+  [draggable]="false"
+  [resizable]="false"
+  appendTo="body">
+  <div class="text-center p-3" style="text-align: center;">
+    <img [src]="previewImageSrc" style="max-width: 100%; max-height: 70vh; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.15); object-fit: contain;" alt="معاينة الصورة" />
+  </div>
+  <ng-template pTemplate="footer">
+    <div style="display: flex; justify-content: flex-end;">
+      <button pButton icon="pi pi-times" label="إغلاق" class="p-button-text" (click)="showImagePreviewDialog = false"></button>
+    </div>
+  </ng-template>
+</p-dialog>
+

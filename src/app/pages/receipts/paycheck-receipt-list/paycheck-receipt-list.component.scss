@@ -1,0 +1,254 @@
+.p-column-resizer {
+  border-left: 3.5px solid #d9d9d9 !important;
+  opacity: 0.5 !important;
+}
+
+:dir(rtl) .p-column-resizer {
+  border-left: 3.5px solid #d9d9d9 !important;
+  opacity: 0.5 !important;
+  right : unset !important; left : 0 !important;
+}
+
+:host {
+  --table-head-bg: #46bbeb;
+  --table-header-text: #ffffff;
+  --btn-bg: #46bbeb;
+  --btn-text: #ffffff;
+  --btn-border: #46bbeb;
+  --btn-hover-bg: #2f8fcc;
+  --btn-hover-text: #ffffff;
+}
+
+/* Theme-aware table header colors */
+::ng-deep .p-datatable .p-datatable-thead > tr > th {
+  background: var(--table-head-bg) !important;
+  color: var(--table-header-text) !important;
+}
+
+/* Theme overrides (consistent across receipts) */
+$green-sels: ".light-green-mode", '[data-bs-theme="light-green"]', "body.light-green";
+@each $sel in $green-sels {
+  :host-context(#{$sel}) {
+    --table-head-bg: #c6ecea;
+    --table-header-text: #2e2a40;
+    --btn-bg: #018897;
+    --btn-text: #ffffff;
+    --btn-border: #018897;
+    --btn-hover-bg: #026f7c;
+    --btn-hover-text: #ffffff;
+  }
+}
+
+$indigo-sels: ".light-indigo-mode", '[data-bs-theme="light-indigo"]', "body.light-indigo";
+@each $sel in $indigo-sels {
+  :host-context(#{$sel}) {
+    --table-head-bg: #c9d0f5;
+    --table-header-text: #5d6679;
+    --btn-bg: #3e4981;
+    --btn-text: #ffffff;
+    --btn-border: #3e4981;
+    --btn-hover-bg: #323b68;
+    --btn-hover-text: #ffffff;
+  }
+}
+
+$darkblue-sels: ".light-darkblue-mode", '[data-bs-theme="light-darkblue"]', "body.light-darkblue";
+@each $sel in $darkblue-sels {
+  :host-context(#{$sel}) {
+    --table-head-bg: #dad7ff;
+    --table-header-text: #191d29;
+    --btn-bg: #191d29;
+    --btn-text: #ffffff;
+    --btn-border: #191d29;
+    --btn-hover-bg: #0f1421;
+    --btn-hover-text: #ffffff;
+  }
+}
+
+/* Theme-aware buttons (filled + outlined) */
+::ng-deep .p-button.p-button-primary,
+::ng-deep .p-button.p-button-secondary,
+::ng-deep .p-button:not(.p-button-outlined):not(.p-button-text):not(.p-button-danger):not(.p-button-help) {
+  background: var(--btn-bg) !important;
+  border-color: var(--btn-border) !important;
+  color: var(--btn-text) !important;
+}
+
+::ng-deep .p-button.p-button-outlined {
+  background: transparent !important;
+  border-color: var(--btn-border) !important;
+  color: var(--btn-border) !important;
+}
+
+::ng-deep .p-button.p-button-outlined:hover {
+  background: rgba(0, 0, 0, 0.05) !important;
+  color: var(--btn-hover-text) !important;
+  border-color: var(--btn-border) !important;
+}
+
+::ng-deep .p-button.p-button-primary:hover,
+::ng-deep .p-button.p-button-secondary:hover,
+::ng-deep .p-button:not(.p-button-outlined):not(.p-button-text):not(.p-button-danger):not(.p-button-help):hover {
+  background: var(--btn-hover-bg) !important;
+  border-color: var(--btn-border) !important;
+  color: var(--btn-hover-text) !important;
+}
+
+/* Keep gear action button neutral (no themed border/background) */
+::ng-deep .gear-button .p-button {
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  color: inherit !important;
+}
+::ng-deep .gear-button .p-button:hover,
+::ng-deep .gear-button .p-button:focus {
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  color: inherit !important;
+}
+
+/* =========================
+   New centered pagination (Total + pages + page/rows) all centered
+   ========================= */
+::ng-deep .custom-paginator-table .p-paginator {
+  direction: rtl;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: .5rem;
+  padding: .5rem .75rem;
+  border-top: 1px solid #e5e7eb;
+  background: #fff;
+  flex-wrap: wrap;
+}
+
+/* "Total" */
+::ng-deep .custom-paginator-table .p-paginator .p-paginator-current {
+  color: #111827;
+  font-weight: 600;
+  white-space: nowrap;
+  margin: 0;
+}
+
+/* Pages */
+::ng-deep .custom-paginator-table .p-paginator .p-paginator-pages {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: .25rem;
+  direction: ltr;
+  margin: 0;
+}
+
+/* Page button */
+::ng-deep .custom-paginator-table .p-paginator .p-paginator-page {
+  min-width: 34px;
+  height: 34px;
+  border-radius: 8px;
+  border: 1px solid transparent;
+  color: #374151;
+}
+
+/* Hover */
+::ng-deep .custom-paginator-table .p-paginator .p-paginator-page:not(.p-highlight):hover {
+  background: #f3f4f6;
+  border-color: #e5e7eb;
+}
+
+/* Active */
+::ng-deep .custom-paginator-table .p-paginator .p-paginator-page.p-highlight {
+  background: #eaf2ff;
+  border-color: #93c5fd;
+  color: #1d4ed8;
+  font-weight: 600;
+}
+
+/* Prev/Next */
+::ng-deep .custom-paginator-table .p-paginator .p-paginator-prev,
+::ng-deep .custom-paginator-table .p-paginator .p-paginator-next {
+  width: 34px;
+  height: 34px;
+  border-radius: 8px;
+}
+
+::ng-deep .custom-paginator-table .p-paginator .p-paginator-prev:hover,
+::ng-deep .custom-paginator-table .p-paginator .p-paginator-next:hover {
+  background: #f3f4f6;
+}
+
+/* Rows per page (page/ + dropdown) */
+::ng-deep .custom-paginator-table .p-paginator .p-paginator-rpp-options {
+  display: inline-flex;
+  align-items: center;
+  gap: .35rem;
+  margin: 0;
+}
+
+/* page/ label */
+::ng-deep .custom-paginator-table .p-paginator .p-paginator-rpp-options::before {
+  content: "page /";
+  color: #6b7280;
+  font-size: 14px;
+  white-space: nowrap;
+}
+
+/* Dropdown size */
+::ng-deep .custom-paginator-table .p-paginator .p-dropdown {
+  min-width: 80px;
+}
+
+/* Ellipsis */
+::ng-deep .custom-paginator-table .p-paginator .p-paginator-ellipsis {
+  color: #6b7280;
+  padding: 0 .25rem;
+}
+
+@media (max-width: 576px) {
+  ::ng-deep .p-paginator {
+    flex-direction: row !important;
+    flex-wrap: wrap !important;
+    gap: 0.5rem !important;
+    padding: 0.5rem !important;
+    font-size: 0.75rem !important;
+    justify-content: center !important;
+
+    .p-paginator-left-content,
+    .p-paginator-right-content {
+      width: auto !important;
+      justify-content: center !important;
+      font-size: 0.75rem !important;
+    }
+
+    .p-paginator-pages {
+      display: flex !important;
+      flex-wrap: wrap !important;
+      justify-content: center !important;
+      gap: 0.25rem !important;
+    }
+
+    .p-paginator-page,
+    .p-paginator-prev,
+    .p-paginator-next,
+    .p-paginator-first,
+    .p-paginator-last {
+      min-width: 2rem !important;
+      height: 2rem !important;
+      font-size: 0.75rem !important;
+    }
+
+    .p-dropdown {
+      font-size: 0.75rem !important;
+
+      .p-inputtext {
+        padding: 0.25rem 0.5rem !important;
+        font-size: 0.75rem !important;
+      }
+    }
+
+    .p-paginator-rpp-options {
+      font-size: 0.75rem !important;
+    }
+  }
+}

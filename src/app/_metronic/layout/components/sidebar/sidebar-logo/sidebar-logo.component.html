@@ -1,0 +1,51 @@
+<ng-container *ngIf="toggleEnabled">
+  <!--begin::Sidebar toggle-->
+  <div
+    [attr.data-kt-toggle-name]="toggleAttr"
+    [attr.data-kt-toggle-state]="toggleState"
+    [ngClass]="[toggleButtonClass, activeLanguage === 'ar' ? 'start-0' : 'start-100']"
+    class="app-sidebar-toggle btn btn-icon btn-shadow btn-sm btn-color-muted btn-active-color-primary body-bg h-30px w-30px position-absolute top-50 translate-middle rotate"
+    data-kt-toggle="true"
+    data-kt-toggle-target="body"
+    id="kt_app_sidebar_toggle"
+  >
+    <app-keenicon
+      [name]="activeLanguage === 'ar' ? 'double-left' : 'double-right'"
+      class="fs-2 rotate-180"
+    ></app-keenicon>
+  </div>
+  <!--end::Sidebar toggle-->
+</ng-container>
+<!--begin::Logo image-->
+<a routerLink="/dashboard">
+  <ng-container *ngIf="currentLayoutType === 'dark-sidebar'">
+    <img
+      alt="Logo"
+      class="app-sidebar-logo-default"
+      src="./assets/default-logo-light.webp"
+      style="width: 120px; height: 120px"
+    />
+  </ng-container>
+  <ng-container *ngIf="currentLayoutType !== 'dark-sidebar'">
+    <img
+      alt="Logo"
+      class="app-sidebar-logo-default theme-light-show"
+      src="./assets/default-logo-light.webp"
+      style="width: 120px; height: 120px"
+    />
+    <img
+      alt="Logo"
+      class="app-sidebar-logo-default theme-dark-show"
+      style="width: 120px; height: 120px"
+      src="./assets/default-logo-light.webp"
+    />
+  </ng-container>
+
+  <img
+    alt="Logo"
+    class="app-sidebar-logo-minimize"
+    style="width: 45px; height: 45px"
+    src="./assets/default-logo-light.webp"
+  />
+</a>
+<!--end::Logo image-->

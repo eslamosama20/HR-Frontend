@@ -1,0 +1,1237 @@
+<div class="reservation-page" #reservationPage>
+
+  <!-- ✅ Header Action Bar (New Reservation Mode) -->
+  <div class="header-actions-bar" *ngIf="!reservationId">
+    <div class="header-title-section">
+      <h1>
+        <span>{{ "RESERVATION.NEW_RESERVATION" | translate }}</span>
+        <div class="search-input-group ms-2" style="display: inline-flex; align-items: center; gap: 4px; vertical-align: middle;">
+          <input 
+            #searchBoxNew
+            type="text" 
+            [value]="reservationForm.get('referenceNumber')?.value" 
+            (keydown.enter)="onReferenceNumberSearch(searchBoxNew.value)" 
+            class="input-like text-center text-lg" 
+            style="width: 150px; font-weight: bold; height: 30px !important; margin: 0 !important;"
+            placeholder="RES-00000"
+          />
+          <button 
+            type="button" 
+            class="btn-search-icon" 
+            (click)="onReferenceNumberSearch(searchBoxNew.value)"
+            style="background: #3b82f6; color: white; border: none; border-radius: 6px; width: 30px; height: 30px; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.2s;"
+            onmouseover="this.style.background='#2563eb'"
+            onmouseout="this.style.background='#3b82f6'"
+          >
+            <i class="pi pi-search"></i>
+          </button>
+        </div>
+      </h1>
+      <span class="badge-status badge-pending">
+        <i class="pi pi-clock"></i>
+        <span>{{ activeLanguage === 'ar' ? 'حجز جديد' : 'New Reservation' }}</span>
+      </span>
+    </div>
+
+    <!-- Far-left End Actions -->
+    <div class="header-end-group">
+      <!-- Submit -->
+      <button
+        type="button"
+        (click)="onSubmit()"
+        class="btn-primary-action"
+        [disabled]="loading"
+      >
+        <i class="pi pi-spin pi-spinner" *ngIf="loading"></i>
+        <i class="pi pi-save" *ngIf="!loading"></i>
+        <span>{{ "DATA.SUBMIT_LABEL" | translate }}</span>
+      </button>
+
+      <!-- Cancel -->
+      <button
+        type="button"
+        (click)="onCancel()"
+        class="btn-danger-action"
+      >
+        <i class="pi pi-times"></i>
+        <span>{{ "DATA.CANCEL" | translate }}</span>
+      </button>
+
+      <div class="toolbar-divider"></div>
+
+      <app-back-button [modernStyle]="false"></app-back-button>
+    </div>
+  </div>
+
+  <!-- ✅ Header Action Bar (Edit Reservation Mode) -->
+  <div class="header-actions-bar" *ngIf="reservationId">
+    <!-- 1. Title + Search + Status Badge + Invoiced Badge -->
+    <div class="header-title-section">
+      <h1>
+        <span>{{ "RESERVATION.RESERVATION_NO" | translate }}: </span>
+        <div class="search-input-group ms-2" style="display: inline-flex; align-items: center; gap: 4px; vertical-align: middle;">
+          <input 
+            #searchBoxEdit
+            type="text" 
+            [value]="reservation?.referenceNumber" 
+            (keydown.enter)="onReferenceNumberSearch(searchBoxEdit.value)" 
+            class="input-like text-center text-lg" 
+            style="width: 120px; font-weight: bold; height: 28px !important; margin: 0 !important;"
+            placeholder="RES-00000"
+          />
+          <button 
+            type="button" 
+            class="btn-search-icon" 
+            (click)="onReferenceNumberSearch(searchBoxEdit.value)"
+            style="background: #3b82f6; color: white; border: none; border-radius: 6px; width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.2s;"
+            onmouseover="this.style.background='#2563eb'"
+            onmouseout="this.style.background='#3b82f6'"
+          >
+            <i class="pi pi-search" style="font-size: 0.8rem;"></i>
+          </button>
+        </div>
+      </h1>
+      
+      <!-- Modern Status Badges -->
+      <span *ngIf="isCancelled" class="badge-status badge-cancelled">
+        <i class="pi pi-times-circle"></i>
+        <span>{{ "RESERVATION.STATUS_CANCELLED" | translate }}</span>
+      </span>
+      <span *ngIf="isConfirmed && !isCancelled" class="badge-status badge-confirmed">
+        <i class="pi pi-check-circle"></i>
+        <span>{{ "RESERVATION.STATUS_CONFIRMED" | translate }}</span>
+      </span>
+      <span *ngIf="!isConfirmed && !isCancelled" class="badge-status badge-pending">
+        <i class="pi pi-clock"></i>
+        <span>{{ activeLanguage === 'ar' ? 'غير مؤكد' : 'Not Confirmed' }}</span>
+      </span>
+
+      <!-- Invoiced Badge (Super sleek & compact clickable pill) -->
+      <button
+        type="button"
+        class="badge-invoiced-clickable"
+        *ngIf="isInvoiced || hasSalesInvoice"
+        (click)="viewSalesInvoice()"
+        [disabled]="loading"
+        [pTooltip]="activeLanguage === 'ar' ? ('🔒 هذا الحجز مقفل لارتباطه بفاتورة مبيعات ' + (salesInvoiceNo ? ('(' + salesInvoiceNo + ')') : '') + '. اضغط لعرض الفاتورة في تبويب جديد') : ('🔒 Locked due to linked sales invoice ' + (salesInvoiceNo ? ('(' + salesInvoiceNo + ')') : '') + '. Click to open.')"
+        tooltipPosition="bottom"
+      >
+        <i class="pi pi-lock" style="color: #d97706; font-size: 0.8rem;"></i>
+        <span>{{ activeLanguage === 'ar' ? 'عرض الفاتورة' : 'View Invoice' }}</span>
+        <i class="pi pi-external-link" style="font-size: 0.7rem; opacity: 0.85;"></i>
+      </button>
+
+      <!-- Related Reservations Dropdown (If linked to same invoice with multiple reservations) -->
+      <p-dropdown
+        *ngIf="relatedReservationsDropdown.length > 0"
+        [options]="relatedReservationsDropdown"
+        [(ngModel)]="selectedRelatedReservation"
+        (onChange)="onRelatedReservationSelect($event)"
+        [disabled]="loading"
+        placeholder="{{ activeLanguage === 'ar' ? 'حجوزات الفاتورة...' : 'Linked...' }}"
+        [style]="{'min-width': '150px', 'height': '26px'}"
+        styleClass="p-dropdown-sm warning-dropdown"
+        panelStyleClass="warning-dropdown-panel"
+        [pTooltip]="activeLanguage === 'ar' ? 'حجوزات أخرى مرتبطة بنفس الفاتورة' : 'Other reservations linked to the same invoice'"
+        tooltipPosition="bottom"
+      >
+        <ng-template let-item pTemplate="item">
+          <div class="d-flex align-items-center" style="font-size: 0.75rem;">
+            <i class="pi pi-link me-1 text-warning" style="font-size: 0.7rem"></i>
+            <span>{{item.label}}</span>
+          </div>
+        </ng-template>
+      </p-dropdown>
+    </div>
+
+    <div class="toolbar-divider"></div>
+
+    <!-- 2. Document / Export / Upload Tools -->
+    <div class="header-tools-group">
+      <!-- File Upload -->
+      <p-fileUpload
+        mode="basic"
+        name="file"
+        chooseIcon="pi pi-upload"
+        accept="application/pdf"
+        customUpload="true"
+        [auto]="true"
+        [disabled]="loading"
+        [chooseLabel]="'RESERVATION.UPLOAD_NEW_FILE' | translate"
+        (uploadHandler)="onFileSelected($event)"
+        styleClass="p-button-sm p-button-info"
+      ></p-fileUpload>
+
+      <!-- Print Dropdown -->
+      <p-menu #printMenu [model]="printMenuItems" [popup]="true" appendTo="body"></p-menu>
+      <button
+        type="button"
+        pButton
+        class="p-button-sm btn-print"
+        (click)="printMenu.toggle($event)"
+        [disabled]="reservationId === null || loading"
+      >
+        <i class="pi pi-print me-1"></i>
+        <span>{{ "DATA.PRINT" | translate }}</span>
+        <i class="pi pi-chevron-down ms-1" style="font-size: 0.75rem;"></i>
+      </button>
+
+      <!-- Download Dropdown -->
+      <p-menu #downloadMenu [model]="downloadMenuItems" [popup]="true" appendTo="body"></p-menu>
+      <button
+        type="button"
+        pButton
+        class="p-button-sm btn-download"
+        (click)="downloadMenu.toggle($event)"
+        [disabled]="reservationId === null || loading"
+      >
+        <i class="pi pi-download me-1"></i>
+        <span>{{ "DATA.DOWNLOAD" | translate }}</span>
+        <i class="pi pi-chevron-down ms-1" style="font-size: 0.75rem;"></i>
+      </button>
+    </div>
+
+    <div class="toolbar-divider"></div>
+
+    <!-- 3. Reservation Lifecycle Actions (تأكيد، نسخ، إلغاء / استعادة) -->
+    <div class="actions-buttons-group">
+      <!-- Confirm Reservation (Dark Green) -->
+      <button
+        type="button"
+        (click)="confirmReservationStatus($event)"
+        class="btn-confirm-action"
+        *ngIf="!isConfirmed && !isCancelled"
+        [disabled]="loading || (reservation?.isSentToZatca)"
+      >
+        <i class="pi pi-check-circle"></i>
+        <span>{{ activeLanguage === 'ar' ? 'تأكيد الحجز' : 'Confirm Reservation' }}</span>
+      </button>
+
+      <!-- Copy Reservation -->
+      <button
+        type="button"
+        (click)="copyReservation()"
+        class="btn-warning-action"
+        [disabled]="loading"
+      >
+        <i class="pi pi-copy"></i>
+        <span>{{ "FINANCE.COPY_RESERVATION" | translate }}</span>
+      </button>
+
+      <!-- Cancel Booking -->
+      <button
+        type="button"
+        (click)="cancelReservationStatus($event)"
+        class="btn-danger-action"
+        *ngIf="!isCancelled"
+        [disabled]="loading || (reservation?.isSentToZatca) || isInvoiced || hasSalesInvoice"
+        [pTooltip]="(isInvoiced || hasSalesInvoice) ? (activeLanguage === 'ar' ? 'لا يمكن إلغاء الحجز لأنه مرتبط بفاتورة مبيعات' : 'Cannot cancel reservation because it is linked to a sales invoice') : ''"
+        tooltipPosition="bottom"
+      >
+        <i class="pi pi-times"></i>
+        <span>{{ "RESERVATION.CANCEL_BOOKING" | translate }}</span>
+      </button>
+
+      <!-- Reactivate Reservation -->
+      <button
+        type="button"
+        (click)="reactivateReservationStatus($event)"
+        class="btn-success-action"
+        *ngIf="isCancelled"
+        [disabled]="loading || (reservation?.isSentToZatca)"
+      >
+        <i class="pi pi-replay"></i>
+        <span>{{ "RESERVATION.REACTIVATE_RESERVATION" | translate }}</span>
+      </button>
+    </div>
+
+    <!-- 4. Save & Back (Fixed on the far left) -->
+    <div class="header-end-group">
+      <div class="toolbar-divider"></div>
+
+      <!-- Save -->
+      <button
+        type="button"
+        (click)="onSubmit()"
+        class="btn-primary-action"
+        [disabled]="isReadOnly || loading"
+      >
+        <i class="pi pi-spin pi-spinner" *ngIf="loading"></i>
+        <i class="pi pi-save" *ngIf="!loading"></i>
+        <span>{{ "DATA.SUBMIT_LABEL" | translate }}</span>
+      </button>
+
+      <!-- Back Button -->
+      <app-back-button [customRoute]="isFrontal ? '/reservations/frontal' : '/reservations'" [modernStyle]="false" [disabled]="loading"></app-back-button>
+    </div>
+  </div>
+
+  <!-- Skeleton Loader -->
+  <div class="skeleton-wrapper mt-3" *ngIf="loading">
+    <div class="row g-3">
+      <!-- Combined Card Skeleton -->
+      <div class="col-12">
+        <div class="modern-card mb-0 skeleton-card">
+          <div class="skeleton-header"></div>
+          <div class="skeleton-body d-flex flex-wrap gap-3">
+            <div class="skeleton-field" style="flex: 1 1 22%;"></div>
+            <div class="skeleton-field" style="flex: 1 1 22%;"></div>
+            <div class="skeleton-field" style="flex: 1 1 22%;"></div>
+            <div class="skeleton-field" style="flex: 1 1 22%;"></div>
+            <div class="skeleton-field" style="flex: 1 1 22%;"></div>
+            <div class="skeleton-field" style="flex: 1 1 22%;"></div>
+            <div class="skeleton-field" style="flex: 1 1 22%;"></div>
+            <div class="skeleton-field" style="flex: 1 1 22%;"></div>
+            <div class="skeleton-field" style="flex: 1 1 22%;"></div>
+            <div class="skeleton-field" style="flex: 1 1 22%;"></div>
+            <div class="skeleton-field" style="flex: 1 1 22%;"></div>
+            <div class="skeleton-field" style="flex: 1 1 22%;"></div>
+          </div>
+        </div>
+      </div>
+      <!-- Table & Details Skeleton -->
+      <div class="col-12">
+        <div class="modern-card skeleton-card">
+          <div class="skeleton-header" style="width: 20%;"></div>
+          <div class="skeleton-table">
+            <div class="skeleton-table-header"></div>
+            <div class="skeleton-table-row"></div>
+            <div class="skeleton-table-row"></div>
+            <div class="skeleton-table-row"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ✅ Main Form Body -->
+  <form [formGroup]="reservationForm" (ngSubmit)="onSubmit()" *ngIf="!loading">
+    <div class="row g-3">
+      <!-- Combined Card: بيانات الحجز (Reservation Details) -->
+      <div class="col-12">
+        <div class="modern-card mb-0">
+          <div class="modern-card-header">
+            <div class="modern-card-title">
+              <i class="pi pi-file-edit"></i>
+              <span>{{ "RESERVATION.RESERVATION_DETAILS" | translate }}</span>
+            </div>
+          </div>
+          <div class="modern-card-body combined-form-grid">
+            <!-- Row 1 -->
+            <!-- Client Company -->
+            <div class="form-field-group">
+              <label for="clientCompanyID" class="form-label">
+                {{ "RESERVATION.CLIENT_COMPANY" | translate }} <span class="text-red-500 text-lg font-bold">*</span>
+              </label>
+              <p-dropdown
+                [readonly]="isReadOnly"
+                appendTo="body"
+                id="clientCompanyID"
+                [options]="reservationCompaniesOptions"
+                formControlName="reservationClientCompanyId"
+                placeholder=""
+                optionLabel="label"
+                optionValue="value"
+                [filter]="true"
+                styleClass="w-full input-like"
+              ></p-dropdown>
+              <div
+                *ngIf="reservationForm.get('reservationClientCompanyId')?.invalid && reservationForm.get('reservationClientCompanyId')?.touched"
+                class="error"
+              >
+                {{ activeLanguage === 'ar' ? 'مطلوب' : 'Required' }}
+              </div>
+            </div>
+
+            <!-- Sales Representative -->
+            <div class="form-field-group">
+              <label for="salesRepresentativeId" class="form-label">
+                {{ "RESERVATION.SALES_REPRESENTATIVE" | translate }}
+              </label>
+              <p-dropdown
+                [readonly]="isReadOnly"
+                id="salesRepresentativeId"
+                appendTo="body"
+                [options]="salesRepresentativesOptions"
+                formControlName="salesRepresentativeId"
+                placeholder=""
+                optionLabel="label"
+                optionValue="value"
+                [filter]="true"
+                styleClass="w-full input-like"
+              ></p-dropdown>
+            </div>
+
+            <!-- Reservation Type -->
+            <div class="form-field-group">
+              <label for="reservationType" class="form-label">
+                {{ "RESERVATION.RESERVATION_TYPE" | translate }} <span class="text-red-500 text-lg font-bold">*</span>
+              </label>
+              <p-dropdown
+                [readonly]="isReadOnly"
+                id="reservationType"
+                appendTo="body"
+                [options]="reservationTypesOptions"
+                formControlName="reservationType"
+                placeholder=""
+                optionLabel="label"
+                optionValue="value"
+                [filter]="true"
+                styleClass="w-full input-like"
+              ></p-dropdown>
+              <div
+                *ngIf="reservationForm.get('reservationType')?.invalid && reservationForm.get('reservationType')?.touched"
+                class="error"
+              >
+                {{ activeLanguage === 'ar' ? 'مطلوب' : 'Required' }}
+              </div>
+            </div>
+
+            <!-- Guest Name -->
+            <div class="form-field-group">
+              <label for="guestName" class="form-label">
+                {{ "RESERVATION.GUEST" | translate }} <span class="text-red-500 text-lg font-bold">*</span>
+              </label>
+              <input
+                pInputText
+                [readonly]="isReadOnly"
+                id="guestName"
+                formControlName="guestName"
+                type="text"
+                class="input-like"
+              />
+              <div
+                *ngIf="reservationForm.get('guestName')?.invalid && reservationForm.get('guestName')?.touched"
+                class="error"
+              >
+                {{ activeLanguage === 'ar' ? 'مطلوب' : 'Required' }}
+              </div>
+            </div>
+
+            <!-- Row 2 -->
+            <!-- Guest Phone -->
+            <div class="form-field-group">
+              <label for="guestPhone" class="form-label">
+                {{ "RESERVATION.TELEPHONE_NUMBER" | translate }}
+              </label>
+              <input
+                pInputText
+                [readonly]="isReadOnly"
+                id="guestPhone"
+                formControlName="guestPhone"
+                type="text"
+                class="input-like"
+              />
+              <div
+                *ngIf="reservationForm.get('guestPhone')?.invalid && reservationForm.get('guestPhone')?.touched"
+                class="error"
+              >
+                {{ "RESERVATION.TELEPHONE_NUMBER_INVALID" | translate }}
+              </div>
+            </div>
+
+            <!-- Guest Email -->
+            <div class="form-field-group">
+              <label for="guestEmail" class="form-label">
+                {{ "RESERVATION.GUEST_EMAIL" | translate }}
+              </label>
+              <input
+                pInputText
+                [readonly]="isReadOnly"
+                id="guestEmail"
+                formControlName="guestEmail"
+                type="email"
+                class="input-like"
+              />
+              <div
+                *ngIf="reservationForm.get('guestEmail')?.invalid && reservationForm.get('guestEmail')?.touched"
+                class="error"
+              >
+                {{ "RESERVATION.GUEST_EMAIL_INVALID" | translate }}
+              </div>
+            </div>
+
+            <!-- Nationality -->
+            <div class="form-field-group">
+              <label for="nationality" class="form-label">
+                {{ "RESERVATION.NATIONALITY" | translate }} <span class="text-red-500 text-lg font-bold">*</span>
+              </label>
+              <p-dropdown
+                [readonly]="isReadOnly"
+                appendTo="body"
+                id="nationality"
+                [options]="nationalities()"
+                formControlName="nationality"
+                placeholder=""
+                optionLabel="label"
+                optionValue="value"
+                [filter]="true"
+                styleClass="w-full input-like"
+              ></p-dropdown>
+              <div
+                *ngIf="reservationForm.get('nationality')?.invalid && reservationForm.get('nationality')?.touched"
+                class="error"
+              >
+                {{ activeLanguage === 'ar' ? 'مطلوب' : 'Required' }}
+              </div>
+            </div>
+
+            <!-- Hotel -->
+            <div class="form-field-group">
+              <label for="hotelId" class="form-label">
+                {{ "RESERVATION.HOTEL" | translate }} <span class="text-red-500 text-lg font-bold">*</span>
+              </label>
+              <p-dropdown
+                [readonly]="isReadOnly"
+                id="hotelId"
+                appendTo="body"
+                [options]="hotelsOptions"
+                formControlName="hotelId"
+                placeholder=""
+                optionLabel="label"
+                optionValue="value"
+                [filter]="true"
+                styleClass="w-full input-like"
+              ></p-dropdown>
+              <div
+                *ngIf="reservationForm.get('hotelId')?.invalid && reservationForm.get('hotelId')?.touched"
+                class="error"
+              >
+                {{ activeLanguage === 'ar' ? 'مطلوب' : 'Required' }}
+              </div>
+            </div>
+
+            <!-- Row 3 -->
+            <!-- Season -->
+            <div class="form-field-group">
+              <label for="reservationSeasonId" class="form-label">
+                {{ "RESERVATION.SEASON_NAME" | translate }} <span class="text-red-500 text-lg font-bold">*</span>
+              </label>
+              <p-dropdown
+                [readonly]="isReadOnly"
+                id="reservationSeasonId"
+                appendTo="body"
+                [options]="seasonsOptions"
+                formControlName="reservationSeasonId"
+                placeholder=""
+                optionLabel="label"
+                optionValue="value"
+                [filter]="true"
+                styleClass="w-full input-like"
+              ></p-dropdown>
+              <div
+                *ngIf="reservationForm.get('reservationSeasonId')?.invalid && reservationForm.get('reservationSeasonId')?.touched"
+                class="error"
+              >
+                {{ activeLanguage === 'ar' ? 'مطلوب' : 'Required' }}
+              </div>
+            </div>
+
+            <!-- Bank Account -->
+            <div class="form-field-group">
+              <label for="bankAccountId" class="form-label">
+                {{ "RESERVATION.COMPANY_BANK_ACCOUNT" | translate }}
+              </label>
+              <p-dropdown
+                [readonly]="isReadOnly"
+                id="bankAccountId"
+                appendTo="body"
+                [options]="companyBankAccountOptions"
+                formControlName="bankAccountId"
+                placeholder=""
+                optionLabel="label"
+                optionValue="value"
+                [filter]="true"
+                styleClass="w-full input-like"
+              ></p-dropdown>
+            </div>
+
+            <!-- Check-in / Nights / Check-out (side by side, spanning 2 columns) -->
+            <div class="dates-row-grid">
+              <!-- Arrival Date -->
+              <div class="form-field-group">
+                <label for="arrivalDate" class="form-label">{{ "RESERVATION.CHECK_IN" | translate }} <span class="text-red-500 text-lg font-bold">*</span></label>
+                <p-calendar
+                  #arrivalCal
+                  [disabled]="isReadOnly"
+                  inputId="arrivalDate"
+                  formControlName="arrivalDate"
+                  dateFormat="dd/mm/yy"
+                  [showIcon]="false"
+                  placeholder="dd/mm/yyyy"
+                >
+                  <ng-template pTemplate="header">
+                    <div class="custom-calendar-header">
+                      <button type="button" class="custom-nav-btn" (click)="arrivalCal.navBackward($event)">
+                        <i [class]="activeLanguage === 'ar' ? 'pi pi-chevron-right' : 'pi pi-chevron-left'"></i>
+                      </button>
+                      <div class="custom-header-controls">
+                        <select [value]="arrivalCal.currentMonth" (change)="onMonthSelect($any($event.target).value, arrivalCal)" class="custom-month-select">
+                          <option *ngFor="let m of monthsList; let idx = index" [value]="idx">{{ m }}</option>
+                        </select>
+                        <input type="number" [value]="arrivalCal.currentYear" (input)="onYearInput($any($event.target).value, arrivalCal)" class="custom-year-input" />
+                      </div>
+                      <button type="button" class="custom-nav-btn" (click)="arrivalCal.navForward($event)">
+                        <i [class]="activeLanguage === 'ar' ? 'pi pi-chevron-left' : 'pi pi-chevron-right'"></i>
+                      </button>
+                    </div>
+                  </ng-template>
+                </p-calendar>
+                <div
+                  *ngIf="reservationForm.get('arrivalDate')?.invalid && reservationForm.get('arrivalDate')?.touched"
+                  class="error"
+                >
+                  {{ activeLanguage === 'ar' ? 'مطلوب' : 'Required' }}
+                </div>
+              </div>
+
+              <!-- Number of Nights -->
+              <div class="form-field-group">
+                <label for="numberOfNights" class="form-label">{{ "RESERVATION.NIGHTS" | translate }} <span class="text-red-500 text-lg font-bold">*</span></label>
+                <input
+                  [readonly]="isReadOnly"
+                  id="numberOfNights"
+                  formControlName="numberOfNights"
+                  type="number"
+                  class="input-like w-full"
+                  min="1"
+                />
+                <div
+                  *ngIf="reservationForm.get('numberOfNights')?.invalid && reservationForm.get('numberOfNights')?.touched"
+                  class="error"
+                >
+                  {{ activeLanguage === 'ar' ? 'مطلوب' : 'Required' }}
+                </div>
+              </div>
+
+              <!-- Departure Date -->
+              <div class="form-field-group">
+                <label for="departureDate" class="form-label">{{ "RESERVATION.CHECK_OUT" | translate }} <span class="text-red-500 text-lg font-bold">*</span></label>
+                <p-calendar
+                  #departureCal
+                  [disabled]="isReadOnly"
+                  inputId="departureDate"
+                  formControlName="departureDate"
+                  dateFormat="dd/mm/yy"
+                  [showIcon]="false"
+                  [minDate]="minDepartureDateObj"
+                  placeholder="dd/mm/yyyy"
+                >
+                  <ng-template pTemplate="header">
+                    <div class="custom-calendar-header">
+                      <button type="button" class="custom-nav-btn" (click)="departureCal.navBackward($event)">
+                        <i [class]="activeLanguage === 'ar' ? 'pi pi-chevron-right' : 'pi pi-chevron-left'"></i>
+                      </button>
+                      <div class="custom-header-controls">
+                        <select [value]="departureCal.currentMonth" (change)="onMonthSelect($any($event.target).value, departureCal)" class="custom-month-select">
+                          <option *ngFor="let m of monthsList; let idx = index" [value]="idx">{{ m }}</option>
+                        </select>
+                        <input type="number" [value]="departureCal.currentYear" (input)="onYearInput($any($event.target).value, departureCal)" class="custom-year-input" />
+                      </div>
+                      <button type="button" class="custom-nav-btn" (click)="departureCal.navForward($event)">
+                        <i [class]="activeLanguage === 'ar' ? 'pi pi-chevron-left' : 'pi pi-chevron-right'"></i>
+                      </button>
+                    </div>
+                  </ng-template>
+                </p-calendar>
+                <div
+                  *ngIf="reservationForm.get('departureDate')?.invalid && reservationForm.get('departureDate')?.touched"
+                  class="error"
+                >
+                  {{ activeLanguage === 'ar' ? 'مطلوب' : 'Required' }}
+                </div>
+              </div>
+            </div>
+
+            <!-- Row 4 -->
+            <!-- Agent Company (Conditional) -->
+            <div class="form-field-group" *ngIf="reservationForm.get('reservationType')?.value === 'AgentDirect'">
+              <label for="reservationCompanyId" class="form-label">
+                {{ "RESERVATION.COMPANY" | translate }}
+                <span class="optional-field-badge">{{ "VALIDATION.OPTIONAL_FIELD" | translate }}</span>
+              </label>
+              <p-dropdown
+                [readonly]="isReadOnly"
+                id="reservationCompanyId"
+                appendTo="body"
+                [options]="reservationCompaniesOptions"
+                formControlName="reservationCompanyId"
+                placeholder=""
+                optionLabel="label"
+                optionValue="value"
+                [filter]="true"
+                styleClass="w-full input-like"
+              ></p-dropdown>
+            </div>
+
+            <!-- Company Phone -->
+            <div class="form-field-group">
+              <label for="companyPhoneId" class="form-label">{{ "RESERVATION.COMPANY_PHONE" | translate }}</label>
+              <p-dropdown
+                [readonly]="isReadOnly"
+                id="companyPhoneId"
+                appendTo="body"
+                [options]="companyPhoneOptions"
+                formControlName="companyPhoneId"
+                placeholder=""
+                optionLabel="label"
+                optionValue="value"
+                [filter]="true"
+                styleClass="w-full input-like"
+              ></p-dropdown>
+            </div>
+
+            <!-- Cancellation Policy -->
+            <div class="form-field-group">
+              <label for="companyPolicyId" class="form-label">{{ "RESERVATION.COMPANY_POLICIES" | translate }}</label>
+              <p-dropdown
+                [readonly]="isReadOnly"
+                id="companyPolicyId"
+                appendTo="body"
+                [options]="companyPolicyOptions"
+                formControlName="companyPolicyId"
+                placeholder=""
+                optionLabel="label"
+                optionValue="value"
+                [filter]="true"
+                styleClass="w-full input-like"
+              ></p-dropdown>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ✅ Rooms Entries Table -->
+    <div formArrayName="reservationRoomEntries" class="mt-4">
+      <div class="table-section-header">
+        <h3 class="table-section-title">{{ "RESERVATION.RESERVATION_DETAILS" | translate }}</h3>
+        <button
+          type="button"
+          [disabled]="isReadOnly"
+          class="btn-add-entry"
+          (click)="addRoomEntry()"
+        >
+          <i class="pi pi-plus"></i>
+          <span>{{ "RESERVATION.ADD_RESERVATION_ENTRY" | translate }}</span>
+        </button>
+      </div>
+
+      <div class="table-container">
+        <table class="premium-table">
+          <thead>
+            <tr>
+              <th style="width: 40px;">#</th>
+              <th style="min-width: 150px;">{{ "RESERVATION.ROOM_TYPE" | translate }} <span class="text-red-500 text-lg font-bold">*</span></th>
+              <th style="width: 90px;">{{ "RESERVATION.NUMBER_OF_ROOMS" | translate }} <span class="text-red-500 text-lg font-bold">*</span></th>
+              <th style="width: 100px;">{{ "RESERVATION.ROOM_RATE" | translate }} <span class="text-red-500 text-lg font-bold">*</span></th>
+              <th style="width: 100px;">{{ "RESERVATION.COST" | translate }}</th>
+              <th style="width: 80px;">{{ "RESERVATION.No_PAX" | translate }}</th>
+              <th style="min-width: 130px;">{{ "RESERVATION.MEALS" | translate }}</th>
+              <th style="width: 90px;">{{ "RESERVATION.MEALS_PRICE" | translate }}</th>
+              <th style="width: 90px;">{{ "RESERVATION.MEALS_COST" | translate }}</th>
+              <th style="min-width: 130px;">{{ "RESERVATION.VIEW" | translate }}</th>
+              <th style="width: 90px;">{{ "RESERVATION.VIEW_PRICE_SALES" | translate }}</th>
+              <th style="width: 90px;">{{ "RESERVATION.VIEW_COST_PRICE" | translate }}</th>
+              <th style="width: 110px;">{{ "RESERVATION.TOTAL_SALES_PRICE" | translate }}</th>
+              <th style="width: 110px;">{{ "RESERVATION.TOTAL_COST_PRICE" | translate }}</th>
+              <th style="width: 50px;"></th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr
+              *ngFor="let detail of reservationRoomEntries.controls; let i = index"
+              [formGroupName]="i"
+            >
+              <td>{{ i + 1 }}</td>
+              <td>
+                <p-dropdown
+                  [readonly]="isReadOnly"
+                  appendTo="body"
+                  [options]="roomTypesOptions"
+                  formControlName="roomTypeId"
+                  placeholder=""
+                  optionLabel="label"
+                  optionValue="value"
+                  [filter]="true"
+                  styleClass="w-full input-like"
+                ></p-dropdown>
+                <div
+                  *ngIf="detail.get('roomTypeId')?.invalid && detail.get('roomTypeId')?.touched"
+                  class="error text-xs text-red-500 mt-1"
+                >
+                  {{ activeLanguage === 'ar' ? 'مطلوب' : 'Required' }}
+                </div>
+              </td>
+              <td>
+                <input
+                  [readonly]="isReadOnly"
+                  class="input-like table-input text-center"
+                  formControlName="numberOfRooms"
+                  type="number"
+                  min="1"
+                />
+                <div
+                  *ngIf="detail.get('numberOfRooms')?.invalid && detail.get('numberOfRooms')?.touched"
+                  class="error text-xs text-red-500 mt-1"
+                >
+                  {{ activeLanguage === 'ar' ? 'مطلوب' : 'Required' }}
+                </div>
+              </td>
+              <td>
+                <input
+                  [readonly]="isReadOnly"
+                  class="input-like table-input text-center"
+                  formControlName="roomRate"
+                  type="number"
+                  min="0.01"
+                />
+                <div
+                  *ngIf="detail.get('roomRate')?.invalid && detail.get('roomRate')?.touched"
+                  class="error text-xs text-red-500 mt-1"
+                >
+                  {{ activeLanguage === 'ar' ? 'مطلوب' : 'Required' }}
+                </div>
+              </td>
+              <td>
+                <input
+                  [readonly]="isReadOnly"
+                  class="input-like table-input text-center"
+                  formControlName="roomCost"
+                  type="number"
+                />
+              </td>
+              <td>{{ getRoomPax(detail) }}</td>
+              <td>
+                <p-dropdown
+                  [readonly]="isReadOnly"
+                  appendTo="body"
+                  [options]="reservationMealOptions"
+                  formControlName="reservationMealId"
+                  placeholder=""
+                  optionLabel="label"
+                  optionValue="value"
+                  [filter]="true"
+                  styleClass="w-full input-like"
+                ></p-dropdown>
+              </td>
+              <td>
+                <input
+                  [readonly]="isReadOnly || !detail.get('reservationMealId')?.value"
+                  [disabled]="!detail.get('reservationMealId')?.value"
+                  class="input-like table-input text-center"
+                  formControlName="mealRate"
+                  type="number"
+                  min="0.01"
+                />
+              </td>
+              <td>
+                <input
+                  [readonly]="isReadOnly || !detail.get('reservationMealId')?.value"
+                  [disabled]="!detail.get('reservationMealId')?.value"
+                  class="input-like table-input text-center"
+                  formControlName="mealCost"
+                  type="number"
+                />
+              </td>
+              <td>
+                <p-dropdown
+                  [readonly]="isReadOnly"
+                  appendTo="body"
+                  [options]="viewsOptions"
+                  formControlName="reservationViewId"
+                  placeholder=""
+                  optionLabel="label"
+                  optionValue="value"
+                  [filter]="true"
+                  styleClass="w-full input-like"
+                ></p-dropdown>
+              </td>
+              <td>
+                <input
+                  [readonly]="isReadOnly || !detail.get('reservationViewId')?.value"
+                  [disabled]="!detail.get('reservationViewId')?.value"
+                  class="input-like table-input text-center"
+                  formControlName="viewRate"
+                  type="number"
+                  min="0.01"
+                />
+              </td>
+              <td>
+                <input
+                  [readonly]="isReadOnly || !detail.get('reservationViewId')?.value"
+                  [disabled]="!detail.get('reservationViewId')?.value"
+                  class="input-like table-input text-center"
+                  formControlName="viewCost"
+                  type="number"
+                />
+              </td>
+              <td class="font-semibold text-success">{{ getRoomTotalSalesPrice(detail) }}</td>
+              <td class="font-semibold text-danger">{{ getRoomTotalCostPrice(detail) }}</td>
+              <td>
+                <button
+                  [disabled]="isReadOnly"
+                  type="button"
+                  class="btn-delete-row"
+                  (click)="removeRoomEntry(i)"
+                >
+                  <i class="pi pi-trash"></i>
+                </button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ✅ Services Entries Table -->
+    <div formArrayName="reservationServiceEntries" class="mt-4">
+      <div class="table-section-header">
+        <h3 class="table-section-title">{{ "RESERVATION.ADDITIONAL_SERVICES" | translate }}</h3>
+        <button
+          [disabled]="isReadOnly"
+          type="button"
+          class="btn-add-entry"
+          (click)="addServiceEntry()"
+        >
+          <i class="pi pi-plus"></i>
+          <span>{{ "RESERVATION.ADD_SERVICE_ENTRY" | translate }}</span>
+        </button>
+      </div>
+
+      <div class="table-container">
+        <table class="premium-table">
+          <thead>
+            <tr>
+              <th style="width: 40px;">#</th>
+              <th style="min-width: 150px;">{{ "RESERVATION.OTHER_SERVICE" | translate }}</th>
+              <th style="min-width: 150px;">{{ "RESERVATION.INVOICE_DES" | translate }}</th>
+              <th style="width: 90px;">{{ "RESERVATION.QUANTITY" | translate }}</th>
+              <th style="width: 100px;">{{ "RESERVATION.PRICE_SALES" | translate }}</th>
+              <th style="width: 100px;">{{ "RESERVATION.VAT_SALES" | translate }}</th>
+              <th style="width: 100px;">{{ "RESERVATION.PRICE_COST" | translate }}</th>
+              <th style="width: 100px;">{{ "RESERVATION.VAT_COST" | translate }}</th>
+              <th style="min-width: 130px;">{{ "RESERVATION.VENDOR" | translate }}</th>
+              <th style="width: 110px;">{{ "RESERVATION.TOTAL_SALES_PRICE" | translate }}</th>
+              <th style="width: 110px;">{{ "RESERVATION.TOTAL_COST_PRICE" | translate }}</th>
+              <th style="width: 50px;"></th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr
+              *ngFor="let detail of reservationServiceEntries.controls; let i = index"
+              [formGroupName]="i"
+            >
+              <td>{{ i + 1 }}</td>
+              <td>
+                <p-dropdown
+                  [readonly]="isReadOnly"
+                  appendTo="body"
+                  [options]="reservationServicesOptions"
+                  formControlName="reservationServiceId"
+                  placeholder=""
+                  optionLabel="label"
+                  optionValue="value"
+                  [filter]="true"
+                  styleClass="w-full input-like"
+                ></p-dropdown>
+              </td>
+              <td>
+                <input
+                  [readonly]="isReadOnly"
+                  class="input-like w-full"
+                  formControlName="description"
+                  type="text"
+                />
+              </td>
+              <td>
+                <input
+                  [readonly]="isReadOnly"
+                  class="input-like table-input text-center"
+                  formControlName="quantity"
+                  type="number"
+                  min="1"
+                />
+              </td>
+              <td>
+                <input
+                  [readonly]="isReadOnly"
+                  class="input-like table-input text-center"
+                  formControlName="salesPrice"
+                  type="number"
+                  min="0.01"
+                />
+              </td>
+              <td>{{ getSalesVatAmount(detail) }}</td>
+              <td>
+                <input
+                  [readonly]="isReadOnly"
+                  class="input-like table-input text-center"
+                  formControlName="costPrice"
+                  type="number"
+                />
+              </td>
+              <td>{{ getCostVatAmount(detail) }}</td>
+              <td>
+                <p-dropdown
+                  [readonly]="isReadOnly"
+                  appendTo="body"
+                  [options]="reservationSupplierOptions"
+                  formControlName="reservationSupplierId"
+                  placeholder=""
+                  optionLabel="label"
+                  optionValue="value"
+                  [filter]="true"
+                  styleClass="w-full input-like"
+                ></p-dropdown>
+              </td>
+              <td class="font-semibold text-success">{{ getServiceTotalSalesPrice(detail) }}</td>
+              <td class="font-semibold text-danger">{{ getServiceTotalCostPrice(detail) }}</td>
+              <td>
+                <button
+                  [disabled]="isReadOnly"
+                  type="button"
+                  class="btn-delete-row"
+                  (click)="removeServiceEntry(i)"
+                >
+                  <i class="pi pi-trash"></i>
+                </button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ✅ Totals Dashboard Card -->
+    <div class="totals-dashboard">
+      <div class="totals-dashboard-header">
+        <div class="totals-dashboard-title">
+          <i class="pi pi-chart-bar"></i>
+          <span>{{ "RESERVATION.TOTALS_SUMMARY_ANALYSIS" | translate }}</span>
+        </div>
+        <div class="flex items-center gap-2">
+          <label class="text-xs font-semibold mb-0">{{ "RESERVATION.SHOW_COMPACT_TOTALS" | translate }}</label>
+          <p-inputSwitch
+            [(ngModel)]="showCompactTotals"
+            [ngModelOptions]="{ standalone: true }"
+          >
+          </p-inputSwitch>
+        </div>
+      </div>
+
+      <!-- Compact View -->
+      <div class="totals-grid" *ngIf="showCompactTotals">
+        <div class="total-item-box">
+          <div class="total-item-label">{{ "RESERVATION.TOTAL_COST_WITH_VAT" | translate }}</div>
+          <div class="total-item-value text-danger">
+            {{ calculateTotal(costAmount) }}
+          </div>
+        </div>
+        <div class="total-item-box">
+          <div class="total-item-label">{{ "RESERVATION.TOTAL_PROFIT_WITH_VAT" | translate }}</div>
+          <div class="total-item-value profit">
+            {{ calculateDifference(calculateTotal(salesAmount), calculateTotal(costAmount)) }}
+          </div>
+        </div>
+      </div>
+
+      <!-- Detailed View -->
+      <div class="table-container bg-transparent border-0 shadow-none mt-2" *ngIf="!showCompactTotals">
+        <table class="premium-table">
+          <thead>
+            <tr style="background-color: #f1f5f9;">
+              <th style="color: var(--text-muted);">{{ "RESERVATION.STATEMENT" | translate }}</th>
+              <th style="color: var(--text-muted);">{{ "FINANCE.TOTALAMOUNTWITHOUTVAT" | translate }}</th>
+              <th style="color: var(--text-muted);">{{ "FINANCE.VAT" | translate }} (15%)</th>
+              <th style="color: var(--text-muted);">{{ "FINANCE.TOTALAMOUNT" | translate }}</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td class="font-semibold text-start ps-3" style="color: var(--primary-color);">{{ "FINANCE.SALES" | translate }}</td>
+              <td class="font-semibold" style="color: var(--text-main);">{{ salesAmount }}</td>
+              <td class="font-semibold" style="color: var(--text-main);">{{ calculateVAT(salesAmount) }}</td>
+              <td class="font-semibold text-success">{{ calculateTotal(salesAmount) }}</td>
+            </tr>
+            <tr>
+              <td class="font-semibold text-start ps-3" style="color: var(--danger-color);">{{ "FINANCE.COST" | translate }}</td>
+              <td class="font-semibold" style="color: var(--text-main);">{{ costAmount }}</td>
+              <td class="font-semibold" style="color: var(--text-main);">{{ calculateVAT(costAmount) }}</td>
+              <td class="font-semibold text-danger">{{ calculateTotal(costAmount) }}</td>
+            </tr>
+            <tr style="background-color: #f8fafc;">
+              <td class="font-bold text-start ps-3" style="color: var(--primary-color);">{{ "FINANCE.PROFIT" | translate }}</td>
+              <td class="font-bold" style="color: var(--text-main);">{{ calculateDifference(salesAmount, costAmount) }}</td>
+              <td class="font-bold" style="color: var(--text-main);">{{ calculateDifference(calculateVAT(salesAmount), calculateVAT(costAmount)) }}</td>
+              <td class="font-bold text-success">
+                {{ calculateDifference(calculateTotal(salesAmount), calculateTotal(costAmount)) }}
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ✅ Hotel and Client Remarks -->
+    <div class="row g-3 mb-4">
+      <div class="col-12 col-md-6">
+        <div class="modern-card">
+          <div class="modern-card-header">
+            <div class="modern-card-title">
+              <i class="pi pi-info-circle"></i>
+              <span>{{ "FINANCE.HOTEL_REMARKS" | translate }}</span>
+            </div>
+          </div>
+          <div class="modern-card-body">
+            <textarea
+              [readonly]="isReadOnly"
+              id="hotelRemarks"
+              formControlName="hotelRemarks"
+              class="input-like w-full"
+              rows="4"
+              style="height: auto !important; resize: vertical;"
+            ></textarea>
+          </div>
+        </div>
+      </div>
+
+      <div class="col-12 col-md-6">
+        <div class="modern-card">
+          <div class="modern-card-header">
+            <div class="modern-card-title">
+              <i class="pi pi-comment"></i>
+              <span>{{ "FINANCE.CLIENT_REMARKS" | translate }}</span>
+            </div>
+          </div>
+          <div class="modern-card-body">
+            <textarea
+              [readonly]="isReadOnly"
+              id="clientRemarks"
+              formControlName="clientRemarks"
+              class="input-like w-full"
+              rows="4"
+              style="height: auto !important; resize: vertical;"
+            ></textarea>
+          </div>
+        </div>
+      </div>
+    </div>
+  </form>
+
+  <!-- ✅ Attachments List -->
+  <div class="attachment-card" *ngIf="reservationId && attachments && attachments.length > 0">
+    <h3 class="table-section-title mb-3">{{ "RESERVATION.FILES_ATTACHMENTS" | translate }}</h3>
+    <div class="table-container">
+      <table class="premium-table">
+        <thead>
+          <tr class="bg-light">
+            <th class="text-center">{{ "RESERVATION.FILE_NAME" | translate }}</th>
+            <th class="text-center" style="width: 200px;">{{ "RESERVATION.ACTIONS" | translate }}</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let pdf of attachments">
+            <td>
+              <a
+                href="javascript:void(0)"
+                class="text-primary text-decoration-none fw-semibold cursor-pointer"
+                (click)="onView(pdf)"
+                [title]="pdf.fileName"
+              >
+                <i class="pi pi-file-pdf me-1 text-danger"></i>
+                <span>{{ pdf.fileName }}</span>
+              </a>
+            </td>
+            <td>
+              <button
+                pButton
+                [label]="'RESERVATION.VIEW_ACTION' | translate"
+                icon="pi pi-eye"
+                class="p-button-text p-button-sm text-blue-500 me-2"
+                (click)="onView(pdf)"
+              ></button>
+              <button
+                pButton
+                [label]="'RESERVATION.DELETE_ACTION' | translate"
+                icon="pi pi-trash"
+                class="p-button-text p-button-sm text-red-500"
+                (click)="onDelete(pdf)"
+              ></button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ✅ Reservation Action Logs / History -->
+  <div class="modern-card mt-4" *ngIf="reservationId">
+    <div class="modern-card-header">
+      <div class="modern-card-title">
+        <i class="pi pi-history"></i>
+        <span>{{ activeLanguage === 'ar' ? 'سجل العمليات على الحجز' : 'Reservation Action Log' }}</span>
+      </div>
+    </div>
+    <div class="modern-card-body p-0">
+      <div class="px-4 py-3" *ngIf="actionLogs && actionLogs.length > 0; else noLogsTpl" style="overflow-x: auto;">
+        <table class="premium-table history-table">
+          <thead>
+            <tr>
+              <th style="width: 250px;">{{ activeLanguage === 'ar' ? 'التاريخ والوقت' : 'Date & Time' }}</th>
+              <th style="width: 200px;">{{ activeLanguage === 'ar' ? 'نوع الإجراء' : 'Action Type' }}</th>
+              <th>{{ activeLanguage === 'ar' ? 'المستخدم المسؤول' : 'Executed By' }}</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let log of actionLogs">
+              <td>{{ log.occurredAt | customDate: 'yyyy-MM-dd HH:mm:ss' }}</td>
+              <td>
+                <span class="badge-status" [ngClass]="{
+                  'badge-confirmed': log.actionType === 'Confirmed' || log.actionType === 'Created',
+                  'badge-cancelled': log.actionType === 'Cancelled',
+                  'badge-reactivated': log.actionType === 'Reactivated',
+                  'badge-info': log.actionType === 'Updated' || log.actionType === 'Copied'
+                }">
+                  {{ log.actionType }}
+                </span>
+              </td>
+              <td>{{ log.executedBy }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <ng-template #noLogsTpl>
+        <div class="p-4 text-center text-muted" style="color: #6b7280; font-style: italic;">
+          <i class="pi pi-info-circle me-2"></i>
+          {{ activeLanguage === 'ar' ? 'لا توجد عمليات مسجلة على هذا الحجز بعد.' : 'No logged operations on this reservation yet.' }}
+        </div>
+      </ng-template>
+    </div>
+  </div>
+</div>
+
+<!-- View PDF Dialog -->
+<p-dialog
+  [(visible)]="viewDialog"
+  [header]="'View PDF'"
+  [style]="{ width: '70vw', height: '70vh' }"
+>
+  <ng-container *ngIf="currentPdfUrl">
+    <a [href]="currentPdfUrl" target="_blank">
+      <button pButton type="button" icon="pi pi-download" class="p-button-sm mb-2">
+        {{ "RESERVATION.OPEN_FILE_NEW_WINDOW" | translate }}
+      </button>
+    </a>
+    <embed
+      [src]="currentPdfUrl"
+      type="application/pdf"
+      width="100%"
+      height="500px"
+    />
+  </ng-container>
+</p-dialog>
+
+<!-- Shared Toast & Confirm Dialog -->
+<p-toast></p-toast>
+<p-confirmDialog styleClass="custom-confirm-dialog" [style]="{ width: '480px', maxWidth: '95vw' }" [focusTrap]="false" [transitionOptions]="'0ms'" appendTo="body"></p-confirmDialog>

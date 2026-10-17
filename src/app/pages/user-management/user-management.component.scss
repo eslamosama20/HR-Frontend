@@ -1,0 +1,1195 @@
+.p-column-resizer {
+  border-left: 3.5px solid #d9d9d9 !important;
+  opacity: 0.5 !important;
+}
+
+:dir(rtl) .p-column-resizer {
+  border-left: 3.5px solid #d9d9d9 !important;
+  opacity: 0.5 !important;
+  right: unset !important;
+  left: 0 !important;
+}
+
+:host {
+  --table-head-bg: #46bbeb;
+  --table-header-text: #ffffff;
+  --btn-bg: #46bbeb;
+  --btn-text: #ffffff;
+  --btn-border: #46bbeb;
+  --btn-hover-bg: #2f8fcc;
+  --btn-hover-text: #ffffff;
+}
+
+// Custom styling for IsActive toggle switch
+::ng-deep {
+  .p-inputswitch {
+    width: 3.1rem !important;
+    height: 1.75rem !important;
+
+    .p-inputswitch-slider {
+      background: #cbd5e1 !important; // neutral slate-300 (OFF state)
+      border: 1px solid #94a3b8 !important;
+      transition: background-color 0.25s ease, border-color 0.25s ease;
+      border-radius: 30px !important;
+
+      &::before {
+        background: #ffffff !important;
+        width: 1.35rem !important;
+        height: 1.35rem !important;
+        left: 0.175rem !important;
+        margin-top: calc(-1.35rem / 2) !important;
+        border-radius: 50% !important;
+        transition: transform 0.25s ease;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+      }
+    }
+
+    // ON state (vibrant blue)
+    &.p-inputswitch-checked .p-inputswitch-slider {
+      background: #0284c7 !important; // sky-600 / primary blue
+      border-color: #0369a1 !important; // sky-700
+
+      &::before {
+        transform: translateX(1.35rem) !important;
+      }
+    }
+
+    // Hover effects
+    &:hover:not(.p-disabled) .p-inputswitch-slider {
+      box-shadow: 0 0 0 0.2rem rgba(2, 132, 199, 0.2);
+    }
+  }
+}
+
+/* ================================================================
+   Account Status Card (Active Toggle in Dialog)
+   ================================================================ */
+.account-status-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.85rem 1.15rem;
+  border-radius: 0.75rem;
+  border: 1.5px solid #e2e8f0;
+  background: #ffffff;
+  transition: all 0.25s ease-in-out;
+
+  &.status-active {
+    background: #f0f9ff;
+    border-color: #7dd3fc;
+
+    .status-icon-box {
+      background: #e0f2fe;
+      color: #0284c7;
+    }
+
+    .status-title {
+      color: #0369a1;
+    }
+
+    .status-badge {
+      background: #e0f2fe;
+      color: #0369a1;
+      border: 1px solid #7dd3fc;
+    }
+
+    .status-subtitle {
+      color: #0284c7;
+    }
+  }
+
+  &.status-inactive {
+    background: #fef2f2;
+    border-color: #fca5a5;
+
+    .status-icon-box {
+      background: #fee2e2;
+      color: #dc2626;
+    }
+
+    .status-title {
+      color: #7f1d1d;
+    }
+
+    .status-badge {
+      background: #fee2e2;
+      color: #b91c1c;
+      border: 1px solid #fca5a5;
+    }
+
+    .status-subtitle {
+      color: #991b1b;
+    }
+  }
+
+  .status-icon-box {
+    width: 2.35rem;
+    height: 2.35rem;
+    border-radius: 0.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.2rem;
+    transition: all 0.25s ease;
+  }
+
+  .status-title {
+    font-weight: 700;
+    font-size: 0.9rem;
+  }
+
+  .status-badge {
+    font-size: 0.72rem;
+    font-weight: 700;
+    padding: 0.15rem 0.55rem;
+    border-radius: 9999px;
+  }
+
+  .status-subtitle {
+    font-size: 0.75rem;
+    margin-top: 0.1rem;
+  }
+}
+
+
+/* Theme-aware table headers */
+::ng-deep .p-datatable .p-datatable-thead>tr>th {
+  background: var(--table-head-bg) !important;
+  color: var(--table-header-text) !important;
+}
+
+/* Theme-aware buttons (filled + outlined) */
+::ng-deep .p-button.p-button-primary,
+::ng-deep .p-button.p-button-secondary,
+::ng-deep .p-button:not(.p-button-outlined):not(.p-button-text):not(.p-button-danger):not(.p-button-warning):not(.p-button-success):not(.p-button-help):not(.p-button-info):not(.p-dialog-header-close):not(.p-dialog-header-icon):not(.role-chip-remove-btn):not(.dialog-footer-btn-cancel):not(.change-password-header-btn) {
+  background: var(--btn-bg) !important;
+  border-color: var(--btn-border) !important;
+  color: var(--btn-text) !important;
+
+  &:hover {
+    background: var(--btn-hover-bg) !important;
+    border-color: var(--btn-hover-bg) !important;
+    color: var(--btn-hover-text) !important;
+  }
+}
+
+::ng-deep .p-button.p-button-info:not(.p-button-outlined):not(.p-button-text) {
+  background: var(--btn-bg) !important;
+  border-color: var(--btn-border) !important;
+  color: var(--btn-text) !important;
+
+  &:hover {
+    background: var(--btn-hover-bg) !important;
+    border-color: var(--btn-hover-bg) !important;
+    color: var(--btn-hover-text) !important;
+  }
+}
+
+::ng-deep .p-button.p-button-outlined:not(.p-button-danger):not(.p-button-warning):not(.p-button-success) {
+  background: transparent !important;
+  border-color: var(--btn-border) !important;
+  color: var(--btn-border) !important;
+
+  &:hover {
+    background: rgba(0, 0, 0, 0.05) !important;
+    color: var(--btn-border) !important;
+    border-color: var(--btn-border) !important;
+  }
+}
+
+::ng-deep .p-button.p-button-danger {
+  background: #ef4444 !important;
+  border-color: #ef4444 !important;
+  color: #ffffff !important;
+
+  &:hover {
+    background: #dc2626 !important;
+    border-color: #dc2626 !important;
+    color: #ffffff !important;
+  }
+
+  &.p-button-outlined {
+    background: #fef2f2 !important;
+    border-color: #fca5a5 !important;
+    color: #dc2626 !important;
+
+    &:hover {
+      background: #fee2e2 !important;
+      color: #b91c1c !important;
+      border-color: #f87171 !important;
+    }
+  }
+}
+
+::ng-deep .p-button.p-button-warning {
+  background: #f59e0b !important;
+  border-color: #f59e0b !important;
+  color: #ffffff !important;
+
+  &:hover {
+    background: #d97706 !important;
+    border-color: #d97706 !important;
+    color: #ffffff !important;
+  }
+
+  &.p-button-outlined {
+    background: #fffbeb !important;
+    border-color: #fde68a !important;
+    color: #b45309 !important;
+
+    &:hover {
+      background: #fef3c7 !important;
+      color: #92400e !important;
+      border-color: #fcd34d !important;
+    }
+  }
+}
+
+/* ================================================================
+   Dialog Form Inputs Sizing & Typography
+   ================================================================ */
+::ng-deep .p-dialog {
+
+  .dialog-input,
+  input.p-inputtext:not(.p-password-input),
+  input[type="text"]:not(.p-password-input),
+  input[type="email"],
+  input[type="date"] {
+    font-size: 0.95rem !important;
+    padding: 0.625rem 0.85rem !important;
+    border-radius: 0.5rem !important;
+    border: 1px solid #cbd5e1 !important;
+    color: #1e293b !important;
+    transition: all 0.2s ease !important;
+    line-height: 1.5 !important;
+
+    &:focus {
+      border-color: #3b82f6 !important;
+      box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15) !important;
+    }
+  }
+
+  /* Integrated Password Input with Leading Lock Icon and Trailing Eye Icon */
+  .password-input-wrapper {
+    position: relative;
+    width: 100%;
+    display: flex;
+    align-items: center;
+
+    .password-lead-icon {
+      position: absolute;
+      top: 50%;
+      transform: translateY(-50%);
+      inset-inline-start: 0.95rem;
+      color: #94a3b8;
+      font-size: 1.05rem;
+      pointer-events: none;
+      transition: color 0.2s ease;
+      z-index: 15;
+    }
+
+    &:focus-within .password-lead-icon {
+      color: #3b82f6;
+    }
+  }
+
+  p-password,
+  .p-password {
+    width: 100% !important;
+    position: relative !important;
+    display: block !important;
+
+    .p-inputtext,
+    .p-password-input,
+    input {
+      width: 100% !important;
+      background-color: #ffffff !important;
+      padding-inline-start: 2.75rem !important;
+      /* Space for the lock icon */
+      padding-inline-end: 2.75rem !important;
+      /* Space for the eye toggle */
+      padding-block: 0.65rem !important;
+      border-radius: 0.5rem !important;
+      border: 1px solid #cbd5e1 !important;
+      color: #1e293b !important;
+      font-size: 0.925rem !important;
+      transition: all 0.2s ease !important;
+
+      &:focus {
+        border-color: #3b82f6 !important;
+        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15) !important;
+        outline: none !important;
+      }
+    }
+
+    /* Eye toggle icon */
+    .p-password-toggle-mask,
+    .p-password-clear-icon,
+    i.pi-eye,
+    i.pi-eye-slash,
+    i[class*="pi-eye"],
+    .p-icon-wrapper,
+    .p-icon,
+    svg {
+      position: absolute !important;
+      top: 50% !important;
+      margin-top: 0 !important;
+      transform: translateY(-50%) !important;
+      inset-inline-end: 0.95rem !important;
+      inset-inline-start: auto !important;
+      cursor: pointer !important;
+      color: #94a3b8 !important;
+      z-index: 10 !important;
+      font-size: 1.15rem !important;
+      display: flex !important;
+      align-items: center !important;
+      justify-content: center !important;
+
+      &:hover {
+        color: #3b82f6 !important;
+      }
+    }
+  }
+
+  /* Prevent browser / bootstrap validation icons from overlapping typed text */
+  .p-password.is-valid input,
+  .p-password.is-invalid input {
+    background-image: none !important;
+  }
+
+  .p-password.is-valid input {
+    border-color: #22c55e !important;
+
+    &:focus {
+      border-color: #22c55e !important;
+      box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.18) !important;
+    }
+  }
+
+  .p-password.is-invalid input {
+    border-color: #ef4444 !important;
+
+    &:focus {
+      border-color: #ef4444 !important;
+      box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.18) !important;
+    }
+  }
+
+  .password-input-wrapper:has(.is-invalid) .password-lead-icon {
+    color: #ef4444 !important;
+  }
+
+  .password-input-wrapper:has(.is-valid) .password-lead-icon {
+    color: #22c55e !important;
+  }
+
+  /* Dialog Header Close Button - Matching Role Chip Remove Button */
+  .p-dialog-header-icons,
+  .p-dialog-header {
+    .p-dialog-header-icon,
+    .p-dialog-header-close,
+    button.p-dialog-header-icon,
+    button.p-dialog-header-close {
+      width: 1.85rem !important;
+      height: 1.85rem !important;
+      min-width: 1.85rem !important;
+      max-width: 1.85rem !important;
+      border-radius: 0.45rem !important;
+      background: #fee2e2 !important;
+      background-color: #fee2e2 !important;
+      border: 1px solid #fca5a5 !important;
+      color: #dc2626 !important;
+      display: inline-flex !important;
+      align-items: center !important;
+      justify-content: center !important;
+      cursor: pointer !important;
+      transition: all 0.15s ease !important;
+      padding: 0 !important;
+      box-shadow: none !important;
+      outline: none !important;
+      opacity: 1 !important;
+
+      .p-dialog-header-close-icon,
+      i,
+      span,
+      svg {
+        color: #dc2626 !important;
+        fill: #dc2626 !important;
+        font-size: 0.85rem !important;
+        font-weight: 800 !important;
+        stroke: #dc2626 !important;
+        background: transparent !important;
+      }
+
+      &:hover {
+        background: #fecaca !important;
+        background-color: #fecaca !important;
+        border-color: #f87171 !important;
+        color: #b91c1c !important;
+        transform: scale(1.08) !important;
+        box-shadow: 0 2px 6px rgba(220, 38, 38, 0.15) !important;
+
+        .p-dialog-header-close-icon,
+        i,
+        span,
+        svg {
+          color: #b91c1c !important;
+          fill: #b91c1c !important;
+        }
+      }
+
+      &:active {
+        transform: scale(0.95) !important;
+      }
+
+      &:focus,
+      &:focus-visible {
+        background: #fee2e2 !important;
+        background-color: #fee2e2 !important;
+        border-color: #f87171 !important;
+        box-shadow: 0 0 0 2px rgba(239, 68, 68, 0.25) !important;
+        outline: none !important;
+      }
+    }
+  }
+}
+
+/* Global fallback for dialog close button */
+::ng-deep .p-dialog .p-dialog-header .p-dialog-header-close,
+::ng-deep .p-dialog .p-dialog-header .p-dialog-header-icon,
+::ng-deep .p-dialog-header-close,
+::ng-deep .p-dialog-header-icon {
+  width: 1.85rem !important;
+  height: 1.85rem !important;
+  min-width: 1.85rem !important;
+  max-width: 1.85rem !important;
+  border-radius: 0.45rem !important;
+  background: #fee2e2 !important;
+  background-color: #fee2e2 !important;
+  border: 1px solid #fca5a5 !important;
+  color: #dc2626 !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  cursor: pointer !important;
+  transition: all 0.15s ease !important;
+  padding: 0 !important;
+  box-shadow: none !important;
+  outline: none !important;
+  opacity: 1 !important;
+
+  .p-dialog-header-close-icon,
+  i,
+  span,
+  svg {
+    color: #dc2626 !important;
+    fill: #dc2626 !important;
+    font-size: 0.85rem !important;
+    font-weight: 800 !important;
+    stroke: #dc2626 !important;
+    background: transparent !important;
+  }
+
+  &:hover {
+    background: #fecaca !important;
+    background-color: #fecaca !important;
+    border-color: #f87171 !important;
+    color: #b91c1c !important;
+    transform: scale(1.08) !important;
+    box-shadow: 0 2px 6px rgba(220, 38, 38, 0.15) !important;
+
+    .p-dialog-header-close-icon,
+    i,
+    span,
+    svg {
+      color: #b91c1c !important;
+      fill: #b91c1c !important;
+    }
+  }
+
+  &:focus,
+  &:focus-visible {
+    background: #fee2e2 !important;
+    background-color: #fee2e2 !important;
+    border-color: #f87171 !important;
+    box-shadow: 0 0 0 2px rgba(239, 68, 68, 0.25) !important;
+    outline: none !important;
+  }
+}
+
+/* ================================================================
+   User Roles Badges / Chips Styling
+   ================================================================ */
+.role-badge-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.4rem 0.75rem;
+  border-radius: 0.625rem;
+  border: 1.5px solid #e2e8f0;
+  background: #ffffff;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+  transition: all 0.2s ease;
+
+  &:hover {
+    border-color: #cbd5e1;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08);
+  }
+
+  .role-chip-icon {
+    width: 1.5rem;
+    height: 1.5rem;
+    border-radius: 0.375rem;
+    background: rgba(70, 187, 235, 0.12);
+    color: var(--btn-bg, #46bbeb);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.75rem;
+  }
+
+  .role-chip-name {
+    font-size: 0.825rem;
+    font-weight: 700;
+    color: #1e293b;
+    white-space: nowrap;
+  }
+
+  .role-chip-remove-btn {
+    width: 1.45rem;
+    height: 1.45rem;
+    border-radius: 0.375rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #dc2626 !important;
+    background: #fee2e2 !important;
+    border: 1px solid #fca5a5 !important;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    padding: 0;
+    margin-inline-start: 0.35rem;
+
+    i {
+      font-size: 0.75rem;
+      font-weight: 700;
+      color: #dc2626;
+    }
+
+    &:hover {
+      background: #fecaca !important;
+      border-color: #f87171 !important;
+      color: #b91c1c !important;
+      transform: scale(1.08);
+
+      i {
+        color: #b91c1c;
+      }
+    }
+
+    &:active {
+      transform: scale(0.95);
+    }
+  }
+}
+
+/* ================================================================
+   Header Active Status Toggle (Sleek Glassmorphic Capsule)
+   ================================================================ */
+.header-active-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.65rem;
+  padding: 0.35rem 0.85rem;
+  border-radius: 9999px;
+  border: 1.5px solid;
+  cursor: pointer;
+  user-select: none;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+
+  .status-dot {
+    position: relative;
+    width: 0.625rem;
+    height: 0.625rem;
+    border-radius: 9999px;
+    flex-shrink: 0;
+
+    &::after {
+      content: '';
+      position: absolute;
+      inset: -3px;
+      border-radius: 9999px;
+      animation: pulse-ring 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+    }
+  }
+
+  .status-text {
+    font-size: 0.8125rem;
+    font-weight: 700;
+    white-space: nowrap;
+    letter-spacing: -0.01em;
+  }
+
+  /* Active state */
+  &.is-active {
+    background: #f0f9ff;
+    border-color: #7dd3fc;
+    color: #0369a1;
+
+    .status-dot {
+      background-color: #0284c7;
+
+      &::after {
+        background-color: rgba(2, 132, 199, 0.35);
+      }
+    }
+
+    &:hover {
+      background: #e0f2fe;
+      border-color: #38bdf8;
+      transform: translateY(-1px);
+      box-shadow: 0 3px 8px rgba(2, 132, 199, 0.18);
+    }
+  }
+
+  /* Inactive state */
+  &.is-inactive {
+    background: #fef2f2;
+    border-color: #fca5a5;
+    color: #b91c1c;
+
+    .status-dot {
+      background-color: #ef4444;
+
+      &::after {
+        background-color: rgba(239, 68, 68, 0.35);
+      }
+    }
+
+    &:hover {
+      background: #fee2e2;
+      border-color: #f87171;
+      transform: translateY(-1px);
+      box-shadow: 0 3px 8px rgba(239, 68, 68, 0.18);
+    }
+  }
+
+  &:active {
+    transform: scale(0.97);
+  }
+
+  /* Mini embedded switch styling */
+  .switch-wrapper {
+    display: flex;
+    align-items: center;
+
+    ::ng-deep .p-inputswitch {
+      width: 2.35rem !important;
+      height: 1.35rem !important;
+
+      .p-inputswitch-slider {
+        border-radius: 9999px !important;
+
+        &::before {
+          width: 0.95rem !important;
+          height: 0.95rem !important;
+          margin-top: -0.475rem !important;
+          border-radius: 9999px !important;
+        }
+      }
+
+      &.p-inputswitch-checked .p-inputswitch-slider {
+        background: #0284c7 !important;
+        border-color: #0369a1 !important;
+
+        &::before {
+          transform: translateX(1rem) !important;
+        }
+      }
+    }
+  }
+}
+
+@keyframes pulse-ring {
+  0% {
+    transform: scale(0.95);
+    opacity: 0.8;
+  }
+  50% {
+    transform: scale(1.6);
+    opacity: 0;
+  }
+  100% {
+    transform: scale(0.95);
+    opacity: 0;
+  }
+}
+
+/* ================================================================
+   Dialog Custom Action & Footer Buttons
+   ================================================================ */
+.change-password-header-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.45rem 0.95rem;
+  font-size: 0.825rem;
+  font-weight: 700;
+  color: #9a3412;
+  background: #ffedd5;
+  border: 1.5px solid #fed7aa;
+  border-radius: 0.5rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+
+  i {
+    font-size: 0.9rem;
+    color: #ea580c;
+  }
+
+  &:hover {
+    background: #fed7aa;
+    border-color: #fdba74;
+    color: #7c2d12;
+    box-shadow: 0 2px 5px rgba(234, 88, 12, 0.15);
+  }
+
+  &:active {
+    transform: translateY(1px);
+  }
+}
+
+.dialog-footer-btn-save {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.55rem 1.45rem;
+  font-size: 0.875rem;
+  font-weight: 700;
+  color: #ffffff;
+  background: #0284c7;
+  border: 1px solid #0369a1;
+  border-radius: 0.5rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 1px 3px rgba(2, 132, 199, 0.25);
+
+  i {
+    font-size: 0.85rem;
+    color: #ffffff;
+  }
+
+  &:hover:not(:disabled) {
+    background: #0369a1;
+    border-color: #075985;
+    color: #ffffff;
+    box-shadow: 0 3px 8px rgba(2, 132, 199, 0.35);
+  }
+
+  &:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+  }
+}
+
+.dialog-footer-btn-cancel {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.55rem 1.25rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #334155;
+  background: #f1f5f9;
+  border: 1px solid #cbd5e1;
+  border-radius: 0.5rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+
+  i {
+    font-size: 0.85rem;
+    color: #ef4444;
+  }
+
+  &:hover:not(:disabled) {
+    background: #fee2e2;
+    border-color: #fca5a5;
+    color: #b91c1c;
+
+    i {
+      color: #b91c1c;
+    }
+  }
+}
+
+/* Compact Password Strength Meter Overlay Panel */
+::ng-deep .p-password-panel {
+  padding: 0.35rem 0.65rem !important;
+  min-width: 130px !important;
+  max-width: 180px !important;
+  border-radius: 0.5rem !important;
+  border: 1px solid #e2e8f0 !important;
+  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.08) !important;
+  background: #ffffff !important;
+  z-index: 1200 !important;
+
+  .p-password-meter {
+    height: 4px !important;
+    margin: 0.15rem 0 0.25rem 0 !important;
+    background: #e2e8f0 !important;
+    border-radius: 2px !important;
+  }
+
+  .p-password-strength {
+    height: 100% !important;
+    border-radius: 2px !important;
+
+    &.weak {
+      background: #ef4444 !important;
+    }
+
+    &.medium {
+      background: #f59e0b !important;
+    }
+
+    &.strong {
+      background: #22c55e !important;
+    }
+  }
+
+  .p-password-info {
+    font-size: 0.725rem !important;
+    font-weight: 700 !important;
+    color: #475569 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    line-height: 1.2 !important;
+    white-space: nowrap !important;
+  }
+}
+
+.password-requirements-box {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 0.5rem;
+}
+
+/* ================================================================
+   Action Menu Overlay Panel Buttons
+   ================================================================ */
+.action-menu-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  min-width: 175px;
+
+  .action-panel-btn {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    width: 100%;
+    padding: 0.5rem 0.75rem;
+    font-size: 0.825rem;
+    font-weight: 600;
+    border-radius: 0.5rem;
+    border: 1px solid transparent;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    text-align: start;
+
+    i {
+      font-size: 0.95rem;
+    }
+
+    &.btn-edit {
+      background: #eff6ff;
+      color: #1d4ed8;
+      border-color: #dbeafe;
+
+      i {
+        color: #2563eb;
+      }
+
+      &:hover {
+        background: #dbeafe;
+        color: #1e40af;
+        border-color: #bfdbfe;
+      }
+    }
+
+    &.btn-password {
+      background: #ffedd5;
+      color: #c2410c;
+      border-color: #fed7aa;
+
+      i {
+        color: #ea580c;
+      }
+
+      &:hover {
+        background: #fed7aa;
+        color: #9a3412;
+        border-color: #fdba74;
+      }
+    }
+
+    &.btn-copy {
+      background: #f3e8ff;
+      color: #7e22ce;
+      border-color: #e9d5ff;
+
+      i {
+        color: #9333ea;
+      }
+
+      &:hover {
+        background: #e9d5ff;
+        color: #6b21a8;
+        border-color: #d8b4fe;
+      }
+    }
+
+    &.btn-frontal {
+      background: #f0fdf4;
+      color: #15803d;
+      border-color: #dcfce7;
+
+      i {
+        color: #16a34a;
+      }
+
+      &:hover {
+        background: #dcfce7;
+        color: #14532d;
+        border-color: #bbf7d0;
+      }
+    }
+
+    &.btn-delete {
+      background: #fef2f2;
+      color: #dc2626;
+      border-color: #fee2e2;
+
+      i {
+        color: #ef4444;
+      }
+
+      &:hover:not(:disabled) {
+        background: #fee2e2;
+        color: #b91c1c;
+        border-color: #fca5a5;
+      }
+
+      &:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+      }
+    }
+  }
+}
+
+
+/* Theme overrides */
+$green-sels: ".light-green-mode", '[data-bs-theme="light-green"]', "body.light-green";
+
+@each $sel in $green-sels {
+  :host-context(#{$sel}) {
+    --table-head-bg: #c6ecea;
+    --table-header-text: #2e2a40;
+    --btn-bg: #018897;
+    --btn-text: #ffffff;
+    --btn-border: #018897;
+    --btn-hover-bg: #026f7c;
+    --btn-hover-text: #ffffff;
+  }
+}
+
+$indigo-sels: ".light-indigo-mode", '[data-bs-theme="light-indigo"]', "body.light-indigo";
+
+@each $sel in $indigo-sels {
+  :host-context(#{$sel}) {
+    --table-head-bg: #c9d0f5;
+    --table-header-text: #5d6679;
+    --btn-bg: #3e4981;
+    --btn-text: #ffffff;
+    --btn-border: #3e4981;
+    --btn-hover-bg: #323b68;
+    --btn-hover-text: #ffffff;
+  }
+}
+
+$darkblue-sels: ".light-darkblue-mode", '[data-bs-theme="light-darkblue"]', "body.light-darkblue";
+
+@each $sel in $darkblue-sels {
+  :host-context(#{$sel}) {
+    --table-head-bg: #dad7ff;
+    --table-header-text: #191d29;
+    --btn-bg: #191d29;
+    --btn-text: #ffffff;
+    --btn-border: #191d29;
+    --btn-hover-bg: #0f1421;
+    --btn-hover-text: #ffffff;
+  }
+}
+
+/* Keep gear action button neutral (no themed border/background) */
+::ng-deep .gear-button .p-button {
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  color: inherit !important;
+}
+
+::ng-deep .gear-button .p-button:hover,
+::ng-deep .gear-button .p-button:focus {
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  color: inherit !important;
+}
+
+/* =========================
+   New centered pagination (Total + pages + page/rows) all centered
+   ========================= */
+::ng-deep .custom-paginator-table .p-paginator {
+  direction: rtl;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: .5rem;
+  padding: .5rem .75rem;
+  border-top: 1px solid #e5e7eb;
+  background: #fff;
+  flex-wrap: wrap;
+}
+
+/* "Total" */
+::ng-deep .custom-paginator-table .p-paginator .p-paginator-current {
+  color: #111827;
+  font-weight: 600;
+  white-space: nowrap;
+  margin: 0;
+}
+
+/* Pages */
+::ng-deep .custom-paginator-table .p-paginator .p-paginator-pages {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: .25rem;
+  direction: ltr;
+  margin: 0;
+}
+
+/* Page button */
+::ng-deep .custom-paginator-table .p-paginator .p-paginator-page {
+  min-width: 34px;
+  height: 34px;
+  border-radius: 8px;
+  border: 1px solid transparent;
+  color: #374151;
+}
+
+/* Hover */
+::ng-deep .custom-paginator-table .p-paginator .p-paginator-page:not(.p-highlight):hover {
+  background: #f3f4f6;
+  border-color: #e5e7eb;
+}
+
+/* Active */
+::ng-deep .custom-paginator-table .p-paginator .p-paginator-page.p-highlight {
+  background: #eaf2ff;
+  border-color: #93c5fd;
+  color: #1d4ed8;
+  font-weight: 600;
+}
+
+/* Prev/Next */
+::ng-deep .custom-paginator-table .p-paginator .p-paginator-prev,
+::ng-deep .custom-paginator-table .p-paginator .p-paginator-next {
+  width: 34px;
+  height: 34px;
+  border-radius: 8px;
+}
+
+::ng-deep .custom-paginator-table .p-paginator .p-paginator-prev:hover,
+::ng-deep .custom-paginator-table .p-paginator .p-paginator-next:hover {
+  background: #f3f4f6;
+}
+
+/* Rows per page (page/ + dropdown) */
+::ng-deep .custom-paginator-table .p-paginator .p-paginator-rpp-options {
+  display: inline-flex;
+  align-items: center;
+  gap: .35rem;
+  margin: 0;
+}
+
+/* page/ label */
+::ng-deep .custom-paginator-table .p-paginator .p-paginator-rpp-options::before {
+  content: "page /";
+  color: #6b7280;
+  font-size: 14px;
+  white-space: nowrap;
+}
+
+/* Dropdown size */
+::ng-deep .custom-paginator-table .p-paginator .p-dropdown {
+  min-width: 80px;
+}
+
+/* Ellipsis */
+::ng-deep .custom-paginator-table .p-paginator .p-paginator-ellipsis {
+  color: #6b7280;
+  padding: 0 .25rem;
+}
+
+@media (max-width: 576px) {
+  ::ng-deep .p-paginator {
+    flex-direction: row !important;
+    flex-wrap: wrap !important;
+    gap: 0.5rem !important;
+    padding: 0.5rem !important;
+    font-size: 0.75rem !important;
+    justify-content: center !important;
+
+    .p-paginator-left-content,
+    .p-paginator-right-content {
+      width: auto !important;
+      justify-content: center !important;
+      font-size: 0.75rem !important;
+    }
+
+    .p-paginator-pages {
+      display: flex !important;
+      flex-wrap: wrap !important;
+      justify-content: center !important;
+      gap: 0.25rem !important;
+    }
+
+    .p-paginator-page,
+    .p-paginator-prev,
+    .p-paginator-next,
+    .p-paginator-first,
+    .p-paginator-last {
+      min-width: 2rem !important;
+      height: 2rem !important;
+      font-size: 0.75rem !important;
+    }
+
+    .p-dropdown {
+      font-size: 0.75rem !important;
+
+      .p-inputtext {
+        padding: 0.25rem 0.5rem !important;
+        font-size: 0.75rem !important;
+      }
+    }
+
+    .p-paginator-rpp-options {
+      font-size: 0.75rem !important;
+    }
+  }
+}

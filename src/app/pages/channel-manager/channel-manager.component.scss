@@ -1,0 +1,119 @@
+.channel-manager-container {
+  font-family: 'Inter', 'Outfit', 'Cairo', sans-serif;
+  
+  .glass-card {
+    background: rgba(255, 255, 255, 0.85);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(220, 224, 230, 0.5) !important;
+  }
+
+  .pointer {
+    cursor: pointer;
+  }
+
+  .bg-primary-light {
+    background-color: rgba(9, 132, 227, 0.08);
+  }
+
+  .bg-success-light {
+    background-color: rgba(0, 184, 148, 0.08);
+  }
+
+  .bg-danger-light {
+    background-color: rgba(255, 118, 117, 0.08);
+  }
+
+  .icon-badge {
+    width: 54px;
+    height: 54px;
+  }
+
+  .hover-bg-light:hover {
+    background-color: #fcfdfe !important;
+    transition: background-color 0.2s ease-in-out;
+  }
+
+  .tab-pane-content {
+    animation: fadeIn 0.3s ease-in-out;
+  }
+
+  .animate-fade-in {
+    animation: fadeIn 0.3s ease-in-out;
+  }
+
+  .bg-light-danger {
+    background-color: rgba(255, 118, 117, 0.04);
+  }
+
+  .min-w-250px {
+    min-width: 250px;
+  }
+
+  .min-w-200px {
+    min-width: 200px;
+  }
+
+  .min-w-150px {
+    min-width: 150px;
+  }
+
+  .min-w-100px {
+    min-width: 100px;
+  }
+
+  .min-w-80px {
+    min-width: 80px;
+  }
+
+  .max-w-120px {
+    max-width: 120px;
+  }
+
+  .max-w-150px {
+    max-width: 150px;
+  }
+
+  .max-w-200px {
+    max-width: 200px;
+  }
+
+  .leading-sm {
+    line-height: 1.45;
+  }
+
+  /* Custom styling for Metronic Nav tabs */
+  .nav-line-tabs {
+    .nav-item {
+      .nav-link {
+        border-bottom: 3px solid transparent;
+        color: #7e8299;
+        font-weight: 600;
+        transition: color 0.2s ease, border-bottom-color 0.2s ease;
+        padding-left: 1.5rem;
+        padding-right: 1.5rem;
+        
+        &.active, &:hover {
+          color: #009ef7;
+          border-bottom-color: #009ef7;
+        }
+      }
+    }
+  }
+
+  pre {
+    font-family: 'Consolas', 'Courier New', monospace;
+    font-size: 0.8rem;
+    direction: ltr;
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(5px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}

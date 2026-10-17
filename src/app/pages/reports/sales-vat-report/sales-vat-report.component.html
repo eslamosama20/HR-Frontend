@@ -1,0 +1,278 @@
+<div class="w-full">
+  <div class="flex justify-center items-start gap-4 flex-col w-full px-10">
+    <div class="fixed inset-0 bg-gray-500 bg-opacity-75 flex items-center justify-center z-50" *ngIf="loading">
+      <i class="pi pi-spin pi-spinner" style="font-size: 2rem"></i>
+    </div>
+
+    <p-panel class="w-full" [header]="'تقرير القيمة المضافة لأصناف المبيعات'">
+      <div class="flex gap-2 w-full items-end justify-between flex-wrap">
+        <div class="flex gap-2 items-end">
+          <div class="field" style="min-width: 280px; max-width: 350px;">
+            <label for="dateRange" class="block">{{translate.instant("FINANCE.DATE_RANGE")}}</label>
+            <p-calendar
+              id="dateRange"
+              [(ngModel)]="dateRange"
+              selectionMode="range"
+              [showButtonBar]="true"
+              variant="filled"
+              [showIcon]="true"
+              [iconDisplay]="'input'"
+              [dateFormat]="'dd/mm/yy'"
+              appendTo="body"
+              styleClass="w-full"
+            >
+              <ng-template pTemplate="inputicon">
+                <i class="pi pi-calendar"></i>
+              </ng-template>
+            </p-calendar>
+          </div>
+          <p-button
+            styleClass="rounded-md"
+            [label]="translate.instant('FINANCE.SEARCH')"
+            (onClick)="handleSubmit()"
+          />
+        </div>
+        <div class="flex gap-2" *ngIf="salesVATReport.length > 0">
+          <p-button
+            styleClass="rounded-md"
+            icon="pi pi-share-alt"
+            [label]="'مشاركة'"
+            (onClick)="openShareDialog()"
+            severity="info"
+          />
+          <p-button
+            styleClass="rounded-md"
+            icon="pi pi-print"
+            [label]="'طباعة PDF'"
+            (onClick)="printPDF()"
+            severity="warning"
+          />
+          <p-button
+            styleClass="rounded-md"
+            icon="pi pi-file-pdf"
+            [label]="'تنزيل PDF'"
+            (onClick)="downloadPDF()"
+            severity="danger"
+          />
+          <p-button 
+            styleClass="rounded-md p-button-success" 
+            label="تصدير Excel" 
+            icon="pi pi-file-excel"
+            (onClick)="exportToExcel()" />
+        </div>
+      </div>
+
+      <div class="flex justify-center p-5 my-4 border border-gray-300 rounded-lg text-xl w-full text-center font-bold"
+        *ngIf="salesVATReport.length === 0">
+        No Data
+      </div>
+
+      <div class="flex flex-col my-4 border border-gray-300 rounded-lg" *ngIf="salesVATReport.length > 0">
+        <table id="sales_vat_report" class="w-full border-collapse">
+          <thead>
+            <tr class="text-center">
+              <th rowspan="2" class="text-center font-semibold text-lg sales-header-bg text-white">
+                م
+              </th>
+              <th colspan="3" class="text-center font-semibold text-lg sales-header-bg text-white">
+                بيانات الفاتورة
+              </th>
+              <th colspan="5" class="text-center font-semibold text-lg sales-header-bg text-white">
+                بيانات الأصناف
+              </th>
+            </tr>
+            <tr>
+              <th class="w-[10%] text-center sales-header-bg text-white">
+                {{translate.instant('INVOICE.INVOICENO')}}
+              </th>
+              <th class="w-[15%] text-center sales-header-bg text-white">
+                {{translate.instant('INVOICE.CLIENTNAME')}}
+              </th>
+              <th class="w-[15%] text-center sales-header-bg text-white">
+                {{translate.instant('INVOICE.ISSUE_DATE')}}
+              </th>
+              <th class="w-[10%] text-center sales-header-bg text-white">
+                معفاة من الضرائب
+              </th>
+              <th class="w-[10%] text-center sales-header-bg text-white">
+                {{translate.instant('INVOICE.ITEM_CODE')}}
+              </th>
+              <th class="w-[15%] text-center sales-header-bg text-white">
+                {{translate.instant('INVOICE.ITEMNAME')}}
+              </th>
+              <th class="w-[10%] text-center sales-header-bg text-white">
+                {{translate.instant('DATA.QUANTITY')}}
+              </th>
+              <th class="w-[15%] text-center sales-header-bg text-white">
+                قيمة القيمة المضافة
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            <ng-container *ngFor="let invoice of salesVATReport; let i = index">
+              <ng-container *ngFor="let item of invoice.itemDetails; let j = index">
+                <tr>
+                  <td class="text-center font-semibold" *ngIf="j === 0" [rowSpan]="invoice.itemDetails.length">
+                    {{ i + 1 }}
+                  </td>
+                  <td class="text-center" *ngIf="j === 0" [rowSpan]="invoice.itemDetails.length">
+                    <a [href]="'/invoices/' + invoice.invoiceId" target="_blank" class="text-decoration-none">
+                      {{ invoice.invoiceNo }}
+                    </a>
+                  </td>
+                  <td class="text-center" *ngIf="j === 0" [rowSpan]="invoice.itemDetails.length">
+                    <a
+                      [href]="'/accounting/account-statement/' + invoice.mainAccountId"
+                      target="_blank"
+                      class="link-style">
+                      {{ activeLanguage === 'ar' ? invoice.suppilerArabicName : invoice.suppilerEnglishName }}
+                    </a>
+                  </td>
+                  <td class="text-center" *ngIf="j === 0" [rowSpan]="invoice.itemDetails.length">
+                    {{invoice.issueDate | customDate}}
+                  </td>
+                  <td class="text-center">
+                    <span *ngIf="item.isTaxExempted" class="badge bg-success">
+                   {{ 'DATA.YES' | translate }}
+                  </span>
+              <span *ngIf="!item.isTaxExempted" class="badge bg-danger">
+                   {{ 'DATA.NO' | translate }}
+                </span>
+                  </td>
+                  <td class="text-center">
+                    {{item.referenceCode}}
+                  </td>
+                  <td class="text-center">
+                    {{activeLanguage === 'ar' ? item.itemArabicName : item.itemEnglishName}}
+                  </td>
+                  <td class="text-center">
+                    {{item.quantity | number : '1.0-2'}}
+                  </td>
+                  <td class="text-center">
+                    {{item.vatAmount | number : '1.0-2'}}
+                  </td>
+                </tr>
+              </ng-container>
+            </ng-container>
+
+            <tr class="text-center overall-total-row">
+              <td colspan="8" class="overall-total">
+                إجمالي القيمة المضافة
+              </td>
+              <td class="overall-total">
+                {{totalVAT | number : '1.0-2'}}
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </p-panel>
+
+    <!-- Share Dialog -->
+    <p-dialog
+      [(visible)]="shareDialogVisible"
+      [header]="'مشاركة تقرير القيمة المضافة'"
+      [modal]="true"
+      [style]="{width: '35vw'}"
+      [draggable]="false"
+      [resizable]="false">
+      
+      <p-tabView [(activeIndex)]="shareActiveTabIndex">
+        <!-- Email Tab -->
+        <p-tabPanel header="البريد الإلكتروني" leftIcon="pi pi-envelope">
+          <form [formGroup]="shareForm">
+            <div class="flex flex-column gap-4 p-3">
+              <div class="field mb-0">
+                <label for="shareEmail" class="block mb-2 font-semibold">البريد الإلكتروني</label>
+                <input
+                  id="shareEmail"
+                  type="email"
+                  pInputText
+                  formControlName="email"
+                  placeholder="example@domain.com"
+                  class="w-full"
+                />
+                <small
+                  class="p-error block mt-1"
+                  *ngIf="shareForm.get('email')?.touched && shareForm.get('email')?.invalid">
+                  برجاء إدخال بريد إلكتروني صحيح
+                </small>
+              </div>
+
+              <div class="flex gap-2 justify-content-end">
+                <p-button
+                  label="إلغاء"
+                  icon="pi pi-times"
+                  (onClick)="closeShareDialog()"
+                  [disabled]="shareBusy"
+                  styleClass="p-button-outlined p-button-secondary"
+                ></p-button>
+                <p-button
+                  label="إرسال"
+                  icon="pi pi-send"
+                  (onClick)="submitShareEmail()"
+                  [loading]="shareBusy"
+                  [disabled]="shareForm.get('email')?.invalid || shareBusy"
+                ></p-button>
+              </div>
+            </div>
+          </form>
+        </p-tabPanel>
+
+        <!-- WhatsApp Tab -->
+        <p-tabPanel header="واتساب" leftIcon="pi pi-whatsapp">
+          <form [formGroup]="shareForm">
+            <div class="flex flex-column gap-4 p-3">
+              <div class="flex align-items-start gap-3 p-3 surface-100 border-round">
+                <span class="flex align-items-center justify-content-center bg-green-500 text-white border-circle" style="width: 3rem; height: 3rem;">
+                  <i class="pi pi-whatsapp text-2xl"></i>
+                </span>
+                <div class="flex-1">
+                  <div class="font-semibold text-900 mb-1">إرسال عبر واتساب</div>
+                  <div class="text-600 text-sm">
+                    أدخل رقم الجوال (رمز الدولة + الرقم) بدون مسافات. مثال: 9665xxxxxxxx
+                  </div>
+                </div>
+              </div>
+
+              <div class="field mb-0">
+                <label for="sharePhone" class="block mb-2 font-semibold">رقم الجوال</label>
+                <input
+                  id="sharePhone"
+                  type="tel"
+                  pInputText
+                  formControlName="whatsappNumber"
+                  placeholder="9665xxxxxxxx"
+                  class="w-full"
+                />
+                <small
+                  class="p-error block mt-1"
+                  *ngIf="shareForm.get('whatsappNumber')?.touched && shareForm.get('whatsappNumber')?.invalid">
+                  برجاء إدخال رقم صحيح (8–15 أرقام)
+                </small>
+              </div>
+
+              <div class="flex gap-2 justify-content-end">
+                <p-button
+                  label="إلغاء"
+                  icon="pi pi-times"
+                  (onClick)="closeShareDialog()"
+                  [disabled]="shareBusy"
+                  styleClass="p-button-outlined p-button-secondary"
+                ></p-button>
+                <p-button
+                  label="إرسال"
+                  icon="pi pi-send"
+                  (onClick)="submitShareWhatsApp()"
+                  [loading]="shareBusy"
+                  [disabled]="shareForm.get('whatsappNumber')?.invalid || shareBusy"
+                  severity="success"
+                ></p-button>
+              </div>
+            </div>
+          </form>
+        </p-tabPanel>
+      </p-tabView>
+    </p-dialog>
+  </div>
+</div>

@@ -1,0 +1,132 @@
+<div class="page-wrapper">
+  <!-- Filters -->
+  <form [formGroup]="form" class="filters">
+    <div class="field">
+      <label>Hotel</label>
+      <select formControlName="hotel">
+        <option value="">All</option>
+        <option *ngFor="let h of hotels" [value]="h">{{ h }}</option>
+      </select>
+    </div>
+
+    <div class="field">
+      <label>View</label>
+      <select formControlName="view">
+        <option value="">All</option>
+        <option *ngFor="let v of views" [value]="v">{{ v }}</option>
+      </select>
+    </div>
+
+    <div class="field">
+      <label>Room Type</label>
+      <select formControlName="roomType">
+        <option value="">All</option>
+        <option *ngFor="let r of roomTypes" [value]="r">{{ r }}</option>
+      </select>
+    </div>
+
+    <div class="field">
+      <label>From Date</label>
+      <input type="date" formControlName="fromDate" />
+    </div>
+
+    <div class="field">
+      <label>To Date</label>
+      <input type="date" formControlName="toDate" />
+    </div>
+
+    <div class="field">
+      <label>Reservation Type</label>
+      <select formControlName="reservationType">
+        <option value="">All</option>
+        <option *ngFor="let r of reservationTypes" [value]="r">{{ r }}</option>
+      </select>
+    </div>
+
+    <div class="field">
+      <label>Source</label>
+      <select formControlName="source">
+        <option value="">All</option>
+        <option *ngFor="let s of sources" [value]="s">{{ s }}</option>
+      </select>
+    </div>
+
+    <div class="field">
+      <label>Company</label>
+      <select formControlName="company">
+        <option value="">All</option>
+        <option *ngFor="let c of companies" [value]="c">{{ c }}</option>
+      </select>
+    </div>
+
+    <div class="field checkbox">
+      <label>
+        <input type="checkbox" formControlName="showAvgRoomType" />
+        Show Avg. Room Rate
+      </label>
+    </div>
+
+    <div class="actions">
+      <button type="button" class="btn primary" (click)="view()">View</button>
+      <button type="button" class="btn info" (click)="print()">Print</button>
+      <button type="button" class="btn danger" (click)="exit()">Exit</button>
+    </div>
+  </form>
+
+  <!-- Loading / Empty States -->
+  <div class="state" *ngIf="isLoading">
+    <div class="spinner"></div>
+    <div>Loading data…</div>
+  </div>
+
+  <div class="state empty" *ngIf="!isLoading && (!isLoaded || !dates.length)">
+    لا توجد بيانات لعرضها.
+  </div>
+
+  <!-- Grid (only after data loaded) -->
+  <div class="table-wrapper" *ngIf="!isLoading && isLoaded && dates.length">
+    <!-- نجعل الاتجاه RTL هنا أو في SCSS -->
+    <div class="grid-table" [style.--cols]="(dates.length).toString()">
+      <!-- Top-right corner (اسمها left-corner لكن هنثبّتها يمين) -->
+      <div class="cell cell-header left-corner"></div>
+
+      <!-- Header columns: date + day -->
+      <ng-container *ngFor="let d of dates">
+        <div class="cell cell-header col-header">
+          <div class="date">{{ dateShort(d) }}</div>
+          <div class="day">{{ dayName(d) }}</div>
+        </div>
+      </ng-container>
+
+      <!-- Info rows (Date / Day / Event) -->
+      <ng-container *ngFor="let row of infoRows">
+        <div class="cell row-label">{{ row.label }}</div>
+        <ng-container *ngFor="let d of dates">
+          <div class="cell">{{ row.value(d) }}</div>
+        </ng-container>
+      </ng-container>
+
+      <!-- Metric rows -->
+      <ng-container *ngFor="let row of metricRows">
+        <ng-container *ngIf="metricVisible(row)">
+          <div class="cell row-label" [ngClass]="row.rowClass">
+            {{ row.label }}
+          </div>
+          <ng-container *ngFor="let d of dates; let ci = index">
+            <div class="cell" [ngClass]="row.rowClass">
+              <ng-container [ngSwitch]="row.key">
+                <span *ngSwitchCase="'occupancyPct'">
+                  {{ valueFor(row, ci) }}%
+                </span>
+                <span *ngSwitchCase="'avgRoomRate'">
+                  {{ valueFor(row, ci) }} SAR
+                </span>
+                <span *ngSwitchDefault>{{ valueFor(row, ci) }}</span>
+              </ng-container>
+            </div>
+          </ng-container>
+        </ng-container>
+      </ng-container>
+    </div>
+  </div>
+</div>

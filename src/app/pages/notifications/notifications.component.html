@@ -1,0 +1,105 @@
+﻿<div class="notifications-panel">
+  <div class="header">
+    <div class="title">
+      <i class="pi pi-bell header-icon"></i>
+      <h3>الإشعارات</h3>
+      <span class="counter" *ngIf="unreadCount$ | async as u">{{ u }}</span>
+    </div>
+    <div class="actions">
+      <button
+        mat-icon-button
+        class="btn-mark-all"
+        (click)="markAllAsRead()"
+        [disabled]="(unreadCount$ | async) === 0"
+        pTooltip="تحديد الكل كمقروء"
+        tooltipPosition="top"
+        aria-label="تحديد جميع الإشعارات كمقروءة"
+      >
+        <i class="pi pi-check-circle"></i>
+      </button>
+      <button
+        mat-icon-button
+        class="btn-ignore-all"
+        (click)="ignoreAll()"
+        [disabled]="(notifications$ | async)?.length === 0"
+        pTooltip="تجاهل الكل"
+        tooltipPosition="top"
+        aria-label="تجاهل جميع الإشعارات"
+      >
+        <i class="pi pi-trash"></i>
+      </button>
+    </div>
+  </div>
+
+  <div class="content" *ngIf="notifications$ | async as list">
+    <div class="empty" *ngIf="list.length === 0">
+      <i class="pi pi-inbox empty-icon"></i>
+      <p>لا توجد إشعارات</p>
+    </div>
+
+    <div class="notification-list" *ngIf="list.length > 0">
+      <div
+        *ngFor="let n of list; trackBy: trackById"
+        class="notification-item"
+        [ngClass]="{
+          success: n.type === 'success',
+          error: n.type === 'error',
+          warning: n.type === 'warning',
+          info: n.type === 'info',
+          read: n.read,
+          unread: !n.read,
+          clickable: n.link
+        }"
+        (click)="onItemClick(n, $event)"
+        (keydown.enter)="onItemKeydown(n, $event)"
+        (keydown.space)="onItemKeydown(n, $event)"
+        [attr.tabindex]="n.link ? '0' : '-1'"
+        role="button"
+        [attr.aria-label]="n.title || n.content || n.message"
+      >
+        <div class="notification-indicator" [ngClass]="n.type"></div>
+
+        <i 
+          class="notification-icon"
+          [ngClass]="{
+            'pi pi-check-circle': n.type === 'success',
+            'pi pi-times-circle': n.type === 'error',
+            'pi pi-exclamation-triangle': n.type === 'warning',
+            'pi pi-info-circle': n.type === 'info',
+            'success': n.type === 'success',
+            'error': n.type === 'error',
+            'warning': n.type === 'warning',
+            'info': n.type === 'info'
+          }"
+        ></i>
+
+        <div class="notification-body">
+          <div class="notification-header">
+            <span class="notification-title" *ngIf="n.title">{{ n.title }}</span>
+            <span class="unread-badge" *ngIf="!n.read"></span>
+          </div>
+
+          <p class="notification-text">{{ n.content || n.message }}</p>
+
+          <div class="notification-footer">
+            <span class="notification-time">{{ n.date | customDate: "short" }}</span>
+            <span class="notification-link-badge" *ngIf="n.link">
+              <i class="pi pi-external-link"></i>
+            </span>
+          </div>
+        </div>
+
+        <button
+          mat-icon-button
+          class="btn-item-ignore"
+          (click)="onIgnore(n, $event)"
+          pTooltip="تجاهل"
+          tooltipPosition="left"
+          aria-label="تجاهل هذا الإشعار"
+        >
+          <i class="pi pi-times"></i>
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

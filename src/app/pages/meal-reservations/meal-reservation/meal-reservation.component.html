@@ -1,0 +1,427 @@
+<p-panel>
+  <ng-template pTemplate="header">
+    <div class="flex items-center justify-between w-full py-0 my-0">
+      <!-- Title on Right (Start in RTL) -->
+      <div class="flex items-center gap-2">
+        <span class="font-bold text-lg text-gray-900 dark:text-gray-50 leading-none">
+          {{ isEditMode ? ('DATA.EDIT_MEAL_RESERVATION' | translate) : ('DATA.ADD_MEAL_RESERVATION' | translate) }}
+        </span>
+      </div>
+
+      <!-- Action & Back Button on Far Left (End in RTL) -->
+      <div class="flex items-center gap-2 no-print">
+        <p-button 
+          *ngIf="isEditMode" 
+          styleClass="rounded-md" 
+          severity="info"
+          icon="pi pi-wallet" 
+          [label]="'PAYMENTS.ACTION_BUTTON' | translate" 
+          (onClick)="navigateToPayments()">
+        </p-button>
+        <p-button 
+          *ngIf="isEditMode" 
+          styleClass="rounded-md" 
+          severity="danger"
+          icon="pi pi-trash" 
+          [label]="'FINANCE.DELETE' | translate" 
+          (onClick)="onDeleteClick()">
+        </p-button>
+        <app-back-button [customRoute]="'/meal-reservations'"></app-back-button>
+      </div>
+    </div>
+  </ng-template>
+
+  <div class="fixed inset-0 bg-gray-500 bg-opacity-75 flex items-center justify-center z-50 no-print" *ngIf="loading">
+    <i class="pi pi-spin pi-spinner" style="font-size: 2rem"></i>
+  </div>
+  
+  <div class="header">
+    <form [formGroup]="mealReservationForm" (ngSubmit)="onSubmit()" class="reservation-form">
+      <div class="row g-3">
+        <!-- العميل -->
+        <div class="col-12 col-md-4">
+          <label for="clientCompanyID" class="text-lg font-semibold mb-1 d-block">
+            {{ 'FINANCE.CUSTOMER_PROFILE' | translate }} <span class="text-danger">*</span>
+          </label>
+          <p-dropdown appendTo="body" id="clientCompanyID" [options]="customerProfilesOptions"
+            formControlName="customerProfileId" placeholder="" optionLabel="label" optionValue="value"
+            [filter]="true" styleClass="w-full h-12 flex items-center">
+          </p-dropdown>
+          <div
+            *ngIf="mealReservationForm.get('customerProfileId')?.invalid && mealReservationForm.get('customerProfileId')?.touched"
+            class="error mt-1">
+            {{ 'FINANCE.CUSTOMER_PROFILE_REQUIRED' | translate }}
+          </div>
+        </div>
+
+        <!-- رقم حجز العميل -->
+        <div class="col-12 col-md-4">
+          <label for="customerReservationNumber" class="text-lg font-semibold mb-1 d-block">رقم حجز العميل</label>
+          <input
+            id="customerReservationNumber"
+            type="text"
+            formControlName="customerReservationNumber"
+            class="form-control h-12"
+          />
+        </div>
+
+        <!-- الوصف -->
+        <div class="col-12 col-md-4">
+          <label for="description" class="text-lg font-semibold mb-1 d-block">الوصف</label>
+          <input
+            id="description"
+            type="text"
+            formControlName="description"
+            class="form-control h-12"
+          />
+        </div>
+
+        <!-- الملاحظات -->
+        <div class="col-12">
+          <label for="notes" class="text-lg font-semibold mb-1 d-block">الملاحظات</label>
+          <textarea
+            id="notes"
+            formControlName="notes"
+            class="form-control"
+            rows="2"
+            style="min-height: 48px; border-radius: 6px;"
+            placeholder="اكتب أي ملاحظات هنا..."
+          ></textarea>
+        </div>
+      </div>
+
+      <!-- Reservation Details Card -->
+      <div class="meal-table-card mt-4" formArrayName="mealReservationEntries">
+        <!-- Table Header Toolbar -->
+        <div class="table-toolbar d-flex flex-wrap align-items-center justify-content-between gap-3 p-3">
+          <div class="d-flex align-items-center gap-2">
+            <i class="pi pi-list text-primary font-bold" style="font-size: 1.15rem;"></i>
+            <span class="font-bold text-gray-800 text-lg">
+              {{ 'RESERVATION.RESERVATION_DETAILS' | translate }}
+            </span>
+            <span class="items-count-badge">
+              <i class="pi pi-box"></i>
+              <span>{{ mealReservationEntries.length }} {{ mealReservationEntries.length === 1 ? 'بند' : 'بنود' }}</span>
+            </span>
+          </div>
+
+          <div class="d-flex align-items-center gap-2">
+            <p-button 
+              type="button" 
+              styleClass="rounded-md p-button-sm" 
+              icon="pi pi-plus" 
+              [label]="'RESERVATION.ADD_MEAL_RESERVATION_ENTRIES' | translate" 
+              (onClick)="addMealReservationEntry()" />
+          </div>
+        </div>
+
+        <div class="table-responsive-wrapper">
+          <table class="meal-erp-table">
+            <colgroup>
+              <col style="width: 2%;">    <!-- # -->
+              <col style="width: 7.5%;">  <!-- تاريخ الوصول -->
+              <col style="width: 7.5%;">  <!-- تاريخ المغادرة -->
+              <col style="width: 5%;">    <!-- عدد الليالي -->
+              <col style="width: 7.5%;">  <!-- الوجبة -->
+              <col style="width: 5.5%;">  <!-- سعر الوجبة -->
+              <col style="width: 5.5%;">  <!-- تكلفة الوجبة -->
+              <col style="width: 5%;">    <!-- عدد الأفراد -->
+              <col style="width: 4.5%;">  <!-- المجاني -->
+              <col style="width: 6%;">    <!-- الإجمالي بعد المجاني -->
+              <col style="width: 7.5%;">  <!-- اسم النزيل -->
+              <col style="width: 6.5%;">  <!-- الجنسية -->
+              <col style="width: 6.5%;">  <!-- وجبة الدخول -->
+              <col style="width: 6.5%;">  <!-- وجبة الخروج -->
+              <col style="width: 5.5%;">  <!-- المبيعات -->
+              <col style="width: 5.5%;">  <!-- التكلفة -->
+              <col style="width: 3.5%;">  <!-- الإجراءات -->
+            </colgroup>
+            <thead>
+              <tr>
+                <th class="th-index text-center">#</th>
+                <th class="text-center">{{ 'RESERVATION.ARRIVAL_DATE' | translate }} <span class="text-danger">*</span></th>
+                <th class="text-center">{{ 'RESERVATION.DEPARTURE_DATE' | translate }} <span class="text-danger">*</span></th>
+                <th class="text-center">{{ 'RESERVATION.NO_OF_NIGHTS' | translate }} <span class="text-danger">*</span></th>
+                <th class="text-center">{{ 'RESERVATION.MEALS' | translate }} <span class="text-danger">*</span></th>
+                <th class="text-center">{{ 'RESERVATION.MEALS_PRICE' | translate }} <span class="text-danger">*</span></th>
+                <th class="text-center">{{ 'RESERVATION.MEALS_COST' | translate }} <span class="text-danger">*</span></th>
+                <th class="text-center">{{ 'RESERVATION.NUMBER_OF_PERSONS' | translate }} <span class="text-danger">*</span></th>
+                <th class="text-center">{{ 'RESERVATION.FREES' | translate }} <span class="text-danger">*</span></th>
+                <th class="text-center">{{ 'RESERVATION.TOTAL_AFTER_FREES' | translate }}</th>
+                <th class="text-center">{{ 'RESERVATION.GUEST' | translate }} <span class="text-danger">*</span></th>
+                <th class="text-center">{{ 'RESERVATION.NATIONALITY' | translate }} <span class="text-danger">*</span></th>
+                <th class="text-center">{{ 'RESERVATION.ENTRING_MEAL' | translate }} <span class="text-danger">*</span></th>
+                <th class="text-center">{{ 'RESERVATION.EXITING_MEAL' | translate }} <span class="text-danger">*</span></th>
+                <th class="text-center">{{ 'FINANCE.SALES' | translate }}</th>
+                <th class="text-center">{{ 'FINANCE.COST' | translate }}</th>
+                <th class="th-action text-center">{{ 'DATA.ACTIONS' | translate }}</th>
+              </tr>
+            </thead>
+            <tbody>
+              <!-- Empty State -->
+              <tr *ngIf="mealReservationEntries.length === 0">
+                <td colspan="17" class="empty-state-cell text-center py-5">
+                  <div class="d-flex flex-column align-items-center justify-content-center text-muted">
+                    <i class="pi pi-inbox mb-2" style="font-size: 2.5rem; color: #94a3b8;"></i>
+                    <p class="text-sm font-medium mb-3 text-slate-500">لا توجد تفاصيل وجبات مضافة حتى الآن</p>
+                    <p-button 
+                      type="button" 
+                      styleClass="rounded-md font-bold" 
+                      icon="pi pi-plus-circle" 
+                      [label]="'RESERVATION.ADD_MEAL_RESERVATION_ENTRIES' | translate" 
+                      (onClick)="addMealReservationEntry()" />
+                  </div>
+                </td>
+              </tr>
+
+              <tr *ngFor="let detail of mealReservationEntries.controls; let i = index" [formGroupName]="i">
+                <td class="text-center font-bold text-slate-500">{{ i + 1 }}</td>
+                <td>
+                  <input id="arrivalDate-{{i}}" formControlName="arrivalDate" type="date" class="form-control form-control-sm cursor-pointer"
+                         onclick="try { this.showPicker() } catch(e) {}" />
+                  <div *ngIf="detail.get('arrivalDate')?.invalid && detail.get('arrivalDate')?.touched" class="error">
+                    {{ 'RESERVATION.ARRIVAL_DATE_REQUIRED' | translate }}
+                  </div>
+                </td>
+                <td>
+                  <input id="departureDate-{{i}}" formControlName="departureDate" type="date" class="form-control form-control-sm cursor-pointer"
+                         [min]="getMinDepartureDate(detail)"
+                         onclick="try { this.showPicker() } catch(e) {}" />
+                  <div *ngIf="detail.get('departureDate')?.invalid && detail.get('departureDate')?.touched" class="error">
+                    {{ 'RESERVATION.DEPARTURE_DATE_REQUIRED' | translate }}
+                  </div>
+                </td>
+                <td>
+                  <input id="numberOfNights-{{i}}" formControlName="numberOfNights" type="number" class="form-control form-control-sm text-center" min="1" />
+                  <div *ngIf="detail.get('numberOfNights')?.invalid && detail.get('numberOfNights')?.touched" class="error">
+                    {{ 'RESERVATION.NO_OF_NIGHTS_REQUIRED' | translate }}
+                  </div>
+                </td>
+                <td>
+                  <p-dropdown appendTo="body" [options]="reservationMealOptions" formControlName="reservationMealId"
+                              placeholder="" optionLabel="label" optionValue="value" [filter]="true" styleClass="w-full p-inputtext-sm">
+                  </p-dropdown>
+                </td>
+                <td>
+                  <input class="form-control form-control-sm text-center" id="mealsPrice-{{i}}" formControlName="mealRate" type="number" [disabled]="!detail.get('reservationMealId')?.value" />
+                </td>
+                <td>
+                  <input class="form-control form-control-sm text-center" id="mealCost-{{i}}" formControlName="mealCost" type="number" [disabled]="!detail.get('reservationMealId')?.value" />
+                </td>
+                <td>
+                  <input class="form-control form-control-sm text-center" id="numberOfPersons-{{i}}" formControlName="numberOfPersons" type="number" />
+                </td>
+                <td>
+                  <input class="form-control form-control-sm text-center" id="frees-{{i}}" formControlName="frees" type="number" min="0" [max]="getFreesMax(detail)" />
+                </td>
+                <td class="text-center font-bold text-slate-700">
+                  {{ getMealReservationEntryTotalPersonsAfterFrees(detail) }}
+                </td>
+                <td>
+                  <input class="form-control form-control-sm" id="guestName-{{i}}" formControlName="guestName" type="text" />
+                </td>
+                <td>
+                  <p-dropdown appendTo="body" id="nationality-{{i}}" [options]="nationalities" formControlName="nationality"
+                              placeholder="" optionLabel="label" optionValue="value" [filter]="true" styleClass="w-full p-inputtext-sm">
+                  </p-dropdown>
+                  <div *ngIf="detail.get('nationality')?.invalid && detail.get('nationality')?.touched" class="error">
+                    {{ 'RESERVATION.NATIONALITY_REQUIRED' | translate }}
+                  </div>
+                </td>
+                <td>
+                  <input class="form-control form-control-sm" id="entringMeal-{{i}}" formControlName="entringMeal" type="text" />
+                </td>
+                <td>
+                  <input class="form-control form-control-sm" id="exitingMeal-{{i}}" formControlName="exitingMeal" type="text" />
+                </td>
+                <td class="text-center font-bold text-primary">
+                  {{ getMealReservationEntryTotalSalesPrice(detail) }}
+                </td>
+                <td class="text-center font-bold text-danger">
+                  {{ getMealReservationEntryTotalCostPrice(detail) }}
+                </td>
+                <td class="text-center">
+                  <button type="button" class="btn-delete-row" (click)="removeMealReservationEntry(i)" title="حذف">
+                    <i class="pi pi-trash"></i>
+                  </button>
+                </td>
+              </tr>
+            </tbody>
+            <tfoot *ngIf="mealReservationEntries.length > 0">
+              <tr class="tfoot-totals-row">
+                <td colspan="14" class="text-center font-bold text-slate-700">
+                  <strong>{{ 'FINANCE.TOTALS' | translate }}</strong>
+                </td>
+                <td class="text-center font-bold text-success" style="font-size: 1.05rem;">
+                  {{ getMealReservationTotals().totalSalesPrice }}
+                </td>
+                <td class="text-center font-bold text-danger" style="font-size: 1.05rem;">
+                  {{ getMealReservationTotals().totalCostPrice }}
+                </td>
+                <td></td>
+              </tr>
+            </tfoot>
+          </table>
+        </div>
+      </div>
+
+      <!-- Totals Summary Card -->
+      <div class="summary-card mt-4 mb-3">
+        <div class="summary-card-header d-flex align-items-center justify-content-between p-3">
+          <div class="summary-card-title d-flex align-items-center gap-2">
+            <i class="pi pi-calculator text-primary font-bold" style="font-size: 1.15rem;"></i>
+            <span class="font-bold text-gray-800 text-lg">{{ 'FINANCE.TOTALS' | translate }}</span>
+          </div>
+        </div>
+        <div class="summary-card-body p-0">
+          <div class="table-responsive">
+            <table class="erp-summary-table">
+              <thead>
+                <tr>
+                  <th class="text-start ps-4">{{ 'RESERVATION.STATEMENT' | translate }}</th>
+                  <th class="text-center">{{ 'FINANCE.TOTALAMOUNTWITHOUTVAT' | translate }}</th>
+                  <th class="text-center">{{ 'FINANCE.VAT' | translate }} (15%)</th>
+                  <th class="text-center">{{ 'FINANCE.TOTALAMOUNT' | translate }}</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td class="font-bold text-start ps-4 text-primary">{{ 'FINANCE.SALES' | translate }}</td>
+                  <td class="text-center font-semibold text-slate-700">{{ salesAmount }}</td>
+                  <td class="text-center font-semibold text-slate-700">{{ calculateVAT(salesAmount) }}</td>
+                  <td class="text-center font-bold text-success" style="font-size: 1.05rem;">{{ calculateTotal(salesAmount) }}</td>
+                </tr>
+                <tr>
+                  <td class="font-bold text-start ps-4 text-danger">{{ 'FINANCE.COST' | translate }}</td>
+                  <td class="text-center font-semibold text-slate-700">{{ costAmount }}</td>
+                  <td class="text-center font-semibold text-slate-700">{{ calculateVAT(costAmount) }}</td>
+                  <td class="text-center font-bold text-danger" style="font-size: 1.05rem;">{{ calculateTotal(costAmount) }}</td>
+                </tr>
+                <tr class="profit-row">
+                  <td class="font-bold text-start ps-4" style="color: #0284c7;">{{ 'FINANCE.PROFIT' | translate }}</td>
+                  <td class="text-center font-bold text-slate-800">{{ calculateDifference(salesAmount, costAmount) }}</td>
+                  <td class="text-center font-bold text-slate-800">{{ calculateDifference(calculateVAT(salesAmount), calculateVAT(costAmount)) }}</td>
+                  <td class="text-center font-bold text-success" style="font-size: 1.1rem;">
+                    {{ calculateDifference(calculateTotal(salesAmount), calculateTotal(costAmount)) }}
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <div class="flex justify-content-end gap-2 no-print mt-4" *ngIf="!isEditMode">
+        <p-button 
+          styleClass="rounded-md" 
+          icon="pi pi-save" 
+          [label]="'DATA.SUBMIT_LABEL' | translate" 
+          (onClick)="onSubmit()" 
+          [disabled]="mealReservationForm.invalid" />
+        <p-button 
+          styleClass="rounded-md" 
+          icon="pi pi-check" 
+          [label]="'FINANCE.SAVE_AND_CONTINUE' | translate" 
+          severity="success" 
+          (onClick)="saveAndContinue()" 
+          [disabled]="mealReservationForm.invalid" />
+        <p-button 
+          styleClass="rounded-md" 
+          icon="pi pi-times" 
+          [label]="'FINANCE.CANCEL' | translate" 
+          severity="secondary" 
+          (onClick)="router.navigate(['/meal-reservations'])" />
+      </div>
+
+      <div class="flex justify-content-end gap-2 no-print mt-4" *ngIf="isEditMode">
+        <p-button 
+          styleClass="rounded-md" 
+          icon="pi pi-save" 
+          [label]="'FINANCE.SAVE' | translate" 
+          (onClick)="onSubmit()" 
+          [disabled]="mealReservationForm.invalid" />
+        <p-button 
+          styleClass="rounded-md" 
+          icon="pi pi-times" 
+          [label]="'FINANCE.CANCEL' | translate" 
+          severity="secondary" 
+          (onClick)="router.navigate(['/meal-reservations'])" />
+      </div>
+    </form>
+  </div>
+</p-panel>
+
+
+<!--<div class="p-5 mt-5" *ngIf="reservationId">
+  &lt;!&ndash; File Upload &ndash;&gt;
+  <div class="mb-4">
+    <p-fileUpload
+      name="file"
+      id="file"
+      mode="basic"
+      chooseIcon="pi pi-upload"
+      accept="application/pdf"
+      (uploadHandler)="onFileSelected($event)"
+      customUpload="true"
+      [auto]="true"
+      chooseLabel="ارفع ملف جديد"/>
+  </div>
+
+  &lt;!&ndash; List of PDFs &ndash;&gt;
+  <div>
+    <table class="min-w-full bg-white shadow-md rounded border border-gray-200">
+      <thead>
+      <tr class="bg-gray-100">
+        <th class="text-center p-3">اسم الملف</th>
+        <th class="text-center p-3">العمليات</th>
+      </tr>
+      </thead>
+      <tbody>
+      <tr *ngFor="let pdf of attachments" class="border-t">
+        <td class="p-3">{{ pdf.fileName }}</td>
+        <td class="p-3 flex justify-center">
+          <button
+            pButton
+            label="عرض"
+            icon="pi pi-eye"
+            class="p-button-text text-blue-500 mr-2"
+            (click)="onView(pdf)"
+          ></button>
+          <p-fileUpload
+            mode="basic"
+            chooseIcon="pi pi-upload"
+            accept="application/pdf"
+            (uploadHandler)="onUpdate($event,pdf)"
+            customUpload="true"
+            [auto]="true"
+            chooseLabel="تعديل"/>
+          <button
+            pButton
+            label="مسح"
+            icon="pi pi-trash"
+            class="p-button-text text-red-500"
+            (click)="onDelete(pdf)"
+          ></button>
+        </td>
+      </tr>
+      </tbody>
+    </table>
+  </div>
+</div>-->
+
+<!-- View PDF Dialog -->
+<!--<p-dialog
+  [(visible)]="viewDialog"
+  [header]="'View PDF'"
+  [style]="{ width: '70vw' , height: '70vh' }"
+>
+  <ng-container *ngIf="currentPdfUrl">
+    <a [href]="currentPdfUrl" target="_blank">
+      <button pButton type="button"  icon="pi pi-download">افتح الملف في نافذة جديدة</button>
+    </a>
+    <embed  [src]="currentPdfUrl" type="application/pdf" width="100%" height="500px" />
+  </ng-container>
+</p-dialog>-->
+
+<p-confirmDialog></p-confirmDialog>
+<p-toast></p-toast>

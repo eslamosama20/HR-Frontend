@@ -1,0 +1,543 @@
+﻿<p-toast></p-toast>
+<div class="container-fluid">
+  <!-- Action Buttons -->
+  <div class="flex justify-between items-center m-5">
+    <div class="flex gap-2">
+      <a *ngIf="hasPermission(PERMISSIONS.PurchaseInvoice.Create)" class="btn btn-primary" (click)="addInvoice()">
+        {{ "INVOICE.ADDINVOICE" | translate }}
+      </a>
+      <button class="btn btn-info" (click)="openViewDialog()">
+        <i class="pi pi-eye"></i> {{ 'INVOICE.VIEW_INVOICES' | translate }}
+      </button>
+    </div>
+    <div *ngIf="selectedInvoices.length >= 1" class="flex gap-2">
+      <button *ngIf="hasPermission(PERMISSIONS.PurchaseInvoice.Delete)" class="btn btn-danger" (click)="deleteAll()">
+        <i class="bi bi-trash"></i> {{ 'INVOICE.DELETE_ALL' | translate }}
+      </button>
+      <button *ngIf="hasPermission(PERMISSIONS.PurchaseInvoice.Create)" class="btn btn-success" (click)="createTransactionForAll()">
+        <i class="bi bi-plus-circle"></i> {{ 'INVOICE.CREATE_TRANSACTION_FOR_ALL' | translate }}
+      </button>
+    </div>
+  </div>
+
+  <!-- Invoice Table -->
+
+  <p-table
+  #dt1
+  [(selection)]="selectedInvoices"
+  [value]="filteredInvoices"
+  [columns]="columns"
+  [resizableColumns]="true"
+  columnResizeMode="expand"
+  dataKey="id"
+
+  [lazy]="true"                       
+  [rows]="rows"                      
+  [totalRecords]="totalRecords"       
+  [rowsPerPageOptions]="rowsPerPageOptions" 
+
+  [sortField]="'invoiceNo'"
+  [sortOrder]="-1"
+  styleClass="p-datatable-gridlines custom-paginator-table"
+  [loading]="loading"
+  [paginator]="true"
+  [paginatorLocale]="activeLanguage === 'en' ? 'en-US' : 'ar-SA'"
+  [showCurrentPageReport]="true"
+  currentPageReportTemplate="اجمالي {{ totalRecords }}"
+  paginatorTemplate="CurrentPageReport PrevPageLink PageLinks NextPageLink RowsPerPageDropdown"
+  [filterDelay]="0"
+  [customSort]="true"
+  (sortFunction)="customSort($event)"  
+
+  (onLazyLoad)="onTableLazyLoad($event)"   
+
+  [scrollable]="true"
+  scrollDirection="horizontal"
+>
+
+    <ng-template pTemplate="caption">
+      <div class="flex rtl:flex-row-reverse justify-between gap-2">
+        <div class="flex gap-2">
+          <p-button
+            styleClass="rounded-md w-auto text-nowrap	"
+            [label]="translate.instant('FINANCE.CLEAR_FILTERS')"
+            [outlined]="true"
+            icon="pi pi-filter-slash"
+            (onClick)="clear(dt1)"
+          />
+        </div>
+
+        <ng-container *ngIf="invoices.length === 0 && !loading">
+          <div class="flex justify-center items-center w-full">
+            <p
+              class="text-center font-semibold text-xl w-full flex justify-center"
+            >
+              {{ "INVOICE.NO_INVOICES" | translate }}
+            </p>
+          </div>
+        </ng-container>
+        <div class="flex justify-between gap-2">
+          <div class="flex flex-wrap gap-3">
+            <div class="flex align-items-center">
+              <p-radioButton
+                name="all"
+                value="all"
+                [(ngModel)]="transactionsFilterType"
+                inputId="all"
+                id="all"
+              />
+              <label for="all" class="ml-2"> {{ 'INVOICE.ALL_TRANSACTIONS' | translate }} </label>
+            </div>
+
+            <div class="flex align-items-center">
+              <p-radioButton
+                name="connected"
+                value="connected"
+                [(ngModel)]="transactionsFilterType"
+                inputId="connected"
+                id="connected"
+              />
+              <label for="connected" class="ml-2"> {{ 'INVOICE.TRANSFERRED_TRANSACTIONS' | translate }} </label>
+            </div>
+            <div class="flex align-items-center">
+              <p-radioButton
+                name="notconnected"
+                value="notconnected"
+                [(ngModel)]="transactionsFilterType"
+                inputId="notconnected"
+                id="notconnected"
+              />
+              <label for="notconnected" class="ml-2">
+                {{ 'INVOICE.NOT_TRANSFERRED_TRANSACTIONS' | translate }}
+              </label>
+            </div>
+          </div>
+          <span class="p-input-icon-left ml-auto">
+            <i class="pi pi-search"></i>
+            <input
+            pInputText
+            type="text"
+            [(ngModel)]="searchValue"
+            [placeholder]="translate.instant('FINANCE.SEARCH')"
+          />
+          </span>
+        </div>
+      </div>
+    </ng-template>
+    <ng-template pTemplate="header" let-columns>
+      <tr>
+        <th class="w-fit"></th>
+
+        <th style="width: 3rem"></th>
+
+        <th
+          style="min-width: fit-content"
+          *ngFor="let column of columns"
+          pResizableColumn
+          [pSortableColumn]="column.field"
+        >
+          <div class="flex align-items-center">
+            {{ column.header }}
+            <p-sortIcon [field]="column.field" class="mx-1"></p-sortIcon>
+            <p-columnFilter
+              *ngIf="column.filter"
+              [type]="column.filterType"
+              [field]="column.field"
+              display="menu"
+              [showClearButton]="true"
+              [showMatchModes]="true"
+              [showOperator]="true"
+              [matchModeOptions]="column.matchModeOptions"
+            />
+          </div>
+        </th>
+        <th style="min-width: fit-content">
+          <div class="flex align-items-center text-base">
+            {{ "FINANCE.ACTIONS" | translate }}
+          </div>
+        </th>
+      </tr>
+    </ng-template>
+    <ng-template pTemplate="body" let-Entry let-i="rowIndex">
+      <tr
+        *ngIf="invoices.length > 0"
+        class="hover:bg-gray-200 cursor-pointer transition-colors duration-200"
+        (click)="viewInvoice(Entry.id)"
+        (contextmenu)="openOverlayInvoice($event, Entry)"
+        style="cursor: pointer"
+      >
+        <td class="text-center">
+          {{ i + 1 }}
+        </td>
+        <td (click)="$event.stopPropagation()">
+          <p-tableCheckbox [value]="Entry"></p-tableCheckbox>
+        </td>
+        <td class="text-lg rtl:text-right">
+          <div class="flex items-center gap-2">
+            {{ Entry.invoiceNo }}
+            <span
+              *ngIf="Entry.quotationNo && Entry.purchaseQuotationId"
+              class="badge bg-info text-white px-2 py-1 rounded text-sm cursor-pointer hover:bg-info-dark transition-colors"
+              [title]="getQuotationBadgeTooltip(Entry.quotationNo)"
+              [attr.aria-label]="getQuotationBadgeTooltip(Entry.quotationNo)"
+              role="button"
+              tabindex="0"
+              (click)="navigateToQuotation(Entry.purchaseQuotationId, $event)"
+              (keydown)="onQuotationBadgeKeydown(Entry.purchaseQuotationId, $event)"
+            >
+              <i class="bi bi-file-earmark-text me-1"></i>
+              {{ Entry.quotationNo }}
+            </span>
+            <span
+              *ngIf="Entry.isFrontal && !isFrontal"
+              class="frontal-badge"
+              [title]="getFrontalStatusText()"
+            >
+              <i class="pi pi-check-circle"></i>
+              {{ getFrontalText() }}
+            </span>
+          </div>
+        </td>
+        <td class="text-lg rtl:text-right">
+          {{ Entry.supplierDetailsName }}
+        </td>
+        <td class="text-lg rtl:text-right">
+          {{ Entry.description }}
+        </td>
+        <td class="text-lg rtl:text-right">
+          {{
+            Entry.issueDate
+              ? (Entry.issueDate | customDate : "yyyy/MM/dd" : "" : "ar-SA")
+              : "-"
+          }}
+        </td>
+        <td class="text-lg rtl:text-right">
+          {{ Entry.totalAmount.toFixed(2) }}
+        </td>
+        <td class="text-lg rtl:text-right">
+          {{ Entry.totalAmountAfterTax.toFixed(2) }}
+        </td>
+
+        <td class="text-lg rtl:text-right flex gap-2">
+          <!-- Overlay panel that holds the buttons -->
+
+          <!-- Button to toggle the overlay panel -->
+          <p-button
+            [text]="true"
+            (onClick)="
+              openOverlayInvoice($event, Entry); $event.stopPropagation()
+            "
+            severity="secondary"
+            styleClass="p-button-outlined rounded-xl"
+          >
+            <ng-template pTemplate="icon">
+              <i class="pi pi-cog text-xl"></i>
+            </ng-template>
+          </p-button>
+        </td>
+      </tr>
+    </ng-template>
+  </p-table>
+  <p-overlayPanel
+    #opInvoice
+    [autoZIndex]="false"
+    [baseZIndex]="80"
+    styleClass="invoice-overlay-panel"
+  >
+    <div class="grid grid-cols-4 gap-2 p-2 max-w-4xl">
+      <p-button
+        icon="bi bi-printer"
+        class="p-button-secondary"
+        [label]="'INVOICE.PRINT' | translate"
+        styleClass="rounded-lg p-button-secondary w-full"
+        (onClick)="printInvoice(selectedInvoice.id)"
+      >
+      </p-button>
+
+      <p-button
+        *ngIf="selectedInvoice?.transactionId === null && hasPermission(PERMISSIONS.PurchaseInvoice.Create)"
+        icon="pi pi-plus-circle"
+        class="p-button-success"
+        [label]="'INVOICE.CREATE_TRANSACTION' | translate"
+        styleClass="rounded-lg p-button-success w-full"
+        (onClick)="createTransaction(selectedInvoice.id)"
+      >
+      </p-button>
+
+      <p-button
+        *ngIf="selectedInvoice?.transactionId !== null"
+        icon="pi pi-external-link"
+        class="p-button-info"
+        [label]="'INVOICE.OPEN_TRANSACTION' | translate"
+        styleClass="rounded-lg p-button-info w-full"
+        [routerLink]="
+          '/accounting/journal-transactions/transaction/' +
+          selectedInvoice.transactionId
+        "
+        target="_blank"
+      >
+      </p-button>
+
+      <p-button
+        *ngIf="hasPermission(PERMISSIONS.PurchaseInvoice.Update)"
+        icon="pi pi-pencil"
+        class="p-button-warning"
+        [label]="'INVOICE.EDIT' | translate"
+        styleClass="rounded-lg p-button-warning w-full"
+        (onClick)="editInvoice(selectedInvoice.id)"
+      >
+      </p-button>
+
+      <p-button
+        icon="pi pi-eye"
+        class="p-button-info"
+        [label]="'INVOICE.VIEW' | translate"
+        styleClass="rounded-lg p-button-info w-full"
+        (onClick)="viewInvoice(selectedInvoice.id)"
+      >
+      </p-button>
+
+      <p-button
+        *ngIf="!isFrontal && !selectedInvoice?.isFrontal && hasPermission(PERMISSIONS.PurchaseInvoice.Update)"
+        icon="pi pi-arrow-left"
+        class="p-button-primary"
+        label="Send To Frontal"
+        styleClass="rounded-lg p-button-primary w-full"
+        (onClick)="makeFrontal(selectedInvoice)"
+      >
+      </p-button>
+
+      <p-button
+        *ngIf="!isFrontal && selectedInvoice?.isFrontal"
+        icon="pi pi-check-circle"
+        class="p-button-success"
+        [label]="getFrontalText()"
+        styleClass="rounded-lg p-button-success w-full"
+        [disabled]="true"
+      >
+      </p-button>
+
+      <p-button
+        *ngIf="hasPermission(PERMISSIONS.PurchaseInvoice.Delete)"
+        [disabled]="loadingStates[selectedInvoice?.id]"
+        icon="pi pi-trash"
+        class="p-button-danger"
+        [label]="'INVOICE.DELETE' | translate"
+        styleClass="rounded-lg p-button-danger w-full"
+        (onClick)="deleteInvoice(selectedInvoice.id)"
+      >
+      </p-button>
+      <p-button
+        *ngIf="hasPermission(PERMISSIONS.PurchaseInvoice.Create)"
+        icon="pi pi-copy"
+        class="p-button-help"
+        [label]="'INVOICE.COPY' | translate"
+        styleClass="rounded-lg p-button-help w-full"
+        (onClick)="copyInvoice(selectedInvoice.id); $event.stopPropagation()"
+      >
+      </p-button>
+    </div>
+  </p-overlayPanel>
+</div>
+
+<ng-container>
+  <div
+    id="printContent"
+    class="absolute top-0 left-[-100%]"
+    *ngIf="docData && docColumns.length > 0"
+  >
+    <app-print-document
+      #printComponent
+      [headerTemplate]="headerTemplate"
+      [footerTemplate]="footerTemplate"
+      [summaryTemplate]="summaryTemplate"
+      [data]="docData"
+      [columns]="docColumns"
+    >
+    </app-print-document>
+
+    <!-- Header Template -->
+    <ng-template #headerTemplate>
+      <div class="w-full" style="margin: 0; padding: 0;">
+        @if (companyDetails) {
+        <table class="w-full" style="border-collapse: collapse; width: 100%; margin: 0; padding: 0; border-spacing: 0;">
+          <tr>
+            <td style="width: auto; min-width: 200px; vertical-align: center; padding: 8px 0 8px 0; text-align: right; margin: 0;" class="text-right">
+              <p class="font-semibold text-lg m-0 p-0">
+                {{companyDetails?.arabicName}}
+              </p>
+              <p class="font-semibold text-lg m-0 p-0" *ngIf="companyDetails?.city">
+                {{companyDetails.city}}
+              </p>
+              <p class="font-semibold text-lg m-0 p-0">
+                {{companyDetails?.phone}}
+              </p>
+              <p class="font-semibold text-lg m-0 p-0">
+                {{ "INVOICE.TAXNUMBER"| translate}}: {{companyDetails?.taxNumber}}
+              </p>
+            </td>
+            <td style="width: 100%; vertical-align: center; text-align: center; padding: 8px;">
+              <img [src]="companyDetails?.logoUrl || ''"
+                   alt="company-logo" width="100" height="100" style="display: block; margin: 0 auto;">
+            </td>
+            <td style="width: auto; min-width: 200px; vertical-align: center; padding: 8px 0 8px 0; margin: 0; text-align: left;">
+              <div style="direction: ltr; text-align: left; unicode-bidi: embed; margin: 0; padding: 0;">
+                <p class="font-semibold text-lg m-0 p-0" style="direction: ltr; text-align: left;">
+                  {{companyDetails?.englishName}}
+                </p>
+                <p class="font-semibold text-lg m-0 p-0" *ngIf="companyDetails?.city" style="direction: ltr; text-align: left;">
+                  {{companyDetails?.city}}
+                </p>
+                <p class="font-semibold text-lg m-0 p-0" style="direction: ltr; text-align: left;">
+                  {{companyDetails?.phone}}
+                </p>
+                <p class="font-semibold text-lg m-0 p-0" style="direction: ltr; text-align: left;">
+                  TAX No: {{companyDetails?.taxNumber}}
+                </p>
+              </div>
+            </td>
+          </tr>
+        </table>
+        }
+        <table class="w-full" style="border-collapse: collapse; width: 100%; border: 1px solid #000; margin-top: 8px;">
+          <tr>
+            <td style="width: auto; padding: 8px 16px; text-align: right;" class="text-right">
+              <p class="font-semibold text-lg m-0" style="white-space: nowrap;">
+                {{ "INVOICE.DATE" | translate }}: {{ invoice.issueDate | customDate: "yyyy-MM-dd" }}
+              </p>
+            </td>
+            <td style="width: 100%; padding: 0; text-align: center;">
+              <h2 class="text-2xl font-bold m-0" style="white-space: nowrap;">
+                {{ "INVOICE.PURCHASE_INVOICE" | translate }}
+              </h2>
+            </td>
+            <td style="width: auto; padding: 8px 16px; text-align: left;" class="text-left">
+              <p class="font-semibold text-lg m-0" style="white-space: nowrap;">
+                {{ "INVOICE.INVOICENO" | translate }}: {{ invoice.invoiceNo }}
+              </p>
+            </td>
+          </tr>
+        </table>
+
+        <table class="w-full" style="border-collapse: collapse; width: 100%; margin-top: 16px;">
+          <tr>
+            <td style="width: auto; padding: 2px 0 2px 0; text-align: left;" class="text-left">
+              <p class="m-0 p-0" style="white-space: nowrap;">
+                {{ "INVOICE.SUPPLIERNAME" | translate }}:
+                {{
+                  activeLanguage === "en"
+                    ? invoice.supplierDetails.englishName
+                    : invoice.supplierDetails?.arabicName
+                }}
+              </p>
+            </td>
+            <td style="width: 100%;"></td>
+            <td style="width: auto; padding: 2px 0 2px 0; text-align: right;" class="text-right" *ngIf="invoice.supplierDetails.taxNumber">
+              <p class="m-0 p-0" style="white-space: nowrap;">
+                {{ "INVOICE.TAXNUMBER" | translate }}:
+                {{ invoice.supplierDetails.taxNumber }}
+              </p>
+            </td>
+          </tr>
+        </table>
+      </div>
+    </ng-template>
+
+    <!-- Summery Template -->
+    <ng-template #summaryTemplate>
+      <div class="w-full" style="display: flex; justify-content: flex-end; width: 100%;">
+        <table class="border border-gray-900" style="font-size: 12px; width: 240px; border-collapse: collapse;">
+          <tbody>
+            <tr>
+              <td class="border border-gray-900" style="padding: 3px 6px;">
+                <strong class="text-dark" style="font-size: 12px;">{{
+                  "INVOICE.TOTAL" | translate
+                }}</strong>
+              </td>
+              <td class="text-center border border-gray-900" style="padding: 3px 6px; font-size: 12px;">
+                {{ getNetPrice() | formatDecimal }}
+              </td>
+            </tr>
+            <tr>
+              <td class="border border-gray-900" style="padding: 3px 6px;">
+                <strong class="text-dark" style="font-size: 12px;">
+                  {{ "INVOICE.ADDEDTAX" | translate }}</strong
+                >
+              </td>
+              <td class="text-center border border-gray-900" style="padding: 3px 6px; font-size: 12px;">
+                {{ getTaxAmount() | formatDecimal }}
+              </td>
+            </tr>
+            <tr>
+              <td class="border border-gray-900" style="padding: 3px 6px;">
+                <strong class="text-dark" style="font-size: 12px;">
+                  {{ "INVOICE.TOTALWITHTAX" | translate }}</strong
+                >
+              </td>
+              <td class="text-center border border-gray-900" style="padding: 3px 6px; font-size: 12px;">
+                <strong class="text-dark" style="font-size: 12px;">{{
+                  getTotalPrice() | formatDecimal
+                }}</strong>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </ng-template>
+    <!-- Footer Template -->
+    <ng-template #footerTemplate>
+      <div class="w-full border border-slate-900 rounded-2xl" style="padding: 8px;">
+        <table class="w-full" style="border-collapse: collapse; width: 100%;">
+          <tr>
+            <td style="width: 25%; text-align: center; vertical-align: top; padding: 8px;">
+              <p class="m-0 p-0 font-semibold text-lg">
+                {{ "INVOICE.RECIPIENT_EMPLOYEE_SIGNATURE" | translate }}:
+              </p>
+              <p class="text-sm font-light m-0 p-0">.............................................................</p>
+            </td>
+            <td style="width: 25%; text-align: center; vertical-align: top; padding: 8px;">
+              <p class="m-0 p-0 font-semibold text-lg">
+                {{ "INVOICE.TREASURY_KEEPER_SIGNATURE" | translate }}:
+              </p>
+              <p class="text-sm font-light m-0 p-0">.............................................................</p>
+            </td>
+            <td style="width: 25%; text-align: center; vertical-align: top; padding: 8px;">
+              <p class="m-0 p-0 font-semibold text-lg">
+                {{ "INVOICE.SECTION_MANAGER_SIGNATURE" | translate }}:
+              </p>
+              <p class="text-sm font-light m-0 p-0">.............................................................</p>
+            </td>
+            <td style="width: 25%; text-align: center; vertical-align: top; padding: 8px;">
+              <p class="m-0 p-0 font-semibold text-lg">
+                {{ "INVOICE.EXPENSES_MANAGER_SIGNATURE" | translate }}:
+              </p>
+              <p class="text-sm font-light m-0 p-0">.............................................................</p>
+            </td>
+          </tr>
+        </table>
+      </div>
+      <div class="w-full" style="margin-top: 16px;" *ngIf="companyDetails?.stampUrl">
+        <table class="w-full" style="border-collapse: collapse; width: 100%;">
+          <tr>
+            <td style="width: 25%;"></td>
+            <td style="width: 25%;"></td>
+            <td style="width: 25%;"></td>
+            <td style="width: 25%; text-align: center; vertical-align: middle; padding: 8px;">
+              <img [src]="companyDetails?.stampUrl || ''" alt="company-stamp" width="120" height="120" style="display: block; margin: 0 auto;">
+            </td>
+          </tr>
+        </table>
+      </div>
+      <!-- Footer address and page number - fixed at bottom in print -->
+      <div class="print-footer-address">
+        <table class="w-full" style="border-collapse: collapse; width: 100%;">
+          <tr>
+            <td style="text-align: center; width: 80%;" class="text-right">
+              {{ companyDetails?.getFullAddress() }}
+            </td>
+          </tr>
+        </table>
+      </div>
+    </ng-template>
+  </div>
+</ng-container>

@@ -1,0 +1,160 @@
+<p-table
+  #dt1
+  [value]="roles"
+  [columns]="columns"
+  [globalFilterFields]="['name']"
+  [resizableColumns]="true"
+  columnResizeMode="expand"
+  dataKey="id"
+  [rows]="10"
+  [sortField]="'createdAt'"    
+  [sortOrder]="-1"
+  styleClass="p-datatable-gridlines scroller custom-paginator-table"
+  [rowsPerPageOptions]="[10, 25, 50]"
+  [loading]="loading"
+  [paginator]="true"
+  [paginatorLocale]="activeLanguage === 'en' ? 'en-US' : 'ar-SA'"
+  [showCurrentPageReport]="true"
+  currentPageReportTemplate="اجمالي {{ roles?.length ? (roles.length) : '' }}"
+  paginatorTemplate="CurrentPageReport PrevPageLink PageLinks NextPageLink RowsPerPageDropdown"
+>
+  <ng-template pTemplate="caption">
+    <div class="flex rtl:flex-row-reverse justify-between gap-2">
+      <div class="flex gap-2">
+        <p-button
+          styleClass="rounded-md w-auto text-nowrap"
+          icon="pi pi-external-link"
+          [label]="translate.instant('FINANCE.EXPORT')"
+          (onClick)="exportExcel()"
+        ></p-button>
+        <p-button
+          styleClass="rounded-md w-auto text-nowrap"
+          [label]="translate.instant('FINANCE.CLEAR_FILTERS')"
+          [outlined]="true"
+          icon="pi pi-filter-slash"
+          (onClick)="clear(dt1)"
+        ></p-button>
+        <p-button
+          styleClass="rounded-md w-auto text-nowrap"
+          [label]="translate.instant('FINANCE.ADD_ROLE')"
+          [outlined]="true"
+          icon="pi pi-plus"
+          [routerLink]="['/roles-management/create']"
+        ></p-button>
+      </div>
+
+      <ng-container *ngIf="roles.length === 0 && !loading">
+        <div class="flex justify-center items-center w-full">
+          <p
+            class="text-center font-semibold text-xl w-full flex justify-center"
+          >
+            {{ "FINANCE.NO_ROLES" | translate }}
+          </p>
+        </div>
+      </ng-container>
+
+      <span class="p-input-icon-left ml-auto">
+        <i class="pi pi-search"></i>
+        <input
+          pInputText
+          type="text"
+          [(ngModel)]="searchValue"
+          (input)="filter(dt1, $event)"
+          [placeholder]="translate.instant('FINANCE.SEARCH')"
+        />
+      </span>
+    </div>
+  </ng-template>
+
+  <ng-template pTemplate="header" let-columns>
+    <tr>
+      <th style="width: 4rem">
+        <div class="flex align-items-center text-base">
+          #
+        </div>
+      </th>
+      <th
+        style="min-width: fit-content"
+        *ngFor="let column of columns"
+        pResizableColumn
+        [pSortableColumn]="column.field"
+      >
+        <div class="flex align-items-center">
+          {{ column.header }}
+          <p-sortIcon [field]="column.field" class="mx-1"></p-sortIcon>
+          <p-columnFilter
+            *ngIf="column.filter"
+            [type]="column.filterType"
+            [field]="column.field"
+            display="menu"
+          />
+        </div>
+      </th>
+      <th style="min-width: fit-content">
+        <div class="flex align-items-center text-base">
+          {{ "FINANCE.ACTIONS" | translate }}
+        </div>
+      </th>
+    </tr>
+  </ng-template>
+
+  <ng-template pTemplate="body" let-Entry let-rowIndex="rowIndex">
+    <tr
+      *ngIf="roles.length > 0"
+      (click)="showRoleDialog(Entry)"
+      (contextmenu)="showRoleOverlay($event, Entry)"
+      class="hover:bg-gray-200 cursor-pointer transition-colors duration-200"
+    >
+      <td class="text-lg rtl:text-right">
+        {{ rowIndex + 1 }}
+      </td>
+      <td class="text-lg rtl:text-right">
+        {{ Entry.name }}
+      </td>
+      <td class="text-lg rtl:text-right">
+        {{
+          Entry.createdAt
+            ? (Entry.createdAt | customDate : "yyyy/MM/dd" : "" : "ar-SA")
+            : "-"
+        }}
+      </td>
+      <td
+        class="text-lg rtl:text-right flex gap-2"
+        (click)="$event.stopPropagation()"
+      >
+        <p-button
+          styleClass="p-button-outlined rounded-xl gear-button"
+          [text]="true"
+          (onClick)="showRoleOverlay($event, Entry)"
+          severity="secondary"
+        >
+          <ng-template pTemplate="icon">
+            <i class="pi pi-cog text-xl"></i>
+          </ng-template>
+        </p-button>
+      </td>
+    </tr>
+  </ng-template>
+</p-table>
+
+<p-overlayPanel #opRole [autoZIndex]="true">
+  <div class="flex flex-column gap-3 w-auto p-1">
+    <p-button
+      icon="pi pi-eye"
+      [label]="translate.instant('FINANCE.EDIT')"
+      styleClass="rounded-lg p-button-secondary w-full"
+      [routerLink]="['/roles-management/view', selectedRole?.id]"
+      (onClick)="opRole.hide()"
+    ></p-button>
+
+    <p-button
+      icon="pi pi-trash"
+      [label]="translate.instant('FINANCE.DELETE')"
+      styleClass="rounded-lg p-button-danger w-full"
+      (onClick)="opRole.hide(); confirmRoleDeletion($event, selectedRole)"
+    ></p-button>
+  </div>
+</p-overlayPanel>
+
+<p-confirmDialog></p-confirmDialog>
+<p-toast></p-toast>

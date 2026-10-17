@@ -1,0 +1,445 @@
+/* ================================
+   Reservation Daily Grid — Themed SCSS
+   ===================================== */
+
+/* ---------- Layout ---------- */
+.page-wrapper {
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  color: #283040;
+
+  /* Default (Light) CSS variables — keep current look */
+  --line: #d7e6f3;
+  --cell-bg: #fff;
+
+  /* Form (filters) */
+  --field-label: #5b6b7c;
+  --field-input-bg: #f8fcff;
+  --field-input-border: #b7d0e6;
+  --field-input-focus: #72a7d6;
+  --field-focus-shadow: rgba(114, 167, 214, 0.15);
+
+  /* Buttons */
+  --btn-primary-bg: #4aa3ff;
+  --btn-primary-text: #ffffff;
+
+  --btn-info-bg: #63c3ff;
+  --btn-info-text: #ffffff;
+
+  --btn-danger-bg: #ffb7b7;
+  --btn-danger-text: #3a2b2b;
+
+  /* Header cells & labels */
+  --header-bg: #f3f9ff;
+  --row-label-bg: #eaf4ff;
+  --header-date-color: #2a6fb0;
+  --header-day-color: #6c7f93;
+}
+
+/* ---------- Filters ---------- */
+.filters {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(200px, 1fr));
+  gap: 12px 16px;
+  align-items: end;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+
+  label {
+    font-size: 12px;
+    color: var(--field-label);
+  }
+
+  select,
+  input[type="date"] {
+    height: 36px;
+    border: 1px solid var(--field-input-border);
+    border-radius: 6px;
+    padding: 0 10px;
+    background: var(--field-input-bg);
+    outline: none;
+
+    &:focus {
+      border-color: var(--field-input-focus);
+      box-shadow: 0 0 0 2px var(--field-focus-shadow);
+    }
+  }
+}
+
+.field.checkbox {
+  grid-column: span 2;
+
+  label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  input {
+    width: 16px;
+    height: 16px;
+  }
+}
+
+/* ---------- Actions ---------- */
+.actions {
+  grid-column: 1 / -1;
+  display: flex;
+  gap: 8px;
+  justify-content: flex-start;
+}
+
+.btn {
+  border: 0;
+  padding: 8px 16px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 600;
+  box-shadow: 0 2px 0 rgba(0, 0, 0, 0.06);
+}
+.btn.primary {
+  background: var(--btn-primary-bg);
+  color: var(--btn-primary-text);
+}
+.btn.info {
+  background: var(--btn-info-bg);
+  color: var(--btn-info-text);
+}
+.btn.danger {
+  background: var(--btn-danger-bg);
+  color: var(--btn-danger-text);
+}
+
+/* ---------- Loading States ---------- */
+.state {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: #475569;
+  margin: 12px 0;
+
+  .spinner {
+    width: 18px;
+    height: 18px;
+    border: 2px solid #cbd5e1;
+    border-top-color: #6366f1;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+  }
+}
+.state.empty {
+  color: #64748b;
+}
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* ---------- Table wrapper ---------- */
+.table-wrapper {
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  overflow: auto;
+  background: #fff;
+
+  /* === Scrollbar base (appears in all themes) === */
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: thin; /* Firefox */
+  scrollbar-color: #9ca3af #e5e7eb; /* thumb track */
+
+  /* WebKit (Chrome/Edge/Safari) */
+  &::-webkit-scrollbar {
+    height: 10px; /* horizontal */
+    width: 10px;  /* vertical if needed */
+  }
+  &::-webkit-scrollbar-track {
+    background: #e5e7eb;
+    border-radius: 8px;
+  }
+  &::-webkit-scrollbar-thumb {
+    background: #9ca3af;
+    border-radius: 8px;
+    border: 2px solid #e5e7eb; /* padding illusion */
+  }
+  &:hover::-webkit-scrollbar-thumb {
+    background: #6b7280;
+  }
+}
+
+/* ---------- Grid table ---------- */
+.grid-table {
+  --label-col: 220px;
+  display: grid;
+  grid-template-columns: var(--label-col) repeat(var(--cols), minmax(120px, 1fr));
+  width: max-content;
+  min-width: 100%;
+  direction: rtl; /* <<< لضمان أن أول عمود يظهر يمين */
+}
+
+/* ---------- Cells ---------- */
+.cell {
+  border-right: 1px solid var(--line);
+  border-bottom: 1px solid var(--line);
+  padding: 8px 10px;
+  background: var(--cell-bg);
+  min-height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.row-label {
+  justify-content: flex-start;
+  font-weight: 600;
+  background: var(--row-label-bg);
+  position: sticky;
+  left: 0; /* موجود من كودك الأصلي */
+  /* إضافة تثبيت يمين باستخدام خصائص منطقية + تعطيل left */
+  left: auto;
+  inset-inline-end: 0;
+  z-index: 2;
+  box-shadow: -6px 0 8px -6px rgba(0, 0, 0, 0.06); /* ظل بسيط للفصل عند اليمين */
+}
+
+.cell-header {
+  position: sticky;
+  top: 0;
+  z-index: 3;
+  background: var(--header-bg);
+  font-weight: 700;
+  text-align: center;
+  flex-direction: column;
+  gap: 2px;
+
+  .date {
+    color: var(--header-date-color);
+  }
+  .day {
+    color: var(--header-day-color);
+    font-size: 12px;
+  }
+}
+
+.left-corner {
+  position: sticky;
+  top: 0;
+  left: 0; /* موجود من كودك الأصلي */
+  /* نجعلها تلتصق باليمين (أعلى-يمين) */
+  left: auto;
+  inset-inline-end: 0;
+  z-index: 4;
+  background: var(--header-bg);
+  border-bottom: 1px solid var(--line);
+}
+
+/* ---------- Pastel bands ---------- */
+.bg-purple {
+  background: #f4eaff !important;
+}
+.bg-yellow {
+  background: #fff5cc !important;
+}
+.bg-pink {
+  background: #ffe6ef !important;
+}
+.bg-green {
+  background: #e7f7ef !important;
+}
+.bg-red {
+  background: #ffe1e1 !important;
+}
+
+/* ---------- Print ---------- */
+@media print {
+  .filters,
+  .actions {
+    display: none !important;
+  }
+  .page-wrapper {
+    padding: 0;
+  }
+  .table-wrapper {
+    border: none;
+  }
+  .grid-table {
+    width: 100%;
+  }
+  /* sticky مش مطلوب في الطباعة */
+  .row-label,
+  .left-corner,
+  .cell-header {
+    position: static !important;
+    box-shadow: none !important;
+  }
+}
+
+/* =========================================================
+   THEME OVERRIDES (applied only when page is inside theme)
+   — No change to default light/dark colors
+   — Add one of these classes/attrs to a parent container:
+     .light-green-mode / [data-bs-theme="light-green"] / body.light-green
+     .light-indigo-mode / [data-bs-theme="light-indigo"] / body.light-indigo
+     .light-darkblue-mode / [data-bs-theme="light-darkblue"] / body.light-darkblue
+   ========================================================= */
+
+/* ---------- Light-Green ---------- */
+$green-sels: ".light-green-mode", '[data-bs-theme="light-green"]',
+  "body.light-green";
+@each $sel in $green-sels {
+  :host-context(#{$sel}) .page-wrapper {
+    --line: #93d5d1;
+    --cell-bg: #f9fffe;
+
+    --field-label: #092c4c;
+    --field-input-bg: #e4f6ff;
+    --field-input-border: #93d5d1;
+    --field-input-focus: #018897;
+    --field-focus-shadow: rgba(1, 136, 151, 0.15);
+
+    --btn-primary-bg: #018897;
+    --btn-primary-text: #ffffff;
+
+    /* تظليل معلوماتي/تحذيري بنفس لوحة الأخضر */
+    --btn-info-bg: #7edce0;
+    --btn-info-text: #083b42;
+
+    --btn-danger-bg: #ffd7d7;
+    --btn-danger-text: #7a1d1d;
+
+    --header-bg: #c6ecea; /* رأس الجدول */
+    --row-label-bg: #f3fdff; /* عمود العناوين */
+    --header-date-color: #018897; /* لون التاريخ */
+    --header-day-color: #0a2d3e; /* لون اليوم */
+  }
+
+  /* === Scrollbar colors for Light-Green === */
+  :host-context(#{$sel}) .table-wrapper {
+    scrollbar-color: #2aa5b3 #d7f3f5; /* thumb track */
+  }
+  :host-context(#{$sel}) .table-wrapper::-webkit-scrollbar-track {
+    background: #d7f3f5;
+  }
+  :host-context(#{$sel}) .table-wrapper::-webkit-scrollbar-thumb {
+    background: #2aa5b3;
+    border-color: #d7f3f5;
+  }
+  :host-context(#{$sel}) .table-wrapper:hover::-webkit-scrollbar-thumb {
+    background: #0d7b88;
+  }
+}
+
+/* ---------- Light-Indigo ---------- */
+$indigo-sels: ".light-indigo-mode", '[data-bs-theme="light-indigo"]',
+  "body.light-indigo";
+@each $sel in $indigo-sels {
+  :host-context(#{$sel}) .page-wrapper {
+    --line: #bfc7f0;
+    --cell-bg: #ffffff;
+
+    --field-label: #2e2a40;
+    --field-input-bg: #e4e9ff;
+    --field-input-border: #3e4981;
+    --field-input-focus: #3e4981;
+    --field-focus-shadow: rgba(62, 73, 129, 0.18);
+
+    --btn-primary-bg: #3e4981;
+    --btn-primary-text: #ffffff;
+
+    --btn-info-bg: #8fa3ff;
+    --btn-info-text: #1f2650;
+
+    --btn-danger-bg: #ffc9d0;
+    --btn-danger-text: #5b1d29;
+
+    --header-bg: #c9d0f5;
+    --row-label-bg: #e4e9ff;
+    --header-date-color: #3e4981;
+    --header-day-color: #5d6679;
+  }
+
+  /* === Scrollbar colors for Light-Indigo === */
+  :host-context(#{$sel}) .table-wrapper {
+    scrollbar-color: #5a6acb #dbe2ff; /* thumb track */
+  }
+  :host-context(#{$sel}) .table-wrapper::-webkit-scrollbar-track {
+    background: #dbe2ff;
+  }
+  :host-context(#{$sel}) .table-wrapper::-webkit-scrollbar-thumb {
+    background: #5a6acb;
+    border-color: #dbe2ff;
+  }
+  :host-context(#{$sel}) .table-wrapper:hover::-webkit-scrollbar-thumb {
+    background: #3e4981;
+  }
+}
+
+/* ---------- Light-DarkBlue ---------- */
+$darkblue-sels: ".light-darkblue-mode", '[data-bs-theme="light-darkblue"]',
+  "body.light-darkblue";
+@each $sel in $darkblue-sels {
+  :host-context(#{$sel}) .page-wrapper {
+    --line: #cfd2e6; /* حد خفيف يناسب الخلفية الفاتحة */
+    --cell-bg: #ffffff;
+
+    --field-label: #191d29;
+    --field-input-bg: #eeedff;
+    --field-input-border: #191d29;
+    --field-input-focus: #191d29;
+    --field-focus-shadow: rgba(25, 29, 41, 0.18);
+
+    --btn-primary-bg: #191d29;
+    --btn-primary-text: #ffffff;
+
+    --btn-info-bg: #dad7ff;
+    --btn-info-text: #10131b;
+
+    --btn-danger-bg: #ffd9de;
+    --btn-danger-text: #2e0f16;
+
+    --header-bg: #dad7ff;
+    --row-label-bg: #eef0ff;
+    --header-date-color: #191d29;
+    --header-day-color: #475569;
+  }
+
+  /* === Scrollbar colors for Light-DarkBlue === */
+  :host-context(#{$sel}) .table-wrapper {
+    scrollbar-color: #2b3248 #e5e7f5; /* thumb track */
+  }
+  :host-context(#{$sel}) .table-wrapper::-webkit-scrollbar-track {
+    background: #e5e7f5;
+  }
+  :host-context(#{$sel}) .table-wrapper::-webkit-scrollbar-thumb {
+    background: #2b3248;
+    border-color: #e5e7f5;
+  }
+  :host-context(#{$sel}) .table-wrapper:hover::-webkit-scrollbar-thumb {
+    background: #191d29;
+  }
+}
+
+/* =============== (اختياري) دعم داكن إن كان موجود فعلاً بالمشروع ===============
+   لا نغير ألوان الوضع الداكن/الفاتح الإفتراضيتين هنا (حسب طلبك).
+   إن كانت لديك طبقة داكنة عامة، ستستمر بالعمل كما هي.
+   ============================================================================ */
+
+/* Larger grid text (1.125rem) as requested */
+.grid-table {
+  font-size: 1.125rem;
+}
+
+.grid-table .cell,
+.grid-table .row-label,
+.grid-table .cell-header {
+  font-size: 1.125rem;
+}
+
+.grid-table .cell-header .day {
+  font-size: 1.125rem;
+}

@@ -1,0 +1,480 @@
+:host {
+  display: block;
+}
+
+.zatca-readiness {
+  margin-top: 0.55rem;
+  padding-top: 0.45rem;
+  border-top: 1px dashed #c8d6e5;
+  font-size: 0.68rem;
+  color: #3a516d;
+}
+
+.zatca-vat-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-weight: 800;
+  margin-bottom: 0.25rem;
+}
+
+.zatca-breakdown-hint {
+  margin: 0 0 0.4rem;
+  font-size: 0.6rem;
+  color: #5d7690;
+  line-height: 1.35;
+}
+
+.zatca-qr-slot {
+  text-align: center;
+}
+
+.zatca-qr-placeholder-box {
+  width: 92px;
+  height: 92px;
+  margin: 0 auto 0.25rem;
+  border: 2px dashed #9db4ce;
+  border-radius: 8px;
+  background: repeating-linear-gradient(
+    45deg,
+    #f4f8fc,
+    #f4f8fc 6px,
+    #e8f0fa 6px,
+    #e8f0fa 12px
+  );
+}
+
+.zatca-qr-slot small {
+  color: #5d7690;
+  font-weight: 600;
+}
+
+.receipt-shell {
+  display: flex;
+  justify-content: center;
+}
+
+.receipt-paper {
+  width: 80mm;
+  max-width: 100%;
+  background: #ffffff;
+  border: 1px dashed #c4d3e4;
+  border-radius: 12px;
+  padding: 0.7rem 0.68rem;
+  color: #1f2f45;
+  font-family: "Cairo", "Tajawal", sans-serif;
+  box-shadow: 0 10px 26px rgba(18, 39, 66, 0.1);
+}
+
+.receipt-header {
+  margin-bottom: 0.45rem;
+  padding-bottom: 0.35rem;
+
+  .receipt-company-logo {
+    max-height: 52px;
+    max-width: 140px;
+    margin: 0 auto 0.35rem;
+    display: block;
+    object-fit: contain;
+  }
+
+  h4 {
+    margin: 0;
+    font-size: 0.95rem;
+    font-weight: 900;
+    color: #0f2744;
+    letter-spacing: 0.02em;
+  }
+
+  p {
+    margin: 0.15rem 0 0;
+    font-size: 0.72rem;
+    color: #4a637d;
+    font-weight: 700;
+  }
+}
+
+.receipt-header.center {
+  text-align: center;
+}
+
+.meta-classic {
+  border-top: 1px dashed #d4e2f1;
+  border-bottom: 1px dashed #d4e2f1;
+  padding: 0.35rem 0;
+  margin-bottom: 0.4rem;
+
+  p {
+    margin: 0.1rem 0;
+    font-size: 0.72rem;
+    color: #3e5772;
+    font-weight: 700;
+  }
+
+  span {
+    color: #647f9b;
+  }
+}
+
+.meta-classic-split {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+
+  .meta-right {
+    flex: 1;
+  }
+
+  .meta-left {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.18rem;
+    padding: 0.2rem 0.4rem;
+    background: #f4f8fc;
+    border-radius: 6px;
+    border: 1px dashed #b8cde4;
+
+    .mixed-badge-item {
+      font-size: 0.7rem;
+      color: #1e3a58;
+      display: flex;
+      align-items: center;
+      gap: 0.25rem;
+
+      span {
+        color: #53708e;
+        font-weight: 700;
+      }
+      strong {
+        color: #112d4a;
+        font-weight: 800;
+      }
+    }
+  }
+}
+
+.compact-meta p {
+  font-size: 0.67rem;
+}
+
+.line-block {
+  display: grid;
+  gap: 0.3rem;
+}
+
+.line-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  gap: 0.3rem;
+  font-size: 0.72rem;
+  color: #27405e;
+
+  .name {
+    font-weight: 700;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .qty {
+    font-weight: 700;
+    color: #5f7892;
+  }
+
+  .total {
+    font-weight: 800;
+  }
+}
+
+.totals-box {
+  border-top: 1px dashed #d4e2f1;
+  margin-top: 0.45rem;
+  padding-top: 0.36rem;
+  display: grid;
+  gap: 0.2rem;
+
+  > div {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-size: 0.74rem;
+    color: #425d79;
+  }
+
+  .grand {
+    padding-top: 0.2rem;
+    border-top: 1px dotted #d4e2f1;
+    font-size: 0.82rem;
+    font-weight: 900;
+    color: #18304a;
+  }
+}
+
+.receipt-footer {
+  margin-top: 0.45rem;
+  border-top: 1px dashed #d4e2f1;
+  padding-top: 0.28rem;
+  text-align: center;
+
+  p {
+    margin: 0.1rem 0;
+    font-size: 0.68rem;
+    color: #5f7792;
+    font-weight: 700;
+  }
+}
+
+.qr-box {
+  margin-top: 0.45rem;
+  border-top: 1px dashed #d4e2f1;
+  padding-top: 0.35rem;
+  display: grid;
+  justify-items: center;
+  gap: 0.15rem;
+
+  small {
+    font-size: 0.66rem;
+    color: #5d7793;
+    font-weight: 700;
+  }
+}
+
+.tpl-compact {
+  .receipt-paper {
+    border-style: solid;
+  }
+
+  .compact-head h4 {
+    font-size: 0.82rem;
+  }
+
+  .compact-lines .line-row {
+    font-size: 0.68rem;
+  }
+}
+
+.tpl-modern {
+  .receipt-paper {
+    border: 1px solid #dbe8f4;
+    background: linear-gradient(180deg, #fbfdff 0%, #ffffff 100%);
+  }
+
+  .modern-head {
+    display: flex;
+    align-items: center;
+    gap: 0.42rem;
+  }
+
+  .store-badge {
+    width: 22px;
+    height: 22px;
+    border-radius: 7px;
+    display: grid;
+    place-items: center;
+    background: linear-gradient(135deg, #0f6fb6, #14a38a);
+    color: #fff;
+    font-size: 0.58rem;
+    font-weight: 900;
+  }
+
+  .meta-grid {
+    margin-top: 0.35rem;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.25rem;
+
+    div {
+      border: 1px solid #e3edf8;
+      border-radius: 7px;
+      padding: 0.18rem 0.25rem;
+      background: #f8fbff;
+      display: grid;
+      gap: 0.05rem;
+    }
+
+    span {
+      font-size: 0.6rem;
+      color: #63809b;
+      font-weight: 700;
+    }
+
+    strong {
+      font-size: 0.67rem;
+      color: #21384f;
+      font-weight: 800;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+  }
+
+  .modern-lines .line-row {
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center;
+
+    .name-wrap {
+      display: grid;
+      gap: 0.05rem;
+    }
+
+    small {
+      color: #6f88a3;
+      font-size: 0.63rem;
+      font-weight: 700;
+    }
+  }
+
+  .modern-total {
+    border-top-style: solid;
+  }
+}
+
+.tpl-pro {
+  .receipt-paper {
+    border: 1px solid #c8ddef;
+    background: linear-gradient(180deg, #f7fbff 0%, #ffffff 100%);
+    box-shadow: 0 10px 28px rgba(19, 48, 74, 0.12);
+  }
+
+  .pro-head {
+    border: 1px solid #d7e7f6;
+    border-radius: 10px;
+    padding: 0.35rem 0.4rem;
+    background: linear-gradient(135deg, #f2f8ff 0%, #eef6ff 100%);
+    display: flex;
+    justify-content: space-between;
+    gap: 0.35rem;
+    align-items: center;
+  }
+
+  .pro-title h4 {
+    font-size: 0.78rem;
+  }
+
+  .pro-title p {
+    margin-top: 0.1rem;
+    font-size: 0.62rem;
+  }
+
+  .pro-invoice {
+    text-align: left;
+    display: grid;
+    gap: 0.05rem;
+    min-width: 0;
+
+    strong {
+      font-size: 0.64rem;
+      color: #1a3b5d;
+      font-weight: 900;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    small {
+      font-size: 0.59rem;
+      color: #607d98;
+      font-weight: 700;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+  }
+
+  .pro-meta-grid {
+    margin-top: 0.35rem;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.25rem;
+
+    > div {
+      border: 1px solid #e1ebf6;
+      border-radius: 7px;
+      padding: 0.2rem 0.28rem;
+      display: grid;
+      gap: 0.04rem;
+      background: #fbfdff;
+      min-width: 0;
+    }
+
+    span {
+      font-size: 0.58rem;
+      color: #6884a0;
+      font-weight: 700;
+    }
+
+    strong {
+      font-size: 0.64rem;
+      color: #24405d;
+      font-weight: 800;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+  }
+
+  .pro-table-wrap {
+    margin-top: 0.38rem;
+    border: 1px solid #dce9f5;
+    border-radius: 8px;
+    overflow: hidden;
+  }
+
+  .pro-items-table {
+    width: 100%;
+    border-collapse: collapse;
+    table-layout: fixed;
+
+    th,
+    td {
+      padding: 0.2rem 0.16rem;
+      font-size: 0.61rem;
+      color: #284664;
+      text-align: center;
+    }
+
+    th {
+      background: #f2f7fd;
+      color: #5f7d99;
+      font-weight: 800;
+      border-bottom: 1px solid #dce9f5;
+    }
+
+    tbody tr:not(:last-child) td {
+      border-bottom: 1px dashed #e3edf8;
+    }
+
+    .align-right {
+      text-align: right;
+    }
+
+    .name {
+      font-weight: 700;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+  }
+
+  .pro-total {
+    border-top-style: solid;
+
+    .grand {
+      border: 1px solid #d8e8f8;
+      border-radius: 8px;
+      padding: 0.28rem 0.32rem;
+      background: #f4f9ff;
+      font-size: 0.78rem;
+    }
+  }
+
+  .pro-qr {
+    border-top-style: solid;
+    margin-top: 0.4rem;
+
+    small {
+      font-size: 0.64rem;
+    }
+  }
+}

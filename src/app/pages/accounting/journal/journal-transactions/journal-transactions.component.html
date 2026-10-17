@@ -1,0 +1,357 @@
+<p-table #dt1 [value]="transactions" [columns]="columns" [resizableColumns]="true" columnResizeMode="expand"
+  appStickyHorizontalScroll
+  dataKey="id" [rows]="pageSize" [totalRecords]="totalRecords" [lazy]="true" (onLazyLoad)="loadTransactionsLazy($event)"
+  styleClass="p-datatable-gridlines scroller custom-paginator-table" [rowsPerPageOptions]="[10, 25, 50]"
+  [loading]="loading" [paginator]="true" [paginatorLocale]="activeLanguage === 'en' ? 'en-US' : 'ar-SA'"
+  [(selection)]="selectedTransactions" (onPage)="onPageChange($event)" [showCurrentPageReport]="true"
+  currentPageReportTemplate="اجمالي {{ totalRecords }}"
+  paginatorTemplate="CurrentPageReport PrevPageLink PageLinks NextPageLink RowsPerPageDropdown"
+  [sortField]="'createdAt'" [sortOrder]="-1" [tableStyle]="">
+  <ng-template pTemplate="caption">
+    <div class="flex rtl:flex-row-reverse justify-between gap-2">
+      <div class="flex gap-2">
+        <p-button *ngIf="selectedTransactions.length > 0 && hasPermission(PERMISSIONS.Transaction.Delete)" styleClass="p-button-danger rounded-md w-auto"
+          icon="pi pi-trash"
+          [label]="translate.instant('FINANCE.DELETE_SELECTED') + ' (' + selectedTransactions.length + ')'"
+          [disabled]="isBulkDeleting" (onClick)="confirmBulkDelete($event)" />
+        <input type="file" accept=".xlsx,.xls" (change)="onFileSelect($event)" style="display: none;" #fileUpload />
+        <p-button *ngIf="hasPermission(PERMISSIONS.Transaction.Import)" styleClass="rounded-md w-auto"
+          icon="pi pi-file-excel" [label]="translate.instant('FINANCE.IMPORT_EXCEL')"
+          (onClick)="showImportInstructionsDialog()" />
+        <p-button *ngIf="hasPermission(PERMISSIONS.Transaction.Export)" styleClass="rounded-md w-auto text-nowrap"
+          icon="pi pi-external-link" [label]="translate.instant('FINANCE.EXPORT')" (onClick)="dt1.exportCSV()" />
+        <p-button styleClass="rounded-md w-auto text-nowrap	" [label]="translate.instant('FINANCE.CLEAR_FILTERS')"
+          [outlined]="true" icon="pi pi-filter-slash" (onClick)="clear(dt1)" />
+        <p-button
+          [styleClass]="showDeleted ? 'p-button-danger rounded-md w-auto text-nowrap' : 'rounded-md w-auto text-nowrap'"
+          [label]="showDeleted ? (translate.instant('FINANCE.SHOW_ACTIVE_TRANSACTIONS')) : (translate.instant('FINANCE.SHOW_DELETED_TRANSACTIONS'))"
+          [outlined]="!showDeleted" [icon]="showDeleted ? 'pi pi-check-circle' : 'pi pi-trash'"
+          (onClick)="toggleShowDeleted(dt1)" />
+        <p-button *ngIf="hasPermission(PERMISSIONS.Transaction.Create)" styleClass="rounded-md w-auto text-nowrap	" [label]="translate.instant('FINANCE.ADD_TRANSACTION')"
+          [outlined]="true" icon="pi pi-plus" (onClick)="navigateToAddTransaction()" />
+      </div>
+
+      <ng-container *ngIf="transactions.length === 0 && !loading">
+        <div class="flex justify-center items-center w-full">
+          <p class="text-center font-semibold text-xl w-full flex justify-center">
+            {{ (showDeleted ? "FINANCE.NO_DELETED_TRANSACTIONS" : "FINANCE.NO_TRANSACTIONS") | translate }}
+          </p>
+        </div>
+      </ng-container>
+      <span class="p-input-icon-left ml-auto">
+        <i class="pi pi-search"></i>
+        <input pInputText type="text" [(ngModel)]="searchValue" (input)="filter(dt1, $event)"
+          [placeholder]="translate.instant('FINANCE.SEARCH')" />
+      </span>
+    </div>
+  </ng-template>
+  <ng-template pTemplate="header" let-columns>
+    <tr>
+      <th style="width: 4rem">
+        <div class="flex align-items-center justify-center">
+          <p-checkbox 
+            [binary]="true" 
+            [ngModel]="isAllEligibleSelected()" 
+            [disabled]="!hasEligibleTransactions()"
+            (onChange)="toggleSelectAllEligible($event)"
+            [pTooltip]="activeLanguage === 'ar' ? 'تحديد كل القيود القابلة للحذف' : 'Select all deletable transactions'"
+            tooltipPosition="top"
+          ></p-checkbox>
+        </div>
+      </th>
+      <th style="width: 4rem">
+        <div class="flex align-items-center text-base">
+          #
+        </div>
+      </th>
+      <th style="min-width: fit-content" *ngFor="let column of columns" pResizableColumn
+        [pSortableColumn]="column.field">
+        <div class="flex align-items-center">
+          {{ column.header }}
+          <p-sortIcon [field]="column.field" class="mx-1"></p-sortIcon>
+          <app-table-column-filter
+            *ngIf="column.filter"
+            [table]="dt1"
+            [field]="column.field"
+            [header]="column.header"
+            [type]="column.filterType || 'text'"
+          ></app-table-column-filter>
+        </div>
+      </th>
+      <th style="min-width: fit-content">
+        <div class="flex align-items-center text-base">
+          {{ "FINANCE.ACTIONS" | translate }}
+        </div>
+      </th>
+    </tr>
+  </ng-template>
+  <ng-template pTemplate="body" let-Entry let-rowIndex="rowIndex">
+    <tr *ngIf="transactions.length > 0"
+      [ngClass]="{'bg-sky-200': Entry.isOpeningTransaction, 'opacity-50 bg-red-50': Entry.isActive === false}"
+      (click)="navigateToTransaction(Entry)" (contextmenu)="showTransactionOverlay($event, Entry)"
+      class="hover:bg-gray-200 cursor-pointer transition-colors duration-200">
+      <td (click)="$event.stopPropagation()">
+        <p-tableCheckbox [value]="Entry" [disabled]="!canDeleteTransaction(Entry)"
+          [pTooltip]="!canDeleteTransaction(Entry) ? (getDeleteDisableTooltip(Entry)) : ''" tooltipPosition="left" />
+      </td>
+      <td class="text-lg rtl:text-right">
+        {{ rowIndex + 1 }}
+      </td>
+      <td class="text-lg rtl:text-right">
+        {{ Entry.referenceNumber }}
+        <span *ngIf="Entry.isActive === false" class="p-badge p-badge-danger p-badge-sm ml-2">{{
+          'FINANCE.TRANSACTION_DELETED_BADGE' | translate }}</span>
+      </td>
+
+      <td class="text-lg rtl:text-right">
+        {{
+        activeLanguage === "en"
+        ? Entry.transactionType.englishName
+        : Entry.transactionType.arabicName
+        }}
+      </td>
+      <td class="text-lg rtl:text-right">
+        {{ Entry.description }}
+      </td>
+      <td class="text-lg rtl:text-right">
+        {{
+        activeLanguage === "en"
+        ? (Entry.transactionDate | customDate : "dd/MM/yyyy" : "" : "en-US")
+        : (Entry.transactionDate | customDate : "dd/MM/yyyy" : "" : "ar-SA")
+        }}
+      </td>
+      <td class="text-lg rtl:text-right">
+        {{
+        activeLanguage === "en"
+        ? (Entry.createdAt
+        | customDate : "dd/MM/yyyy hh:mm a" : "" : "en-US")
+        : (Entry.createdAt
+        | customDate : "dd/MM/yyyy hh:mm a" : "" : "ar-SA")
+        }}
+      </td>
+      <td class="text-lg rtl:text-right flex gap-2" (click)="$event.stopPropagation()">
+        <ng-container>
+          <p-button styleClass="p-button-outlined rounded-xl gear-button" [text]="true"
+            (onClick)="showTransactionOverlay($event, Entry)" severity="secondary">
+            <ng-template pTemplate="icon">
+              <i class="pi pi-cog text-xl"></i>
+            </ng-template>
+          </p-button>
+        </ng-container>
+      </td>
+    </tr>
+  </ng-template>
+</p-table>
+<p-overlayPanel #opTransactionPanel [autoZIndex]="false" [baseZIndex]="1000" [appendTo]="'body'">
+  <div class="flex flex-column gap-3 w-auto p-1">
+    <!-- Restore button - only for deleted transactions -->
+    <p-button *ngIf="selectedTransaction?.isActive === false && hasPermission(PERMISSIONS.Transaction.Update)" icon="pi pi-refresh" class="p-button-success"
+      [label]="'FINANCE.RESTORE' | translate" styleClass="rounded-lg w-full" (onClick)="
+        confirmTransactionRestore($event, selectedTransaction);
+        opTransactionPanel.hide();
+        $event.stopPropagation()
+      ">
+    </p-button>
+    <p-button *ngIf="hasPermission(PERMISSIONS.Transaction.Update)" icon="pi pi-pencil" class="p-button-secondary" [label]="'COMMON.EDIT' | translate"
+      [disabled]="selectedTransaction?.isActive === false" styleClass="rounded-lg w-full" (onClick)="
+        navigateToTransaction(selectedTransaction); opTransactionPanel.hide(); $event.stopPropagation()
+      ">
+    </p-button>
+    <p-button *ngIf="hasPermission(PERMISSIONS.Transaction.Create)" icon="pi pi-copy" class="p-button-info" [label]="'COMMON.COPY' | translate"
+      [disabled]="selectedTransaction?.isActive === false" styleClass="rounded-lg w-full"
+      (onClick)="copyTransaction(selectedTransaction); opTransactionPanel.hide(); $event.stopPropagation()">
+    </p-button>
+    <p-button *ngIf="hasPermission(PERMISSIONS.Transaction.Delete)" icon="pi pi-trash" class="p-button-danger" [label]="'COMMON.DELETE' | translate" [disabled]="
+        selectedTransaction?.isActive === false ||
+        selectedTransaction?.saleInvoiceId ||
+        selectedTransaction?.purchaseInvoiceId ||
+        selectedTransaction?.salesReturnId ||
+        selectedTransaction?.purchaseReturnId ||
+        selectedTransaction?.paymentReceiptId ||
+        selectedTransaction?.paycheckReceiptId ||
+        selectedTransaction?.inventoryPermitId ||
+        selectedTransaction?.inventoryStocktakingId ||
+        selectedTransaction?.reservationId ||
+        selectedTransaction?.debitNoteId ||
+        selectedTransaction?.creditNoteId
+      " styleClass="rounded-lg w-full" (onClick)="
+        confirmTransactionDeletion($event, selectedTransaction);
+        opTransactionPanel.hide();
+        $event.stopPropagation()
+      ">
+    </p-button>
+
+    <p-button *ngIf="!isFrontal && !selectedTransaction?.isFrontal" icon="pi pi-arrow-left" class="p-button-primary"
+      [label]="'COMMON.SEND_TO_FRONTAL' | translate" [disabled]="selectedTransaction?.isActive === false"
+      styleClass="rounded-lg w-full"
+      (onClick)="sendToFrontal(selectedTransaction); opTransactionPanel.hide(); $event.stopPropagation()">
+    </p-button>
+  </div>
+</p-overlayPanel>
+
+<!-- Import Instructions Dialog -->
+<p-dialog [(visible)]="showImportInstructions" [header]="importInstructions.title" [modal]="true"
+  [style]="{width: '50vw'}" [breakpoints]="{'960px': '75vw', '640px': '90vw'}" [draggable]="false" [resizable]="false">
+  <div class="import-instructions-content" [dir]="activeLanguage === 'ar' ? 'rtl' : 'ltr'">
+    <div *ngIf="importInstructions.description" class="mb-4">
+      <p class="text-gray-700">{{ importInstructions.description }}</p>
+    </div>
+
+    <div class="mb-4">
+      <h4 class="font-semibold mb-2 text-lg">{{ translate.instant('COMMON.REQUIRED_HEADERS') }}:</h4>
+      <div class="bg-gray-50 p-3 rounded border border-gray-200">
+        <ul class="list-disc list-inside space-y-1">
+          <li *ngFor="let header of importInstructions.headers" class="text-sm font-mono"
+            [ngClass]="{'text-red-600 font-semibold': header.startsWith('*')}">
+            {{ header }}
+          </li>
+        </ul>
+      </div>
+    </div>
+
+    <div *ngIf="importInstructions.notes && importInstructions.notes.length > 0" class="mb-4">
+      <h4 class="font-semibold mb-2 text-lg">{{ translate.instant('COMMON.NOTES') }}:</h4>
+      <ul class="list-disc list-inside space-y-1 text-sm text-gray-600">
+        <li *ngFor="let note of importInstructions.notes">{{ note }}</li>
+      </ul>
+    </div>
+  </div>
+
+  <p-footer>
+    <div class="flex gap-2 justify-end">
+      <p-button [label]="translate.instant('FINANCE.DOWNLOAD_TEMPLATE')" icon="pi pi-download" severity="info"
+        styleClass="rounded-md" (onClick)="downloadTemplate()" />
+      <p-button [label]="translate.instant('FINANCE.CANCEL')" icon="pi pi-times" styleClass="p-button-text rounded-md"
+        (onClick)="cancelImportInstructions()" />
+      <p-button [label]="translate.instant('COMMON.PROCEED')" icon="pi pi-check" styleClass="rounded-md"
+        (onClick)="confirmImportInstructions()" />
+    </div>
+  </p-footer>
+</p-dialog>
+
+<!-- Import Uploading Spinner Dialog -->
+<p-dialog [visible]="importProgress.isImporting" [closable]="false" [modal]="true" [draggable]="false"
+  [resizable]="false" [style]="{width: '340px'}"
+  [header]="activeLanguage === 'ar' ? 'جارٍ الاستيراد...' : 'Importing...'">
+  <div class="flex flex-column align-items-center gap-4 py-4">
+    <p-progressSpinner strokeWidth="4" styleClass="w-16 h-16" />
+    <p class="text-center text-sm text-gray-600 m-0">
+      {{ activeLanguage === 'ar'
+      ? 'جارٍ معالجة الملف على الخادم، يرجى الانتظار...'
+      : 'Processing file on the server, please wait...' }}
+    </p>
+  </div>
+</p-dialog>
+
+<!-- Import Failures Dialog -->
+<p-dialog [(visible)]="showImportFailuresDialog" [header]="translate.instant('COMMON.IMPORT_FAILURES_TITLE')"
+  [modal]="true" [style]="{width: '65vw', maxHeight: '80vh'}" [breakpoints]="{'960px': '80vw', '640px': '95vw'}"
+  [draggable]="false" [resizable]="false">
+  <div class="import-failures-wrap" [dir]="activeLanguage === 'ar' ? 'rtl' : 'ltr'">
+    <div class="import-failures-summary mb-4">
+      <div class="import-failures-summary__icon">
+        <i class="pi pi-exclamation-triangle"></i>
+      </div>
+      <div class="import-failures-summary__content">
+        <div class="import-failures-summary__title">
+          {{ 'COMMON.IMPORT_FAILURES_TITLE' | translate }}
+        </div>
+        <div class="import-failures-summary__subtitle">
+          {{ 'COMMON.IMPORT_FAILED_ROWS' | translate: { count: importFailures.length } }}
+        </div>
+      </div>
+      <span class="import-failures-summary__badge">{{ importFailures.length }}</span>
+    </div>
+
+    <p-table [value]="importFailures" styleClass="p-datatable-sm p-datatable-gridlines import-failures-table"
+      [scrollable]="true" scrollHeight="400px" [paginator]="importFailures.length > 10" [rows]="10">
+      <ng-template pTemplate="header">
+        <tr>
+          <th style="width:80px">{{ 'COMMON.IMPORT_FAILURE_ROW' | translate }}</th>
+          <th>{{ 'COMMON.IMPORT_FAILURE_NAME' | translate }}</th>
+          <th>{{ 'COMMON.IMPORT_FAILURE_REASON' | translate }}</th>
+        </tr>
+      </ng-template>
+      <ng-template pTemplate="body" let-f>
+        <tr>
+          <td class="text-center font-mono text-sm">{{ f.row }}</td>
+          <td class="font-semibold">{{ f.name }}</td>
+          <td class="text-sm">
+            <div class="flex align-items-start gap-2">
+              <span class="failure-chip" [ngClass]="getImportFailureVisualState(f).chipClass">
+                <i [class]="getImportFailureVisualState(f).icon"></i>
+              </span>
+              <span class="failure-reason" [class.failure-reason--truncated]="isImportFailureReasonTruncated(f)"
+                [attr.title]="isImportFailureReasonTruncated(f) ? getImportFailureReason(f) : null">
+                {{ getImportFailureReasonPreview(f) }}
+              </span>
+            </div>
+          </td>
+        </tr>
+      </ng-template>
+    </p-table>
+  </div>
+  <p-footer>
+    <div class="flex gap-2 justify-content-end">
+      <p-button *ngIf="canDownloadFailedRows"
+        [label]="activeLanguage === 'ar' ? 'تحميل صفوف الفشل' : 'Download Failed Rows'" icon="pi pi-download"
+        styleClass="p-button-success" (onClick)="downloadFailedImportRows()" />
+      <p-button [label]="translate.instant('FINANCE.CLOSE_LABEL')" icon="pi pi-times" styleClass="rounded-md"
+        (onClick)="showImportFailuresDialog = false" />
+    </div>
+  </p-footer>
+</p-dialog>
+
+<!-- Bulk Delete Failures Dialog -->
+<p-dialog [(visible)]="showBulkDeleteFailuresDialog" [header]="translate.instant('FINANCE.BULK_DELETE_FAILURES_TITLE')"
+  [modal]="true" [style]="{width: '65vw', maxHeight: '80vh'}" [breakpoints]="{'960px': '80vw', '640px': '95vw'}"
+  [draggable]="false" [resizable]="false">
+  <div class="import-failures-wrap" [dir]="activeLanguage === 'ar' ? 'rtl' : 'ltr'">
+    <div class="import-failures-summary mb-4">
+      <div class="import-failures-summary__icon">
+        <i class="pi pi-exclamation-triangle"></i>
+      </div>
+      <div class="import-failures-summary__content">
+        <div class="import-failures-summary__title">
+          {{ 'FINANCE.BULK_DELETE_FAILURES_TITLE' | translate }}
+        </div>
+        <div class="import-failures-summary__subtitle">
+          {{ 'FINANCE.BULK_DELETE_FAILED_ROWS' | translate: { count: bulkDeleteFailures.length } }}
+        </div>
+      </div>
+      <span class="import-failures-summary__badge">{{ bulkDeleteFailures.length }}</span>
+    </div>
+
+    <p-table [value]="bulkDeleteFailures" styleClass="p-datatable-sm p-datatable-gridlines import-failures-table"
+      [scrollable]="true" scrollHeight="400px" [paginator]="bulkDeleteFailures.length > 10" [rows]="10">
+      <ng-template pTemplate="header">
+        <tr>
+          <th>{{ 'FINANCE.BULK_DELETE_FAILURE_REFERENCE' | translate }}</th>
+          <th>{{ 'FINANCE.BULK_DELETE_FAILURE_REASON' | translate }}</th>
+        </tr>
+      </ng-template>
+      <ng-template pTemplate="body" let-f>
+        <tr>
+          <td class="font-semibold">{{ f.referenceNumber }}</td>
+          <td class="text-sm">
+            <div class="flex align-items-start gap-2">
+              <span class="failure-chip failure-chip--danger">
+                <i class="pi pi-ban"></i>
+              </span>
+              <span class="failure-reason">
+                {{ getBulkDeleteFailureReason(f) }}
+              </span>
+            </div>
+          </td>
+        </tr>
+      </ng-template>
+    </p-table>
+  </div>
+  <p-footer>
+    <p-button [label]="translate.instant('FINANCE.CLOSE_LABEL')" icon="pi pi-times" styleClass="rounded-md"
+      (onClick)="showBulkDeleteFailuresDialog = false" />
+  </p-footer>
+</p-dialog>
+
+<p-confirmDialog> </p-confirmDialog>
+<p-toast />

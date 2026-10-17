@@ -1,0 +1,54 @@
+:host {
+  width: 100%;
+  @media (min-width: 992px) {
+    .login-form {
+      width: 100%;
+      max-width: 450px;
+
+      .mat-form-field {
+        width: 100%;
+      }
+    }
+  }
+}
+
+.separator-custom {
+  width: 35svw;
+  margin-top: 14px;
+  margin-bottom: 14px;
+}
+@media (max-width: 900px) {
+  .separator-custom {
+    width: 80svw;
+  }
+}
+
+.login-lang-switch {
+  background-color: #f8fafc;
+  border-color: #e2e8f0 !important;
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.04);
+  gap: 4px;
+
+  .btn {
+    font-size: 0.8rem;
+    line-height: 1.2;
+    min-width: 75px;
+
+    &.btn-primary {
+      background-color: #2563eb !important;
+      color: #ffffff !important;
+      box-shadow: 0 2px 6px rgba(37, 99, 235, 0.25);
+    }
+  }
+}
+
+:host-context([data-bs-theme="dark"]) {
+  .login-lang-switch {
+    background-color: rgba(255, 255, 255, 0.05);
+    border-color: rgba(255, 255, 255, 0.1) !important;
+
+    .btn.text-muted {
+      color: #94a3b8 !important;
+    }
+  }
+}

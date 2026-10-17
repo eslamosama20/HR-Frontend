@@ -1,0 +1,111 @@
+:host {
+  height: 100%;
+  display: block;
+  position: relative;
+}
+
+/* Floating Language Switcher in Top Corner */
+.auth-floating-lang {
+  position: fixed;
+  top: 1.5rem;
+  inset-inline-end: 1.75rem;
+  z-index: 1050;
+}
+
+.lang-floating-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(226, 232, 240, 0.9);
+  padding: 4px 8px 4px 10px;
+  border-radius: 9999px;
+  cursor: pointer;
+  box-shadow: 0 4px 20px -2px rgba(15, 23, 42, 0.08), 0 2px 6px -1px rgba(15, 23, 42, 0.04);
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  user-select: none;
+
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px -4px rgba(15, 23, 42, 0.12);
+    border-color: #cbd5e1;
+    background: #ffffff;
+
+    .lang-icon {
+      color: #2563eb;
+      transform: rotate(15deg);
+    }
+  }
+
+  &:active {
+    transform: translateY(0);
+  }
+
+  .lang-icon {
+    font-size: 1.05rem;
+    color: #64748b;
+    transition: all 0.25s ease;
+  }
+}
+
+.lang-pills-wrap {
+  display: flex;
+  align-items: center;
+  background: #f1f5f9;
+  padding: 2px;
+  border-radius: 9999px;
+  gap: 2px;
+}
+
+.lang-tag {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: #64748b;
+  padding: 3px 10px;
+  border-radius: 9999px;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1.2;
+
+  &.active {
+    background: #2563eb;
+    color: #ffffff !important;
+    box-shadow: 0 2px 6px rgba(37, 99, 235, 0.35);
+  }
+}
+
+/* Dark Mode Theme Support */
+:host-context([data-bs-theme="dark"]) {
+  .lang-floating-btn {
+    background: rgba(30, 41, 59, 0.8);
+    border-color: rgba(255, 255, 255, 0.12);
+    box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.3);
+
+    &:hover {
+      background: rgba(30, 41, 59, 0.95);
+      border-color: rgba(255, 255, 255, 0.25);
+    }
+
+    .lang-icon {
+      color: #94a3b8;
+    }
+  }
+
+  .lang-pills-wrap {
+    background: rgba(15, 23, 42, 0.6);
+  }
+
+  .lang-tag {
+    color: #94a3b8;
+
+    &.active {
+      background: #3b82f6;
+      color: #ffffff !important;
+      box-shadow: 0 2px 8px rgba(59, 130, 246, 0.4);
+    }
+  }
+}

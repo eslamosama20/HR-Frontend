@@ -1,0 +1,671 @@
+﻿<p-toast></p-toast>
+
+<div class="container-fluid">
+  <!-- Action Buttons -->
+  <div class="flex justify-between items-center m-5">
+    <button class="btn btn-primary" type="button" (click)="navigateToAdd()">
+      + {{ "REQUEST_QUOTATION.ADD_ITEM" | translate }}
+    </button>
+    <div *ngIf="selectedItems.length >= 1" class="flex gap-2">
+      <button class="btn btn-secondary" (click)="printBulk()">
+        <i class="bi bi-printer"></i> {{ "REQUEST_QUOTATION.PRINT" | translate }}
+      </button>
+      <button class="btn btn-info" (click)="openBulkShareDialog()">
+        <i class="pi pi-share-alt"></i> {{ "REQUEST_QUOTATION.SHARE" | translate }}
+      </button>
+      <button class="btn btn-danger" (click)="deleteAll()">
+        <i class="bi bi-trash"></i> {{ "REQUEST_QUOTATION.DELETE_ALL" | translate }}
+      </button>
+    </div>
+  </div>
+
+  <!-- Request Quotation Table -->
+  <p-table #dt1 [(selection)]="selectedItems" [value]="filteredItems" [columns]="columns"
+    [resizableColumns]="true" columnResizeMode="expand" dataKey="id" [rows]="10"
+    styleClass="p-datatable-gridlines scroller custom-paginator-table" [rowsPerPageOptions]="[10, 25, 50]" [loading]="loading"
+    [paginator]="true" [paginatorLocale]="'ar-SA'"
+    [showCurrentPageReport]="true"
+    currentPageReportTemplate="اجمالي {{ filteredItems?.length ? (filteredItems.length) : '' }}"
+    paginatorTemplate="CurrentPageReport PrevPageLink PageLinks NextPageLink RowsPerPageDropdown"
+    [scrollable]="true" scrollDirection="horizontal">
+    <ng-template pTemplate="caption">
+      <div class="flex rtl:flex-row-reverse justify-between gap-2">
+        <div class="flex gap-2">
+          <p-button styleClass="rounded-md w-auto text-nowrap" [label]="'REQUEST_QUOTATION.CLEAR_FILTERS' | translate"
+            [outlined]="true" icon="pi pi-filter-slash" (onClick)="clear(dt1)" />
+        </div>
+
+        <ng-container *ngIf="items.length === 0 && !loading">
+          <div class="flex justify-center items-center w-full">
+            <p class="text-center font-semibold text-xl w-full flex justify-center">
+              {{ "REQUEST_QUOTATION.NO_REQUESTS" | translate }}
+            </p>
+          </div>
+        </ng-container>
+        <div class="flex justify-between gap-2">
+          <span class="p-input-icon-left ml-auto">
+            <i class="pi pi-search"></i>
+            <input pInputText type="text" [(ngModel)]="searchValue" (input)="filter(dt1, $event)"
+              [placeholder]="'REQUEST_QUOTATION.SEARCH' | translate" />
+          </span>
+        </div>
+
+      </div>
+    </ng-template>
+    <ng-template pTemplate="header" let-columns>
+      <tr>
+        <th style="width: 1rem">
+          <div class="flex align-items-center text-base">
+            #
+          </div>
+        </th>
+        <th style="width: 3rem"></th>
+
+        <th style="min-width: fit-content" *ngFor="let column of columns" pResizableColumn
+          [pSortableColumn]="column.field">
+          <div class="flex align-items-center">
+            {{ column.header | translate }}
+            <p-sortIcon [field]="column.field" class="mx-1"></p-sortIcon>
+            <p-columnFilter *ngIf="column.filter" [type]="column.filterType" [field]="column.field" display="menu" />
+          </div>
+        </th>
+        <th style="min-width: fit-content">
+          <div class="flex align-items-center text-base">
+            {{ "REQUEST_QUOTATION.ACTIONS" | translate }}
+          </div>
+        </th>
+      </tr>
+    </ng-template>
+    <ng-template pTemplate="body" let-Entry let-rowIndex="rowIndex">
+      <tr (click)="onRowClick($event, Entry)"
+        (contextmenu)="onRowRightClick($event, Entry)"
+        class="cursor-pointer hover:bg-gray-100">
+         <td class="rtl:text-right">
+          {{ rowIndex + 1 }}
+        </td>
+        <td>
+          <p-tableCheckbox [value]="Entry" (click)="$event.stopPropagation()"></p-tableCheckbox>
+        </td>
+
+        <td class="text-lg rtl:text-right">
+          {{ Entry.mainPurchaseClassName }}
+        </td>
+        <td class="text-lg rtl:text-right">
+          {{ Entry.quantity }}
+        </td>
+        <td class="text-lg rtl:text-right text-muted" [title]="Entry.invoiceNo || Entry.requestId">
+          <div class="flex items-center gap-2">
+            {{ Entry.invoiceNo || Entry.requestId }}
+            <span *ngIf="Entry.status === 'ConvertedToInvoice' || Entry.purchaseInvoiceId"
+                  class="badge bg-success text-white px-2 py-1 rounded text-sm">
+              <i class="bi bi-check-circle me-1"></i>{{ "REQUEST_QUOTATION.CONVERTED" | translate }}
+            </span>
+          </div>
+        </td>
+
+        <td class="text-lg rtl:text-right flex gap-2"
+            (click)="$event.stopPropagation()">
+          <!-- Button to toggle the overlay panel -->
+          <p-button
+            [text]="true"
+            (onClick)="onActionButtonClick($event, Entry)"
+            severity="secondary"
+            styleClass="p-button-outlined rounded-xl">
+            <ng-template pTemplate="icon">
+              <i class="pi pi-cog text-xl"></i>
+            </ng-template>
+          </p-button>
+        </td>
+
+      </tr>
+    </ng-template>
+  </p-table>
+
+  <p-overlayPanel #opItem [autoZIndex]="true" [baseZIndex]="1100" [appendTo]="'body'">
+    <div class="flex flex-column gap-3 w-auto p-1">
+      <p-button icon="bi bi-printer" class="p-button-secondary" [label]="'REQUEST_QUOTATION.PRINT' | translate" styleClass="rounded-lg w-full"
+        (onClick)="onPrint(selectedItem); $event.stopPropagation()">
+      </p-button>
+
+      <p-button icon="pi pi-eye" class="p-button-info" [label]="'REQUEST_QUOTATION.VIEW' | translate" styleClass="rounded-lg w-full"
+        (onClick)="onView(selectedItem); $event.stopPropagation()">
+      </p-button>
+
+      <p-button icon="pi pi-pencil" class="p-button-warning" [label]="'REQUEST_QUOTATION.EDIT' | translate" styleClass="rounded-lg w-full"
+        (onClick)="onEdit(selectedItem); $event.stopPropagation()">
+      </p-button>
+
+      <p-button icon="pi pi-share-alt" severity="info" [label]="'REQUEST_QUOTATION.SHARE' | translate" styleClass="rounded-lg w-full"
+        (onClick)="openShareDialog(selectedItem); opItem.hide(); $event.stopPropagation()">
+      </p-button>
+
+      <!-- Convert button shown for all quotations (all are frontal now) -->
+      <p-button 
+        [icon]="(selectedItem?.status === 'ConvertedToInvoice' || selectedItem?.purchaseInvoiceId) ? 'bi bi-check-circle' : 'pi pi-file-import'" 
+        [severity]="(selectedItem?.status === 'ConvertedToInvoice' || selectedItem?.purchaseInvoiceId) ? 'secondary' : 'success'" 
+        [label]="(selectedItem?.status === 'ConvertedToInvoice' || selectedItem?.purchaseInvoiceId) ? ('REQUEST_QUOTATION.CONVERTED' | translate) : ('REQUEST_QUOTATION.CONVERT_TO_INVOICE' | translate)"
+        styleClass="rounded-lg w-full"
+        [disabled]="selectedItem?.status === 'ConvertedToInvoice' || selectedItem?.purchaseInvoiceId"
+        (onClick)="onConvert(selectedItem); $event.stopPropagation()">
+      </p-button>
+
+      <p-button icon="pi pi-trash" class="p-button-danger" [label]="'REQUEST_QUOTATION.DELETE' | translate" styleClass="rounded-lg w-full"
+        (onClick)="onDelete(selectedItem); $event.stopPropagation()">
+      </p-button>
+    </div>
+  </p-overlayPanel>
+
+</div>
+
+<!-- View Dialog -->
+<div class="rq-modal-backdrop" *ngIf="showViewDialog" (click)="closeViewDialog()">
+  <div class="rq-modal" (click)="$event.stopPropagation()">
+    <div class="rq-modal-header">
+      <h5 class="m-0">{{ "REQUEST_QUOTATION.VIEW_ITEM_DIALOG_TITLE" | translate }}</h5>
+      <button type="button" class="btn-close" aria-label="Close" (click)="closeViewDialog()"></button>
+    </div>
+    <div class="rq-modal-body">
+      <div *ngIf="viewLoading" class="alert alert-info py-2 mb-3">{{ "REQUEST_QUOTATION.LOADING_DETAILS" | translate }}</div>
+      <div class="mb-3">
+        <label class="form-label">{{ "REQUEST_QUOTATION.REQUEST_ID_LABEL" | translate }}</label>
+        <input class="form-control" [value]="viewForm.requestId" readonly />
+      </div>
+      <div class="mb-3">
+        <label class="form-label">{{ 'DATA.CLASS' | translate }}</label>
+        <input class="form-control" [value]="viewForm.mainPurchaseClassName" readonly />
+      </div>
+      <div class="mb-3">
+        <label class="form-label">{{ "REQUEST_QUOTATION.QUANTITY_VIEW_LABEL" | translate }}</label>
+        <input class="form-control" [value]="viewForm.quantity" readonly />
+      </div>
+      <div class="mb-3">
+        <label class="form-label">{{ 'DATA.UNIT_PRICE' | translate }}</label>
+        <input class="form-control" [value]="viewForm.unitPrice ?? '-'" readonly />
+      </div>
+      <div class="mb-1 text-muted">
+        {{ "REQUEST_QUOTATION.ITEMS_COUNT" | translate }}: {{ viewForm.itemsCount }}
+      </div>
+    </div>
+    <div class="rq-modal-footer">
+      <button type="button" class="btn btn-primary" (click)="closeViewDialog()">{{ "REQUEST_QUOTATION.OK" | translate }}</button>
+    </div>
+  </div>
+</div>
+
+<!-- Delete Dialog -->
+<div class="rq-modal-backdrop" *ngIf="showDeleteDialog" (click)="closeDeleteDialog()">
+  <div class="rq-modal rq-modal-danger" (click)="$event.stopPropagation()">
+    <div class="rq-modal-header">
+      <h5 class="m-0 text-danger">{{ "REQUEST_QUOTATION.DELETE_CONFIRM_TITLE" | translate }}</h5>
+      <button type="button" class="btn-close" aria-label="Close" (click)="closeDeleteDialog()"></button>
+    </div>
+    <div class="rq-modal-body">
+      <p class="mb-2">
+        {{ "REQUEST_QUOTATION.DELETE_CONFIRM_MESSAGE" | translate }}
+        <strong class="text-danger">{{ deleteTarget?.requestId }}</strong>؟
+      </p>
+      <p class="text-muted m-0">{{ "REQUEST_QUOTATION.DELETE_WARNING" | translate }}</p>
+      <div *ngIf="deleteError" class="alert alert-danger py-2 mt-3">{{ deleteError }}</div>
+    </div>
+    <div class="rq-modal-footer">
+      <button type="button" class="btn btn-light" (click)="closeDeleteDialog()">{{ "REQUEST_QUOTATION.CANCEL" | translate }}</button>
+      <button type="button" class="btn btn-danger" [disabled]="submitting" (click)="confirmDelete()">
+        {{ submitting ? ("REQUEST_QUOTATION.DELETING" | translate) : ("REQUEST_QUOTATION.DELETE_CONFIRM" | translate) }}
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Delete All Dialog -->
+<div class="rq-modal-backdrop" *ngIf="showDeleteAllDialog" (click)="closeDeleteAllDialog()">
+  <div class="rq-modal rq-modal-danger" (click)="$event.stopPropagation()">
+    <div class="rq-modal-header">
+      <h5 class="m-0 text-danger">{{ "REQUEST_QUOTATION.DELETE_ALL_CONFIRM_TITLE" | translate }}</h5>
+      <button type="button" class="btn-close" aria-label="Close" (click)="closeDeleteAllDialog()"></button>
+    </div>
+    <div class="rq-modal-body">
+      <p class="mb-2">
+        {{ "REQUEST_QUOTATION.DELETE_ALL_CONFIRM_MESSAGE" | translate }}
+        <strong class="text-danger">{{ selectedItems.length }}</strong>
+        {{ "REQUEST_QUOTATION.DELETE_ALL_CONFIRM_ITEMS" | translate }}؟
+      </p>
+      <p class="text-muted m-0">{{ "REQUEST_QUOTATION.DELETE_ALL_WARNING" | translate }}</p>
+    </div>
+    <div class="rq-modal-footer">
+      <button type="button" class="btn btn-light" (click)="closeDeleteAllDialog()">{{ "REQUEST_QUOTATION.CANCEL" | translate }}</button>
+      <button type="button" class="btn btn-danger" [disabled]="submitting" (click)="confirmDeleteAll()">
+        {{ submitting ? ("REQUEST_QUOTATION.DELETING" | translate) : ("REQUEST_QUOTATION.DELETE_CONFIRM" | translate) }}
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Share Dialog -->
+<p-dialog
+  [(visible)]="shareDialogVisible"
+  [modal]="true"
+  [draggable]="false"
+  [resizable]="false"
+  [style]="{ width: '550px' }"
+  contentStyleClass="share-dialog"
+  [baseZIndex]="11000"
+  (onHide)="closeShareDialog()"
+>
+  <ng-template pTemplate="header">
+    <div class="share-header">
+      <span class="icon-chip"><i class="pi pi-share-alt"></i></span>
+      <div class="title">
+        <div class="title-main">
+          {{ (shareBulkMode ? "REQUEST_QUOTATION.SHARE_BULK" : "REQUEST_QUOTATION.SHARE_SINGLE") | translate }}
+        </div>
+        <div class="title-sub">
+          <ng-container *ngIf="!shareBulkMode && shareTarget; else bulkInfo">
+            {{ "REQUEST_QUOTATION.ITEM_NAME_SHORT" | translate }}:
+            <b>{{ shareTarget?.itemName || "-" }}</b> — {{ "REQUEST_QUOTATION.REQUEST_NUMBER" | translate }}:
+            <b>#{{ shareTarget?.requestId?.slice(0, 8) || "-" }}</b>
+          </ng-container>
+          <ng-template #bulkInfo>
+            {{ "REQUEST_QUOTATION.SELECTED_REQUESTS_COUNT" | translate }}:
+            <b>{{ shareBulkIds.length }}</b>
+          </ng-template>
+        </div>
+      </div>
+    </div>
+  </ng-template>
+
+  <p-tabView [(activeIndex)]="shareActiveTabIndex">
+    <!-- Email Tab -->
+    <p-tabPanel [header]="'REQUEST_QUOTATION.EMAIL_TAB' | translate" leftIcon="pi pi-envelope mr-2">
+      <div class="share-tab">
+        <div class="form-row">
+          <label for="shareEmail">{{ "REQUEST_QUOTATION.EMAIL_LABEL" | translate }}</label>
+          <input
+            id="shareEmail"
+            type="email"
+            pInputText
+            [formControl]="$any(shareForm.get('email'))"
+            [placeholder]="'REQUEST_QUOTATION.EMAIL_PLACEHOLDER' | translate"
+            class="w-full"
+          />
+          <small
+            class="err"
+            *ngIf="shareForm.get('email')?.touched && shareForm.get('email')?.invalid"
+          >
+            {{ "REQUEST_QUOTATION.EMAIL_INVALID" | translate }}
+          </small>
+        </div>
+
+        <div class="actions">
+          <button
+            pButton
+            type="button"
+            class="p-button p-button-primary"
+            icon="pi pi-send"
+            [label]="'REQUEST_QUOTATION.SEND' | translate"
+            (click)="submitShareEmail()"
+            [disabled]="
+              shareForm.get('email')?.invalid ||
+              shareBusy ||
+              (shareBulkMode && shareBulkIds.length === 0) ||
+              (!shareBulkMode && !shareTarget)
+            "
+          ></button>
+          <button
+            pButton
+            type="button"
+            class="p-button-outlined"
+            icon="pi pi-times"
+            [label]="'REQUEST_QUOTATION.CANCEL' | translate"
+            (click)="closeShareDialog()"
+            [disabled]="shareBusy"
+          ></button>
+        </div>
+      </div>
+    </p-tabPanel>
+
+    <!-- WhatsApp Tab -->
+    <p-tabPanel [header]="'REQUEST_QUOTATION.WHATSAPP_TAB' | translate" leftIcon="pi pi-whatsapp mr-2">
+      <div class="share-tab">
+        <div class="media">
+          <span class="chip chip-whatsapp"><i class="pi pi-whatsapp"></i></span>
+          <div class="media-body">
+            <div class="media-title">{{ "REQUEST_QUOTATION.SHARE_VIA_WHATSAPP" | translate }}</div>
+            <div class="media-sub">
+              {{ "REQUEST_QUOTATION.PHONE_HINT" | translate }}
+            </div>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <label for="sharePhone">{{ "REQUEST_QUOTATION.PHONE_LABEL" | translate }}</label>
+          <input
+            id="sharePhone"
+            type="tel"
+            pInputText
+            [formControl]="$any(shareForm.get('whatsappNumber'))"
+            [placeholder]="'REQUEST_QUOTATION.PHONE_PLACEHOLDER' | translate"
+            class="w-full"
+          />
+          <small
+            class="err"
+            *ngIf="shareForm.get('whatsappNumber')?.touched && shareForm.get('whatsappNumber')?.invalid"
+          >
+            {{ "REQUEST_QUOTATION.PHONE_INVALID" | translate }}
+          </small>
+        </div>
+
+        <div class="actions">
+          <button
+            pButton
+            type="button"
+            class="p-button p-button-success"
+            icon="pi pi-send"
+            [label]="'REQUEST_QUOTATION.SEND' | translate"
+            (click)="submitShareWhatsapp()"
+            [disabled]="
+              shareForm.get('whatsappNumber')?.invalid ||
+              shareBusy ||
+              (shareBulkMode && shareBulkIds.length === 0) ||
+              (!shareBulkMode && !shareTarget)
+            "
+          ></button>
+
+          <button
+            pButton
+            type="button"
+            class="p-button-outlined"
+            icon="pi pi-times"
+            [label]="'REQUEST_QUOTATION.CANCEL' | translate"
+            (click)="closeShareDialog()"
+            [disabled]="shareBusy"
+          ></button>
+        </div>
+      </div>
+    </p-tabPanel>
+  </p-tabView>
+</p-dialog>
+
+<!-- Print Options Dialog -->
+<p-dialog
+  [(visible)]="printOptionsDialogVisible"
+  [modal]="true"
+  [closable]="true"
+  [style]="{ width: '400px' }"
+  [header]="'REQUEST_QUOTATION.PRINT_OPTIONS' | translate"
+>
+  <div class="flex flex-column gap-4 p-4">
+    <div class="flex align-items-center gap-2">
+      <p-checkbox
+        [(ngModel)]="includePricesInPrint"
+        [binary]="true"
+        inputId="includePrices"
+      ></p-checkbox>
+      <label for="includePrices" class="cursor-pointer">
+        {{ "REQUEST_QUOTATION.INCLUDE_PRICES" | translate }}
+      </label>
+    </div>
+
+    <div class="flex gap-2 justify-content-end">
+      <button
+        pButton
+        type="button"
+        [label]="'GENERAL.CANCEL' | translate"
+        class="p-button-secondary"
+        (click)="printOptionsDialogVisible = false"
+      ></button>
+      <button
+        pButton
+        type="button"
+        icon="bi bi-printer"
+        [label]="'REQUEST_QUOTATION.PRINT' | translate"
+        class="p-button-primary"
+        (click)="onPrintConfirm()"
+      ></button>
+    </div>
+  </div>
+</p-dialog>
+
+<!-- Print Section -->
+<ng-container>
+  <div
+    id="printContent"
+    class="absolute top-0 left-[-100%]"
+  >
+    <app-print-document
+      *ngIf="printData.length > 0 && docColumns.length > 0"
+      #printComponent
+      [headerTemplate]="headerTemplate"
+      [footerTemplate]="footerTemplate"
+      [summaryTemplate]="summaryTemplate"
+      [data]="printData"
+      [columns]="docColumns"
+    >
+    </app-print-document>
+
+    <!-- Header Template -->
+    <ng-template #headerTemplate>
+      <div class="w-full" style="margin: 0; padding: 0;">
+        @if (companyDetails) {
+        <table class="w-full" style="border-collapse: collapse; width: 100%; margin: 0; padding: 0; border-spacing: 0;">
+          <tr>
+            <td style="width: auto; min-width: 200px; vertical-align: center; padding: 8px 0 8px 0; text-align: right; margin: 0;" class="text-right">
+              <p class="font-semibold text-lg m-0 p-0">
+                {{companyDetails?.arabicName}}
+              </p>
+              <p class="font-semibold text-lg m-0 p-0" *ngIf="companyDetails?.city">
+                {{companyDetails.city}}
+              </p>
+              <p class="font-semibold text-lg m-0 p-0">
+                {{companyDetails?.phone}}
+              </p>
+              <p class="font-semibold text-lg m-0 p-0">
+                {{ "INVOICE.TAXNUMBER"| translate}}: {{companyDetails?.taxNumber}}
+              </p>
+            </td>
+            <td style="width: 100%; vertical-align: center; text-align: center; padding: 8px;">
+              <img [src]="companyDetails?.logoUrl || ''"
+                   alt="company-logo" width="100" height="100" style="display: block; margin: 0 auto;">
+            </td>
+            <td style="width: auto; min-width: 200px; vertical-align: center; padding: 8px 0 8px 0; margin: 0; text-align: left;">
+              <div style="direction: ltr; text-align: left; unicode-bidi: embed; margin: 0; padding: 0;">
+                <p class="font-semibold text-lg m-0 p-0" style="direction: ltr; text-align: left;">
+                  {{companyDetails?.englishName}}
+                </p>
+                <p class="font-semibold text-lg m-0 p-0" *ngIf="companyDetails?.city" style="direction: ltr; text-align: left;">
+                  {{companyDetails?.city}}
+                </p>
+                <p class="font-semibold text-lg m-0 p-0" style="direction: ltr; text-align: left;">
+                  {{companyDetails?.phone}}
+                </p>
+                <p class="font-semibold text-lg m-0 p-0" style="direction: ltr; text-align: left;">
+                  TAX No: {{companyDetails?.taxNumber}}
+                </p>
+              </div>
+            </td>
+          </tr>
+        </table>
+        }
+        <table class="w-full" style="border-collapse: collapse; width: 100%; border: 1px solid #000; margin-top: 8px;">
+          <tr>
+            <td style="width: auto; padding: 8px 16px; text-align: right;" class="text-right">
+              <p class="font-semibold text-lg m-0" style="white-space: nowrap;">
+                {{ "INVOICE.DATE" | translate }}: {{ currentDate | customDate: "yyyy-MM-dd" }}
+              </p>
+            </td>
+            <td style="width: 100%; padding: 0; text-align: center;">
+              <h2 class="text-2xl font-bold m-0" style="white-space: nowrap;">
+                {{ "REQUEST_QUOTATION.PRINT_TITLE" | translate }}
+              </h2>
+            </td>
+            <td style="width: auto; padding: 8px 16px; text-align: left;" class="text-left">
+              <p class="font-semibold text-lg m-0" style="white-space: nowrap;">
+                {{ "REQUEST_QUOTATION.REQUEST_NUMBER" | translate }}: {{ printRequestId }}
+              </p>
+            </td>
+          </tr>
+        </table>
+      </div>
+    </ng-template>
+
+    <!-- Summary Template -->
+    <ng-template #summaryTemplate>
+      <div class="w-full">
+        <table class="w-full border border-gray-900" style="font-size: 12px;">
+          <tbody>
+            <tr>
+              <td class="border border-gray-900" style="padding: 3px 6px;">
+                <strong class="text-dark" style="font-size: 12px;">{{
+                  "REQUEST_QUOTATION.TOTAL_ITEMS" | translate
+                }}</strong>
+              </td>
+              <td class="text-center border border-gray-900" style="padding: 3px 6px; font-size: 12px;">
+                {{ printData.length }}
+              </td>
+            </tr>
+            <tr>
+              <td class="border border-gray-900" style="padding: 3px 6px;">
+                <strong class="text-dark" style="font-size: 12px;">
+                  {{ "REQUEST_QUOTATION.TOTAL_QUANTITY" | translate }}</strong
+                >
+              </td>
+              <td class="text-center border border-gray-900" style="padding: 3px 6px; font-size: 12px;">
+                {{ getTotalQuantity() }}
+              </td>
+            </tr>
+            <tr>
+              <td class="border border-gray-900" style="padding: 3px 6px;">
+                <strong class="text-dark" style="font-size: 12px;">
+                  {{ "REQUEST_QUOTATION.TOTAL_BEFORE_TAX" | translate }}</strong
+                >
+              </td>
+              <td class="text-center border border-gray-900" style="padding: 3px 6px; font-size: 12px;">
+                <span *ngIf="includePricesInPrint">{{ getTotalAmount() | number:'1.2-2' }}</span>
+              </td>
+            </tr>
+            <tr>
+              <td class="border border-gray-900" style="padding: 3px 6px;">
+                <strong class="text-dark" style="font-size: 12px;">
+                  {{ "REQUEST_QUOTATION.TOTAL_TAX" | translate }}</strong
+                >
+              </td>
+              <td class="text-center border border-gray-900" style="padding: 3px 6px; font-size: 12px;">
+                <span *ngIf="includePricesInPrint">{{ getTotalTaxAmount() | number:'1.2-2' }}</span>
+              </td>
+            </tr>
+            <tr>
+              <td class="border border-gray-900" style="padding: 3px 6px;">
+                <strong class="text-dark" style="font-size: 12px;">
+                  {{ "REQUEST_QUOTATION.TOTAL_WITH_TAX" | translate }}</strong
+                >
+              </td>
+              <td class="text-center border border-gray-900" style="padding: 3px 6px; font-size: 12px;">
+                <span *ngIf="includePricesInPrint">{{ getTotalWithTax() | number:'1.2-2' }}</span>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </ng-template>
+
+    <!-- Footer Template -->
+    <ng-template #footerTemplate>
+      <div class="w-full border border-slate-900 rounded-2xl" style="padding: 8px;">
+        <table class="w-full" style="border-collapse: collapse; width: 100%;">
+          <tr>
+            <td style="width: 33%; text-align: center; vertical-align: top; padding: 8px;">
+              <p class="m-0 p-0 font-semibold text-lg">
+                {{ "REQUEST_QUOTATION.REQUESTER_SIGNATURE" | translate }}:
+              </p>
+              <p class="text-sm font-light m-0 p-0">.............................................................</p>
+            </td>
+            <td style="width: 33%; text-align: center; vertical-align: top; padding: 8px;">
+              <p class="m-0 p-0 font-semibold text-lg">
+                {{ "REQUEST_QUOTATION.APPROVER_SIGNATURE" | translate }}:
+              </p>
+              <p class="text-sm font-light m-0 p-0">.............................................................</p>
+            </td>
+            <td style="width: 34%; text-align: center; vertical-align: top; padding: 8px;">
+              <p class="m-0 p-0 font-semibold text-lg">
+                {{ "REQUEST_QUOTATION.MANAGER_SIGNATURE" | translate }}:
+              </p>
+              <p class="text-sm font-light m-0 p-0">.............................................................</p>
+            </td>
+          </tr>
+        </table>
+      </div>
+      <div class="w-full" style="margin-top: 16px;" *ngIf="companyDetails?.stampUrl">
+        <table class="w-full" style="border-collapse: collapse; width: 100%;">
+          <tr>
+            <td style="width: 33%;"></td>
+            <td style="width: 33%;"></td>
+            <td style="width: 34%; text-align: center; vertical-align: middle; padding: 8px;">
+              <img [src]="companyDetails?.stampUrl || ''" alt="company-stamp" width="120" height="120" style="display: block; margin: 0 auto;">
+            </td>
+          </tr>
+        </table>
+      </div>
+      <!-- Footer address and page number - fixed at bottom in print -->
+      <div class="print-footer-address">
+        <table class="w-full" style="border-collapse: collapse; width: 100%;">
+          <tr>
+            <td style="text-align: center; width: 80%;" class="text-right">
+              {{ companyDetails?.getFullAddress() }}
+            </td>
+          </tr>
+        </table>
+      </div>
+    </ng-template>
+  </div>
+</ng-container>
+
+<!-- Convert to Invoice Dialog -->
+<p-dialog 
+  [(visible)]="showConvertDialog" 
+  [header]="'REQUEST_QUOTATION.CONVERT_DIALOG_TITLE' | translate" 
+  [modal]="true" 
+  [style]="{width: '450px'}"
+  [draggable]="false"
+  [resizable]="false">
+  <div class="p-fluid">
+    <div class="mb-3">
+      <label class="form-label fw-bold">{{ 'REQUEST_QUOTATION.SELECT_STORE' | translate }}</label>
+      <p-dropdown
+        [options]="stores"
+        [(ngModel)]="selectedStoreId"
+        optionLabel="arabicName"
+        optionValue="id"
+        [placeholder]="'REQUEST_QUOTATION.SELECT_STORE_PLACEHOLDER' | translate"
+        [filter]="true"
+        filterBy="arabicName,englishName"
+        [showClear]="false"
+        appendTo="body">
+      </p-dropdown>
+    </div>
+    
+    <div *ngIf="convertError" class="alert alert-danger py-2 mb-3">
+      {{ convertError }}
+    </div>
+  </div>
+  
+  <ng-template pTemplate="footer">
+    <button 
+      pButton 
+      type="button" 
+      [label]="'FINANCE.CANCEL' | translate" 
+      icon="pi pi-times" 
+      class="p-button-text"
+      (click)="closeConvertDialog()"
+      [disabled]="submitting">
+    </button>
+    <button 
+      pButton 
+      type="button" 
+      [label]="'REQUEST_QUOTATION.CONVERT' | translate" 
+      icon="pi pi-check" 
+      class="p-button-success"
+      (click)="confirmConvert()"
+      [disabled]="!selectedStoreId || submitting"
+      [loading]="submitting">
+    </button>
+  </ng-template>
+</p-dialog>

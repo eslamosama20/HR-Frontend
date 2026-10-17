@@ -1,0 +1,297 @@
+/* Page Title & Header Bar Styling */
+.top-selling-products-header,
+.filters-header-bar {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+
+  .page-title {
+    color: #1e293b;
+    font-size: 1.25rem;
+    font-weight: 700;
+  }
+
+  .header-search-box {
+    input {
+      height: 36px;
+      font-size: 0.875rem;
+      border-radius: 6px;
+      border-color: #cbd5e1;
+
+      &:focus {
+        border-color: #0284c7;
+        box-shadow: 0 0 0 2px rgba(2, 132, 199, 0.15);
+      }
+    }
+  }
+
+  ::ng-deep {
+    .p-calendar {
+      height: 36px;
+      display: inline-flex;
+      align-items: center;
+      position: relative;
+
+      .p-inputtext {
+        height: 36px;
+        font-size: 0.85rem;
+        border-radius: 6px;
+        border-color: #cbd5e1;
+        width: 100%;
+        text-align: start !important;
+        padding-inline-start: 2rem !important;
+        padding-inline-end: 0.65rem !important;
+
+        &:focus {
+          border-color: #0284c7;
+          box-shadow: 0 0 0 2px rgba(2, 132, 199, 0.15);
+        }
+      }
+
+      .p-datepicker-trigger-icon,
+      .pi-calendar,
+      .p-icon,
+      [data-pc-section="inputicon"] {
+        color: #64748b;
+        position: absolute;
+        top: 50%;
+        transform: translateY(-50%);
+        inset-inline-start: 0.65rem !important;
+        inset-inline-end: auto !important;
+        z-index: 2;
+        pointer-events: none;
+        font-size: 0.85rem;
+      }
+    }
+
+    [dir="rtl"] .p-calendar,
+    :host-context([dir="rtl"]) .p-calendar,
+    body[direction="rtl"] .p-calendar,
+    html[dir="rtl"] .p-calendar {
+      .p-inputtext {
+        text-align: right !important;
+        padding-right: 2rem !important;
+        padding-left: 0.65rem !important;
+      }
+      .p-datepicker-trigger-icon,
+      .pi-calendar,
+      .p-icon,
+      [data-pc-section="inputicon"] {
+        right: 0.65rem !important;
+        left: auto !important;
+      }
+    }
+
+    [dir="ltr"] .p-calendar,
+    :host-context([dir="ltr"]) .p-calendar,
+    body[direction="ltr"] .p-calendar,
+    html[dir="ltr"] .p-calendar {
+      .p-inputtext {
+        text-align: left !important;
+        padding-left: 2rem !important;
+        padding-right: 0.65rem !important;
+      }
+      .p-datepicker-trigger-icon,
+      .pi-calendar,
+      .p-icon,
+      [data-pc-section="inputicon"] {
+        left: 0.65rem !important;
+        right: auto !important;
+      }
+    }
+
+    .p-dropdown {
+      height: 36px;
+      font-size: 0.85rem;
+      border-radius: 6px;
+      border-color: #cbd5e1;
+      display: inline-flex;
+      align-items: center;
+    }
+
+    .p-dropdown .p-dropdown-label {
+      padding: 0.35rem 0.65rem;
+      font-size: 0.85rem;
+    }
+
+    .p-button.p-button-sm,
+    .p-button {
+      height: 36px;
+      font-size: 0.85rem;
+      padding: 0.35rem 0.75rem;
+      display: inline-flex !important;
+      flex-direction: row !important;
+      align-items: center !important;
+      justify-content: center !important;
+      gap: 0.45rem !important;
+      white-space: nowrap !important;
+
+      .p-button-icon {
+        font-size: 0.85rem !important;
+        margin: 0 !important;
+        display: inline-flex !important;
+        align-items: center !important;
+      }
+
+      .p-button-label {
+        font-size: 0.85rem !important;
+        margin: 0 !important;
+        display: inline-block !important;
+        line-height: 1 !important;
+        white-space: nowrap !important;
+        flex: 0 1 auto !important;
+      }
+    }
+  }
+}
+
+.rank-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  font-weight: bold;
+  background-color: #e2e8f0;
+  color: #475569;
+}
+
+.rank-gold {
+  background: linear-gradient(135deg, #ffd700, #ffec8b);
+  color: #7c5e00;
+  box-shadow: 0 2px 8px rgba(255, 215, 0, 0.4);
+}
+
+.rank-silver {
+  background: linear-gradient(135deg, #c0c0c0, #e8e8e8);
+  color: #4a4a4a;
+  box-shadow: 0 2px 8px rgba(192, 192, 192, 0.4);
+}
+
+.rank-bronze {
+  background: linear-gradient(135deg, #cd7f32, #dda15e);
+  color: #5c3d0c;
+  box-shadow: 0 2px 8px rgba(205, 127, 50, 0.4);
+}
+
+.top-3 {
+  background-color: rgba(34, 197, 94, 0.05) !important;
+}
+
+:host {
+  --table-head-bg: var(--primary-color, #46bbeb);
+  --table-header-text: #ffffff;
+}
+
+:host ::ng-deep {
+  .p-button {
+    display: inline-flex !important;
+    flex-direction: row !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 0.45rem !important;
+    white-space: nowrap !important;
+
+    .p-button-icon {
+      font-size: 0.85rem !important;
+      margin: 0 !important;
+      display: inline-flex !important;
+      align-items: center !important;
+    }
+
+    .p-button-label {
+      font-size: 0.85rem !important;
+      margin: 0 !important;
+      display: inline-block !important;
+      line-height: 1 !important;
+      white-space: nowrap !important;
+      flex: 0 1 auto !important;
+    }
+  }
+
+  .p-datatable {
+    .p-datatable-thead > tr > th {
+      background: var(--table-head-bg) !important;
+      color: var(--table-header-text) !important;
+      font-weight: 600;
+      padding: 1rem;
+      text-align: center;
+      border: none;
+      white-space: nowrap !important;
+
+      .p-sortable-column-icon {
+        display: inline-block !important;
+        vertical-align: middle !important;
+        margin-inline-start: 0.35rem !important;
+      }
+    }
+
+    .p-datatable-tbody > tr {
+      &:hover {
+        background-color: var(--surface-50);
+      }
+
+      > td {
+        padding: 0.75rem 1rem;
+        text-align: center;
+        border-bottom: 1px solid var(--surface-border);
+      }
+    }
+
+    .p-datatable-emptymessage > td {
+      text-align: center;
+      padding: 3rem 1rem;
+    }
+  }
+}
+
+/* Theme overrides (align with other tables) */
+$green-sels: ".light-green-mode", '[data-bs-theme="light-green"]', "body.light-green";
+@each $sel in $green-sels {
+  :host-context(#{$sel}) {
+    --table-head-bg: #c6ecea;
+    --table-header-text: #2e2a40;
+  }
+}
+
+$indigo-sels: ".light-indigo-mode", '[data-bs-theme="light-indigo"]', "body.light-indigo";
+@each $sel in $indigo-sels {
+  :host-context(#{$sel}) {
+    --table-head-bg: #c9d0f5;
+    --table-header-text: #5d6679;
+  }
+}
+
+$darkblue-sels: ".light-darkblue-mode", '[data-bs-theme="light-darkblue"]', "body.light-darkblue";
+@each $sel in $darkblue-sels {
+  :host-context(#{$sel}) {
+    --table-head-bg: #dad7ff;
+    --table-header-text: #191d29;
+  }
+}
+
+.bg-primary {
+  background-color: #3b82f6 !important;
+}
+
+.bg-info {
+  background-color: #06b6d4 !important;
+}
+
+.bg-warning {
+  background-color: #f59e0b !important;
+}
+
+.text-primary {
+  color: #3b82f6 !important;
+}
+
+.text-success {
+  color: #22c55e !important;
+}
+
+.fw-bold {
+  font-weight: 600 !important;
+}

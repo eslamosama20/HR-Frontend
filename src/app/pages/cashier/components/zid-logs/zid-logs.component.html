@@ -1,0 +1,110 @@
+﻿<app-zid-shell activeTab="logs" titleKey="CASHIER_ZID.LOGS_TITLE" subtitleKey="CASHIER_ZID.LOGS_SUBTITLE">
+  <p-toast></p-toast>
+
+  <div zid-actions class="zid-actions">
+    <button pButton type="button" icon="pi pi-refresh" [label]="'CASHIER_ZID.REFRESH' | translate" class="p-button-outlined" [loading]="loading()" (click)="loadLogs()"></button>
+  </div>
+
+  <div zid-kpis class="zid-summary">
+    <div class="zid-metric"><span>{{ 'CASHIER_ZID.LOGS_TITLE' | translate }}</span><strong>{{ totalRecords() }}</strong></div>
+    <div class="zid-metric"><span>{{ 'CASHIER_ZID.EVENT_TYPE' | translate }}</span><strong>{{ eventType || '-' }}</strong></div>
+  </div>
+
+  <div zid-filters class="zid-panel">
+    <div class="zid-panel-header">
+      <div>
+        <h2>{{ 'CASHIER_ZID.EVENT_TYPE' | translate }}</h2>
+        <p>{{ 'CASHIER_ZID.LOGS_SUBTITLE' | translate }}</p>
+      </div>
+    </div>
+    <div class="zid-grid compact">
+      <div class="zid-field">
+        <label>{{ 'CASHIER_ZID.EVENT_TYPE' | translate }}</label>
+        <input pInputText [(ngModel)]="eventType" [placeholder]="'CASHIER_ZID.EVENT_TYPE_PLACEHOLDER' | translate" (keyup.enter)="loadLogs()" />
+      </div>
+      <div class="zid-actions">
+        <button pButton type="button" icon="pi pi-filter" [label]="'CASHIER_ZID.APPLY' | translate" (click)="loadLogs()"></button>
+        <button pButton type="button" icon="pi pi-times" [label]="'CASHIER_ZID.CLEAR' | translate" class="p-button-outlined" (click)="resetFilter()"></button>
+      </div>
+    </div>
+  </div>
+
+  <div class="zid-error" *ngIf="error() && !loading()">
+    <i class="pi pi-exclamation-triangle"></i>
+    <span>{{ error() }}</span>
+    <button pButton type="button" icon="pi pi-refresh" class="p-button-text p-button-sm" (click)="loadLogs()"></button>
+  </div>
+
+  <div class="zid-table-panel" *ngIf="loading() && !logs().length">
+    <app-zid-skeleton [rows]="6"></app-zid-skeleton>
+  </div>
+
+  <div class="zid-table-panel" *ngIf="!loading() || logs().length">
+    <div class="zid-table-toolbar">
+      <div class="zid-table-title">
+        <strong>{{ 'CASHIER_ZID.LOG_TIMELINE' | translate }}</strong>
+        <span>{{ totalRecords() }} {{ 'CASHIER_ZID.LOGS_TITLE' | translate }}</span>
+      </div>
+    </div>
+
+    <div class="zid-timeline" *ngIf="logs().length; else emptyLogs">
+      <div class="zid-timeline-item" *ngFor="let log of logs()">
+        <span class="zid-timeline-dot"></span>
+        <div class="zid-cell-stack">
+          <strong>{{ log.eventType || '-' }}</strong>
+          <small>{{ directionLabel(log.direction) }} · {{ log.zidResourceId || '-' }}</small>
+          <span class="zid-error" *ngIf="log.errorMessage">
+            <i class="pi pi-exclamation-triangle"></i>
+            <span>{{ log.errorMessage }}</span>
+          </span>
+        </div>
+        <div class="zid-cell-stack">
+          <p-tag [severity]="syncStatusSeverity(log.status)" [value]="syncStatusLabel(log.status)"></p-tag>
+          <small>{{ log.durationMs }} ms</small>
+          <small>{{ log.createdAt ? (log.createdAt | customDate: 'short') : '-' }}</small>
+        </div>
+      </div>
+    </div>
+
+    <ng-template #emptyLogs>
+      <app-zid-empty-state titleKey="CASHIER_ZID.EMPTY_LOGS_TITLE" descriptionKey="CASHIER_ZID.EMPTY_LOGS_DESC">
+        <button pButton type="button" icon="pi pi-refresh" [label]="'CASHIER_ZID.REFRESH' | translate" class="p-button-sm p-button-outlined" (click)="loadLogs()"></button>
+      </app-zid-empty-state>
+    </ng-template>
+
+    <p-table
+      [value]="logs()"
+      [loading]="loading()"
+      [paginator]="true"
+      [rows]="pageSize"
+      [totalRecords]="totalRecords()"
+      [lazy]="true"
+      [lazyLoadOnInit]="false"
+      (onLazyLoad)="onPageChange($event)"
+      responsiveLayout="scroll"
+      styleClass="p-datatable-sm p-datatable-striped">
+      <ng-template pTemplate="header">
+        <tr>
+          <th>{{ 'CASHIER_ZID.EVENT_TYPE' | translate }}</th>
+          <th>{{ 'CASHIER_ZID.DIRECTION' | translate }}</th>
+          <th>{{ 'CASHIER_ZID.STATUS' | translate }}</th>
+          <th>{{ 'CASHIER_ZID.ZID_RESOURCE' | translate }}</th>
+          <th>{{ 'CASHIER_ZID.DURATION' | translate }}</th>
+          <th>{{ 'CASHIER_ZID.ERROR' | translate }}</th>
+          <th>{{ 'CASHIER_ZID.CREATED' | translate }}</th>
+        </tr>
+      </ng-template>
+      <ng-template pTemplate="body" let-log>
+        <tr>
+          <td><strong>{{ log.eventType || '-' }}</strong></td>
+          <td>{{ directionLabel(log.direction) }}</td>
+          <td><p-tag [severity]="syncStatusSeverity(log.status)" [value]="syncStatusLabel(log.status)"></p-tag></td>
+          <td>{{ log.zidResourceId || '-' }}</td>
+          <td>{{ log.durationMs }} ms</td>
+          <td>{{ log.errorMessage || '-' }}</td>
+          <td>{{ log.createdAt ? (log.createdAt | customDate: 'short') : '-' }}</td>
+        </tr>
+      </ng-template>
+    </p-table>
+  </div>
+</app-zid-shell>

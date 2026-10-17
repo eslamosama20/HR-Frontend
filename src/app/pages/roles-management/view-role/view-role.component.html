@@ -1,0 +1,323 @@
+<p-toast></p-toast>
+
+<!-- غلاف يشبه الدايالوج بعرض ثابت ومركز -->
+<div class="view-role-page w-full">
+  <!-- الهيدر -->
+  <div class="dialog-header" style="
+      background: var(--surface-section, #f8f9fa);
+      padding: 0.5rem 1rem;
+      border: 1px solid #e5e7eb;
+      border-bottom: none;
+      border-radius: 8px 8px 0 0;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    ">
+    <div style="display: flex; align-items: center; gap: 1.5rem">
+      <h3 class="text-lg" style="margin: 0; font-weight: 600">
+        {{
+        isCreateMode
+        ? ("FINANCE.ADD_ROLE" | translate)
+        : ("FINANCE.EDIT_ROLE" | translate)
+        }}
+      </h3>
+    </div>
+
+    <div style="display: flex; align-items: center; gap: 1rem">
+      <!-- Frontal Switch مع وصف معبر ومحدد للسايدبار -->
+      <div style="
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        background: #ffffff;
+        padding: 0.35rem 0.75rem;
+        border: 1px solid #e2e8f0;
+        border-radius: 8px;
+      ">
+        <div style="display: flex; flex-direction: column; align-items: flex-start;">
+          <div style="display: flex; align-items: center; gap: 0.35rem;">
+            <span class="text-sm font-bold" [style.color]="showFrontal ? '#16a34a' : '#475569'">
+              {{ showFrontal 
+                ? (activeLanguage === 'ar' ? 'دور فرونتال (Frontal)' : 'Frontal Role') 
+                : (activeLanguage === 'ar' ? 'دور عادي (Standard)' : 'Standard Role') }}
+            </span>
+            <i class="pi pi-info-circle text-xs text-gray-400" 
+               [pTooltip]="showFrontal 
+                ? (activeLanguage === 'ar' ? 'مفعل: هذا الدور مخصص لشاشات الفرونتال والاستقبال، ويظهر عناصر الفرونتال في القائمة الجانبية (Sidebar).' : 'Enabled: Dedicated for Frontal screens, showing Frontal items in the sidebar.') 
+                : (activeLanguage === 'ar' ? 'غير مفعل: هذا الدور مخصص للإدارة العامة، ويظهر القوائم القياسية للنظام في القائمة الجانبية.' : 'Disabled: Dedicated for general administration, showing standard ERP menus in sidebar.')" 
+               tooltipPosition="bottom"
+               style="cursor: help;"></i>
+          </div>
+          <span class="text-xs text-gray-500" style="font-size: 0.75rem; line-height: 1.2;">
+            {{ showFrontal 
+              ? (activeLanguage === 'ar' ? 'مفعل: يظهر عناصر الفرونتال في السايدبار' : 'Enabled: Shows Frontal sidebar items') 
+              : (activeLanguage === 'ar' ? 'غير مفعل: يظهر القوائم الأساسية في السايدبار' : 'Disabled: Shows standard menus in sidebar') }}
+          </span>
+        </div>
+
+        <p-inputSwitch [(ngModel)]="showFrontal" (ngModelChange)="onSwitchChange($event)"
+          [disabled]="loading || saving"></p-inputSwitch>
+      </div>
+
+      <!-- زر الحفظ العلوي -->
+      <p-button styleClass="rounded-md text-base" icon="pi pi-check" [label]="'FINANCE.SAVE' | translate"
+        (onClick)="saveRole()" [disabled]="roleFormGroup.invalid || saving"></p-button>
+
+      <!-- زر رجوع لقائمة الأدوار -->
+      <p-button styleClass="rounded-md text-base"
+        [icon]="activeLanguage === 'ar' ? 'pi pi-arrow-right' : 'pi pi-arrow-left'"
+        [label]="activeLanguage === 'ar' ? 'رجوع' : 'Back'" severity="secondary"
+        (onClick)="closeRoleDialog()" [disabled]="saving"></p-button>
+    </div>
+  </div>
+
+  <!-- الجسم: محتوى النموذج -->
+  <div class="dialog-body" style="
+      border: 1px solid #e5e7eb;
+      border-top: none;
+      border-bottom: none;
+      padding: 0.5rem 1rem;
+      min-height: 250px;
+    ">
+    <!-- حالة التحميل -->
+    <div *ngIf="loading" class="flex justify-center items-center py-8"
+      style="display: flex; flex-direction: column; justify-content: center; align-items: center; padding: 4rem 0; gap: 1rem;">
+      <i class="pi pi-spin pi-spinner text-primary" style="font-size: 2.5rem; color: #2563eb;"></i>
+      <span class="text-lg font-medium text-gray-600">{{ "FINANCE.LOADING" | translate }}...</span>
+    </div>
+
+    <form *ngIf="!loading" [formGroup]="roleFormGroup" class="flex gap-2 flex-col" novalidate>
+      <!-- اسم الدور -->
+      <div class="field w-full">
+        <label for="name" class="block text-lg" style="margin-bottom: 0.25rem">
+          {{ "FINANCE.ROLE_NAME" | translate }} <span class="text-red-500 font-bold" style="color: #ef4444;">*</span>
+        </label>
+        <input pInputText type="text" id="name" formControlName="name"
+          [class]="'input w-full ' + (isAtMaxLimit() ? 'border-red-500' : '')"
+          [placeholder]="'FINANCE.ROLE_NAME' | translate" [disabled]="loading || saving" maxlength="100" />
+        <div class="mt-1" *ngIf="roleFormGroup.controls.name.invalid && roleFormGroup.controls.name.touched">
+          <small class="text-red-500 p-error block text-sm">
+            <span *ngIf="roleFormGroup.controls.name.errors?.['required']">
+              {{ "FINANCE.NAME_REQUIRED" | translate }}
+            </span>
+            <span *ngIf="roleFormGroup.controls.name.errors?.['maxlength']">
+              {{ "FINANCE.MAX_LENGTH_EXCEEDED" | translate }}
+            </span>
+            <span *ngIf="roleFormGroup.controls.name.errors?.['whitespaceOnly']">
+              {{ "FINANCE.WHITESPACE_ONLY" | translate }}
+            </span>
+            <span *ngIf="roleFormGroup.controls.name.errors?.['duplicateRoleName']">
+              {{ "FINANCE.DUPLICATE_ROLE_NAME" | translate }}
+            </span>
+          </small>
+        </div>
+      </div>
+
+      <!-- سقف الموارد والحدود القصوى لهذا الدور (Role Quotas) -->
+      <div class="field w-full mt-3 mb-4 p-3 border-round border-1 surface-border bg-gray-50"
+        style="border: 1px solid #e2e8f0; border-radius: 8px; background: #f8fafc; padding: 1rem;">
+        <label class="block text-lg font-bold text-primary mb-2"
+          style="color: #2563eb; font-weight: 700; margin-bottom: 0.75rem;">
+          <i class="pi pi-sliders-h me-2" style="margin-inline-end: 0.5rem;"></i>
+          {{ activeLanguage === 'ar' ? 'سقف الموارد والحدود القصوى لهذا الدور (Role Quotas)' : 'Role Resource Quota
+          Limits' }}
+        </label>
+
+        <p class="text-sm text-gray-600 mb-3" style="font-size: 0.875rem; color: #64748b; margin-bottom: 1rem;">
+          {{ activeLanguage === 'ar' ? 'يمكنك تحديد سقف الحدود المسموح بها لهذا الدور. يرجى الملاحظة أنه لا يمكن إدخال
+          حد لمورد معين إلا بعد تفعيل صلاحية الإضافة الخاصة به.' : 'Specify resource quota limits for this role. Note
+          that quota inputs are enabled only when the corresponding permission is selected.' }}
+        </p>
+
+        <div class="quota-grid"
+          style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 0.85rem 1rem;">
+          <!-- عدد المستخدمين -->
+          <div class="quota-item" style="display: flex; flex-direction: column; gap: 0.3rem;">
+            <label class="text-sm font-semibold text-gray-700" style="font-size: 0.875rem; color: #374151;">
+              {{ activeLanguage === 'ar' ? 'الحد الأقصى للمستخدمين' : 'Max Users Count' }}
+            </label>
+            <input pInputText type="number" formControlName="maxUsersCount" min="1"
+              [placeholder]="isUsersQuotaEnabled() ? (activeLanguage === 'ar' ? 'مثال: 5' : 'e.g. 5') : (activeLanguage === 'ar' ? 'يتطلب صلاحية المستخدمين' : 'Requires User Permission')"
+              [disabled]="!isUsersQuotaEnabled() || loading || saving"
+              style="width: 100%; padding: 0.45rem 0.65rem; font-size: 0.9rem; border-radius: 6px;" />
+          </div>
+
+          <!-- عدد الشركات -->
+          <div class="quota-item" style="display: flex; flex-direction: column; gap: 0.3rem;">
+            <label class="text-sm font-semibold text-gray-700" style="font-size: 0.875rem; color: #374151;">
+              {{ activeLanguage === 'ar' ? 'الحد الأقصى للشركات' : 'Max Companies Count' }}
+            </label>
+            <input pInputText type="number" formControlName="maxCompaniesCount" min="1"
+              [placeholder]="isCompaniesQuotaEnabled() ? (activeLanguage === 'ar' ? 'مثال: 2' : 'e.g. 2') : (activeLanguage === 'ar' ? 'يتطلب صلاحية إضافة الشركات' : 'Requires Company Permission')"
+              [disabled]="!isCompaniesQuotaEnabled() || loading || saving"
+              style="width: 100%; padding: 0.45rem 0.65rem; font-size: 0.9rem; border-radius: 6px;" />
+          </div>
+
+          <!-- عدد الفروع -->
+          <div class="quota-item" style="display: flex; flex-direction: column; gap: 0.3rem;">
+            <label class="text-sm font-semibold text-gray-700" style="font-size: 0.875rem; color: #374151;">
+              {{ activeLanguage === 'ar' ? 'الحد الأقصى للفروع' : 'Max Branches Count' }}
+            </label>
+            <input pInputText type="number" formControlName="maxBranchesCount" min="1"
+              [placeholder]="isBranchesQuotaEnabled() ? (activeLanguage === 'ar' ? 'مثال: 3' : 'e.g. 3') : (activeLanguage === 'ar' ? 'يتطلب صلاحية إضافة الفروع' : 'Requires Branch Permission')"
+              [disabled]="!isBranchesQuotaEnabled() || loading || saving"
+              style="width: 100%; padding: 0.45rem 0.65rem; font-size: 0.9rem; border-radius: 6px;" />
+          </div>
+
+          <!-- عدد المخازن -->
+          <div class="quota-item" style="display: flex; flex-direction: column; gap: 0.3rem;">
+            <label class="text-sm font-semibold text-gray-700" style="font-size: 0.875rem; color: #374151;">
+              {{ activeLanguage === 'ar' ? 'الحد الأقصى للمخازن' : 'Max Stores Count' }}
+            </label>
+            <input pInputText type="number" formControlName="maxStoresCount" min="1"
+              [placeholder]="isStoresQuotaEnabled() ? (activeLanguage === 'ar' ? 'مثال: 4' : 'e.g. 4') : (activeLanguage === 'ar' ? 'يتطلب صلاحية إضافة المخازن' : 'Requires Store Permission')"
+              [disabled]="!isStoresQuotaEnabled() || loading || saving"
+              style="width: 100%; padding: 0.45rem 0.65rem; font-size: 0.9rem; border-radius: 6px;" />
+          </div>
+
+          <!-- عدد البنوك -->
+          <div class="quota-item" style="display: flex; flex-direction: column; gap: 0.3rem;">
+            <label class="text-sm font-semibold text-gray-700" style="font-size: 0.875rem; color: #374151;">
+              {{ activeLanguage === 'ar' ? 'الحد الأقصى للبنوك' : 'Max Banks Count' }}
+            </label>
+            <input pInputText type="number" formControlName="maxBanksCount" min="1"
+              [placeholder]="isBanksQuotaEnabled() ? (activeLanguage === 'ar' ? 'مثال: 2' : 'e.g. 2') : (activeLanguage === 'ar' ? 'يتطلب صلاحية إضافة الحسابات' : 'Requires Bank Permission')"
+              [disabled]="!isBanksQuotaEnabled() || loading || saving"
+              style="width: 100%; padding: 0.45rem 0.65rem; font-size: 0.9rem; border-radius: 6px;" />
+          </div>
+
+          <!-- عدد الخزائن -->
+          <div class="quota-item" style="display: flex; flex-direction: column; gap: 0.3rem;">
+            <label class="text-sm font-semibold text-gray-700" style="font-size: 0.875rem; color: #374151;">
+              {{ activeLanguage === 'ar' ? 'الحد الأقصى للخزائن' : 'Max Treasuries Count' }}
+            </label>
+            <input pInputText type="number" formControlName="maxTreasuriesCount" min="1"
+              [placeholder]="isTreasuriesQuotaEnabled() ? (activeLanguage === 'ar' ? 'مثال: 3' : 'e.g. 3') : (activeLanguage === 'ar' ? 'يتطلب صلاحية إضافة الخزائن' : 'Requires Treasury Permission')"
+              [disabled]="!isTreasuriesQuotaEnabled() || loading || saving"
+              style="width: 100%; padding: 0.45rem 0.65rem; font-size: 0.9rem; border-radius: 6px;" />
+          </div>
+
+          <!-- عدد الموردين -->
+          <div class="quota-item" style="display: flex; flex-direction: column; gap: 0.3rem;">
+            <label class="text-sm font-semibold text-gray-700" style="font-size: 0.875rem; color: #374151;">
+              {{ activeLanguage === 'ar' ? 'الحد الأقصى للموردين' : 'Max Suppliers Count' }}
+            </label>
+            <input pInputText type="number" formControlName="maxSuppliersCount" min="1"
+              [placeholder]="isSuppliersQuotaEnabled() ? (activeLanguage === 'ar' ? 'مثال: 10' : 'e.g. 10') : (activeLanguage === 'ar' ? 'يتطلب صلاحية إضافة الموردين' : 'Requires Supplier Permission')"
+              [disabled]="!isSuppliersQuotaEnabled() || loading || saving"
+              style="width: 100%; padding: 0.45rem 0.65rem; font-size: 0.9rem; border-radius: 6px;" />
+          </div>
+
+          <!-- عدد العملاء -->
+          <div class="quota-item" style="display: flex; flex-direction: column; gap: 0.3rem;">
+            <label class="text-sm font-semibold text-gray-700" style="font-size: 0.875rem; color: #374151;">
+              {{ activeLanguage === 'ar' ? 'الحد الأقصى للعملاء' : 'Max Customers Count' }}
+            </label>
+            <input pInputText type="number" formControlName="maxCustomersCount" min="1"
+              [placeholder]="isCustomersQuotaEnabled() ? (activeLanguage === 'ar' ? 'مثال: 50' : 'e.g. 50') : (activeLanguage === 'ar' ? 'يتطلب صلاحية إضافة العملاء' : 'Requires Customer Permission')"
+              [disabled]="!isCustomersQuotaEnabled() || loading || saving"
+              style="width: 100%; padding: 0.45rem 0.65rem; font-size: 0.9rem; border-radius: 6px;" />
+          </div>
+        </div>
+      </div>
+
+      <!-- الصلاحيات (مقسمة لمجموعات) -->
+      <div class="field w-full mt-2">
+        <div style="display: flex; align-items: center; justify-content: space-between; gap: 1.25rem; margin-bottom: 1.25rem; flex-wrap: wrap;">
+          <!-- اليمين (في العربية): عنوان الصلاحيات وحقل البحث -->
+          <div style="display: flex; align-items: center; gap: 1.25rem; flex-wrap: wrap; flex: 1; min-width: 280px;">
+            <label class="text-lg font-bold" style="margin: 0; white-space: nowrap;">
+              {{ "FINANCE.PERMISSIONS" | translate }}
+            </label>
+            <div style="position: relative; width: 100%; max-width: 320px;">
+              <i class="pi pi-search" [style.left]="activeLanguage === 'ar' ? 'auto' : '0.75rem'"
+                [style.right]="activeLanguage === 'ar' ? '0.75rem' : 'auto'"
+                style="position: absolute; top: 50%; transform: translateY(-50%); color: #6b7280; z-index: 10;"></i>
+              <input type="text" [(ngModel)]="searchQuery" (ngModelChange)="onSearchQueryChange()"
+                [ngModelOptions]="{standalone: true}"
+                placeholder="{{ activeLanguage === 'ar' ? 'ابحث عن صلاحية...' : 'Search permission...' }}"
+                [style.padding-left]="activeLanguage === 'ar' ? '1rem' : '2.25rem'"
+                [style.padding-right]="activeLanguage === 'ar' ? '2.25rem' : '1rem'"
+                style="width: 100%; padding-top: 0.5rem; padding-bottom: 0.5rem; border: 1px solid #d1d5db; border-radius: 6px; font-size: 0.95rem; outline: none; background: #fff;" />
+            </div>
+          </div>
+
+          <!-- الشمال (في العربية): تحديد جميع الصلاحيات -->
+          <div style="display: flex; align-items: center; gap: 0.6rem; cursor: pointer; user-select: none;" (click)="toggleAllPermissions()">
+            <input type="checkbox" [checked]="isAllSelected()" [disabled]="loading || saving"
+              style="width: 1.45rem; height: 1.45rem; cursor: pointer; pointer-events: none; accent-color: #2563eb;" />
+            <span class="text-base font-semibold" style="color: #374151; white-space: nowrap;">
+              {{ isAllSelected() ? (activeLanguage === 'ar' ? 'إلغاء تحديد جميع الصلاحيات' : 'Deselect All Permissions') : (activeLanguage === 'ar' ? 'تحديد جميع الصلاحيات' : 'Select All Permissions') }}
+            </span>
+          </div>
+        </div>
+
+        <div *ngFor="let cat of groupedCategories" class="perm-category-section mb-4">
+          <div class="perm-category-header">
+            <div style="display: flex; align-items: center; gap: 1rem;">
+              <div style="display: flex; align-items: center; gap: 0.4rem; cursor: pointer;"
+                (click)="toggleCategoryAll(cat)">
+                <input type="checkbox" [checked]="isCategoryAllSelected(cat)" [disabled]="loading || saving"
+                  style="width: 1.3rem; height: 1.3rem; cursor: pointer; pointer-events: none; accent-color: #2563eb;" />
+                <span class="text-sm text-gray-500"
+                  style="font-size: 0.9rem; opacity: 0.9; user-select: none; font-weight: 600;">
+                  {{ isCategoryAllSelected(cat) ? (activeLanguage === 'ar' ? 'إلغاء تحديد الكل' : 'Deselect All') :
+                  (activeLanguage === 'ar' ? 'تحديد الكل' : 'Select All') }}
+                </span>
+              </div>
+              <span class="perm-category-title">
+                <i class="pi pi-folder me-2 text-primary" style="margin-inline-end: 0.5rem;"></i>
+                {{ cat.name }}
+              </span>
+            </div>
+            <div>
+              <span class="perm-category-badge">{{ cat.options.length }}</span>
+            </div>
+          </div>
+          <div class="perm-grid">
+            <label class="perm-item" *ngFor="let opt of cat.options" [class.selected]="isSelected(opt.value)">
+              <input type="checkbox" class="perm-checkbox" [checked]="isSelected(opt.value)"
+                (change)="togglePermission(opt.value, $event)" [disabled]="loading || saving" />
+              <span class="perm-label text-lg">{{ opt.label }}</span>
+            </label>
+          </div>
+        </div>
+
+        <!-- رسالة عند عدم وجود نتائج للبحث -->
+        <div *ngIf="!loading && groupedCategories.length === 0" class="text-center py-5"
+          style="padding: 2.5rem; text-align: center; background: var(--surface-section, #f8f9fa); border: 1px dashed #d1d5db; border-radius: 8px; margin: 1.5rem 0;">
+          <i class="pi pi-filter-slash text-gray-400"
+            style="font-size: 2.5rem; color: #9ca3af; margin-bottom: 0.75rem; display: block;"></i>
+          <span class="text-lg text-gray-500" style="font-weight: 500; display: block;">
+            {{ searchQuery 
+              ? (activeLanguage === 'ar' ? 'لا توجد صلاحيات تطابق البحث الحالي.' : 'No permissions match the current search.') 
+              : (activeLanguage === 'ar' ? 'لا توجد صلاحيات متاحة لهذا الدور.' : 'No permissions available for this role.') }}
+          </span>
+        </div>
+
+        <small class="text-red-500 p-error block text-lg" *ngIf="
+            roleFormGroup.controls.rolePermissions.invalid &&
+            roleFormGroup.controls.rolePermissions.touched
+          ">
+          {{ "FINANCE.AT_LEAST_ONE_PERMISSION_REQUIRED" | translate }}
+        </small>
+      </div>
+    </form>
+  </div>
+
+  <!-- الفوتر: أزرار الحفظ والإلغاء -->
+  <div class="dialog-footer" style="
+      border: 1px solid #e5e7eb;
+      border-top: none;
+      padding: 0.5rem 1rem;
+      border-radius: 0 0 8px 8px;
+    ">
+    <div class="flex justify-content-end gap-2" style="display: flex; gap: 0.5rem; justify-content: flex-end">
+      <p-button styleClass="rounded-md text-lg" [label]="'FINANCE.SAVE' | translate" (onClick)="saveRole()"
+        [disabled]="loading || roleFormGroup.invalid || saving"></p-button>
+
+      <p-button styleClass="rounded-md text-lg" [label]="'FINANCE.CANCEL' | translate" severity="secondary"
+        (onClick)="closeRoleDialog()" [disabled]="saving"></p-button>
+    </div>
+  </div>
+</div>

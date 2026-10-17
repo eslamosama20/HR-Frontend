@@ -1,0 +1,271 @@
+// Hotel room selection custom styles
+
+/* Filter Card Animations */
+.filter-card {
+  animation: slideDown 0.5s ease-out;
+  transition: all 0.3s ease;
+  
+  &:hover {
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15) !important;
+  }
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Amenity Tags Styling */
+.amenity-tag {
+  display: inline-flex;
+  align-items: center;
+  padding: 8px 16px;
+  margin: 6px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border-radius: 20px;
+  font-size: 14px;
+  font-weight: 500;
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  animation: fadeInUp 0.5s ease-out backwards;
+  
+  i {
+    margin-left: 8px;
+    font-size: 16px;
+  }
+  
+  &:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 20px rgba(102, 126, 234, 0.4);
+  }
+  
+  &:nth-child(1) { animation-delay: 0.1s; }
+  &:nth-child(2) { animation-delay: 0.15s; }
+  &:nth-child(3) { animation-delay: 0.2s; }
+  &:nth-child(4) { animation-delay: 0.25s; }
+  &:nth-child(5) { animation-delay: 0.3s; }
+  &:nth-child(6) { animation-delay: 0.35s; }
+  &:nth-child(7) { animation-delay: 0.4s; }
+  &:nth-child(8) { animation-delay: 0.45s; }
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(15px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Image Gallery Animations */
+.hotel-images-grid {
+  animation: zoomIn 0.6s ease-out;
+  
+  .image-container {
+    overflow: hidden;
+    
+    img {
+      transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+      
+      &:hover {
+        transform: scale(1.05);
+        box-shadow: 0 12px 35px rgba(0, 0, 0, 0.25);
+        z-index: 10;
+      }
+    }
+  }
+}
+
+@keyframes zoomIn {
+  from {
+    opacity: 0;
+    transform: scale(0.9);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.cursor-pointer {
+  cursor: pointer;
+}
+
+/* Button Hover Animations */
+.btn {
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+  
+  &::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 0;
+    height: 0;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.3);
+    transform: translate(-50%, -50%);
+    transition: width 0.6s, height 0.6s;
+  }
+  
+  &:hover::before {
+    width: 300px;
+    height: 300px;
+  }
+  
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
+  }
+  
+  &:active {
+    transform: translateY(0);
+  }
+}
+
+/* Card Shadow Animations */
+.card {
+  transition: all 0.4s ease;
+  
+  &:hover {
+    transform: translateY(-3px);
+  }
+  
+  .card-header {
+    position: relative;
+    
+    h5 {
+      color: #495057;
+    }
+    
+    i {
+      color: #667eea;
+    }
+  }
+}
+
+/* Hotel Information Styling */
+.card-body {
+  h6 {
+    font-size: 0.95rem;
+    color: #343a40;
+    
+    i {
+      font-size: 1.1rem;
+    }
+  }
+  
+  a {
+    color: #667eea;
+    transition: color 0.3s ease;
+    
+    &:hover {
+      color: #764ba2;
+      text-decoration: underline !important;
+    }
+  }
+  
+  p {
+    font-size: 0.95rem;
+  }
+}
+
+/* Description Text Styling */
+.card-body p[style*="white-space: pre-line"] {
+  text-align: justify;
+  color: #6c757d;
+}
+
+/* Smooth Form Control Transitions */
+.form-control, .form-select {
+  transition: all 0.3s ease;
+  
+  &:focus {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(13, 110, 253, 0.2);
+  }
+}
+
+::ng-deep {
+  .p-datatable {
+    .p-datatable-thead > tr > th {
+      background-color: #f8f9fa;
+      color: #333;
+      font-weight: 600;
+      padding: 1rem;
+      border-bottom: 2px solid #dee2e6;
+    }
+
+    .p-datatable-tbody > tr {
+      animation: fadeInLeft 0.4s ease-out backwards;
+      transition: all 0.3s ease;
+      
+      &:nth-child(1) { animation-delay: 0.05s; }
+      &:nth-child(2) { animation-delay: 0.1s; }
+      &:nth-child(3) { animation-delay: 0.15s; }
+      &:nth-child(4) { animation-delay: 0.2s; }
+      &:nth-child(5) { animation-delay: 0.25s; }
+      
+      &:hover {
+        transform: translateX(-5px);
+        box-shadow: -5px 0 15px rgba(0, 0, 0, 0.08);
+        background: linear-gradient(90deg, #f8f9ff 0%, #ffffff 100%) !important;
+      }
+
+      > td {
+        padding: 1.5rem 1rem;
+        border-bottom: 1px solid #dee2e6;
+      }
+    }
+  }
+
+  @keyframes fadeInLeft {
+    from {
+      opacity: 0;
+      transform: translateX(30px);
+    }
+    to {
+      opacity: 1;
+      transform: translateX(0);
+    }
+  }
+
+  .p-galleria {
+    .p-galleria-mask {
+      background: rgba(0, 0, 0, 0.9);
+      backdrop-filter: blur(10px);
+    }
+    
+    .p-galleria-thumbnail-container {
+      background: rgba(0, 0, 0, 0.9);
+    }
+
+    .p-galleria-close {
+      color: white;
+    }
+  }
+
+  .p-tag {
+    font-size: 0.875rem;
+    padding: 0.5rem 1rem;
+  }
+
+  .p-rating {
+    .p-rating-icon {
+      color: #ffc107;
+      font-size: 1.25rem;
+    }
+  }
+}

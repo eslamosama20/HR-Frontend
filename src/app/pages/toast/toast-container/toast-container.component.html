@@ -1,0 +1,46 @@
+﻿<!-- أضف toast-bottom-left للتحكم في الموضع -->
+<div class="toast-container toast-bottom-left">
+  <div
+    class="toast"
+    *ngFor="let t of toasts; trackBy: trackById"
+    [ngClass]="t.type"
+    (click)="onClick(t)"
+    tabindex="0"
+    role="status"
+    aria-live="polite"
+  >
+    <div class="icon">
+      <mat-icon>{{ iconName(t.type) }}</mat-icon>
+    </div>
+
+    <div class="body">
+      <div class="message">
+        <!-- العنوان (اختياري) -->
+        <div class="title" *ngIf="t.title">{{ t.title }}</div>
+
+        <!-- النص/المحتوى -->
+        <div class="text">
+          {{ t.content || t.message }}
+          <span
+            *ngIf="t.link"
+            class="link-hint"
+            aria-label="يفتح رابطًا خارجيًا"
+          >
+            <mat-icon inline>open_in_new</mat-icon>
+            <span class="hint-text">رابط</span>
+          </span>
+        </div>
+      </div>
+
+      <div class="meta">{{ t.date | customDate: "shortTime" }}</div>
+    </div>
+
+    <button
+      class="close"
+      aria-label="إغلاق"
+      (click)="$event.stopPropagation(); dismiss(t.toastId)"
+    >
+      <mat-icon>close</mat-icon>
+    </button>
+  </div>
+</div>

@@ -1,0 +1,12 @@
+<button 
+  pButton 
+  type="button" 
+  [icon]="isArabic ? 'pi pi-arrow-right' : 'pi pi-arrow-left'"
+  iconPos="left"
+  [label]="showLabel ? (label | translate) : ''" 
+  [class]="(modernStyle ? 'modern-back-button ' : 'p-button-outlined ') + styleClass"
+  (click)="goBack()"
+  [disabled]="disabled"
+  [attr.aria-label]="label | translate">
+</button>
+

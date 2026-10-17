@@ -1,0 +1,85 @@
+/* ========================= 
+   Table Header Colors (matching payment-receipt exactly)
+   ========================= */
+:host {
+  --table-head-bg: #46bbeb;
+  --table-header-text: #ffffff;
+}
+
+/* Theme-aware table header colors */
+.invoices-table-container ::ng-deep .p-datatable .p-datatable-thead > tr > th {
+  background: var(--table-head-bg) !important;
+  color: var(--table-header-text) !important;
+}
+
+/* Theme overrides (consistent across app) */
+$green-sels: ".light-green-mode", '[data-bs-theme="light-green"]', "body.light-green";
+@each $sel in $green-sels {
+  :host-context(#{$sel}) {
+    --table-head-bg: #c6ecea;
+    --table-header-text: #2e2a40;
+  }
+}
+
+$indigo-sels: ".light-indigo-mode", '[data-bs-theme="light-indigo"]', "body.light-indigo";
+@each $sel in $indigo-sels {
+  :host-context(#{$sel}) {
+    --table-head-bg: #c9d0f5;
+    --table-header-text: #5d6679;
+  }
+}
+
+$darkblue-sels: ".light-darkblue-mode", '[data-bs-theme="light-darkblue"]', "body.light-darkblue";
+@each $sel in $darkblue-sels {
+  :host-context(#{$sel}) {
+    --table-head-bg: #dad7ff;
+    --table-header-text: #191d29;
+  }
+}
+
+/* Table compact styling */
+:host ::ng-deep {
+  .p-datatable-sm .p-datatable-tbody > tr > td,
+  .p-datatable-sm .p-datatable-thead > tr > th {
+    padding: 0.5rem;
+  }
+}
+
+/* Center content horizontally and vertically in all table cells */
+table td, table th {
+  text-align: center;  /* Horizontal centering */
+  vertical-align: middle; /* Vertical centering */
+}
+
+/* Increase the size of the remove icon */
+.big-icon {
+  font-size: 1.5rem; /* Adjust icon size */
+  cursor: pointer;
+}
+.btn-custom {
+  background-color: #00b7ff; /* Replace with your desired color */
+  color: #fff; /* Text color */
+  border: none; /* Remove default border */
+}
+
+.btn-custom:hover {
+  background-color: #008fb3; /* Darker shade for hover */
+}
+@media print {
+  /* Hide specific buttons or elements during print */
+  .btn,  /* All buttons with the class 'btn' */
+  .form-check, /* The checkbox to toggle table visibility */
+  .modal, /* The modal for tax (if it's visible) */
+  .text-right button, /* The 'Add Account' button */
+  .bi-dash-circle, /* The delete icon inside the table */
+  .modal-footer { /* The modal's footer */
+    display: none !important;
+  }
+
+  /* You can also target specific buttons by their classes if needed */
+}
+@media print {
+  .print-exclude {
+    display: none !important;
+  }
+}

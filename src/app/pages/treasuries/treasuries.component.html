@@ -1,0 +1,532 @@
+<!-- Single view: Treasury -->
+<ng-container *ngIf="viewMode === 'treasury'">
+  <ng-container *ngTemplateOutlet="treasuryContent"></ng-container>
+</ng-container>
+
+<!-- Single view: Bank Accounts -->
+<ng-container *ngIf="viewMode === 'bank'">
+  <ng-container *ngTemplateOutlet="bankContent"></ng-container>
+</ng-container>
+
+<!-- Tab view (Fallback) -->
+<p-tabView class="w-full" [(activeIndex)]="activeTabIndex" *ngIf="viewMode === 'tab'">
+  <!-- ===================== TAB 1: الخزائن ===================== -->
+  <p-tabPanel [header]="translate.instant('FINANCE.TREASURIES_TAB')">
+    <ng-container *ngTemplateOutlet="treasuryContent"></ng-container>
+  </p-tabPanel>
+  <!-- ===================== TAB 2: الحسابات البنكية العامة ===================== -->
+  <p-tabPanel [header]="translate.instant('FINANCE.BANK_ACCOUNTS_TAB')">
+    <ng-container *ngTemplateOutlet="bankContent"></ng-container>
+  </p-tabPanel>
+</p-tabView>
+
+<!-- Reusable Treasury Template -->
+<ng-template #treasuryContent>
+  <p-table #dt1 [value]="treasuries" [columns]="columns" [resizableColumns]="true" columnResizeMode="expand"
+    dataKey="id" [rows]="10" styleClass="p-datatable-gridlines scroller custom-paginator-table"
+    [rowsPerPageOptions]="[10, 25, 50]" [loading]="loading" [paginator]="true"
+    [paginatorLocale]="activeLanguage === 'en' ? 'en-US' : 'ar-SA'" [showCurrentPageReport]="true"
+    [currentPageReportTemplate]="activeLanguage === 'en' ? 'Total ' + (treasuries?.length || 0) : 'إجمالي ' + (treasuries?.length || 0)"
+    paginatorTemplate="CurrentPageReport PrevPageLink PageLinks NextPageLink RowsPerPageDropdown"
+    [sortField]="'createdAt'" [sortOrder]="-1">
+    <ng-template pTemplate="caption">
+      <div class="flex rtl:flex-row-reverse justify-between gap-2">
+        <div class="flex gap-2">
+          <p-button styleClass="rounded-md w-auto text-nowrap" icon="pi pi-external-link"
+            [label]="translate.instant('FINANCE.EXPORT')" (onClick)="exportExcel()" />
+          <p-button styleClass="rounded-md w-auto text-nowrap" [outlined]="true" icon="pi pi-upload"
+            [label]="translate.instant('FINANCE.TREASURY_IMPORT_BUTTON')" (onClick)="openTreasuryImportInstructions()" />
+          <p-button styleClass="rounded-md w-auto text-nowrap" [label]="translate.instant('FINANCE.CLEAR_FILTERS')"
+            [outlined]="true" icon="pi pi-filter-slash" (onClick)="clear(dt1)" />
+          <p-button styleClass="rounded-md w-auto text-nowrap" [label]="translate.instant('FINANCE.ADD_TREASURY')"
+            [outlined]="true" icon="pi pi-plus" (onClick)="showAddTreasuryDialog()" />
+        </div>
+
+        <ng-container *ngIf="treasuries.length === 0 && !loading">
+          <div class="flex justify-center items-center w-full">
+            <p class="text-center font-semibold text-xl w-full flex justify-center">
+              {{ "FINANCE.NO_TREASURIES" | translate }}
+            </p>
+          </div>
+        </ng-container>
+
+        <span class="p-input-icon-left ml-auto">
+          <i class="pi pi-search"></i>
+          <input pInputText type="text" [(ngModel)]="searchValue" (input)="filter(dt1, $event)"
+            [placeholder]="translate.instant('FINANCE.SEARCH')" />
+        </span>
+      </div>
+    </ng-template>
+
+    <ng-template pTemplate="header" let-columns>
+      <tr>
+        <th style="width: 4rem">
+          <div class="flex align-items-center text-base">
+            #
+          </div>
+        </th>
+        <th style="min-width: fit-content" *ngFor="let column of columns" pResizableColumn
+          [pSortableColumn]="column.field">
+          <div class="flex align-items-center">
+            {{ column.header | translate }}
+            <p-sortIcon [field]="column.field" class="mx-1"></p-sortIcon>
+            <p-columnFilter *ngIf="column.filter" [type]="column.filterType" [field]="column.field"
+              display="menu"></p-columnFilter>
+          </div>
+        </th>
+        <th style="min-width: fit-content">
+          <div class="flex align-items-center text-base">
+            {{ "FINANCE.ACTIONS" | translate }}
+          </div>
+        </th>
+      </tr>
+    </ng-template>
+
+    <ng-template pTemplate="body" let-Entry let-rowIndex="rowIndex">
+      <tr *ngIf="treasuries.length > 0"
+        (click)="showAddTreasuryDialog(Entry)"
+        (contextmenu)="showTreasuryOverlay($event, Entry)"
+        class="hover:bg-gray-200 cursor-pointer transition-colors duration-200">
+        <td class="text-lg rtl:text-right">
+          {{ rowIndex + 1 }}
+        </td>
+        <td class="text-lg rtl:text-right">
+          {{ Entry.name }}
+        </td>
+        <td class="text-lg rtl:text-right">
+          <i class="pi" [ngClass]="{
+              'text-green-500 pi-check-circle': Entry.isConnected,
+              'text-red-500 pi-times-circle': !Entry.isConnected
+            }"></i>
+        </td>
+        <td class="text-lg rtl:text-right">
+          {{
+          Entry.createdAt
+          ? (Entry.createdAt | customDate : "yyyy/MM/dd" : "" : "ar-SA")
+          : "-"
+          }}
+        </td>
+        <td class="text-lg rtl:text-right flex gap-2">
+          <p-button [text]="true" (onClick)="
+              showTreasuryOverlay($event, Entry); $event.stopPropagation()
+            " severity="secondary" styleClass="p-button-outlined rounded-xl">
+            <ng-template pTemplate="icon">
+              <i class="pi pi-cog text-xl"></i>
+            </ng-template>
+          </p-button>
+        </td>
+      </tr>
+    </ng-template>
+  </p-table>
+
+  <p-overlayPanel #opTreasuryPanel appendTo="body" [dismissable]="true">
+    <div class="flex flex-column gap-3 w-auto p-1">
+      <p-button icon="pi pi-pencil" class="p-button-secondary" [label]="translate.instant('FINANCE.EDIT')"
+        styleClass="rounded-lg p-button-secondary w-full"
+        (onClick)="showAddTreasuryDialog(selectedTreasuryForOverlay); opTreasuryPanel.hide()"></p-button>
+
+      <p-button *ngIf="!isFrontal && !selectedTreasuryForOverlay?.isFrontal" icon="pi pi-send" class="p-button-info"
+        [label]="translate.instant('FINANCE.SEND_TO_FRONTAL')" styleClass="rounded-lg p-button-info w-full"
+        (onClick)="sendToFrontal(selectedTreasuryForOverlay); opTreasuryPanel.hide()"></p-button>
+
+      <p-button *ngIf="!isFrontal && selectedTreasuryForOverlay?.isFrontal" icon="pi pi-exclamation-triangle"
+        class="p-button-warning" [label]="translate.instant('FINANCE.FRONTAL')"
+        styleClass="rounded-lg p-button-warning w-full" [disabled]="true"></p-button>
+
+      <p-button icon="pi pi-trash" class="p-button-danger" [label]="translate.instant('FINANCE.DELETE')"
+        styleClass="rounded-lg p-button-danger w-full"
+        (click)="confirmTreasuryDeletion($event, selectedTreasuryForOverlay); opTreasuryPanel.hide()"></p-button>
+    </div>
+  </p-overlayPanel>
+
+  <p-dialog [header]="
+      treasuryFormGroup.controls.id.value
+        ? translate.instant('FINANCE.EDIT_TREASURY')
+        : translate.instant('FINANCE.ADD_TREASURY')
+    " [(visible)]="treasuryVisibleDialogSignal" [style]="{ width: '60%' }" (onHide)="closeTreasuryDialog()">
+    <form [formGroup]="treasuryFormGroup" (ngSubmit)="saveTreasury()" class="grid grid-cols-2 gap-4 p-2 py-4"
+      novalidate>
+      <div class="field">
+        <label for="name" class="block">
+          {{ translate.instant("FINANCE.NAME") }} <span class="text-red-500">*</span>
+        </label>
+        <input pInputText type="text" id="name" formControlName="name" class="input w-full"
+          [placeholder]="translate.instant('FINANCE.NAME')" />
+        <small class="text-red-500 p-error block" *ngIf="
+            treasuryFormGroup.controls.name.invalid &&
+            treasuryFormGroup.controls.name.touched
+          ">
+          {{ translate.instant("FINANCE.NAME_REQUIRED") }}
+        </small>
+      </div>
+
+      <div class="field">
+        <label for="mainAccountId" class="block">
+          {{ translate.instant("FINANCE.MAIN_ACCOUNT") }} <span class="text-red-500">*</span>
+        </label>
+        <p-dropdown [options]="mainAccountOptions" [filter]="true" formControlName="mainAccountId" id="mainAccountId"
+          styleClass="w-full" appendTo="body" variant="filled"
+          [placeholder]="translate.instant('FINANCE.CHOOSEACCOUNT')"></p-dropdown>
+        <small class="text-red-500 p-error block" *ngIf="
+            treasuryFormGroup.controls.mainAccountId.invalid &&
+            treasuryFormGroup.controls.mainAccountId.touched
+          ">
+          {{ translate.instant("FINANCE.MAIN_ACCOUNT_REQUIRED") }}
+        </small>
+      </div>
+    </form>
+
+    <hr class="mt-2 mb-1" />
+
+    <p-footer>
+      <div class="flex justify-content-end gap-2">
+        <p-button styleClass="rounded-md" [label]="translate.instant('FINANCE.SAVE')" (onClick)="saveTreasury()"
+          [disabled]="treasuryFormGroup.invalid" />
+        <p-button styleClass="rounded-md" [label]="translate.instant('FINANCE.CANCEL')" severity="secondary"
+          (onClick)="closeTreasuryDialog()" />
+      </div>
+    </p-footer>
+  </p-dialog>
+</ng-template>
+
+<!-- Reusable Bank Template -->
+<ng-template #bankContent>
+  <p-table #dtBank [value]="generalBankAccounts" [columns]="bankColumns" [resizableColumns]="true"
+    columnResizeMode="expand" dataKey="id" [rows]="10"
+    styleClass="p-datatable-gridlines scroller custom-paginator-table" [rowsPerPageOptions]="[10, 25, 50]"
+    [loading]="loadingBank" [paginator]="true" [paginatorLocale]="activeLanguage === 'en' ? 'en-US' : 'ar-SA'" [showCurrentPageReport]="true"
+    [currentPageReportTemplate]="activeLanguage === 'en' ? 'Total ' + (generalBankAccounts?.length || 0) : 'إجمالي ' + (generalBankAccounts?.length || 0)"
+    paginatorTemplate="CurrentPageReport PrevPageLink PageLinks NextPageLink RowsPerPageDropdown"
+    [sortField]="'createdAt'" [sortOrder]="-1">
+    <ng-template pTemplate="caption">
+      <div class="flex rtl:flex-row-reverse justify-between gap-2">
+        <div class="flex gap-2">
+          <p-button styleClass="rounded-md w-auto text-nowrap" icon="pi pi-external-link"
+            [label]="translate.instant('FINANCE.EXPORT')" (onClick)="exportBankExcel()" />
+          <p-button styleClass="rounded-md w-auto text-nowrap" [outlined]="true" icon="pi pi-upload"
+            [label]="translate.instant('FINANCE.BANK_IMPORT_BUTTON')" (onClick)="openBankImportInstructions()" />
+          <p-button styleClass="rounded-md w-auto text-nowrap" icon="pi pi-filter-slash"
+            [label]="translate.instant('FINANCE.CLEAR_FILTERS_LABEL')" (onClick)="clearBank(dtBank)"
+            [outlined]="true" />
+          <!-- ✅ الزر: إضافة حساب بنكي -->
+          <p-button styleClass="rounded-md w-auto text-nowrap" [outlined]="true" icon="pi pi-plus"
+            [label]="translate.instant('FINANCE.ADD_BANK_ACCOUNT')" (onClick)="onAddBankAccount()" />
+        </div>
+
+        <ng-container *ngIf="generalBankAccounts.length === 0 && !loadingBank">
+          <div class="flex justify-center items-center w-full">
+            <p class="text-center font-semibold text-xl w-full flex justify-center">
+              {{ "FINANCE.NO_BANK_ACCOUNTS" | translate }}
+            </p>
+          </div>
+        </ng-container>
+
+        <span class="p-input-icon-left ml-auto">
+          <i class="pi pi-search"></i>
+          <input pInputText type="text" [(ngModel)]="searchBank" (input)="filterBank(dtBank, $event)"
+            [placeholder]="translate.instant('FINANCE.SEARCH_PLACEHOLDER_LABEL')" />
+        </span>
+      </div>
+    </ng-template>
+
+    <ng-template pTemplate="header" let-columns>
+      <tr>
+        <th style="width: 4rem">
+          <div class="flex align-items-center text-base">
+            #
+          </div>
+        </th>
+        <th style="min-width: fit-content" *ngFor="let column of columns" pResizableColumn
+          [pSortableColumn]="column.field">
+          <div class="flex align-items-center">
+            {{ column.header | translate }}
+            <p-sortIcon [field]="column.field" class="mx-1"></p-sortIcon>
+            <p-columnFilter *ngIf="column.filter" [type]="column.filterType" [field]="column.field"
+              display="menu"></p-columnFilter>
+          </div>
+        </th>
+        <th style="min-width: fit-content">
+          <div class="flex align-items-center text-base">{{ "FINANCE.ACTIONS_LABEL" | translate }}</div>
+        </th>
+      </tr>
+    </ng-template>
+
+    <ng-template pTemplate="body" let-row let-rowIndex="rowIndex">
+      <tr *ngIf="generalBankAccounts.length > 0"
+        (click)="editBankAccount(row)"
+        (contextmenu)="showBankOverlay($event, row)"
+        class="hover:bg-gray-200 cursor-pointer transition-colors duration-200">
+        <td class="text-lg rtl:text-right">{{ rowIndex + 1 }}</td>
+        <td class="text-lg rtl:text-right">{{ row.accountName }}</td>
+        <td class="text-lg rtl:text-right">{{ row.bankName }}</td>
+        <td class="text-lg rtl:text-right">{{ row.iban }}</td>
+        <td class="text-lg rtl:text-right">
+          <i class="pi" [ngClass]="{
+              'text-green-500 pi-check-circle': row.isActive,
+              'text-red-500 pi-times-circle': !row.isActive
+            }"></i>
+        </td>
+        <td class="text-lg rtl:text-right">
+          {{
+          row.createdAt
+          ? (row.createdAt | customDate : "yyyy/MM/dd" : "" : "ar-SA")
+          : "-"
+          }}
+        </td>
+
+        <td class="text-lg rtl:text-right flex gap-2">
+          <p-button [text]="true" severity="secondary" styleClass="p-button-outlined rounded-xl"
+            (onClick)="showBankOverlay($event, row); $event.stopPropagation()">
+            <ng-template pTemplate="icon">
+              <i class="pi pi-cog text-xl"></i>
+            </ng-template>
+          </p-button>
+
+        </td>
+      </tr>
+    </ng-template>
+  </p-table>
+  <p-overlayPanel #opBankPanel appendTo="body" [dismissable]="true">
+    <div class="flex flex-column gap-3 w-auto p-1">
+      <p-button icon="pi pi-eye" class="p-button-success" [label]="translate.instant('FINANCE.VIEW')"
+        styleClass="rounded-lg p-button-success w-full" (click)="viewBankAccount(selectedBankForOverlay!); opBankPanel.hide()"></p-button>
+
+      <p-button icon="pi pi-pencil" class="p-button-info" [label]="translate.instant('FINANCE.EDIT_ACTION')"
+        styleClass="rounded-lg p-button-info w-full" (click)="editBankAccount(selectedBankForOverlay!); opBankPanel.hide()"></p-button>
+      <p-button *ngIf="!isFrontal && !selectedBankForOverlay?.isFrontal" icon="pi pi-send" class="p-button-info"
+        [label]="translate.instant('FINANCE.SEND_TO_FRONTAL')" styleClass="rounded-lg p-button-info w-full"
+        (onClick)="sendBankToFrontal(selectedBankForOverlay); opBankPanel.hide()"></p-button>
+
+      <p-button *ngIf="!isFrontal && selectedBankForOverlay?.isFrontal" icon="pi pi-exclamation-triangle"
+        class="p-button-warning" [label]="translate.instant('FINANCE.FRONTAL')"
+        styleClass="rounded-lg p-button-warning w-full" [disabled]="true"></p-button>
+
+      <p-button icon="pi pi-trash" class="p-button-danger" [label]="translate.instant('FINANCE.DELETE_ACTION')"
+        styleClass="rounded-lg p-button-danger w-full"
+        (click)="confirmBankDeletion($event, selectedBankForOverlay!); opBankPanel.hide()"></p-button>
+    </div>
+  </p-overlayPanel>
+
+  <!-- ✅ Dialog إضافة / تعديل حساب بنكي -->
+  <p-dialog [header]="
+      selectedBankForOverlay?.id
+        ? translate.instant('FINANCE.EDIT_BANK_ACCOUNT_DIALOG')
+        : translate.instant('FINANCE.ADD_BANK_ACCOUNT_DIALOG')
+    " [(visible)]="bankDialogVisibleSignal"
+    [style]="{ width: '60%' }" appendTo="body" (onHide)="closeBankDialog()">
+    <form [formGroup]="bankAccountForm" (ngSubmit)="submitBankAccount()" class="grid grid-cols-2 gap-4 p-2 py-4"
+      novalidate>
+      <div class="field">
+        <label for="accountName" class="block">
+          {{ translate.instant("FINANCE.ACCOUNT_NAME_LABEL") }} <span class="text-red-500">*</span>
+        </label>
+        <input pInputText id="accountName" type="text" formControlName="accountName" class="input w-full" />
+        <small class="text-red-500 p-error block"
+          *ngIf="bankAccountForm.controls.accountName.invalid && bankAccountForm.controls.accountName.touched">
+          {{ translate.instant("FINANCE.ACCOUNT_NAME_REQUIRED_ERROR") }}
+        </small>
+      </div>
+
+      <div class="field">
+        <label for="bankName" class="block">
+          {{ translate.instant("FINANCE.BANK_NAME_LABEL") }} <span class="text-red-500">*</span>
+        </label>
+        <input pInputText id="bankName" type="text" formControlName="bankName" class="input w-full" />
+        <small class="text-red-500 p-error block"
+          *ngIf="bankAccountForm.controls.bankName.invalid && bankAccountForm.controls.bankName.touched">
+          {{ translate.instant("FINANCE.BANK_NAME_REQUIRED_ERROR") }}
+        </small>
+      </div>
+
+      <div class="field">
+        <label for="bankBranchName" class="block">{{ translate.instant("FINANCE.BANK_BRANCH_NAME_LABEL") }}</label>
+        <input pInputText id="bankBranchName" type="text" formControlName="bankBranchName" class="input w-full" />
+      </div>
+
+      <div class="field">
+        <label for="bankAccountNumber" class="block">
+          {{ translate.instant("FINANCE.BANK_ACCOUNT_NUMBER_LABEL") }} <span class="text-red-500">*</span>
+        </label>
+        <input pInputText id="bankAccountNumber" type="text" formControlName="bankAccountNumber"
+          class="input w-full" />
+        <small class="text-red-500 p-error block"
+          *ngIf="bankAccountForm.controls.bankAccountNumber.invalid && bankAccountForm.controls.bankAccountNumber.touched">
+          {{ translate.instant("FINANCE.BANK_ACCOUNT_NUMBER_REQUIRED_ERROR") }}
+        </small>
+      </div>
+
+      <div class="field">
+        <label for="iban" class="block">
+          {{ translate.instant("FINANCE.IBAN_LABEL") }} <span class="text-red-500">*</span>
+        </label>
+        <input pInputText id="iban" type="text" formControlName="iban" class="input w-full" />
+        <small class="text-red-500 p-error block"
+          *ngIf="bankAccountForm.controls.iban.invalid && bankAccountForm.controls.iban.touched">
+          {{ translate.instant("FINANCE.IBAN_REQUIRED_ERROR") }}
+        </small>
+      </div>
+
+      <div class="field">
+        <label for="swiftCode" class="block">{{ translate.instant("FINANCE.SWIFT_CODE_LABEL") }}</label>
+        <input pInputText id="swiftCode" type="text" formControlName="swiftCode" class="input w-full" />
+      </div>
+
+      <div class="field">
+        <label for="bankMainAccountId" class="block">
+          {{ translate.instant("FINANCE.MAIN_ACCOUNT_LABEL") }} <span class="text-red-500">*</span>
+        </label>
+        <p-dropdown [options]="mainAccountOptions" [filter]="true" formControlName="mainAccountId"
+          id="bankMainAccountId" styleClass="w-full" appendTo="body" variant="filled"
+          [placeholder]="translate.instant('FINANCE.CHOOSEACCOUNT')"></p-dropdown>
+        <small class="text-red-500 p-error block"
+          *ngIf="bankAccountForm.controls.mainAccountId.invalid && bankAccountForm.controls.mainAccountId.touched">
+          {{ translate.instant("FINANCE.MAIN_ACCOUNT_REQUIRED_ERROR") }}
+        </small>
+      </div>
+
+
+      <!-- ✅ Switch: Frontal -->
+      <div class="field flex items-center gap-3">
+        <label class="block">{{ translate.instant("FINANCE.FRONTAL_LABEL") }}</label>
+        <p-inputSwitch formControlName="isFrontal"></p-inputSwitch>
+      </div>
+    </form>
+
+    <hr class="mt-2 mb-1" />
+
+    <p-footer>
+      <div class="flex justify-content-end gap-2">
+        <p-button styleClass="rounded-md" [label]="translate.instant('FINANCE.SAVE')" (onClick)="submitBankAccount()"
+          [disabled]="bankAccountForm.invalid" />
+        <p-button styleClass="rounded-md" [label]="translate.instant('FINANCE.CANCEL')" severity="secondary"
+          (onClick)="closeBankDialog()" />
+      </div>
+    </p-footer>
+  </p-dialog>
+  <!-- ✅ Dialog عرض تفاصيل الحساب البنكي -->
+  <p-dialog [header]="translate.instant('FINANCE.BANK_ACCOUNT_DETAILS')" [(visible)]="viewBankDialogVisible"
+    [style]="{ width: '50%' }" appendTo="body" (onHide)="closeViewBankDialog()">
+    <div class="p-4 grid grid-cols-2 gap-4">
+      <div><strong>{{ translate.instant("FINANCE.ACCOUNT_NAME_LABEL") }}:</strong> {{ selectedBankForView?.accountName
+        }}</div>
+      <div><strong>{{ translate.instant("FINANCE.BANK_NAME_LABEL") }}:</strong> {{ selectedBankForView?.bankName }}
+      </div>
+      <div><strong>{{ translate.instant("FINANCE.BANK_BRANCH_NAME_LABEL") }}:</strong> {{
+        selectedBankForView?.bankBranchName }}</div>
+      <div><strong>{{ translate.instant("FINANCE.BANK_ACCOUNT_NUMBER_LABEL") }}:</strong> {{
+        selectedBankForView?.bankAccountNumber }}</div>
+      <div><strong>{{ translate.instant("FINANCE.IBAN_LABEL") }}:</strong> {{ selectedBankForView?.iban }}</div>
+      <div><strong>{{ translate.instant("FINANCE.SWIFT_CODE_LABEL") }}:</strong> {{ selectedBankForView?.swiftCode }}
+      </div>
+      <div>
+        <strong>{{ translate.instant("FINANCE.ACTIVE_LABEL") }}:</strong>
+        <i class="pi" [ngClass]="{
+      'pi-check-circle text-green-500': selectedBankForView?.isActive,
+      'pi-times-circle text-red-500': !selectedBankForView?.isActive
+    }"></i>
+      </div>
+      <div>
+        <strong>{{ translate.instant("FINANCE.FRONTAL_LABEL") }}:</strong>
+        <i class="pi" [ngClass]="{
+      'pi-check-circle text-green-500': selectedBankForView?.isFrontal,
+      'pi-times-circle text-red-500': !selectedBankForView?.isFrontal
+    }"></i>
+      </div>
+      <div><strong>{{ translate.instant("FINANCE.CREATED_DATE_LABEL") }}:</strong> {{ selectedBankForView?.createdAt |
+        customDate:'yyyy/MM/dd hh:mm' }}</div>
+    </div>
+
+    <p-footer>
+      <p-button [label]="translate.instant('FINANCE.CLOSE_LABEL')" icon="pi pi-times" (click)="closeViewBankDialog()"
+        styleClass="p-button-text rounded-md" />
+    </p-footer>
+  </p-dialog>
+</ng-template>
+
+<input #treasuryImportFileInput type="file" accept=".xlsx,.xls" class="hidden"
+  (change)="onImportFileSelected($event, 'treasury')" />
+<input #bankImportFileInput type="file" accept=".xlsx,.xls" class="hidden"
+  (change)="onImportFileSelected($event, 'bank')" />
+
+<p-dialog [header]="translate.instant(importTarget === 'treasury' ? 'FINANCE.TREASURY_IMPORT_DIALOG_TITLE' : 'FINANCE.BANK_IMPORT_DIALOG_TITLE')"
+  [(visible)]="importInstructionsVisibleSignal" [style]="{ width: '55%' }" appendTo="body">
+  <div class="flex flex-column gap-3 import-instructions-content" [attr.dir]="activeLanguage === 'ar' ? 'rtl' : 'ltr'">
+    <p class="m-0 import-instructions-line">
+      {{ translate.instant(importTarget === 'treasury' ? 'FINANCE.TREASURY_IMPORT_DESCRIPTION' : 'FINANCE.BANK_IMPORT_DESCRIPTION') }}
+    </p>
+
+    <div>
+      <strong>{{ 'COMMON.REQUIRED_HEADERS' | translate }}</strong>
+      <ul class="mt-2 mb-0 import-instructions-list">
+        <li class="import-instructions-line" *ngFor="let header of getImportHeaders()">{{ header }}</li>
+      </ul>
+    </div>
+
+    <div>
+      <strong>{{ 'COMMON.NOTES' | translate }}</strong>
+      <ul class="mt-2 mb-0 import-instructions-list">
+        <li class="import-instructions-line" *ngFor="let note of getImportNotes()">{{ note }}</li>
+      </ul>
+    </div>
+  </div>
+
+  <p-footer>
+    <div class="flex justify-content-end gap-2">
+      <p-button styleClass="rounded-md" severity="info" icon="pi pi-download"
+        [label]="translate.instant(importTarget === 'treasury' ? 'FINANCE.DOWNLOAD_TREASURY_TEMPLATE' : 'FINANCE.DOWNLOAD_BANK_TEMPLATE')"
+        (onClick)="downloadTemplate()" />
+      <p-button styleClass="rounded-md" [label]="translate.instant('FINANCE.CANCEL')" severity="secondary"
+        (onClick)="importInstructionsVisibleSignal.set(false)" />
+      <p-button styleClass="rounded-md" icon="pi pi-upload"
+        [label]="translate.instant(importTarget === 'treasury' ? 'FINANCE.TREASURY_IMPORT_BUTTON' : 'FINANCE.BANK_IMPORT_BUTTON')"
+        (onClick)="triggerImportFileSelection()" />
+    </div>
+  </p-footer>
+</p-dialog>
+
+<p-dialog [header]="translate.instant('INVOICE.IMPORT_RESULT_TITLE')" [(visible)]="importResultVisibleSignal"
+  [style]="{ width: '55%' }" appendTo="body">
+  <div class="flex flex-column gap-3">
+    <p-progressBar *ngIf="importInProgress" [value]="importProgress"></p-progressBar>
+
+    <p class="m-0">
+      {{ 'INVOICE.IMPORT_RESULT_LINE' | translate: {
+        imported: importResult.imported,
+        updated: importResult.updated,
+        failed: importResult.failed.length
+      } }}
+    </p>
+
+    <div *ngIf="importResult.failed.length > 0">
+      <h5 class="mb-2">{{ 'COMMON.IMPORT_FAILURES_TITLE' | translate }}</h5>
+      <div class="overflow-auto max-h-80 border rounded">
+        <table class="w-full">
+          <thead>
+            <tr>
+              <th class="text-left p-2">{{ 'COMMON.IMPORT_FAILURE_ROW' | translate }}</th>
+              <th class="text-left p-2">{{ 'COMMON.IMPORT_FAILURE_NAME' | translate }}</th>
+              <th class="text-left p-2">{{ 'COMMON.IMPORT_FAILURE_REASON' | translate }}</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let failure of importResult.failed">
+              <td class="p-2">{{ failure.row }}</td>
+              <td class="p-2">{{ failure.name || '-' }}</td>
+              <td class="p-2">{{ getImportFailureReason(failure) }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <p-footer>
+    <div class="flex justify-content-end">
+      <p-button styleClass="rounded-md" [label]="translate.instant('FINANCE.CLOSE_LABEL')" severity="secondary"
+        (onClick)="importResultVisibleSignal.set(false)" />
+    </div>
+  </p-footer>
+</p-dialog>
+
+<p-confirmDialog></p-confirmDialog>
+<p-toast></p-toast>

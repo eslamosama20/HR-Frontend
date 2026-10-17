@@ -1,0 +1,130 @@
+﻿<div class="pharmacy-page interactions-theme">
+  <p-toast></p-toast>
+
+  <header class="hero-card">
+    <div>
+      <h1>{{ 'PHARMACY_INTERACTIONS.PAGE_TITLE' | translate }}</h1>
+      <p>{{ 'PHARMACY_INTERACTIONS.PAGE_SUBTITLE' | translate }}</p>
+    </div>
+    <button pButton type="button" icon="pi pi-refresh" [label]="'PHARMACY_INTERACTIONS.REFRESH' | translate" class="hero-btn" (click)="loadInteractions()"></button>
+  </header>
+
+  <section class="stats-grid">
+    <article class="stat-card danger">
+      <span>{{ 'PHARMACY_INTERACTIONS.CRITICAL_CASES' | translate }}</span>
+      <strong>{{ criticalCount }}</strong>
+    </article>
+    <article class="stat-card warning">
+      <span>{{ 'PHARMACY_INTERACTIONS.OPEN_CASES' | translate }}</span>
+      <strong>{{ openCount }}</strong>
+    </article>
+    <article class="stat-card info">
+      <span>{{ 'PHARMACY_INTERACTIONS.BLOCKED_RX' | translate }}</span>
+      <strong>{{ blockedCount }}</strong>
+    </article>
+  </section>
+
+  <section class="panel-card filters-row">
+    <span class="filter-input">
+      <i class="pi pi-search"></i>
+      <input pInputText type="text" [(ngModel)]="searchTerm" [placeholder]="'PHARMACY_INTERACTIONS.SEARCH_PLACEHOLDER' | translate" />
+    </span>
+
+    <p-dropdown
+      [options]="severityOptions"
+      optionLabel="label"
+      optionValue="value"
+      [(ngModel)]="selectedSeverity"
+      appendTo="body"
+      [placeholder]="'PHARMACY_INTERACTIONS.TABLE_SEVERITY' | translate">
+    </p-dropdown>
+
+    <p-dropdown
+      [options]="stateOptions"
+      optionLabel="label"
+      optionValue="value"
+      [(ngModel)]="selectedState"
+      appendTo="body"
+      [placeholder]="'PHARMACY_INTERACTIONS.TABLE_STATE' | translate">
+    </p-dropdown>
+  </section>
+
+  <section class="panel-card table-panel">
+    <p-table [value]="filteredInteractions" [paginator]="true" [rows]="8" styleClass="pharmacy-table">
+      <ng-template pTemplate="header">
+        <tr>
+          <th>{{ 'PHARMACY_INTERACTIONS.TABLE_RX_NO' | translate }}</th>
+          <th>{{ 'PHARMACY_INTERACTIONS.TABLE_PATIENT' | translate }}</th>
+          <th>{{ 'PHARMACY_INTERACTIONS.TABLE_PRIMARY_DRUG' | translate }}</th>
+          <th>{{ 'PHARMACY_INTERACTIONS.TABLE_INTERACTING' | translate }}</th>
+          <th>{{ 'PHARMACY_INTERACTIONS.TABLE_SEVERITY' | translate }}</th>
+          <th>{{ 'PHARMACY_INTERACTIONS.TABLE_STATE' | translate }}</th>
+          <th>{{ 'PHARMACY_INTERACTIONS.TABLE_PHARMACIST' | translate }}</th>
+          <th>{{ 'PHARMACY_INTERACTIONS.TABLE_CHECK_TIME' | translate }}</th>
+          <th>{{ 'PHARMACY_INTERACTIONS.TABLE_ACTIONS' | translate }}</th>
+        </tr>
+      </ng-template>
+      <ng-template pTemplate="body" let-item>
+        <tr>
+          <td>{{ item.rxNo }}</td>
+          <td>{{ item.patientName }}</td>
+          <td>{{ item.primaryDrug }}</td>
+          <td>{{ item.interactingDrug }}</td>
+          <td><p-tag [value]="getSeverityLabel(item.severity)" [severity]="getSeverityTag(item.severity)"></p-tag></td>
+          <td><p-tag [value]="getStateLabel(item.state)" [severity]="getStateTag(item.state)"></p-tag></td>
+          <td>{{ item.pharmacist }}</td>
+          <td>{{ item.checkedAt | customDate: 'yyyy/MM/dd - hh:mm a' }}</td>
+          <td class="actions-col">
+            <button pButton type="button" icon="pi pi-eye" class="p-button-text p-button-sm" [pTooltip]="'PHARMACY_INTERACTIONS.DETAILS_TITLE' | translate" (click)="openDetails(item)"></button>
+            <button
+              pButton
+              type="button"
+              icon="pi pi-phone"
+              class="p-button-text p-button-sm"
+              [pTooltip]="'PHARMACY_INTERACTIONS.ACTION_CONTACT_DR' | translate"
+              [disabled]="item.state === 'blocked'"
+              (click)="updateState(item, 'doctor_contacted')">
+            </button>
+            <button
+              pButton
+              type="button"
+              icon="pi pi-check-circle"
+              class="p-button-text p-button-sm"
+              [pTooltip]="'PHARMACY_INTERACTIONS.ACTION_APPROVE' | translate"
+              [disabled]="item.state === 'approved_override'"
+              (click)="updateState(item, 'approved_override')">
+            </button>
+            <button
+              pButton
+              type="button"
+              icon="pi pi-ban"
+              class="p-button-text p-button-sm"
+              [pTooltip]="'PHARMACY_INTERACTIONS.ACTION_BLOCK' | translate"
+              [disabled]="item.state === 'blocked'"
+              (click)="updateState(item, 'blocked')">
+            </button>
+          </td>
+        </tr>
+      </ng-template>
+    </p-table>
+  </section>
+</div>
+
+<p-dialog
+  [(visible)]="showDetailsDialog"
+  [modal]="true"
+  [draggable]="false"
+  [resizable]="false"
+  [style]="{width:'620px', maxWidth:'95vw'}"
+  [header]="'PHARMACY_INTERACTIONS.DETAILS_TITLE' | translate">
+  <div *ngIf="selectedCase() as item" class="details-grid">
+    <div><span>{{ 'PHARMACY_INTERACTIONS.TABLE_RX_NO' | translate }}</span><strong>{{ item.rxNo }}</strong></div>
+    <div><span>{{ 'PHARMACY_INTERACTIONS.TABLE_PATIENT' | translate }}</span><strong>{{ item.patientName }}</strong></div>
+    <div><span>{{ 'PHARMACY_INTERACTIONS.TABLE_PRIMARY_DRUG' | translate }}</span><strong>{{ item.primaryDrug }}</strong></div>
+    <div><span>{{ 'PHARMACY_INTERACTIONS.TABLE_INTERACTING' | translate }}</span><strong>{{ item.interactingDrug }}</strong></div>
+    <div><span>{{ 'PHARMACY_INTERACTIONS.TABLE_SEVERITY' | translate }}</span><strong>{{ getSeverityLabel(item.severity) }}</strong></div>
+    <div><span>{{ 'PHARMACY_INTERACTIONS.TABLE_STATE' | translate }}</span><strong>{{ getStateLabel(item.state) }}</strong></div>
+    <div class="wide-box"><span>{{ 'PHARMACY_INTERACTIONS.RISK_DESCRIPTION' | translate }}</span><p>{{ item.riskDescription }}</p></div>
+    <div class="wide-box"><span>{{ 'PHARMACY_INTERACTIONS.RECOMMENDATION' | translate }}</span><p>{{ item.recommendation }}</p></div>
+  </div>
+</p-dialog>

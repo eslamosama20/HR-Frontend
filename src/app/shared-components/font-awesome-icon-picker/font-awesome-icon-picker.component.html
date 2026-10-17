@@ -1,0 +1,27 @@
+<p-overlayPanel #op [appendTo]="'body'" (onHide)="onHide()">
+  <div class="iconPicker__popoverContainer h-[80vh]">
+    <p-divider></p-divider>
+
+    <div #scrollableDiv class="button-grid"
+         infiniteScroll
+         [infiniteScrollContainer]="scrollableDiv"
+         [infiniteScrollDistance]="2"
+         [infiniteScrollThrottle]="150"
+         (scrolled)="onScroll()">
+
+      <button *ngFor="let icon of displayedItems" class="bg-sky-200 text-black p-2 rounded-xl" (click)="onIconSelect(icon.iconName, $event)">
+        <fa-icon [icon]="icon" size="2x"></fa-icon>
+      </button>
+    </div>
+  </div>
+</p-overlayPanel>
+<ng-container>
+
+<p-button
+  styleClass="p-button-outlined border-0 shadow-sky-400 shadow-sm rounded-xl p-0 flex items-center justify-center"
+  [style]="{'width': '3.5rem', 'height': '3.5rem' }"
+  (click)="op.toggle($event)">
+  <fa-icon *ngIf="value" [icon]="['fas', value]" size="2x" class="p-2"></fa-icon>
+</p-button>
+</ng-container>
+

@@ -1,0 +1,398 @@
+﻿<div class="card">
+  <div class="card-header py-3">
+    <!-- Top Row: Title & Search on Right, Clear Filters & Add Project Button on Left -->
+    <div class="header-top-bar" style="display: flex; justify-content: space-between; align-items: center; width: 100%; margin-bottom: 1rem;" dir="rtl">
+      <div class="d-flex align-items-center gap-3">
+        <h4 class="m-0 font-bold">{{ isArchivedView ? 'المشاريع المؤرشفة' : 'المشاريع' }}</h4>
+        <!-- Search Input -->
+        <span class="p-input-icon-left" style="min-width: 220px;">
+          <i class="pi pi-search"></i>
+          <input
+            #searchInput
+            type="text"
+            pInputText
+            class="p-inputtext-sm"
+            style="width: 100%;"
+            (input)="onGlobalFilter($any($event.target).value)"
+            placeholder="ابحث في كافة البيانات..."
+          />
+        </span>
+
+        <!-- Clear Filters Button -->
+        <button
+          *ngIf="hasActiveFilters"
+          pButton
+          type="button"
+          label="إلغاء الفلاتر"
+          icon="pi pi-filter-slash"
+          class="p-button-danger p-button-sm"
+          style="background: #dc3545; border-color: #dc3545; color: #ffffff; border-radius: 8px; font-weight: 500; font-size: 0.8rem; height: 33px; padding: 0 0.75rem; display: inline-flex; align-items: center; transition: all 0.2s ease;"
+          (click)="clearFilters(searchInput)">
+        </button>
+      </div>
+
+      <button
+        *ngIf="hasPermission(PERMISSIONS.Projects.Create)"
+        pButton
+        type="button"
+        label="إضافة مشروع"
+        icon="pi pi-plus"
+        class="p-button-success p-button-sm add-project-btn"
+        (click)="addNew()">
+      </button>
+    </div>
+
+    <!-- Bottom Row: Dropdown Filters -->
+    <div class="d-flex align-items-center flex-wrap gap-2" dir="rtl">
+      <!-- Status Filter (MultiSelect with Checkboxes) -->
+      <p-multiSelect
+        *ngIf="!isArchivedView"
+        [(ngModel)]="selectedStatuses"
+        [options]="statuses"
+        placeholder="الحالة"
+        [filter]="false"
+        [showToggleAll]="false"
+        [showHeader]="false"
+        [showClear]="!!(selectedStatuses && selectedStatuses.length > 0)"
+        styleClass="p-inputtext-sm"
+        [style]="{'width': '175px'}"
+        [maxSelectedLabels]="2"
+        selectedItemsLabel="{0} حالات مختارة"
+        (onChange)="onStatusChange()">
+      </p-multiSelect>
+
+      <!-- Company Filter -->
+      <p-dropdown
+        [(ngModel)]="selectedCompanyId"
+        [options]="companies"
+        optionLabel="arabicName"
+        optionValue="id"
+        placeholder="الشركة التابعة"
+        [showClear]="!!selectedCompanyId"
+        styleClass="p-inputtext-sm"
+        [style]="{'width': '175px'}"
+        (onChange)="onCompanyChange()">
+      </p-dropdown>
+
+      <!-- Country Filter -->
+      <p-dropdown
+        [(ngModel)]="selectedCountry"
+        [options]="countries"
+        placeholder="بلد التنفيذ"
+        [showClear]="!!selectedCountry"
+        styleClass="p-inputtext-sm"
+        [style]="{'width': '165px'}"
+        (onChange)="onCountryChange()">
+      </p-dropdown>
+
+      <!-- Executing Company Filter -->
+      <p-dropdown
+        [(ngModel)]="selectedExecutingCompany"
+        [options]="executingCompanies"
+        placeholder="الشركة المنفذة"
+        [showClear]="!!selectedExecutingCompany"
+        styleClass="p-inputtext-sm"
+        [style]="{'width': '170px'}"
+        (onChange)="onExecutingCompanyChange()">
+      </p-dropdown>
+
+      <!-- Supervising Entity Filter -->
+      <p-dropdown
+        [(ngModel)]="selectedSupervisingEntity"
+        [options]="supervisingEntities"
+        placeholder="الجهة المشرفة"
+        [showClear]="!!selectedSupervisingEntity"
+        styleClass="p-inputtext-sm"
+        [style]="{'width': '170px'}"
+        (onChange)="onSupervisingEntityChange()">
+      </p-dropdown>
+
+      <!-- Department Filter -->
+      <p-dropdown
+        [(ngModel)]="selectedDepartment"
+        [options]="departments"
+        placeholder="الإدارة"
+        [showClear]="!!selectedDepartment"
+        styleClass="p-inputtext-sm"
+        [style]="{'width': '160px'}"
+        (onChange)="onDepartmentChange()">
+      </p-dropdown>
+
+      <!-- Financial Solvency Filter -->
+      <p-dropdown
+        [(ngModel)]="financialSolvencyFilter"
+        [options]="[
+          {label: 'الكل', value: ''},
+          {label: 'ملاءة مالية', value: 'yes'},
+          {label: 'غير ملاءة مالية', value: 'no'}
+        ]"
+        optionLabel="label"
+        optionValue="value"
+        placeholder="الملاءة المالية"
+        [showClear]="!!financialSolvencyFilter"
+        styleClass="p-inputtext-sm"
+        [style]="{'width': '165px'}"
+        (onChange)="onFinancialSolvencyChange()">
+      </p-dropdown>
+    </div>
+  </div>
+
+  <div class="card-body">
+
+    <!-- Table -->
+    <p-table
+      #dt
+      [value]="projects"
+      [loading]="loading"
+      [paginator]="true"
+      [rows]="10"
+      [rowsPerPageOptions]="[10, 25, 50]"
+      [responsive]="true"
+      [lazy]="false"
+      [totalRecords]="totalRecords"
+      [showCurrentPageReport]="true"
+      currentPageReportTemplate="اجمالي {{ totalRecords ? totalRecords : (projects?.length ? projects.length : '') }}"
+      paginatorTemplate="CurrentPageReport PrevPageLink PageLinks NextPageLink RowsPerPageDropdown"
+      styleClass="p-datatable-gridlines custom-paginator-table"
+      [globalFilterFields]="['projectName', 'projectNumber', 'fileNumber', 'assignmentNumber', 'companyName', 'country', 'status', 'departmentName', 'supervisingEntityName', 'executingCompanyName', 'totalAmount', 'executionAmount', 'companyAmount', 'profitPercentage', 'formattedCreatedAt', 'solvencyText']">
+      
+      <ng-template pTemplate="header">
+        <tr>
+          <th style="text-align: center; width: 45px; min-width: 35px;" rtlColumnResize>م</th>
+          <th style="text-align: start; min-width: 130px;" rtlColumnResize>
+            <div class="d-flex align-items-center gap-1">
+              <span>اسم المشروع</span>
+              <p-sortIcon field="projectName" pSortableColumn="projectName" style="cursor: pointer;"></p-sortIcon>
+              <p-columnFilter type="text" field="projectName" display="menu"></p-columnFilter>
+            </div>
+          </th>
+          <th style="text-align: start; min-width: 100px;" rtlColumnResize>
+            <div class="d-flex align-items-center gap-1">
+              <span>الشركة التابعة</span>
+              <p-sortIcon field="companyName" pSortableColumn="companyName" style="cursor: pointer;"></p-sortIcon>
+              <p-columnFilter type="text" field="companyName" display="menu"></p-columnFilter>
+            </div>
+          </th>
+          <th style="text-align: start; min-width: 80px;" rtlColumnResize>
+            <div class="d-flex align-items-center gap-1">
+              <span>بلد التنفيذ</span>
+              <p-sortIcon field="country" pSortableColumn="country" style="cursor: pointer;"></p-sortIcon>
+              <p-columnFilter type="text" field="country" display="menu"></p-columnFilter>
+            </div>
+          </th>
+          <th style="text-align: center; min-width: 85px;" rtlColumnResize>
+            <div class="d-flex align-items-center justify-content-center gap-1">
+              <span>رقم المشروع</span>
+              <p-sortIcon field="projectNumber" pSortableColumn="projectNumber" style="cursor: pointer;"></p-sortIcon>
+              <p-columnFilter type="text" field="projectNumber" display="menu"></p-columnFilter>
+            </div>
+          </th>
+          <th style="text-align: center; min-width: 85px;" rtlColumnResize>
+            <div class="d-flex align-items-center justify-content-center gap-1">
+              <span>رقم الملف</span>
+              <p-sortIcon field="fileNumber" pSortableColumn="fileNumber" style="cursor: pointer;"></p-sortIcon>
+              <p-columnFilter type="text" field="fileNumber" display="menu"></p-columnFilter>
+            </div>
+          </th>
+          <th style="text-align: center; min-width: 85px;" rtlColumnResize>
+            <div class="d-flex align-items-center justify-content-center gap-1">
+              <span>رقم التعميد</span>
+              <p-sortIcon field="assignmentNumber" pSortableColumn="assignmentNumber" style="cursor: pointer;"></p-sortIcon>
+              <p-columnFilter type="text" field="assignmentNumber" display="menu"></p-columnFilter>
+            </div>
+          </th>
+          <th style="text-align: center; min-width: 80px;" rtlColumnResize>
+            <div class="d-flex align-items-center justify-content-center gap-1">
+              <span>الحالة</span>
+              <p-sortIcon field="status" pSortableColumn="status" style="cursor: pointer;"></p-sortIcon>
+              <p-columnFilter type="text" field="status" display="menu"></p-columnFilter>
+            </div>
+          </th>
+          <th style="text-align: center; min-width: 95px;" rtlColumnResize>
+            <div class="d-flex align-items-center justify-content-center gap-1">
+              <span>المبلغ الإجمالي</span>
+              <p-sortIcon field="totalAmount" pSortableColumn="totalAmount" style="cursor: pointer;"></p-sortIcon>
+              <p-columnFilter type="numeric" field="totalAmount" display="menu"></p-columnFilter>
+            </div>
+          </th>
+          <th style="text-align: center; min-width: 95px;" rtlColumnResize>
+            <div class="d-flex align-items-center justify-content-center gap-1">
+              <span>مبلغ التنفيذ</span>
+              <p-sortIcon field="executionAmount" pSortableColumn="executionAmount" style="cursor: pointer;"></p-sortIcon>
+              <p-columnFilter type="numeric" field="executionAmount" display="menu"></p-columnFilter>
+            </div>
+          </th>
+          <th style="text-align: center; min-width: 95px;" rtlColumnResize>
+            <div class="d-flex align-items-center justify-content-center gap-1">
+              <span>مبلغ الشركة</span>
+              <p-sortIcon field="companyAmount" pSortableColumn="companyAmount" style="cursor: pointer;"></p-sortIcon>
+              <p-columnFilter type="numeric" field="companyAmount" display="menu"></p-columnFilter>
+            </div>
+          </th>
+          <th style="text-align: center; min-width: 75px;" rtlColumnResize>
+            <div class="d-flex align-items-center justify-content-center gap-1">
+              <span>نسبة الربح</span>
+              <p-sortIcon field="profitPercentage" pSortableColumn="profitPercentage" style="cursor: pointer;"></p-sortIcon>
+              <p-columnFilter type="numeric" field="profitPercentage" display="menu"></p-columnFilter>
+            </div>
+          </th>
+          <th style="text-align: center; min-width: 75px;" rtlColumnResize>الملاءة المالية</th>
+          <th style="text-align: center; min-width: 90px;" rtlColumnResize>
+            <div class="d-flex align-items-center justify-content-center gap-1">
+              <span>تاريخ الإنشاء</span>
+              <p-sortIcon field="createdAt" pSortableColumn="createdAt" style="cursor: pointer;"></p-sortIcon>
+              <p-columnFilter type="date" field="createdAt" display="menu"></p-columnFilter>
+            </div>
+          </th>
+          <th style="text-align: center; min-width: 65px;" rtlColumnResize>المستندات</th>
+          <th style="text-align: center; min-width: 65px;" rtlColumnResize>الدفعات</th>
+          <th style="text-align: center; min-width: 100px;">الإجراءات</th>
+        </tr>
+      </ng-template>
+
+      <!-- Skeleton Template للتحميل -->
+      <ng-template pTemplate="loadingbody">
+        <tr *ngFor="let i of [1,2,3,4,5]; let idx = index">
+          <td style="text-align: center;">{{ idx + 1 }}</td>
+          <td><p-skeleton></p-skeleton></td>
+          <td><p-skeleton width="100px"></p-skeleton></td>
+          <td><p-skeleton width="80px"></p-skeleton></td>
+          <td><p-skeleton></p-skeleton></td>
+          <td><p-skeleton></p-skeleton></td>
+          <td><p-skeleton></p-skeleton></td>
+          <td><p-skeleton width="80px"></p-skeleton></td>
+          <td><p-skeleton width="100px"></p-skeleton></td>
+          <td><p-skeleton width="100px"></p-skeleton></td>
+          <td><p-skeleton width="100px"></p-skeleton></td>
+          <td><p-skeleton width="70px"></p-skeleton></td>
+          <td><p-skeleton width="80px"></p-skeleton></td>
+          <td><p-skeleton></p-skeleton></td>
+          <td><p-skeleton width="40px"></p-skeleton></td>
+          <td><p-skeleton width="40px"></p-skeleton></td>
+          <td><p-skeleton width="120px"></p-skeleton></td>
+        </tr>
+      </ng-template>
+
+      <ng-template pTemplate="body" let-project let-rowIndex="rowIndex">
+        <tr (click)="hasPermission(PERMISSIONS.Projects.Read) && viewDetails(project)" class="project-row" style="cursor: pointer;">
+          <td style="text-align: center;">
+            <strong>{{ rowIndex + 1 }}</strong>
+          </td>
+          <td style="text-align: start;">
+            <span class="project-name">{{ project.projectName }}</span>
+          </td>
+          <td style="text-align: start;">
+            <span class="table-text-val">{{ project.companyName || '-' }}</span>
+          </td>
+          <td style="text-align: start;">
+            <span class="table-text-val">{{ project.country || '-' }}</span>
+          </td>
+          <td style="text-align: center;">
+            <span class="table-text-val">{{ project.projectNumber || '-' }}</span>
+          </td>
+          <td style="text-align: center;">
+            <span class="table-text-val">{{ project.fileNumber || '-' }}</span>
+          </td>
+          <td style="text-align: center;">
+            <span class="table-text-val">{{ project.assignmentNumber || '-' }}</span>
+          </td>
+          <td style="text-align: center;">
+            <span class="status-badge" [ngClass]="getStatusClass(project.status)">
+              {{ translateStatus(project.status) }}
+            </span>
+          </td>
+          <td style="text-align: center; white-space: nowrap;">
+            <span class="amount-text" *ngIf="project.totalAmount; else noAmount">
+              {{ formatCurrency(project.totalAmount) }}
+            </span>
+            <ng-template #noAmount>-</ng-template>
+          </td>
+          <td style="text-align: center; white-space: nowrap;">
+            <span class="amount-text" *ngIf="project.executionAmount; else noExecution">
+              {{ formatCurrency(project.executionAmount) }}
+            </span>
+            <ng-template #noExecution>-</ng-template>
+          </td>
+          <td style="text-align: center; white-space: nowrap;">
+            <span class="amount-text" *ngIf="project.companyAmount !== null && project.companyAmount !== undefined; else noCompanyAmount">
+              {{ formatCurrency(project.companyAmount) }}
+            </span>
+            <ng-template #noCompanyAmount>-</ng-template>
+          </td>
+          <td style="text-align: center;">
+            <span class="profit-badge" [ngClass]="getProfitClass(project.profitPercentage)" *ngIf="project.profitPercentage !== null && project.profitPercentage !== undefined; else noProfit">
+              {{ project.profitPercentage }}%
+            </span>
+            <ng-template #noProfit>-</ng-template>
+          </td>
+          <td style="text-align: center;">
+            <span [ngClass]="project.isFinancialSolvency ? 'badge bg-success' : 'badge bg-secondary'">
+              {{ project.isFinancialSolvency ? 'نعم' : 'لا' }}
+            </span>
+          </td>
+          <td style="text-align: center;">{{ project.createdAt | customDate: 'yyyy/MM/dd' }}</td>
+          <td style="text-align: center;">
+            <span class="p-badge p-badge-info">{{ project.documentsCount }}</span>
+          </td>
+          <td style="text-align: center;">
+            <span class="p-badge p-badge-success">{{ project.paymentsCount }}</span>
+          </td>
+          <td style="text-align: center;" (click)="$event.stopPropagation()">
+            <div class="action-buttons d-flex justify-content-center gap-1">
+              <button
+                *ngIf="hasPermission(PERMISSIONS.Projects.Read)"
+                pButton
+                pRipple
+                type="button"
+                icon="pi pi-eye"
+                class="p-button-rounded p-button-info p-button-text p-button-sm"
+                pTooltip="عرض"
+                tooltipPosition="top"
+                (click)="viewDetails(project); $event.stopPropagation()">
+              </button>
+              <button
+                *ngIf="hasPermission(PERMISSIONS.Projects.Update)"
+                pButton
+                pRipple
+                type="button"
+                icon="pi pi-pencil"
+                class="p-button-rounded p-button-warning p-button-text p-button-sm"
+                pTooltip="تعديل"
+                tooltipPosition="top"
+                (click)="edit(project); $event.stopPropagation()">
+              </button>
+              <button
+                *ngIf="hasPermission(PERMISSIONS.Projects.Delete)"
+                pButton
+                pRipple
+                type="button"
+                icon="pi pi-trash"
+                class="p-button-rounded p-button-danger p-button-text p-button-sm"
+                pTooltip="حذف"
+                tooltipPosition="top"
+                (click)="delete(project); $event.stopPropagation()">
+              </button>
+            </div>
+          </td>
+        </tr>
+      </ng-template>
+
+      <ng-template pTemplate="emptymessage">
+        <tr>
+          <td colspan="15" class="text-center">
+            <div class="empty-state">
+              <i class="pi pi-inbox" style="font-size: 3rem; color: #ccc;"></i>
+              <p>{{ 'DATA.NO_PROJECTS' | translate }}</p>
+            </div>
+          </td>
+        </tr>
+      </ng-template>
+    </p-table>
+  </div>
+</div>
+
+<p-confirmDialog
+  [style]="{width: '450px'}"
+  [baseZIndex]="10000"
+  rejectButtonStyleClass="p-button-text">
+</p-confirmDialog>

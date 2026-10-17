@@ -1,0 +1,497 @@
+td,
+th {
+  padding: 0.5rem;
+}
+
+:host {
+  --table-head-bg: #46bbeb;
+  --table-header-text: #ffffff;
+}
+
+
+.table {
+  border-collapse: separate;
+  border-spacing: 0 10px;
+  padding: 10px;
+}
+
+.table thead {
+  background-color: #46bbeb;
+  color: white;
+  text-align: left;
+}
+
+.table-hover tbody tr:hover {
+  background-color: #f1f1f1;
+}
+
+.btn-group .btn {
+  margin-right: 5px;
+}
+
+.card {
+  border-radius: 8px;
+  border: 1px solid #ddd;
+}
+
+
+.tooltip-inner {
+  background-color: #007bff !important;
+  color: #fff !important;
+  font-size: 14px;
+  border-radius: 5px;
+}
+
+.tooltip-arrow::before {
+  border-top-color: #007bff !important;
+}
+
+.tippy-box[data-theme~='light-border'] {
+  border: 1px solid #ddd;
+  background-color: #fff;
+  color: #333;
+}
+
+.button-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  /* Add spacing between buttons */
+}
+
+.button-group .btn {
+  flex: 1 1 auto;
+  /* Make buttons flexible to fit container */
+  text-align: center;
+  /* Align button text */
+}
+
+.button-group .btn-sm {
+  padding: 0.5rem 1rem;
+  /* Adjust padding for small buttons */
+}
+
+
+.button-group .btn:hover {
+  opacity: 0.9;
+  /* Slight transparency on hover */
+}
+
+.button-group .btn-danger {
+  background-color: #ff6b6b;
+  /* Custom red for delete */
+  border-color: #ff4c4c;
+}
+
+.button-group .btn-success {
+  background-color: #28a745;
+  border-radius: 5px;
+  /* Rounded corners for success buttons */
+}
+
+@media (max-width: 768px) {
+  .button-group {
+    flex-direction: column;
+    /* Stack buttons vertically on small screens */
+  }
+}
+
+@media (max-width: 768px) {
+  .dropdown .dropdown-toggle {
+    width: 100%;
+    /* Full-width dropdown button on small screens */
+  }
+}
+
+.dropdown .dropdown-toggle {
+  background-color: #007bff;
+  /* Primary color */
+  border-color: #0056b3;
+  color: white;
+}
+
+.dropdown .dropdown-item {
+  font-size: 0.9rem;
+  padding: 0.5rem 1rem;
+}
+
+.dropdown .dropdown-item:hover {
+  background-color: #f8f9fa;
+  /* Light hover effect */
+}
+
+
+.dropdown {
+  position: relative;
+  display: inline-block;
+}
+
+.dropdown-menu {
+  display: none;
+  position: absolute;
+  top: 100%;
+  left: 0;
+  z-index: 1;
+  background-color: white;
+  border: 1px solid #ccc;
+  padding: 0;
+  list-style: none;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.dropdown:hover .dropdown-menu {
+  display: block;
+}
+
+.dropdown-item {
+  padding: 8px 12px;
+  cursor: pointer;
+}
+
+.dropdown-item:hover {
+  background-color: #f8f9fa;
+}
+
+@media print {
+  body {
+    margin: 0;
+    padding: 0;
+    font-family: Arial, sans-serif;
+  }
+
+  .no-print {
+    display: none;
+  }
+}
+
+
+body {
+  text-align: right;
+  direction: rtl;
+}
+
+table {
+  direction: rtl;
+  text-align: right;
+}
+
+p,
+div {
+  direction: rtl;
+  text-align: right;
+}
+
+.p-column-resizer {
+  border-left: 3.5px solid #d9d9d9 !important;
+  opacity: 0.5 !important;
+}
+
+:dir(rtl) .p-column-resizer {
+  border-left: 3.5px solid #d9d9d9 !important;
+  opacity: 0.5 !important;
+  right : unset !important; left : 0 !important;
+}
+
+/* حدود الجدول */
+::ng-deep .p-datatable {
+  border: 1px solid #e5e7eb !important;
+  border-radius: 8px !important;
+  overflow: hidden !important;
+  width: 100% !important;
+  position: relative !important;
+}
+
+/* Scrollable table wrapper - Horizontal only */
+::ng-deep .p-datatable-wrapper {
+  overflow-x: auto !important;
+  overflow-y: hidden !important;
+  position: relative !important;
+}
+
+/* Ensure table maintains minimum width on small screens */
+::ng-deep .p-datatable.p-datatable-scrollable .p-datatable-wrapper {
+  min-width: 100% !important;
+}
+
+::ng-deep .p-datatable.p-datatable-scrollable .p-datatable-thead > tr > th,
+::ng-deep .p-datatable.p-datatable-scrollable .p-datatable-tbody > tr > td {
+  white-space: nowrap !important;
+}
+
+::ng-deep .p-datatable.p-datatable-gridlines {
+  .p-datatable-thead > tr > th {
+    border: 1px solid #e5e7eb !important;
+    border-bottom: 2px solid #d1d5db !important;
+  }
+
+  .p-datatable-tbody > tr > td {
+    border: 1px solid #e5e7eb !important;
+  }
+
+  .p-datatable-tbody > tr:last-child > td {
+    border-bottom: 1px solid #e5e7eb !important;
+  }
+}
+
+/* Theme-aware table header colors */
+::ng-deep .p-datatable .p-datatable-thead > tr > th {
+  background: var(--table-head-bg) !important;
+  color: var(--table-header-text) !important;
+}
+
+/* Theme overrides (aligned with other lists) */
+$green-sels: ".light-green-mode", '[data-bs-theme="light-green"]', "body.light-green";
+@each $sel in $green-sels {
+  :host-context(#{$sel}) {
+    --table-head-bg: #c6ecea;
+    --table-header-text: #2e2a40;
+  }
+}
+
+$indigo-sels: ".light-indigo-mode", '[data-bs-theme="light-indigo"]', "body.light-indigo";
+@each $sel in $indigo-sels {
+  :host-context(#{$sel}) {
+    --table-head-bg: #c9d0f5;
+    --table-header-text: #5d6679;
+  }
+}
+
+$darkblue-sels: ".light-darkblue-mode", '[data-bs-theme="light-darkblue"]', "body.light-darkblue";
+@each $sel in $darkblue-sels {
+  :host-context(#{$sel}) {
+    --table-head-bg: #dad7ff;
+    --table-header-text: #191d29;
+  }
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .flex.rtl\\:flex-row-reverse {
+    flex-direction: column !important;
+    gap: 0.75rem !important;
+  }
+  
+  .flex.gap-2 {
+    flex-direction: column !important;
+    width: 100% !important;
+    
+    p-button {
+      width: 100% !important;
+      
+      ::ng-deep .p-button {
+        width: 100% !important;
+      }
+    }
+  }
+  
+  .p-input-icon-left {
+    width: 100% !important;
+    
+    input {
+      width: 100% !important;
+    }
+  }
+  
+  ::ng-deep .p-datatable {
+    .p-datatable-thead > tr > th,
+    .p-datatable-tbody > tr > td {
+      padding: 0.5rem 0.25rem !important;
+      font-size: 0.7rem !important;
+      min-width: 100px !important;
+      white-space: nowrap !important;
+    }
+  }
+}
+
+@media (max-width: 576px) {
+  ::ng-deep .p-datatable {
+    .p-datatable-thead > tr > th,
+    .p-datatable-tbody > tr > td {
+      padding: 0.375rem 0.125rem !important;
+      font-size: 0.65rem !important;
+      min-width: 80px !important;
+    }
+  }
+  
+  ::ng-deep .p-paginator {
+    flex-direction: row !important;
+    flex-wrap: wrap !important;
+    gap: 0.5rem !important;
+    padding: 0.5rem !important;
+    font-size: 0.75rem !important;
+    justify-content: center !important;
+    
+    .p-paginator-left-content,
+    .p-paginator-right-content {
+      width: auto !important;
+      justify-content: center !important;
+      font-size: 0.75rem !important;
+    }
+    
+    .p-paginator-pages {
+      display: flex !important;
+      flex-wrap: wrap !important;
+      justify-content: center !important;
+      gap: 0.25rem !important;
+    }
+    
+    .p-paginator-page,
+    .p-paginator-prev,
+    .p-paginator-next,
+    .p-paginator-first,
+    .p-paginator-last {
+      min-width: 2rem !important;
+      height: 2rem !important;
+      font-size: 0.75rem !important;
+    }
+    
+    .p-dropdown {
+      font-size: 0.75rem !important;
+      
+      .p-inputtext {
+        padding: 0.25rem 0.5rem !important;
+        font-size: 0.75rem !important;
+      }
+    }
+    
+    .p-paginator-rpp-options {
+      font-size: 0.75rem !important;
+    }
+  }
+}
+/* إجبار المتغيرات تكون ثابتة في كل الثيمات */
+:host,
+:host-context(.light-green-mode),
+:host-context([data-bs-theme="light-green"]),
+:host-context(body.light-green),
+:host-context(.light-indigo-mode),
+:host-context([data-bs-theme="light-indigo"]),
+:host-context(body.light-indigo),
+:host-context(.light-darkblue-mode),
+:host-context([data-bs-theme="light-darkblue"]),
+:host-context(body.light-darkblue) {
+  --table-head-bg: #46bbeb !important;
+  --table-header-text: #ffffff !important;
+}
+/* =========================
+   New centered pagination (Total + pages + page/rows) all centered
+   ========================= */
+::ng-deep .custom-paginator-table .p-paginator {
+  direction: rtl;
+  display: flex;
+  align-items: center;
+  justify-content: center; /* ✅ كله في المنتصف */
+  gap: .5rem;              /* ✅ مسافات صغيرة */
+  padding: .5rem .75rem;
+  border-top: 1px solid #e5e7eb;
+  background: #fff;
+  flex-wrap: wrap;         /* ✅ لو الشاشة ضيقة */
+}
+
+/* "إجمالي" */
+::ng-deep .custom-paginator-table .p-paginator .p-paginator-current {
+  color: #111827;
+  font-weight: 600;
+  white-space: nowrap;
+  margin: 0;
+}
+
+/* مجموعة الصفحات */
+::ng-deep .custom-paginator-table .p-paginator .p-paginator-pages {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: .25rem;
+  direction: ltr; /* ✅ يخليها تطلع بصريًا زي الصورة */
+  margin: 0;
+}
+
+/* زر الصفحة */
+::ng-deep .custom-paginator-table .p-paginator .p-paginator-page {
+  min-width: 34px;
+  height: 34px;
+  border-radius: 8px;
+  border: 1px solid transparent;
+  color: #374151;
+}
+
+/* Hover */
+::ng-deep .custom-paginator-table .p-paginator .p-paginator-page:not(.p-highlight):hover {
+  background: #f3f4f6;
+  border-color: #e5e7eb;
+}
+
+/* Active */
+::ng-deep .custom-paginator-table .p-paginator .p-paginator-page.p-highlight {
+  background: #eaf2ff;
+  border-color: #93c5fd;
+  color: #1d4ed8;
+  font-weight: 600;
+}
+
+/* Prev/Next */
+::ng-deep .custom-paginator-table .p-paginator .p-paginator-prev,
+::ng-deep .custom-paginator-table .p-paginator .p-paginator-next {
+  width: 34px;
+  height: 34px;
+  border-radius: 8px;
+}
+
+::ng-deep .custom-paginator-table .p-paginator .p-paginator-prev:hover,
+::ng-deep .custom-paginator-table .p-paginator .p-paginator-next:hover {
+  background: #f3f4f6;
+}
+
+/* Rows per page (page/ + dropdown) */
+::ng-deep .custom-paginator-table .p-paginator .p-paginator-rpp-options {
+  display: inline-flex;
+  align-items: center;
+  gap: .35rem;
+  margin: 0;
+}
+
+/* page/ قبل الدروبداون */
+::ng-deep .custom-paginator-table .p-paginator .p-paginator-rpp-options::before {
+  content: "page /";
+  color: #6b7280;
+  font-size: 14px;
+  white-space: nowrap;
+}
+
+/* Dropdown size */
+::ng-deep .custom-paginator-table .p-paginator .p-dropdown {
+  min-width: 80px;
+}
+
+/* Ellipsis لو PrimeNG بيطلعها في إصدارك */
+::ng-deep .custom-paginator-table .p-paginator .p-paginator-ellipsis {
+  color: #6b7280;
+  padding: 0 .25rem;
+}
+
+/* Prevent Overlay Panel clipping in PrimeNG tables */
+::ng-deep .p-overlaypanel {
+  z-index: 999999 !important;
+  pointer-events: auto !important;
+  overflow: visible !important;
+  border-radius: 12px !important;
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1) !important;
+}
+
+::ng-deep .p-overlaypanel-content {
+  overflow: visible !important;
+  padding: 0.5rem !important; /* تقليل الحشو الداخلي */
+}
+
+/* تصغير أزرار الإجراءات لتشغل مساحة رأسية أقل */
+::ng-deep .p-overlaypanel .p-button {
+  padding: 0.35rem 0.75rem !important;
+  font-size: 0.85rem !important;
+  height: 32px !important;
+}
+
+/* إضافة مسافة فارغة أسفل الجدول لكي لا تقص القوائم في الصفوف الأخيرة */
+p-table {
+  display: block;
+  margin-bottom: 150px !important;
+}

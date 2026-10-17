@@ -1,0 +1,282 @@
+<div class="container-fluid">
+  <p-toast></p-toast>
+  <p-confirmDialog></p-confirmDialog>
+  
+  <!-- Header: Title on Right, Tools on Left -->
+  <div class="inventory-stocktaking-header d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4 p-3 bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700">
+    <div class="d-flex flex-wrap align-items-center gap-3">
+      <h2 class="page-title m-0 text-xl font-bold text-gray-800 dark:text-gray-100">{{ 'FINANCE.STOCKTAKING' | translate }}</h2>
+
+      <span class="p-input-icon-left header-search-box">
+        <i class="pi pi-search"></i>
+        <input
+          pInputText
+          type="text"
+          [(ngModel)]="searchValue"
+          (input)="filter(dt1, $event)"
+          placeholder="بحث في الجرد..."
+          class="p-inputtext-sm rounded-lg"
+        />
+      </span>
+    </div>
+
+    <div class="d-flex flex-wrap align-items-center gap-2">
+      <!-- Export & Report Tools Group -->
+      <div class="btn-group-wrapper d-flex align-items-center gap-2">
+        <p-button 
+          styleClass="rounded-md p-button-sm shadow-sm"
+          severity="success" 
+          icon="pi pi-file-excel" 
+          label="تصدير Excel"
+          pTooltip="تصدير إلى Excel"
+          tooltipPosition="bottom"
+          (onClick)="exportToExcel()"
+          [disabled]="!inventoryStocktakings || inventoryStocktakings.length === 0">
+        </p-button>
+
+        <p-button 
+          styleClass="rounded-md p-button-sm shadow-sm"
+          severity="danger" 
+          icon="pi pi-file-pdf" 
+          label="تنزيل PDF"
+          pTooltip="تنزيل PDF"
+          tooltipPosition="bottom"
+          (onClick)="downloadPDF()"
+          [loading]="loadingPdf"
+          [disabled]="!inventoryStocktakings || inventoryStocktakings.length === 0">
+        </p-button>
+
+        <p-button 
+          styleClass="rounded-md p-button-sm shadow-sm"
+          severity="info" 
+          icon="pi pi-share-alt" 
+          label="مشاركة"
+          pTooltip="مشاركة التقرير"
+          tooltipPosition="bottom"
+          (onClick)="openShareDialog()"
+          [disabled]="!inventoryStocktakings || inventoryStocktakings.length === 0">
+        </p-button>
+
+        <p-button 
+          styleClass="rounded-md p-button-sm shadow-sm"
+          severity="warning" 
+          icon="pi pi-print" 
+          label="طباعة"
+          pTooltip="طباعة التقرير"
+          tooltipPosition="bottom"
+          (onClick)="printReport()"
+          [loading]="loadingPdf"
+          [disabled]="!inventoryStocktakings || inventoryStocktakings.length === 0">
+        </p-button>
+
+        <p-button 
+          styleClass="rounded-md p-button-sm shadow-sm"
+          severity="secondary" 
+          icon="pi pi-refresh" 
+          label="تحديث"
+          pTooltip="تحديث البيانات"
+          tooltipPosition="bottom"
+          (onClick)="loadInventoryStocktakings()"
+          [loading]="loading">
+        </p-button>
+      </div>
+
+      <!-- Divider between tool groups -->
+      <div class="header-divider d-none d-md-block"></div>
+
+      <!-- Main Creation Actions -->
+      <div class="d-flex align-items-center gap-2">
+        <p-button 
+          *ngIf="hasPermission(PERMISSIONS.InventoryStocktaking.Create)"
+          styleClass="rounded-md p-button-sm font-bold shadow-sm"
+          severity="success"
+          icon="pi pi-plus" 
+          label="إضافة جرد جديد"
+          (onClick)="navigateToAddInventoryStocktaking()">
+        </p-button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Stocktaking Table -->
+  <p-table
+    #dt1
+    [value]="inventoryStocktakings"
+    [columns]="columns"
+    dataKey="id"
+    [rows]="15"
+    styleClass="p-datatable-sm p-datatable-striped"
+    [rowsPerPageOptions]="[15, 25, 50]"
+    [loading]="loading"
+    [paginator]="true"
+    [showCurrentPageReport]="true"
+    currentPageReportTemplate="عرض {first} إلى {last} من {totalRecords} سجل"
+    [globalFilterFields]="['referenceNumber', 'description']"
+    [sortField]="'createdAt'"
+    [sortOrder]="-1"
+    responsiveLayout="scroll"
+  >
+    <ng-template pTemplate="header">
+      <tr>
+        <th style="width: 60px; text-align: center;">#</th>
+        <th pSortableColumn="referenceNumber" style="text-align: center;">
+          {{ 'FINANCE.STOCKTAKING_REFERENCE_NUMBER' | translate }}
+          <p-sortIcon field="referenceNumber"></p-sortIcon>
+        </th>
+        <th pSortableColumn="description" style="text-align: center;">
+          {{ 'FINANCE.DESCRIPTION' | translate }}
+          <p-sortIcon field="description"></p-sortIcon>
+        </th>
+        <th pSortableColumn="stocktakingDate" style="text-align: center;">
+          {{ 'FINANCE.STOCKTAKING_DATE' | translate }}
+          <p-sortIcon field="stocktakingDate"></p-sortIcon>
+        </th>
+        <th pSortableColumn="createdAt" style="text-align: center;">
+          {{ 'FINANCE.CREATED_AT' | translate }}
+          <p-sortIcon field="createdAt"></p-sortIcon>
+        </th>
+        <th style="text-align: center;">{{ 'FINANCE.ACTIONS' | translate }}</th>
+      </tr>
+    </ng-template>
+
+    <ng-template pTemplate="body" let-entry let-rowIndex="rowIndex">
+      <tr
+        class="hover:bg-gray-200 cursor-pointer transition-colors duration-200"
+        (click)="navigateToInventoryStocktaking(entry)"
+        (contextmenu)="openOverlayInventoryStocktaking($event, entry); $event.stopPropagation()"
+        style="cursor:pointer">
+        <td style="text-align: center; width: 60px;">
+          {{ (dt1?.first || 0) + rowIndex + 1 }}
+        </td>
+        <td style="text-align: center;">
+          {{ entry.referenceNumber }}
+        </td>
+        <td style="text-align: center;">
+          <span [title]="entry.description">
+            {{ entry.description && entry.description.length > 50 ? (entry.description | slice:0:50) + '...' : (entry.description || '-') }}
+          </span>
+        </td>
+        <td style="text-align: center;">
+          {{ activeLanguage === 'en' ?
+          (entry.stocktakingDate | customDate: 'YYYY/M/d':'':'en-US') :
+          (entry.stocktakingDate | customDate:'YYYY/M/d':'':'ar-SA')
+          }}
+        </td>
+        <td style="text-align: center;">
+          {{ activeLanguage === 'en' ?
+          (entry.createdAt | customDate: 'YYYY/M/d h:mm a':'':'en-US') :
+          (entry.createdAt | customDate:'YYYY/M/d h:mm a':'':'ar-SA')
+          }}
+        </td>
+        <td style="text-align: center;">
+          <div class="flex justify-center gap-2">
+            <button 
+              *ngIf="hasPermission(PERMISSIONS.InventoryStocktaking.Update) || hasPermission(PERMISSIONS.InventoryStocktaking.Delete)"
+              pButton 
+              type="button" 
+              icon="pi pi-cog" 
+              class="p-button-secondary p-button-sm p-button-text"
+              (click)="openOverlayInventoryStocktaking($event, entry); $event.stopPropagation()">
+            </button>
+          </div>
+        </td>
+      </tr>
+    </ng-template>
+
+    <ng-template pTemplate="emptymessage">
+      <tr>
+        <td colspan="6" class="text-center py-5">
+          <i class="pi pi-inbox" style="font-size: 3rem; color: var(--surface-400);"></i>
+          <p class="mt-3 text-muted">{{ 'FINANCE.NO_INVENTORY_STOCKTAKINGS' | translate }}</p>
+        </td>
+      </tr>
+    </ng-template>
+  </p-table>
+
+  <p-overlayPanel #opInventoryStocktaking appendTo="body" [dismissable]="true" [autoZIndex]="true" [baseZIndex]="99999">
+    <div class="flex flex-column gap-3 w-auto p-1" *ngIf="selectedInventoryStocktaking">
+      <p-button
+        *ngIf="hasPermission(PERMISSIONS.InventoryStocktaking.Update)"
+        icon="pi pi-pencil"
+        class="p-button-secondary"
+        [label]="translate.instant('FINANCE.EDIT')"
+        styleClass="rounded-lg p-button-secondary w-full"
+        (onClick)="navigateToInventoryStocktaking(selectedInventoryStocktaking); opInventoryStocktaking.hide()"
+      ></p-button>
+      <p-button
+        *ngIf="hasPermission(PERMISSIONS.InventoryStocktaking.Delete)"
+        icon="pi pi-trash"
+        class="p-button-danger"
+        [label]="translate.instant('FINANCE.DELETE')"
+        styleClass="rounded-lg p-button-danger w-full"
+        (onClick)="confirmInventoryStocktakingDeletion($event, selectedInventoryStocktaking); opInventoryStocktaking.hide()"
+      ></p-button>
+    </div>
+  </p-overlayPanel>
+</div>
+
+<!-- Share Dialog -->
+<p-dialog
+  [(visible)]="showShareDialog"
+  header="مشاركة التقرير"
+  [modal]="true"
+  [style]="{width: '450px'}"
+  [draggable]="false"
+  [resizable]="false">
+  
+  <div class="d-flex flex-column gap-3">
+    <div class="field">
+      <label class="form-label">طريقة المشاركة</label>
+      <p-dropdown
+        [options]="shareMethodOptions"
+        [(ngModel)]="selectedShareMethod"
+        optionLabel="label"
+        optionValue="value"
+        placeholder="اختر طريقة المشاركة"
+        styleClass="w-100">
+      </p-dropdown>
+    </div>
+    
+    <div class="field" *ngIf="selectedShareMethod === 'email'">
+      <label class="form-label">البريد الإلكتروني</label>
+      <input
+        type="email"
+        pInputText
+        [(ngModel)]="shareEmail"
+        placeholder="example@email.com"
+        class="w-100" />
+    </div>
+    
+    <div class="field" *ngIf="selectedShareMethod === 'whatsapp'">
+      <label class="form-label">رقم الواتساب</label>
+      <input
+        type="tel"
+        pInputText
+        [(ngModel)]="sharePhone"
+        placeholder="+966xxxxxxxxx"
+        class="w-100" />
+    </div>
+  </div>
+  
+  <ng-template pTemplate="footer">
+    <button
+      pButton
+      type="button"
+      label="إلغاء"
+      icon="pi pi-times"
+      class="p-button-text"
+      (click)="showShareDialog = false">
+    </button>
+    <button
+      pButton
+      type="button"
+      label="إرسال"
+      icon="pi pi-send"
+      (click)="shareReport()"
+      [loading]="loadingShare"
+      [disabled]="!canShare()">
+    </button>
+  </ng-template>
+</p-dialog>
+
+

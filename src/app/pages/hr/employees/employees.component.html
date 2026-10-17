@@ -1,0 +1,170 @@
+<p-table
+  #dt1
+  [value]="employees"
+  [columns]="columns"
+  [resizableColumns]="true"
+  columnResizeMode="expand"
+  dataKey="id"
+  [rows]="10"
+  styleClass="p-datatable-gridlines scroller"
+  [rowsPerPageOptions]="[10, 25, 50]"
+  [loading]="loading"
+  [paginator]="true"
+  [paginatorLocale]="activeLanguage === 'en' ? 'en-US' : 'ar-EG'"
+  [globalFilterFields]="['deviceId', 'referenceNumber', 'name', 'phone', 'employmentTypeName', 'shiftName']"
+>
+  <ng-template pTemplate="caption">
+    <div class="flex flex-col rtl:flex-row-reverse justify-between gap-2">
+      <div class="flex gap-2">
+        <p-button
+          styleClass="rounded-md w-auto text-nowrap"
+          icon="pi pi-external-link"
+          [label]="translate.instant('FINANCE.EXPORT')"
+          (onClick)="exportExcel()"
+        />
+        <p-button
+          styleClass="rounded-md w-auto text-nowrap	"
+          [label]="translate.instant('FINANCE.CLEAR_FILTERS')"
+          [outlined]="true"
+          icon="pi pi-filter-slash"
+          (onClick)="clear(dt1)"
+        />
+        <a routerLink="/hr/employee">
+          <p-button
+            styleClass="rounded-md w-auto text-nowrap	"
+            label="اضافة موظف"
+            [outlined]="true"
+            icon="pi pi-plus"
+          />
+        </a>
+      </div>
+
+      <ng-container *ngIf="employees.length === 0 && !loading">
+        <div class="flex justify-center items-center w-full">
+          <p
+            class="text-center font-semibold text-xl w-full flex justify-center"
+          >
+            لا يوجد موظفين متاحين
+          </p>
+        </div>
+      </ng-container>
+      <span class="p-input-icon-left ml-auto">
+        <i class="pi pi-search"></i>
+        <input
+          pInputText
+          type="text"
+          [(ngModel)]="searchValue"
+          (input)="filter(dt1, $event)"
+          [placeholder]="translate.instant('FINANCE.SEARCH')"
+        />
+      </span>
+    </div>
+  </ng-template>
+  <ng-template pTemplate="header" let-columns>
+    <tr>
+      <th
+        style="min-width: fit-content"
+        *ngFor="let column of columns"
+        pResizableColumn
+        [pSortableColumn]="column.field"
+      >
+        <div class="flex align-items-center">
+          {{ column.header }}
+          <p-sortIcon [field]="column.field" class="mx-1 "></p-sortIcon>
+          <p-columnFilter
+            *ngIf="column.filter"
+            [type]="column.filterType"
+            [field]="column.field"
+            display="menu"
+          />
+        </div>
+      </th>
+      <th style="min-width: fit-content">
+        <div class="flex align-items-center text-base">
+          {{ "FINANCE.ACTIONS" | translate }}
+        </div>
+      </th>
+    </tr>
+  </ng-template>
+  <ng-template pTemplate="body" let-Entry>
+    <tr *ngIf="employees.length > 0">
+      <td class="text-lg rtl:text-right font-bold text-sky-700">
+        {{ Entry.deviceId || '-' }}
+      </td>
+      <td class="text-lg rtl:text-right text-gray-500">
+        {{ Entry.referenceNumber }}
+      </td>
+      <td class="text-lg rtl:text-right">
+        {{ Entry.name }}
+      </td>
+      <td class="text-lg rtl:text-right">
+        {{ Entry.phone }}
+      </td>
+      <td class="text-lg rtl:text-right">
+        {{ Entry.employmentTypeName }}
+      </td>
+      <td class="text-lg rtl:text-right">
+        {{ Entry.shiftName }}
+      </td>
+      <td class="text-lg rtl:text-right">
+        {{ Entry.leaveBalance | number }}
+      </td>
+      <td class="text-lg rtl:text-right">
+        {{ Entry.monthlyRate | currency : "EGP" : "symbol" : "1.0-2" : "ar-EG" }}
+      </td>
+      <td class="text-lg rtl:text-right">
+        {{ Entry.supplementaryRate | currency : "EGP" : "symbol" : "1.0-2" : "ar-EG" }}
+      </td>
+      <td class="text-lg rtl:text-right">
+        {{ Entry.monthlyInsurance | currency : "EGP" : "symbol" : "1.0-2" : "ar-EG" }}
+      </td>
+       <td class="text-lg rtl:text-right">
+        {{ Entry.factoryType === 'Factory1' ? 'المصنع الأول' : Entry.factoryType === 'Factory2' ? 'المصنع الثاني' : Entry.factoryType === 'Factory3' ? 'المصنع الثالث' : 'غير محدد' }}
+       </td>
+      <td class="text-lg rtl:text-right">
+          {{
+            Entry.createdAt ? (Entry.createdAt | date : "yyyy/MM/dd  hh:mm a" : "": "ar-EG"): '-'
+          }}
+      </td>
+      <td class="text-lg rtl:text-right flex gap-2">
+        <ng-container
+        >
+          <p-overlayPanel #opEmployee [autoZIndex]="false" [baseZIndex]="80">
+            <div class="flex flex-column gap-3 w-auto p-1">
+              <a routerLink="/hr/employee/{{Entry.id}}">
+                <p-button
+                  icon="pi pi-pencil"
+                  class="p-button-secondary"
+                  [label]="translate.instant('FINANCE.EDIT')"
+                  styleClass="rounded-lg p-button-secondary w-full"
+                ></p-button>
+              </a>
+              <p-button
+                icon="pi pi-trash"
+                class="p-button-danger"
+                [label]="translate.instant('FINANCE.DELETE')"
+                styleClass="rounded-lg p-button-danger w-full"
+                (onClick)="confirmEmployeeDeletion($event, Entry)"
+              ></p-button>
+            </div>
+          </p-overlayPanel>
+          <p-button
+            [text]="true"
+            (onClick)="opEmployee.toggle($event)"
+            severity="secondary"
+            styleClass="p-button-outlined rounded-xl"
+          >
+            <ng-template pTemplate="icon">
+              <i class="pi pi-cog text-xl"></i>
+            </ng-template>
+          </p-button>
+        </ng-container>
+      </td>
+    </tr>
+  </ng-template>
+</p-table>
+
+
+<p-confirmDialog> </p-confirmDialog>
+<p-toast />
+

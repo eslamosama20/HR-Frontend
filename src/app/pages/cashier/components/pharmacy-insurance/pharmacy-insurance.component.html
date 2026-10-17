@@ -1,0 +1,574 @@
+﻿<div class="pos-shell pharmacy-page insurance-theme">
+  <p-toast></p-toast>
+
+  <!-- 1. Header (Matching cashier/session & pharmacy-patients) -->
+  <div class="session-unified-card mb-2">
+    <header class="session-header">
+      <div class="session-header-top">
+        <div class="header-title">
+          <div>
+            <h1>{{ 'PHARMACY_INSURANCE.PAGE_TITLE' | translate }}</h1>
+            <p>{{ 'PHARMACY_INSURANCE.PAGE_SUBTITLE' | translate }}</p>
+          </div>
+        </div>
+
+        <div class="header-actions">
+          <button pButton type="button" icon="pi pi-refresh" [label]="'PHARMACY_INSURANCE.REFRESH' | translate" class="action-btn soft-btn" [loading]="loading()" (click)="loadClaims()"></button>
+        </div>
+      </div>
+    </header>
+  </div>
+
+  <!-- 2. KPI / Summary Cards Grid (6 Interactive Cards) -->
+  <section class="session-meta-panel mb-2">
+    <div class="summary-grid">
+      <!-- Total Claims -->
+      <article class="summary-card cash" (click)="selectedStatus = 'all'; selectedInsurer = 'all'">
+        <div class="summary-card-head">
+          <i class="pi pi-shield"></i>
+          <span>إجمالي المطالبات</span>
+        </div>
+        <div class="summary-val">{{ claims().length }} <small>مطالبة</small></div>
+      </article>
+
+      <!-- Approved Claims -->
+      <article class="summary-card sales" (click)="selectedStatus = 'Approved'">
+        <div class="summary-card-head">
+          <i class="pi pi-check-circle"></i>
+          <span>{{ 'PHARMACY_INSURANCE.APPROVED_CLAIMS' | translate }}</span>
+        </div>
+        <div class="summary-val">{{ approvedCount }} <small>مقبولة</small></div>
+      </article>
+
+      <!-- Queued / Pending -->
+      <article class="summary-card credit" (click)="selectedStatus = 'Pending'">
+        <div class="summary-card-head">
+          <i class="pi pi-clock"></i>
+          <span>{{ 'PHARMACY_INSURANCE.QUEUED_PENDING' | translate }}</span>
+        </div>
+        <div class="summary-val">{{ queuedCount }} <small>قيد المعالجة</small></div>
+      </article>
+
+      <!-- Rejected Claims -->
+      <article class="summary-card tx" (click)="selectedStatus = 'Rejected'">
+        <div class="summary-card-head">
+          <i class="pi pi-times-circle"></i>
+          <span>{{ 'PHARMACY_INSURANCE.STATUS_REJECTED' | translate }}</span>
+        </div>
+        <div class="summary-val">{{ rejectedCount }} <small>مرفوضة</small></div>
+      </article>
+
+      <!-- Total Covered Amount -->
+      <article class="summary-card expected" (click)="selectedStatus = 'all'">
+        <div class="summary-card-head">
+          <i class="pi pi-money-bill"></i>
+          <span>إجمالي التغطية</span>
+        </div>
+        <div class="summary-val">{{ totalCoveredSum | number:'1.0-0' }} <small>ريال</small></div>
+      </article>
+
+      <!-- Paid Claims -->
+      <article class="summary-card card" (click)="selectedStatus = 'Paid'">
+        <div class="summary-card-head">
+          <i class="pi pi-verified"></i>
+          <span>مسددة بالكامل</span>
+        </div>
+        <div class="summary-val">{{ paidCount }} <small>مسددة</small></div>
+      </article>
+    </div>
+  </section>
+
+  <!-- 3. Table / History Panel -->
+  <section class="history-panel">
+    <div class="history-card">
+      
+      <!-- Top Filter Bar -->
+      <div class="history-header">
+        <div class="panel-title">
+          <h2>
+            <i class="pi pi-list"></i>
+            <span>سجل مطالبات التأمين الطبي و NPHIES</span>
+          </h2>
+          <p>متابعة الموافقات، حصة التأمين والمريض، وحالات الإرسال والربط</p>
+        </div>
+
+        <div class="panel-filters">
+          <!-- Search Box -->
+          <div class="filter-search-box">
+            <i class="pi pi-search"></i>
+            <input 
+              pInputText 
+              type="text" 
+              [(ngModel)]="searchTerm" 
+              [placeholder]="'PHARMACY_INSURANCE.SEARCH_PLACEHOLDER' | translate" 
+              class="search-input" />
+            <button *ngIf="searchTerm" type="button" class="btn-clear" (click)="searchTerm = ''">
+              <i class="pi pi-times"></i>
+            </button>
+          </div>
+
+          <!-- Dropdowns -->
+          <div class="header-dropdown-filters">
+            <!-- Insurer Dropdown -->
+            <p-dropdown
+              [options]="insurerOptions"
+              optionLabel="label"
+              optionValue="value"
+              [(ngModel)]="selectedInsurer"
+              appendTo="body"
+              [autoDisplayFirst]="true"
+              styleClass="header-filter-dropdown"
+              [placeholder]="'PHARMACY_INSURANCE.FIELD_INSURER' | translate">
+            </p-dropdown>
+
+            <!-- Status Dropdown -->
+            <p-dropdown
+              [options]="statusOptions"
+              optionLabel="label"
+              optionValue="value"
+              [(ngModel)]="selectedStatus"
+              appendTo="body"
+              [autoDisplayFirst]="true"
+              styleClass="header-filter-dropdown"
+              [placeholder]="'PHARMACY_INSURANCE.FIELD_STATUS' | translate">
+            </p-dropdown>
+
+            <!-- Clear Filters Button -->
+            <button 
+              *ngIf="searchTerm || selectedInsurer !== 'all' || selectedStatus !== 'all'"
+              pButton 
+              type="button" 
+              icon="pi pi-filter-slash" 
+              label="إعادة ضبط" 
+              class="clear-filters-btn" 
+              (click)="clearAllFilters()">
+            </button>
+          </div>
+
+          <span class="count-pill">{{ filteredClaims.length }} مطالبة</span>
+        </div>
+      </div>
+
+      <!-- Error / Loading -->
+      <div *ngIf="errorMessage()" class="error-banner">
+        <i class="pi pi-exclamation-triangle"></i>
+        <span>{{ errorMessage() }}</span>
+      </div>
+
+      <!-- Scrollable Horizontal Table with Column Filters & Numbering -->
+      <div class="table-container scrollable-table-wrapper">
+        <p-table 
+          #dtClaims
+          [value]="filteredClaims" 
+          [paginator]="true" 
+          [rows]="10" 
+          [rowsPerPageOptions]="[10, 25, 50]"
+          [showCurrentPageReport]="true"
+          currentPageReportTemplate="عرض {first} إلى {last} من أصل {totalRecords} مطالبة"
+          [scrollable]="true"
+          scrollHeight="flex"
+          styleClass="session-table p-datatable-gridlines p-datatable-sm" 
+          [loading]="loading()">
+          
+          <ng-template pTemplate="header">
+            <tr>
+              <!-- 0. الترقيم -->
+              <th style="width: 48px; min-width: 48px; text-align: center;">
+                <span class="th-label">#</span>
+              </th>
+
+              <!-- 1. رقم المطالبة -->
+              <th pSortableColumn="claimNo" pResizableColumn style="min-width: 130px;">
+                <div class="th-content">
+                  <span class="th-label">{{ 'PHARMACY_INSURANCE.TABLE_CLAIM_NO' | translate }}</span>
+                  <div class="th-icons">
+                    <p-sortIcon field="claimNo"></p-sortIcon>
+                    <p-columnFilter type="text" field="claimNo" display="menu"></p-columnFilter>
+                  </div>
+                </div>
+              </th>
+
+              <!-- 2. رقم الوصفة -->
+              <th pSortableColumn="rxNo" pResizableColumn style="min-width: 130px;">
+                <div class="th-content">
+                  <span class="th-label">{{ 'PHARMACY_INSURANCE.TABLE_RX_NO' | translate }}</span>
+                  <div class="th-icons">
+                    <p-sortIcon field="rxNo"></p-sortIcon>
+                    <p-columnFilter type="text" field="rxNo" display="menu"></p-columnFilter>
+                  </div>
+                </div>
+              </th>
+
+              <!-- 3. المريض -->
+              <th pSortableColumn="patientName" pResizableColumn style="min-width: 180px;">
+                <div class="th-content">
+                  <span class="th-label">{{ 'PHARMACY_INSURANCE.TABLE_PATIENT' | translate }}</span>
+                  <div class="th-icons">
+                    <p-sortIcon field="patientName"></p-sortIcon>
+                    <p-columnFilter type="text" field="patientName" display="menu"></p-columnFilter>
+                  </div>
+                </div>
+              </th>
+
+              <!-- 4. شركة التأمين -->
+              <th pSortableColumn="insurer" pResizableColumn style="min-width: 150px;">
+                <div class="th-content">
+                  <span class="th-label">{{ 'PHARMACY_INSURANCE.TABLE_INSURER' | translate }}</span>
+                  <div class="th-icons">
+                    <p-sortIcon field="insurer"></p-sortIcon>
+                    <p-columnFilter type="text" field="insurer" display="menu"></p-columnFilter>
+                  </div>
+                </div>
+              </th>
+
+              <!-- 5. الإجمالي -->
+              <th pSortableColumn="totalAmount" pResizableColumn style="min-width: 110px; text-align: center;">
+                <div class="th-content" style="justify-content: center;">
+                  <span class="th-label">{{ 'PHARMACY_INSURANCE.TABLE_TOTAL' | translate }}</span>
+                  <div class="th-icons">
+                    <p-sortIcon field="totalAmount"></p-sortIcon>
+                    <p-columnFilter type="numeric" field="totalAmount" display="menu" currency="SAR"></p-columnFilter>
+                  </div>
+                </div>
+              </th>
+
+              <!-- 6. حصة التأمين -->
+              <th pSortableColumn="insuranceCoveredAmount" pResizableColumn style="min-width: 110px; text-align: center;">
+                <div class="th-content" style="justify-content: center;">
+                  <span class="th-label">{{ 'PHARMACY_INSURANCE.TABLE_INSURER_SHARE' | translate }}</span>
+                  <div class="th-icons">
+                    <p-sortIcon field="insuranceCoveredAmount"></p-sortIcon>
+                    <p-columnFilter type="numeric" field="insuranceCoveredAmount" display="menu" currency="SAR"></p-columnFilter>
+                  </div>
+                </div>
+              </th>
+
+              <!-- 7. حصة المريض -->
+              <th pSortableColumn="patientShareAmount" pResizableColumn style="min-width: 110px; text-align: center;">
+                <div class="th-content" style="justify-content: center;">
+                  <span class="th-label">{{ 'PHARMACY_INSURANCE.TABLE_PATIENT_SHARE' | translate }}</span>
+                  <div class="th-icons">
+                    <p-sortIcon field="patientShareAmount"></p-sortIcon>
+                    <p-columnFilter type="numeric" field="patientShareAmount" display="menu" currency="SAR"></p-columnFilter>
+                  </div>
+                </div>
+              </th>
+
+              <!-- 8. نسبة التغطية -->
+              <th pSortableColumn="coveragePercentage" pResizableColumn style="min-width: 100px; text-align: center;">
+                <div class="th-content" style="justify-content: center;">
+                  <span class="th-label">{{ 'PHARMACY_INSURANCE.TABLE_COVERAGE' | translate }}</span>
+                  <div class="th-icons">
+                    <p-sortIcon field="coveragePercentage"></p-sortIcon>
+                  </div>
+                </div>
+              </th>
+
+              <!-- 9. الحالة المحلية -->
+              <th pSortableColumn="status" pResizableColumn style="min-width: 130px; text-align: center;">
+                <div class="th-content" style="justify-content: center;">
+                  <span class="th-label">{{ 'PHARMACY_INSURANCE.TABLE_LOCAL_STATUS' | translate }}</span>
+                  <div class="th-icons">
+                    <p-sortIcon field="status"></p-sortIcon>
+                    <p-columnFilter type="text" field="status" display="menu"></p-columnFilter>
+                  </div>
+                </div>
+              </th>
+
+              <!-- 10. حالة NPHIES -->
+              <th pSortableColumn="nphiesStatus" pResizableColumn style="min-width: 130px; text-align: center;">
+                <div class="th-content" style="justify-content: center;">
+                  <span class="th-label">{{ 'PHARMACY_INSURANCE.TABLE_NPHIES' | translate }}</span>
+                  <div class="th-icons">
+                    <p-sortIcon field="nphiesStatus"></p-sortIcon>
+                    <p-columnFilter type="text" field="nphiesStatus" display="menu"></p-columnFilter>
+                  </div>
+                </div>
+              </th>
+
+              <!-- 11. رقم الفاتورة -->
+              <th pSortableColumn="saleInvoiceId" pResizableColumn style="min-width: 120px;">
+                <div class="th-content">
+                  <span class="th-label">{{ 'PHARMACY_INSURANCE.TABLE_INVOICE' | translate }}</span>
+                  <div class="th-icons">
+                    <p-sortIcon field="saleInvoiceId"></p-sortIcon>
+                  </div>
+                </div>
+              </th>
+
+              <!-- 12. تاريخ الإرسال -->
+              <th pSortableColumn="submittedAt" pResizableColumn style="min-width: 150px;">
+                <div class="th-content">
+                  <span class="th-label">{{ 'PHARMACY_INSURANCE.TABLE_SUBMITTED' | translate }}</span>
+                  <div class="th-icons">
+                    <p-sortIcon field="submittedAt"></p-sortIcon>
+                    <p-columnFilter type="date" field="submittedAt" display="menu"></p-columnFilter>
+                  </div>
+                </div>
+              </th>
+
+              <!-- 13. الإجراءات -->
+              <th style="min-width: 130px; text-align: center;">
+                <span class="th-label">{{ 'PHARMACY_INSURANCE.TABLE_ACTIONS' | translate }}</span>
+              </th>
+            </tr>
+          </ng-template>
+
+          <ng-template pTemplate="body" let-claim let-rowIndex="rowIndex">
+            <tr>
+              <!-- 0. الترقيم -->
+              <td style="text-align: center; font-weight: 700; color: #64748b;">
+                {{ rowIndex + 1 }}
+              </td>
+
+              <!-- 1. رقم المطالبة -->
+              <td>
+                <span class="code-badge">{{ claim.claimNo || '-' }}</span>
+              </td>
+
+              <!-- 2. رقم الوصفة -->
+              <td>
+                <span class="batch-no-chip">{{ claim.rxNo || '-' }}</span>
+              </td>
+
+              <!-- 3. المريض -->
+              <td>
+                <span class="item-name-txt">{{ claim.patientName || '-' }}</span>
+              </td>
+
+              <!-- 4. شركة التأمين -->
+              <td>{{ getInsurerLabel(claim.insurer) || '-' }}</td>
+
+              <!-- 5. الإجمالي -->
+              <td style="text-align: center; font-weight: 800;">
+                {{ claim.totalAmount | number:'1.2-2' }}
+              </td>
+
+              <!-- 6. حصة التأمين -->
+              <td style="text-align: center; font-weight: 800; color: #059669;">
+                {{ claim.insuranceCoveredAmount | number:'1.2-2' }}
+              </td>
+
+              <!-- 7. حصة المريض -->
+              <td style="text-align: center; font-weight: 700; color: #0284c7;">
+                {{ claim.patientShareAmount | number:'1.2-2' }}
+              </td>
+
+              <!-- 8. نسبة التغطية -->
+              <td style="text-align: center;">
+                <span class="coverage-pill">{{ claim.coveragePercentage | number:'1.0-2' }}%</span>
+              </td>
+
+              <!-- 9. الحالة المحلية -->
+              <td style="text-align: center;">
+                <p-tag [value]="getLocalStatusLabel(claim.status)" [severity]="getLocalStatusTag(claim.status)"></p-tag>
+              </td>
+
+              <!-- 10. حالة NPHIES -->
+              <td style="text-align: center;">
+                <p-tag [value]="getNphiesStatusLabel(claim.nphiesStatus)" [severity]="getNphiesStatusTag(claim.nphiesStatus)"></p-tag>
+              </td>
+
+              <!-- 11. الفاتورة -->
+              <td>{{ claim.saleInvoiceId || '-' }}</td>
+
+              <!-- 12. تاريخ الإرسال -->
+              <td>{{ claim.submittedAt | customDate: 'yyyy/MM/dd - HH:mm' }}</td>
+
+              <!-- 13. الإجراءات -->
+              <td class="actions-col" style="text-align: center;">
+                <div class="actions-cell">
+                  <button 
+                    pButton 
+                    type="button" 
+                    icon="pi pi-eye" 
+                    class="p-button-text p-button-rounded p-button-secondary action-icon-btn" 
+                    [pTooltip]="'PHARMACY_INSURANCE.TOOLTIP_DETAILS' | translate" 
+                    tooltipPosition="top"
+                    [loading]="isActionLoading('details', claim)" 
+                    (click)="openDetails(claim)">
+                  </button>
+                  <button 
+                    pButton 
+                    type="button" 
+                    icon="pi pi-send" 
+                    class="p-button-text p-button-rounded p-button-primary action-icon-btn" 
+                    [pTooltip]="'PHARMACY_INSURANCE.TOOLTIP_SUBMIT' | translate" 
+                    tooltipPosition="top"
+                    [disabled]="!canSubmitClaim(claim)" 
+                    [loading]="isActionLoading('submit', claim)" 
+                    (click)="submitClaim(claim)">
+                  </button>
+                  <button 
+                    pButton 
+                    type="button" 
+                    icon="pi pi-cloud-download" 
+                    class="p-button-text p-button-rounded p-button-help action-icon-btn" 
+                    [pTooltip]="'PHARMACY_INSURANCE.TOOLTIP_POLL' | translate" 
+                    tooltipPosition="top"
+                    [disabled]="!canPollClaim(claim)" 
+                    [loading]="isActionLoading('poll', claim)" 
+                    (click)="pollNphies(claim)">
+                  </button>
+                  <button 
+                    pButton 
+                    type="button" 
+                    icon="pi pi-sync" 
+                    class="p-button-text p-button-rounded p-button-warning action-icon-btn" 
+                    [pTooltip]="'PHARMACY_INSURANCE.TOOLTIP_PATCH' | translate" 
+                    tooltipPosition="top"
+                    (click)="openStatusDialog(claim)">
+                  </button>
+                  <button 
+                    pButton 
+                    type="button" 
+                    icon="pi pi-check-circle" 
+                    class="p-button-text p-button-rounded p-button-success action-icon-btn" 
+                    [pTooltip]="'PHARMACY_INSURANCE.TOOLTIP_APPROVE_LOCAL' | translate" 
+                    tooltipPosition="top"
+                    [disabled]="claim.status === 'Approved'" 
+                    (click)="updateStatus(claim, 'Approved')">
+                  </button>
+                </div>
+              </td>
+            </tr>
+          </ng-template>
+          
+          <ng-template pTemplate="emptymessage">
+            <tr>
+              <td colspan="14" style="text-align: center; padding: 2rem;">
+                <div class="empty-box">{{ 'PHARMACY_INSURANCE.EMPTY_TABLE' | translate }}</div>
+              </td>
+            </tr>
+          </ng-template>
+        </p-table>
+      </div>
+
+    </div>
+  </section>
+</div>
+
+<!-- Details Dialog -->
+<p-dialog
+  [(visible)]="showDetailsDialog"
+  [modal]="true"
+  [draggable]="false"
+  [resizable]="false"
+  [style]="{width:'760px', maxWidth:'96vw'}"
+  [contentStyle]="{'max-height': '80vh', 'overflow-y': 'auto'}"
+  appendTo="body"
+  [header]="'PHARMACY_INSURANCE.DETAILS_TITLE' | translate"
+  styleClass="insurance-modal-dialog">
+  
+  <div *ngIf="selectedClaim() as claim" class="details-grid">
+    <div><span>{{ 'PHARMACY_INSURANCE.TABLE_CLAIM_NO' | translate }}</span><strong>{{ claim.claimNo || '-' }}</strong></div>
+    <div><span>{{ 'PHARMACY_INSURANCE.TABLE_RX_NO' | translate }}</span><strong>{{ claim.rxNo || '-' }}</strong></div>
+    <div><span>{{ 'PHARMACY_INSURANCE.TABLE_PATIENT' | translate }}</span><strong>{{ claim.patientName || '-' }}</strong></div>
+    <div><span>{{ 'PHARMACY_INSURANCE.TABLE_INSURER' | translate }}</span><strong>{{ getInsurerLabel(claim.insurer) || '-' }}</strong></div>
+    <div><span>{{ 'PHARMACY_INSURANCE.FIELD_TOTAL_CLAIM' | translate }}</span><strong>{{ claim.totalAmount | number:'1.2-2' }} ريال</strong></div>
+    <div><span>{{ 'PHARMACY_INSURANCE.TABLE_INSURER_SHARE' | translate }}</span><strong>{{ claim.insuranceCoveredAmount | number:'1.2-2' }} ريال</strong></div>
+    <div><span>{{ 'PHARMACY_INSURANCE.TABLE_PATIENT_SHARE' | translate }}</span><strong>{{ claim.patientShareAmount | number:'1.2-2' }} ريال</strong></div>
+    <div><span>{{ 'PHARMACY_INSURANCE.TABLE_COVERAGE' | translate }}</span><strong>{{ claim.coveragePercentage | number:'1.0-2' }}%</strong></div>
+    <div><span>{{ 'PHARMACY_INSURANCE.TABLE_LOCAL_STATUS' | translate }}</span><strong>{{ getLocalStatusLabel(claim.status) }}</strong></div>
+    <div><span>{{ 'PHARMACY_INSURANCE.TABLE_NPHIES' | translate }} {{ 'PHARMACY_INSURANCE.FIELD_STATUS' | translate }}</span><strong>{{ getNphiesStatusLabel(claim.nphiesStatus) }}</strong></div>
+    <div><span>{{ 'PHARMACY_INSURANCE.FIELD_NPHIES_CLAIM_ID' | translate }}</span><strong>{{ claim.nphiesClaimId || '-' }}</strong></div>
+    <div><span>{{ 'PHARMACY_INSURANCE.TABLE_INVOICE' | translate }}</span><strong>{{ claim.saleInvoiceId || '-' }}</strong></div>
+    <div><span>{{ 'PHARMACY_INSURANCE.FIELD_PRESCRIPTION_ID' | translate }}</span><strong>{{ claim.prescriptionId || '-' }}</strong></div>
+    <div><span>{{ 'PHARMACY_INSURANCE.FIELD_CASHIER_PAYMENT_ID' | translate }}</span><strong>{{ claim.cashierPaymentId || '-' }}</strong></div>
+    <div><span>{{ 'PHARMACY_INSURANCE.TABLE_SUBMITTED' | translate }}</span><strong>{{ formatDate(claim.submittedAt) }}</strong></div>
+    <div><span>{{ 'PHARMACY_INSURANCE.FIELD_NPHIES_SUBMITTED' | translate }}</span><strong>{{ formatDate(claim.nphiesSubmittedAt) }}</strong></div>
+    <div><span>{{ 'PHARMACY_INSURANCE.TABLE_ADJUDICATED' | translate }}</span><strong>{{ formatDate(claim.adjudicatedAt) }}</strong></div>
+    <div><span>{{ 'PHARMACY_INSURANCE.FIELD_PROCESSED_AT' | translate }}</span><strong>{{ formatDate(claim.processedAt) }}</strong></div>
+    <div class="wide-box"><span>{{ 'PHARMACY_INSURANCE.NOTES' | translate }}</span><p>{{ claim.notes || '-' }}</p></div>
+  </div>
+
+  <ng-template pTemplate="footer">
+    <button pButton type="button" label="إغلاق" class="p-button-text p-button-secondary" (click)="showDetailsDialog = false"></button>
+  </ng-template>
+</p-dialog>
+
+<!-- Create Claim Dialog -->
+<p-dialog 
+  [(visible)]="showClaimDialog" 
+  [modal]="true" 
+  [draggable]="false" 
+  [resizable]="false" 
+  [style]="{width:'760px', maxWidth:'96vw'}" 
+  [contentStyle]="{'max-height': '80vh', 'overflow-y': 'auto'}"
+  appendTo="body"
+  [header]="'PHARMACY_INSURANCE.DIALOG_CREATE_TITLE' | translate"
+  styleClass="insurance-modal-dialog">
+  
+  <div class="form-grid">
+    <div class="form-field">
+      <label class="required">{{ 'PHARMACY_INSURANCE.TABLE_RX_NO' | translate }}</label>
+      <input pInputText [(ngModel)]="claimDraft.rxNo" class="custom-form-control" />
+    </div>
+    <div class="form-field">
+      <label class="required">{{ 'PHARMACY_INSURANCE.TABLE_PATIENT' | translate }}</label>
+      <input pInputText [(ngModel)]="claimDraft.patientName" class="custom-form-control" />
+    </div>
+    <div class="form-field">
+      <label>{{ 'PHARMACY_INSURANCE.FIELD_PRESCRIPTION_ID' | translate }}</label>
+      <input pInputText [(ngModel)]="claimDraft.prescriptionId" class="custom-form-control" [placeholder]="'PHARMACY_INSURANCE.FIELD_PRESCRIPTION_ID_HINT' | translate" />
+    </div>
+    <div class="form-field">
+      <label class="required">{{ 'PHARMACY_INSURANCE.TABLE_INSURER' | translate }}</label>
+      <p-dropdown [options]="insurerMasterOptions" optionLabel="label" optionValue="value" [(ngModel)]="claimDraft.insurer" appendTo="body" class="w-full"></p-dropdown>
+    </div>
+    <div class="form-field">
+      <label class="required">{{ 'PHARMACY_INSURANCE.TABLE_TOTAL' | translate }}</label>
+      <input pInputText type="number" [(ngModel)]="claimDraft.totalAmount" class="custom-form-control" />
+    </div>
+    <div class="form-field full-span">
+      <label>{{ 'PHARMACY_INSURANCE.TABLE_REF_NO' | translate }}</label>
+      <input pInputText [(ngModel)]="claimDraft.referenceNo" class="custom-form-control" />
+    </div>
+    <div class="form-field full-span">
+      <label>{{ 'PHARMACY_INSURANCE.NOTES' | translate }}</label>
+      <textarea pInputTextarea rows="3" [(ngModel)]="claimDraft.notes" class="custom-form-control"></textarea>
+    </div>
+  </div>
+  
+  <ng-template pTemplate="footer">
+    <div class="dialog-actions">
+      <button pButton type="button" [label]="'PHARMACY_INSURANCE.BTN_CANCEL' | translate" class="p-button-text p-button-secondary" (click)="showClaimDialog = false"></button>
+      <button pButton type="button" [label]="'PHARMACY_INSURANCE.BTN_CREATE' | translate" icon="pi pi-check" class="hero-btn save-blue-btn" [loading]="isActionLoading('create')" (click)="saveClaim()"></button>
+    </div>
+  </ng-template>
+</p-dialog>
+
+<!-- Status Update Dialog -->
+<p-dialog 
+  [(visible)]="showStatusDialog" 
+  [modal]="true" 
+  [draggable]="false" 
+  [resizable]="false" 
+  [style]="{width:'600px', maxWidth:'95vw'}" 
+  [contentStyle]="{'max-height': '80vh', 'overflow-y': 'auto'}"
+  appendTo="body"
+  [header]="'PHARMACY_INSURANCE.DIALOG_PATCH_TITLE' | translate"
+  styleClass="insurance-modal-dialog">
+  
+  <div class="form-grid compact">
+    <div class="form-field">
+      <label>{{ 'PHARMACY_INSURANCE.TABLE_LOCAL_STATUS' | translate }}</label>
+      <p-dropdown [options]="localStatusOptions" optionLabel="label" optionValue="value" [(ngModel)]="statusDraft.status" appendTo="body" class="w-full"></p-dropdown>
+    </div>
+    <div class="form-field">
+      <label>{{ 'PHARMACY_INSURANCE.FIELD_APPROVED_AMOUNT' | translate }}</label>
+      <input pInputText type="number" [(ngModel)]="statusDraft.approvedAmount" class="custom-form-control" />
+    </div>
+    <div class="form-field full-span">
+      <label>{{ 'PHARMACY_INSURANCE.NOTES' | translate }}</label>
+      <textarea pInputTextarea rows="3" [(ngModel)]="statusDraft.notes" class="custom-form-control"></textarea>
+    </div>
+  </div>
+  
+  <ng-template pTemplate="footer">
+    <div class="dialog-actions">
+      <button pButton type="button" [label]="'PHARMACY_INSURANCE.BTN_CANCEL' | translate" class="p-button-text p-button-secondary" (click)="showStatusDialog = false"></button>
+      <button pButton type="button" [label]="'PHARMACY_INSURANCE.BTN_SAVE_STATUS' | translate" icon="pi pi-check" class="hero-btn save-blue-btn" [loading]="actionLoading()?.startsWith('status:')" (click)="saveStatus()"></button>
+    </div>
+  </ng-template>
+</p-dialog>

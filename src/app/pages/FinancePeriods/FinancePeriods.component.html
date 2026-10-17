@@ -1,0 +1,242 @@
+<p-table
+  #dt1
+  [value]="financePeriods"
+  [columns]="columns"
+  [resizableColumns]="true"
+  columnResizeMode="expand"
+  dataKey="id"
+  [rows]="10"
+  styleClass="p-datatable-gridlines scroller custom-paginator-table"
+  [rowsPerPageOptions]="[10, 25, 50]"
+  [loading]="loading"
+  [paginator]="true"
+  [paginatorLocale]="activeLanguage === 'en' ? 'en-US' : 'ar-SA'"
+  [showCurrentPageReport]="true"
+  currentPageReportTemplate="اجمالي {{ financePeriods?.length ? (financePeriods.length) : '' }}"
+  paginatorTemplate="CurrentPageReport PrevPageLink PageLinks NextPageLink RowsPerPageDropdown"
+
+ [sortField]="'createdAt'"
+  [sortOrder]="-1"
+>
+  <ng-template pTemplate="caption">
+    <div class="flex rtl:flex-row-reverse justify-between gap-2">
+      <div class="flex gap-2">
+        <p-button
+          styleClass="rounded-md w-auto text-nowrap"
+          icon="pi pi-external-link"
+          [label]="translate.instant('FINANCE.EXPORT')"
+          (onClick)="exportExcel()"
+        />
+        <p-button
+          styleClass="rounded-md w-auto text-nowrap	"
+          [label]="translate.instant('FINANCE.CLEAR_FILTERS')"
+          [outlined]="true"
+          icon="pi pi-filter-slash"
+          (onClick)="clear(dt1)"
+        />
+        <p-button
+          styleClass="rounded-md w-auto text-nowrap	"
+          [label]="translate.instant('FINANCE.ADD_FINANCE_PERIOD')"
+          [outlined]="true"
+          icon="pi pi-plus"
+          (onClick)="showAddFinancePeriodsDialog()"
+        />
+      </div>
+
+      <ng-container *ngIf="financePeriods.length === 0 && !loading">
+        <div class="flex justify-center items-center w-full">
+          <p
+            class="text-center font-semibold text-xl w-full flex justify-center"
+          >
+            {{ "FINANCE.NO_FINANCE_PERIOD" | translate }}
+          </p>
+        </div>
+      </ng-container>
+      <span class="p-input-icon-left ml-auto">
+        <i class="pi pi-search"></i>
+        <input
+          pInputText
+          type="text"
+          [(ngModel)]="searchValue"
+          (input)="filter(dt1, $event)"
+          [placeholder]="translate.instant('FINANCE.SEARCH')"
+        />
+      </span>
+    </div>
+  </ng-template>
+  <ng-template pTemplate="header" let-columns>
+    <tr>
+      <th style="width: 4rem">
+        <div class="flex align-items-center text-base">
+          #
+        </div>
+      </th>
+      <th
+        style="min-width: fit-content"
+        *ngFor="let column of columns"
+        pResizableColumn
+        [pSortableColumn]="column.field"
+      >
+        <div class="flex align-items-center">
+          {{ column.header }}
+          <p-sortIcon [field]="column.field" class="mx-1 "></p-sortIcon>
+          <p-columnFilter
+            *ngIf="column.filter"
+            [type]="column.filterType"
+            [field]="column.field"
+            display="menu"
+          />
+        </div>
+      </th>
+      <th style="min-width: fit-content">
+        <div class="flex align-items-center text-base">
+          {{ "FINANCE.ACTIONS" | translate }}
+        </div>
+      </th>
+    </tr>
+  </ng-template>
+  <ng-template pTemplate="body" let-Entry let-rowIndex="rowIndex">
+    <tr *ngIf="financePeriods.length > 0"
+      (click)="showAddFinancePeriodsDialog(Entry)"
+      (contextmenu)="openOverlay($event, Entry)"
+    class="cursor-pointer hover:bg-gray-100"
+    >
+      <td class="text-lg rtl:text-right">
+        {{ rowIndex + 1 }}
+      </td>
+      <td class="text-lg rtl:text-right">
+        {{ Entry.arabicName }}
+      </td>
+      <td class="text-lg rtl:text-right">
+        {{ Entry.englishName }}
+      </td>
+
+      <td class="text-lg rtl:text-right">
+          {{
+            Entry.createdAt ? (Entry.createdAt | customDate : "yyyy/MM/dd" : "": "ar-SA"): '-'
+          }}
+      </td>
+      <td class="text-lg rtl:text-right flex gap-2"
+          (click)="$event.stopPropagation()">
+        <ng-container>
+          <p-button
+            [text]="true"
+            (onClick)="toggleCogOverlay($event, Entry)"
+            severity="secondary"
+            styleClass="p-button-outlined rounded-xl"
+          >
+            <ng-template pTemplate="icon">
+              <i class="pi pi-cog text-xl"></i>
+            </ng-template>
+          </p-button>
+        </ng-container>
+      </td>
+    </tr>
+  </ng-template>
+</p-table>
+
+<p-overlayPanel #opCustomerProfile appendTo="body" [dismissable]="true" [autoZIndex]="true" [baseZIndex]="99999">
+  <div class="flex flex-column gap-3 w-auto p-1" *ngIf="selectedFinancePeriod">
+    <p-button
+      icon="pi pi-pencil"
+      class="p-button-secondary"
+      [label]="translate.instant('FINANCE.EDIT')"
+      styleClass="rounded-lg p-button-secondary w-full"
+      (onClick)="showAddFinancePeriodsDialog(selectedFinancePeriod); opCustomerProfile.hide()"
+    ></p-button>
+    <p-button
+      icon="pi pi-trash"
+      class="p-button-danger"
+      [label]="translate.instant('FINANCE.DELETE')"
+      styleClass="rounded-lg p-button-danger w-full"
+      (onClick)="confirmFinancePeriodsDeletion($event, selectedFinancePeriod); opCustomerProfile.hide()"
+    ></p-button>
+  </div>
+</p-overlayPanel>
+
+<p-dialog
+  [header]="
+    financePeriodsFormGroup.controls.id.value
+      ? translate.instant('FINANCE.EDIT_FINANCE_PERIOD')
+      : translate.instant('FINANCE.ADD_FINANCE_PERIOD')
+  "
+  [(visible)]="financePeriodsDialogVisible"
+  [style]="{ width: '60%' }"
+  (onHide)="closeFinancePeriodsDialog()"
+>
+
+<form
+[formGroup]="financePeriodsFormGroup"
+(ngSubmit)="saveFinancePeriods()"
+class="grid grid-cols-4 gap-6 p-6"
+novalidate
+>
+<div class="field col-span-2">
+  <label for="arabicName" class="block mb-2 text-sm font-medium text-gray-700">
+    {{ translate.instant("FINANCE.ARABIC_NAME") }} <span class="text-danger font-bold ms-1">*</span>
+  </label>
+  <input
+    pInputText
+    type="text"
+    id="arabicName"
+    formControlName="arabicName"
+    class="input w-full border border-gray-300 rounded-md py-2 px-3"
+  />
+  <small
+    class="text-red-500 p-error block mt-1"
+    *ngIf="
+      financePeriodsFormGroup.controls.arabicName.invalid &&
+      financePeriodsFormGroup.controls.arabicName.touched
+    "
+  >
+    {{ translate.instant("FINANCE.ARABIC_NAME_REQUIRED") }}
+  </small>
+</div>
+
+<div class="field col-span-2">
+  <label for="englishName" class="block mb-2 text-sm font-medium text-gray-700">
+    {{ translate.instant("FINANCE.ENGLISH_NAME") }} <span class="text-danger font-bold ms-1">*</span>
+  </label>
+  <input
+    pInputText
+    type="text"
+    id="englishName"
+    formControlName="englishName"
+    class="input w-full border border-gray-300 rounded-md py-2 px-3"
+  />
+  <small
+    class="text-red-500 p-error block mt-1"
+    *ngIf="
+      financePeriodsFormGroup.controls.englishName.invalid &&
+      financePeriodsFormGroup.controls.englishName.touched
+    "
+  >
+    {{ translate.instant("FINANCE.ENGLISH_NAME_REQUIRED") }}
+  </small>
+</div>
+</form>
+
+
+  <hr class="mt-2 mb-1" />
+
+  <p-footer>
+    <div class="flex justify-content-end gap-2">
+      <p-button
+        styleClass="rounded-md"
+        [label]="translate.instant('FINANCE.CANCEL')"
+        severity="secondary"
+        (onClick)="closeFinancePeriodsDialog()"
+      />
+      <p-button
+        styleClass="rounded-md"
+        [label]="translate.instant('FINANCE.SAVE')"
+        (onClick)="saveFinancePeriods()"
+        [disabled]="financePeriodsFormGroup.invalid"
+      />
+    </div>
+  </p-footer>
+</p-dialog>
+
+<p-confirmDialog> </p-confirmDialog>
+<p-toast />
+

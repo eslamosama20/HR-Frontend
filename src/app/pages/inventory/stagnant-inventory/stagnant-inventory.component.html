@@ -1,0 +1,288 @@
+﻿<div class="container-fluid">
+  <p-toast></p-toast>
+  
+  <!-- Header: Title on Right, Tools on Left -->
+  <div class="stagnant-inventory-header d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4 p-3 bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700">
+    <div class="d-flex flex-wrap align-items-center gap-3">
+      <h2 class="page-title m-0 text-xl font-bold text-gray-800 dark:text-gray-100">الرواكد</h2>
+
+      <span class="p-input-icon-left header-search-box">
+        <i class="pi pi-search"></i>
+        <input
+          pInputText
+          type="text"
+          class="p-inputtext-sm rounded-lg"
+          (input)="dt.filterGlobal($any($event.target).value, 'contains')"
+          placeholder="بحث في الرواكد..."
+        />
+      </span>
+    </div>
+
+    <div class="d-flex flex-wrap align-items-center gap-2">
+      <!-- Export & Report Tools Group -->
+      <div class="btn-group-wrapper d-flex align-items-center gap-2">
+        <p-button 
+          styleClass="rounded-md p-button-sm shadow-sm"
+          severity="success" 
+          icon="pi pi-file-excel" 
+          label="تصدير Excel"
+          pTooltip="تصدير إلى Excel"
+          tooltipPosition="bottom"
+          (onClick)="exportExcel()"
+          [loading]="excelLoading"
+          [disabled]="!stagnantItems() || stagnantItems().length === 0">
+        </p-button>
+
+        <p-button 
+          styleClass="rounded-md p-button-sm shadow-sm"
+          severity="danger" 
+          icon="pi pi-file-pdf" 
+          label="تنزيل PDF"
+          pTooltip="تنزيل PDF"
+          tooltipPosition="bottom"
+          (onClick)="downloadPdfReport()"
+          [loading]="pdfLoading"
+          [disabled]="!stagnantItems() || stagnantItems().length === 0">
+        </p-button>
+
+        <p-button 
+          styleClass="rounded-md p-button-sm shadow-sm"
+          severity="info" 
+          icon="pi pi-share-alt" 
+          label="مشاركة"
+          pTooltip="مشاركة التقرير"
+          tooltipPosition="bottom"
+          (onClick)="openShareDialog()"
+          [disabled]="!stagnantItems() || stagnantItems().length === 0">
+        </p-button>
+
+        <p-button 
+          styleClass="rounded-md p-button-sm shadow-sm"
+          severity="warning" 
+          icon="pi pi-print" 
+          label="طباعة"
+          pTooltip="طباعة التقرير"
+          tooltipPosition="bottom"
+          (onClick)="printPDF()"
+          [disabled]="!stagnantItems() || stagnantItems().length === 0">
+        </p-button>
+
+        <p-button 
+          styleClass="rounded-md p-button-sm shadow-sm"
+          severity="secondary" 
+          icon="pi pi-refresh" 
+          label="تحديث"
+          pTooltip="تحديث البيانات"
+          tooltipPosition="bottom"
+          (onClick)="refresh()"
+          [loading]="loading">
+        </p-button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Stagnant Items Table -->
+  <p-table 
+    #dt
+    [value]="stagnantItems() || []" 
+    dataKey="id"
+    [loading]="loading"
+    [paginator]="true" 
+    [rows]="15"
+    [showCurrentPageReport]="true"
+    currentPageReportTemplate="عرض {first} إلى {last} من {totalRecords} سجل"
+    [rowsPerPageOptions]="[15, 30, 50]"
+    [globalFilterFields]="['productName', 'productCode', 'storeName', 'reason']"
+    styleClass="p-datatable-sm p-datatable-striped">
+    
+    <ng-template pTemplate="header">
+      <tr>
+        <th style="width: 60px; text-align: center;">م</th>
+        <th style="text-align: center;">اسم الصنف</th>
+        <th style="text-align: center;">الكود</th>
+        <th style="text-align: center;">المخزن</th>
+        <th style="text-align: center;">الكمية</th>
+        <th style="text-align: center;">آخر حركة</th>
+        <th style="text-align: center;">مدة الركود (بالأيام)</th>
+        <th style="text-align: center;">السبب</th>
+        <th style="text-align: center;">الحالة</th>
+      </tr>
+    </ng-template>
+
+    <ng-template pTemplate="body" let-item let-i="rowIndex">
+      <tr [ngClass]="{'disposed-row': item.isDisposed}">
+        <td style="text-align: center;">{{ i + 1 }}</td>
+        <td style="text-align: center;">
+          <div>{{ item.productName }}</div>
+          <small class="text-muted" *ngIf="item.batchNo">دفعة: {{ item.batchNo }}</small>
+        </td>
+        <td style="text-align: center;">{{ item.productCode || '-' }}</td>
+        <td style="text-align: center;">{{ item.storeName }}</td>
+        <td class="text-danger fw-bold" style="text-align: center;">{{ item.quantity | number: '1.2-2' }}</td>
+        <td style="text-align: center;">
+          <span *ngIf="item.lastMovementDate">{{ item.lastMovementDate | customDate: 'dd/MM/yyyy' }}</span>
+          <span *ngIf="!item.lastMovementDate">-</span>
+        </td>
+        <td style="text-align: center;">
+          <span class="stagnant-days" [ngClass]="getStagnantDaysClass(item)">
+            {{ getStagnantDays(item) }}
+          </span>
+        </td>
+        <td style="text-align: center;">{{ getReasonDisplay(item.reason) || '-' }}</td>
+        <td style="text-align: center;">
+          <span class="status-badge" [ngClass]="item.isDisposed ? 'disposed' : 'stagnant'">
+            {{ item.isDisposed ? 'تم التصرف' : 'راكد' }}
+          </span>
+        </td>
+      </tr>
+    </ng-template>
+
+    <ng-template pTemplate="emptymessage">
+      <tr>
+        <td colspan="9" class="text-center py-5">
+          <i class="pi pi-inbox" style="font-size: 3rem; color: #94a3b8;"></i>
+          <p class="mt-3 text-muted">لا توجد عناصر راكدة</p>
+        </td>
+      </tr>
+    </ng-template>
+  </p-table>
+</div>
+
+<!-- Dispose Dialog -->
+<p-dialog
+  [(visible)]="showDisposeDialog"
+  [header]="'تسجيل التصرف في الراكد'"
+  [modal]="true"
+  [style]="{width: '500px'}"
+  [draggable]="false"
+  [resizable]="false"
+>
+  <div class="d-flex flex-column gap-3" *ngIf="selectedItemToDispose">
+    <div class="bg-light p-3 rounded">
+      <div class="text-sm"><strong>الصنف:</strong> {{ selectedItemToDispose.productName }}</div>
+      <div class="text-sm"><strong>المخزن:</strong> {{ selectedItemToDispose.storeName }}</div>
+      <div class="text-sm"><strong>الكمية:</strong> {{ selectedItemToDispose.quantity | number: '1.2-2' }}</div>
+      <div class="text-sm"><strong>مدة الركود:</strong> {{ getStagnantDays(selectedItemToDispose) }} يوم</div>
+    </div>
+
+    <div class="field">
+      <label for="disposalMethod" class="form-label">طريقة التصرف <span class="text-danger">*</span></label>
+      <p-dropdown
+        id="disposalMethod"
+        [options]="disposalMethodOptions"
+        [(ngModel)]="selectedDisposalMethod"
+        optionLabel="label"
+        optionValue="value"
+        placeholder="اختر طريقة التصرف"
+        styleClass="w-100"
+        appendTo="body"
+      ></p-dropdown>
+    </div>
+
+    <div class="field">
+      <label for="disposeNotes" class="form-label">ملاحظات التصرف</label>
+      <textarea 
+        id="disposeNotes"
+        pInputTextarea 
+        [(ngModel)]="disposeNotes"
+        rows="3" 
+        class="w-100"
+        placeholder="أدخل ملاحظات إضافية...">
+      </textarea>
+    </div>
+  </div>
+
+  <ng-template pTemplate="footer">
+    <button
+      pButton
+      type="button"
+      label="إلغاء"
+      icon="pi pi-times"
+      class="p-button-text"
+      (click)="showDisposeDialog = false"
+    ></button>
+    <button
+      pButton
+      type="button"
+      label="تأكيد التصرف"
+      icon="pi pi-check"
+      class="p-button-success"
+      (click)="confirmDispose()"
+      [disabled]="!selectedDisposalMethod"
+      [loading]="disposeLoading"
+    ></button>
+  </ng-template>
+</p-dialog>
+
+<!-- Share Dialog -->
+<p-dialog
+  [(visible)]="showShareDialog"
+  [header]="'مشاركة التقرير'"
+  [modal]="true"
+  [style]="{width: '450px'}"
+  [draggable]="false"
+  [resizable]="false"
+>
+  <div class="d-flex flex-column gap-3">
+    <div class="field">
+      <label class="form-label">طريقة المشاركة</label>
+      <div class="d-flex gap-3">
+        <p-radioButton 
+          name="shareMethod" 
+          value="email" 
+          [(ngModel)]="shareMethod" 
+          label="البريد الإلكتروني">
+        </p-radioButton>
+        <p-radioButton 
+          name="shareMethod" 
+          value="whatsapp" 
+          [(ngModel)]="shareMethod" 
+          label="واتساب">
+        </p-radioButton>
+      </div>
+    </div>
+
+    <div class="field" *ngIf="shareMethod === 'email'">
+      <label for="shareEmail" class="form-label">البريد الإلكتروني <span class="text-danger">*</span></label>
+      <input 
+        id="shareEmail"
+        type="email" 
+        pInputText 
+        [(ngModel)]="shareEmail"
+        placeholder="example@email.com"
+        class="w-100" />
+    </div>
+
+    <div class="field" *ngIf="shareMethod === 'whatsapp'">
+      <label for="sharePhone" class="form-label">رقم الهاتف <span class="text-danger">*</span></label>
+      <input 
+        id="sharePhone"
+        type="tel" 
+        pInputText 
+        [(ngModel)]="sharePhone"
+        placeholder="+966XXXXXXXXX"
+        class="w-100" />
+    </div>
+  </div>
+
+  <ng-template pTemplate="footer">
+    <button
+      pButton
+      type="button"
+      label="إلغاء"
+      icon="pi pi-times"
+      class="p-button-text"
+      (click)="showShareDialog = false"
+    ></button>
+    <button
+      pButton
+      type="button"
+      label="إرسال"
+      icon="pi pi-send"
+      class="p-button-primary"
+      (click)="confirmShare()"
+      [disabled]="(shareMethod === 'email' && !shareEmail) || (shareMethod === 'whatsapp' && !sharePhone)"
+      [loading]="shareLoading"
+    ></button>
+  </ng-template>
+</p-dialog>

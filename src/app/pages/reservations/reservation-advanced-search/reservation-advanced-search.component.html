@@ -1,0 +1,295 @@
+<div class="container-fluid px-4 py-4">
+  <!-- Search Form -->
+  <div class="bg-white rounded-lg shadow-sm p-4 mb-4">
+    <form [formGroup]="searchForm" (ngSubmit)="onSearch()" class="space-y-4">
+      <!-- شبكة ديناميكية - كل حقل أقصى عرض 130px -->
+      <div class="border-b">
+        <div class="fields-grid">
+          <!-- الصف 1: 6 حقول -->
+          <div class="flex flex-col form-field">
+            <label class="field-label">رقم الحجز</label>
+            <input type="text" pInputText formControlName="referenceNumber" placeholder="ادخل رقم الحجز"
+              class="w-full input-like" />
+          </div>
+
+          <div class="flex flex-col form-field">
+            <label class="field-label">اسم النزيل</label>
+            <input type="text" pInputText formControlName="guestName" placeholder="ادخل اسم النزيل"
+              class="w-full input-like" />
+          </div>
+
+          <div class="flex flex-col form-field">
+            <label class="field-label">رقم الهاتف</label>
+            <input type="text" pInputText formControlName="guestPhone" placeholder="ادخل رقم الهاتف"
+              class="w-full input-like" (input)="onPhoneInput($event)" />
+          </div>
+
+          <div class="flex flex-col form-field">
+            <label class="field-label">الجنسية</label>
+            <p-dropdown formControlName="nationality" [options]="nationalitiesOptions()" optionLabel="label"
+              optionValue="value" placeholder="اختر الجنسية" [showClear]="true" [filter]="true" filterBy="label"
+              styleClass="w-full input-like rtl:flex-row-reverse" appendTo="body"></p-dropdown>
+          </div>
+
+          <div class="flex flex-col form-field">
+            <label class="field-label">تاريخ الوصول من</label>
+            <p-calendar formControlName="arrivalDateFrom" dateFormat="dd/mm/yy" placeholder="اختر التاريخ"
+              [showIcon]="true" iconDisplay="input" appendTo="body" styleClass="w-full input-like"
+              [ngClass]="{'p-invalid': searchForm.hasError('arrivalDateFrom_arrivalDateTo_order')}"></p-calendar>
+            <small class="p-error" *ngIf="searchForm.hasError('arrivalDateFrom_arrivalDateTo_order')">
+              تاريخ البداية لا يمكن أن يكون بعد تاريخ النهاية
+            </small>
+          </div>
+
+          <div class="flex flex-col form-field">
+            <label class="field-label">تاريخ الوصول إلى</label>
+            <p-calendar formControlName="arrivalDateTo" dateFormat="dd/mm/yy" placeholder="اختر التاريخ"
+              [showIcon]="true" iconDisplay="input" appendTo="body" styleClass="w-full input-like"
+              [ngClass]="{'p-invalid': searchForm.hasError('arrivalDateFrom_arrivalDateTo_order')}"></p-calendar>
+            <small class="p-error" *ngIf="searchForm.hasError('arrivalDateFrom_arrivalDateTo_order')">
+              تاريخ النهاية لا يمكن أن يكون قبل تاريخ البداية
+            </small>
+          </div>
+
+          <!-- الصف 2 -->
+          <div class="flex flex-col form-field">
+            <label class="field-label">تاريخ المغادرة من</label>
+            <p-calendar formControlName="departureDateFrom" dateFormat="dd/mm/yy" placeholder="اختر التاريخ"
+              [showIcon]="true" iconDisplay="input" appendTo="body" styleClass="w-full input-like"
+              [ngClass]="{'p-invalid': searchForm.hasError('departureDateFrom_departureDateTo_order')}"></p-calendar>
+            <small class="p-error" *ngIf="searchForm.hasError('departureDateFrom_departureDateTo_order')">
+              تاريخ البداية لا يمكن أن يكون بعد تاريخ النهاية
+            </small>
+          </div>
+
+          <div class="flex flex-col form-field">
+            <label class="field-label">تاريخ المغادرة إلى</label>
+            <p-calendar formControlName="departureDateTo" dateFormat="dd/mm/yy" placeholder="اختر التاريخ"
+              [showIcon]="true" iconDisplay="input" appendTo="body" styleClass="w-full input-like"
+              [ngClass]="{'p-invalid': searchForm.hasError('departureDateFrom_departureDateTo_order')}"></p-calendar>
+            <small class="p-error" *ngIf="searchForm.hasError('departureDateFrom_departureDateTo_order')">
+              تاريخ النهاية لا يمكن أن يكون قبل تاريخ البداية
+            </small>
+          </div>
+
+          <div class="flex flex-col form-field">
+            <label class="field-label">شركة الحجز</label>
+            <p-dropdown formControlName="reservationCompanyId" [options]="reservationCompaniesOptions()"
+              optionLabel="label" optionValue="value" placeholder="اختر شركة الحجز" [showClear]="true" [filter]="true"
+              filterBy="label" styleClass="w-full input-like rtl:flex-row-reverse" appendTo="body"></p-dropdown>
+          </div>
+
+          <div class="flex flex-col form-field">
+            <label class="field-label">شركة العميل</label>
+            <p-dropdown formControlName="reservationClientCompanyId" [options]="clientCompaniesOptions()"
+              optionLabel="label" optionValue="value" placeholder="اختر شركة العميل" [showClear]="true" [filter]="true"
+              filterBy="label" styleClass="w-full input-like rtl:flex-row-reverse" appendTo="body"></p-dropdown>
+          </div>
+
+          <div class="flex flex-col form-field">
+            <label class="field-label">مندوب المبيعات</label>
+            <p-dropdown formControlName="salesRepresentativeId" [options]="salesRepresentativesOptions()"
+              optionLabel="label" optionValue="value" placeholder="اختر مندوب المبيعات" [showClear]="true"
+              [filter]="true" filterBy="label" styleClass="w-full input-like rtl:flex-row-reverse"
+              appendTo="body"></p-dropdown>
+          </div>
+
+          <div class="flex flex-col form-field">
+            <label class="field-label">الفندق</label>
+            <p-dropdown formControlName="hotelId" [options]="hotelsOptions()" optionLabel="label" optionValue="value"
+              placeholder="اختر الفندق" [showClear]="true" [filter]="true" filterBy="label"
+              styleClass="w-full input-like rtl:flex-row-reverse" appendTo="body"></p-dropdown>
+          </div>
+
+          <!-- الصف 3 -->
+          <div class="flex flex-col form-field">
+            <label class="field-label">الموسم</label>
+            <p-dropdown formControlName="reservationSeasonId" [options]="seasonsOptions()" optionLabel="label"
+              optionValue="value" placeholder="اختر الموسم" [showClear]="true" [filter]="true" filterBy="label"
+              styleClass="w-full input-like rtl:flex-row-reverse" appendTo="body"></p-dropdown>
+          </div>
+
+          <div class="flex flex-col form-field">
+            <label class="field-label">نوع الحجز</label>
+            <p-dropdown formControlName="reservationType" [options]="reservationTypesOptions" optionLabel="label"
+              optionValue="value" placeholder="اختر نوع الحجز" [showClear]="true"
+              styleClass="w-full input-like rtl:flex-row-reverse" appendTo="body"></p-dropdown>
+          </div>
+
+          <div class="flex flex-col form-field">
+            <label class="field-label">عدد الليالي من</label>
+            <p-inputNumber formControlName="numberOfNightsFrom" [min]="1" [max]="365" placeholder="أدخل العدد"
+              styleClass="w-full input-like"></p-inputNumber>
+          </div>
+
+          <div class="flex flex-col form-field">
+            <label class="field-label">عدد الليالي إلى</label>
+            <p-inputNumber formControlName="numberOfNightsTo" [min]="1" [max]="365" placeholder="أدخل العدد"
+              styleClass="w-full input-like"></p-inputNumber>
+          </div>
+
+          <div class="flex flex-col form-field">
+            <label class="field-label">نوع الغرفة</label>
+            <p-dropdown formControlName="roomTypeId" [options]="roomTypesOptions()" optionLabel="label"
+              optionValue="value" placeholder="اختر نوع الغرفة" [showClear]="true" [filter]="true" filterBy="label"
+              styleClass="w-full input-like rtl:flex-row-reverse" appendTo="body"></p-dropdown>
+          </div>
+
+          <div class="flex flex-col form-field">
+            <label class="field-label">نوع الوجبة</label>
+            <p-dropdown formControlName="reservationMealId" [options]="reservationMealsOptions()" optionLabel="label"
+              optionValue="value" placeholder="اختر نوع الوجبة" [showClear]="true" [filter]="true" filterBy="label"
+              styleClass="w-full input-like rtl:flex-row-reverse" appendTo="body"></p-dropdown>
+          </div>
+
+          <!-- الصف 4 -->
+          <div class="flex flex-col form-field">
+            <label class="field-label">الإطلالة</label>
+            <p-dropdown formControlName="reservationViewId" [options]="reservationViewsOptions()" optionLabel="label"
+              optionValue="value" placeholder="اختر الإطلالة" [showClear]="true" [filter]="true" filterBy="label"
+              styleClass="w-full input-like rtl:flex-row-reverse" appendTo="body"></p-dropdown>
+          </div>
+
+          <div class="flex flex-col form-field">
+            <label class="field-label">الخدمة</label>
+            <p-dropdown formControlName="reservationServiceId" [options]="reservationServicesOptions()"
+              optionLabel="label" optionValue="value" placeholder="اختر الخدمة" [showClear]="true" [filter]="true"
+              filterBy="label" styleClass="w-full input-like rtl:flex-row-reverse" appendTo="body"></p-dropdown>
+          </div>
+
+          <div class="flex flex-col form-field">
+            <label class="field-label">المورد</label>
+            <p-dropdown formControlName="reservationSupplierId" [options]="reservationSuppliersOptions()"
+              optionLabel="label" optionValue="value" placeholder="اختر المورد" [showClear]="true" [filter]="true"
+              filterBy="label" styleClass="w-full input-like rtl:flex-row-reverse" appendTo="body"></p-dropdown>
+          </div>
+
+          <div class="flex flex-col form-field">
+            <label class="field-label">تاريخ الإنشاء من</label>
+            <p-calendar formControlName="createdDateFrom" dateFormat="dd/mm/yy" placeholder="اختر التاريخ"
+              [showIcon]="true" iconDisplay="input" appendTo="body" styleClass="w-full input-like"
+              [ngClass]="{'p-invalid': searchForm.hasError('createdDateFrom_createdDateTo_order')}"></p-calendar>
+            <small class="p-error" *ngIf="searchForm.hasError('createdDateFrom_createdDateTo_order')">
+              تاريخ البداية لا يمكن أن يكون بعد تاريخ النهاية
+            </small>
+          </div>
+
+          <div class="flex flex-col form-field">
+            <label class="field-label">تاريخ الإنشاء إلى</label>
+            <p-calendar formControlName="createdDateTo" dateFormat="dd/mm/yy" placeholder="اختر التاريخ"
+              [showIcon]="true" iconDisplay="input" appendTo="body" styleClass="w-full input-like"
+              [ngClass]="{'p-invalid': searchForm.hasError('createdDateFrom_createdDateTo_order')}"></p-calendar>
+            <small class="p-error" *ngIf="searchForm.hasError('createdDateFrom_createdDateTo_order')">
+              تاريخ النهاية لا يمكن أن يكون قبل تاريخ البداية
+            </small>
+          </div>
+        </div>
+      </div>
+
+      <!-- Action Buttons -->
+      <div class="flex flex-wrap gap-3 justify-center md:justify-end">
+        <button type="button" pButton class="p-button-outlined p-button-secondary px-6 py-3 text-base"
+          label="مسح الاختيار" icon="pi pi-times" (click)="selectedTemplate = null"></button>
+        <button type="button" pButton class="p-button-outlined p-button-secondary px-6 py-3 text-base"
+          label="مسح البيانات" icon="pi pi-refresh" (click)="onClear()" [disabled]="loading()"></button>
+        <button type="submit" pButton class="p-button-primary px-8 py-3 text-base" label="بحث" icon="pi pi-search"
+          [loading]="loading()" [disabled]="loading()"></button>
+      </div>
+    </form>
+  </div>
+
+  <!-- Search Results -->
+  <div *ngIf="showResults()" class="bg-white rounded-lg shadow-sm p-4">
+    <!-- العنوان -->
+    <div class="flex justify-between items-center mb-3">
+      <h3 class="text-lg font-semibold text-gray-800">نتائج البحث</h3>
+
+      <div class="flex items-center gap-3">
+        <span class="text-sm text-gray-600">
+          تم العثور على {{ searchResults.length }} نتيجة
+        </span>
+        <button *ngIf="searchResults.length" pButton type="button"
+          class="p-button p-button-sm p-button-success p-button-outlined" icon="pi pi-file-excel" label="تصدير النتائج"
+          (click)="exportToExcel()"></button>
+      </div>
+    </div>
+
+    <!-- اختيار قالب الطباعة: لو اخترت قالب يطبق تلقائي ويعرض أعمدة القالب في الجدول -->
+    <div class="actions-radio-section mb-3">
+      <label class="block text-sm font-medium text-gray-700 mb-2">قالب الطباعة</label>
+      <div class="flex flex-wrap gap-4">
+        <div *ngFor="let template of reservationPrintTableTemplates" class="flex items-center gap-2">
+          <p-radioButton [name]="'template'" [value]="template" [(ngModel)]="selectedTemplate"
+            [inputId]="'tpl-' + template.id"></p-radioButton>
+          <label [for]="'tpl-' + template.id" class="cursor-pointer">{{ template.name }}</label>
+        </div>
+      </div>
+    </div>
+
+    <!-- أزرار طباعة وتنزيل تظهر فوق الجدول عند اختيار قالب -->
+    <div *ngIf="selectedTemplate" class="flex flex-wrap gap-2 mb-3">
+      <button pButton type="button" class="p-button p-button-sm" icon="pi pi-print"
+        [label]="'طباعة ' + selectedTemplate.name" (click)="printReservation(selectedTemplate)"
+        [disabled]="!searchResults?.length"></button>
+      <button pButton type="button" class="p-button p-button-sm p-button-help" icon="pi pi-download"
+        [label]="'تنزيل ' + selectedTemplate.name" (click)="downloadReservation(selectedTemplate)"
+        [disabled]="!searchResults?.length"></button>
+      <button pButton type="button" class="p-button p-button-sm p-button-success" icon="pi pi-file-excel"
+        label="تصدير اكسيل" (click)="exportToExcel()" [disabled]="!searchResults?.length"></button>
+    </div>
+
+    <!-- الجدول: عرض افتراضي أو أعمدة القالب حسب الاختيار -->
+    <p-table [value]="searchResults" [columns]="displayColumns" [resizableColumns]="true" columnResizeMode="expand"
+      dataKey="id" [rows]="10" styleClass="p-datatable-gridlines" [rowsPerPageOptions]="[10, 25, 50]"
+      [loading]="loading()" [paginator]="true" [responsive]="true" [scrollable]="true" scrollHeight="500px">
+      <ng-template pTemplate="header" let-cols>
+        <tr>
+          <th *ngFor="let col of displayColumns" [pSortableColumn]="col.field">
+            {{ col.header }}
+            <p-sortIcon [field]="col.field"></p-sortIcon>
+          </th>
+        </tr>
+      </ng-template>
+
+      <ng-template pTemplate="body" let-reservation>
+        <tr>
+          <td *ngFor="let col of displayColumns">{{ getCellValue(reservation, col) }}</td>
+        </tr>
+      </ng-template>
+
+      <ng-template pTemplate="emptymessage">
+        <tr>
+          <td [attr.colspan]="displayColumns.length" class="text-center py-8">
+            <div class="text-gray-500">
+              <i class="pi pi-search text-4xl mb-4"></i>
+              <p class="text-lg">لا توجد نتائج للبحث المحدد</p>
+              <p class="text-sm">قم بتعديل معايير البحث وحاول مرة أخرى</p>
+            </div>
+          </td>
+        </tr>
+      </ng-template>
+    </p-table>
+  </div>
+</div>
+
+<style>
+  .rtl {
+    direction: rtl;
+  }
+
+  .p-column-resizer {
+    border-left: 3.5px solid #d9d9d9 !important;
+    opacity: 0.5 !important;
+  }
+
+  :dir(rtl) .p-column-resizer {
+    border-left: 3.5px solid #d9d9d9 !important;
+    opacity: 0.5 !important;
+    right: unset !important;
+    left: 0 !important;
+  }
+
+  .actions-radio-section label.block {
+    margin-bottom: 0.25rem;
+  }
+</style>

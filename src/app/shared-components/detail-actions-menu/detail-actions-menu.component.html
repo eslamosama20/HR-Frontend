@@ -1,0 +1,72 @@
+<div class="detail-actions-menu">
+  <div class="actions-container">
+    <!-- Action Buttons Container -->
+    <div class="action-buttons">
+      <!-- Back Button slotted directly inside the action list (First Item) -->
+      <!-- <app-back-button [modernStyle]="false" class="action-btn p-0 border-0 bg-transparent shadow-none" style="flex: 0 0 auto; min-height: 28px; height: 28px;"></app-back-button> -->
+
+      <!-- Delete Button (Red) -->
+      <button *ngIf="showDelete" pButton type="button" class="action-btn btn-delete" [disabled]="disableDelete || isDeleting"
+        [pTooltip]="deleteTooltip || ('COMMON.DELETE' | translate)" tooltipPosition="top" appendTo="body" tooltipZIndex="999999"
+        (click)="handleDelete($event); $event.stopPropagation()">
+        <i [class]="isDeleting ? 'pi pi-spin pi-spinner' : 'pi pi-trash'"></i>
+        <span class="btn-label">{{ isDeleting ? (translate.currentLang === 'ar' ? 'جاري الحذف...' : 'Deleting...') : ('COMMON.DELETE' | translate) }}</span>
+      </button>
+
+      <!-- Copy Button (Secondary) -->
+      <button *ngIf="showCopy" pButton type="button" class="action-btn btn-copy p-button-secondary" [disabled]="disableCopy || isDeleting"
+        [pTooltip]="copyTooltip || ('COMMON.COPY' | translate)" tooltipPosition="top" appendTo="body" tooltipZIndex="999999"
+        (click)="handleCopy(); $event.stopPropagation()">
+        <i class="pi pi-copy"></i>
+        <span class="btn-label">{{ 'COMMON.COPY' | translate }}</span>
+      </button>
+
+      <!-- Send to Frontal Button (Blue) -->
+      <button *ngIf="showSendToFrontal" pButton type="button" class="action-btn btn-send-frontal"
+        [disabled]="disableSendToFrontal || isDeleting" [pTooltip]="'COMMON.SEND_TO_FRONTAL' | translate" tooltipPosition="top" appendTo="body" tooltipZIndex="999999"
+        (click)="handleSendToFrontal(); $event.stopPropagation()">
+        <i class="pi pi-send"></i>
+        <span class="btn-label">{{ 'COMMON.SEND_TO_FRONTAL' | translate }}</span>
+      </button>
+
+      <!-- Edit Button (Orange) -->
+      <button *ngIf="showEdit" pButton type="button" class="action-btn btn-edit" [disabled]="disableEdit || isDeleting"
+        [pTooltip]="editTooltip || ('COMMON.EDIT' | translate)" tooltipPosition="top" appendTo="body" tooltipZIndex="999999"
+        (click)="handleEdit(); $event.stopPropagation()">
+        <i class="pi pi-pencil"></i>
+        <span class="btn-label">{{ 'COMMON.EDIT' | translate }}</span>
+      </button>
+
+      <!-- Create Entry Button (Green) -->
+      <button *ngIf="showCreateEntry" pButton type="button" class="action-btn btn-create-entry"
+        [disabled]="disableCreateEntry || isDeleting" [pTooltip]="'COMMON.CREATE_ENTRY' | translate" tooltipPosition="top" appendTo="body" tooltipZIndex="999999"
+        (click)="handleCreateEntry(); $event.stopPropagation()">
+        <i class="pi pi-plus-circle"></i>
+        <span class="btn-label">{{ 'COMMON.CREATE_ENTRY' | translate }}</span>
+      </button>
+
+      <!-- Custom Buttons -->
+      <button *ngFor="let button of customButtons" [hidden]="!isButtonVisible(button)" pButton type="button"
+        [class]="'action-btn btn-custom ' + getButtonClass(button.color)" [disabled]="button.disabled || isDeleting"
+        [pTooltip]="button.tooltip || (button.label | translate)" tooltipPosition="top" appendTo="body" tooltipZIndex="999999"
+        (click)="handleCustomButton(button, $event)">
+        <i [class]="button.icon"></i>
+        <span class="btn-label">{{ button.label | translate }}</span>
+      </button>
+
+      <!-- Print Button (Gray/Secondary) -->
+      <button *ngIf="showPrint" pButton type="button" class="action-btn btn-print" [disabled]="disablePrint || isDeleting"
+        [pTooltip]="'COMMON.PRINT' | translate" tooltipPosition="top" appendTo="body" tooltipZIndex="999999"
+        (click)="handlePrint(); $event.stopPropagation()">
+        <i class="pi pi-print"></i>
+        <span class="btn-label">{{ 'COMMON.PRINT' | translate }}</span>
+      </button>
+
+    </div>
+
+    <!-- Document Title (Center) -->
+    <!--    <div class="document-title" *ngIf="documentTitle">-->
+    <!--      <h5>{{ documentTitle }}</h5>-->
+    <!--    </div>-->
+  </div>
+</div>

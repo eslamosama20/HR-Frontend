@@ -1,0 +1,340 @@
+<p-panel>
+  <ng-template pTemplate="header">
+    <div class="flex items-center justify-between w-full py-0">
+      <!-- Title on Right (Start in RTL) -->
+      <div class="flex items-center gap-2">
+        <span class="font-bold text-lg md:text-xl text-gray-900 dark:text-gray-50 leading-tight">
+          {{ isEditMode ? translate.instant('DATA.EDIT_RECIPE') : translate.instant('DATA.ADD_RECIPE') }}
+        </span>
+      </div>
+
+      <!-- Action & Back Button on Far Left (End in RTL) -->
+      <div class="flex items-center gap-2 no-print">
+        <p-button 
+          *ngIf="isEditMode" 
+          styleClass="rounded-md" 
+          icon="pi pi-print" 
+          [label]="translate.instant('DATA.PRINT')" 
+          (onClick)="printDocument()">
+        </p-button>
+        <p-button 
+          *ngIf="isEditMode" 
+          styleClass="rounded-md" 
+          severity="danger"
+          icon="pi pi-trash" 
+          [label]="translate.instant('FINANCE.DELETE')" 
+          (onClick)="onDeleteClick()">
+        </p-button>
+        <app-back-button [customRoute]="'/recipes'"></app-back-button>
+      </div>
+    </div>
+  </ng-template>
+
+  <div class="fixed inset-0 bg-gray-500 bg-opacity-75 flex items-center justify-center z-50 no-print" *ngIf="loading">
+    <i class="pi pi-spin pi-spinner" style="font-size: 2rem"></i>
+  </div>
+
+  <form *ngIf="!loading" [formGroup]="recipeFormGroup" class="recipe-form-container" novalidate>
+    <!-- Basic Info Grid -->
+    <div class="grid grid-cols-1 md:grid-cols-12 gap-3 items-start">
+      <!-- 1. Recipe Name -->
+      <div class="col-span-1 md:col-span-8 flex flex-col">
+        <label for="mainSalesClassId" class="form-label font-bold text-gray-800 dark:text-gray-100">
+          {{ translate.instant("DATA.RECIPE_NAME") }} <span class="text-red-500">*</span>
+        </label>
+        <p-dropdown 
+          [readonly]="isReadOnly" 
+          id="mainSalesClassId" 
+          formControlName="mainSalesClassId"
+          [options]="mainSalesClassesOptions" 
+          [placeholder]="translate.instant('FINANCE.SELECT')"
+          [showClear]="!isReadOnly" 
+          [filter]="true" 
+          filterBy="label"
+          styleClass="w-full flex rtl:flex-row-reverse" 
+          appendTo="body">
+        </p-dropdown>
+        <small class="text-red-500 p-error block mt-1 text-xs" *ngIf="
+            recipeFormGroup.controls.mainSalesClassId.invalid &&
+            (recipeFormGroup.controls.mainSalesClassId.touched || isSubmitted)
+          ">
+          {{ translate.instant("DATA.RECIPE_NAME_REQUIRED") }}
+        </small>
+      </div>
+
+      <!-- 2. Number of Persons -->
+      <div class="col-span-1 md:col-span-4 flex flex-col">
+        <label for="numberOfPersons" class="form-label font-bold text-gray-800 dark:text-gray-100">
+          {{ translate.instant("DATA.NUMBER_OF_PERSONS") }} <span class="text-red-500">*</span>
+        </label>
+        <p-inputNumber 
+          id="numberOfPersons" 
+          formControlName="numberOfPersons" 
+          [min]="1" 
+          [max]="500"
+          maxFractionDigits="0" 
+          [showButtons]="true" 
+          styleClass="w-full flex rtl:flex-row-reverse">
+        </p-inputNumber>
+        <small class="text-red-500 p-error block mt-1 text-xs" *ngIf="
+            recipeFormGroup.controls.numberOfPersons.invalid &&
+            (recipeFormGroup.controls.numberOfPersons.touched || isSubmitted)
+          ">
+          {{ translate.instant("DATA.NUMBER_OF_PERSONS_REQUIRED") }}
+        </small>
+      </div>
+
+      <!-- 3. Description (underneath) -->
+      <div class="col-span-1 md:col-span-12 flex flex-col">
+        <label for="description" class="form-label font-bold text-gray-800 dark:text-gray-100">
+          {{ translate.instant("FINANCE.DESCRIPTION") }}
+        </label>
+        <textarea 
+          rows="2" 
+          pInputTextarea 
+          id="description" 
+          class="w-full" 
+          styleClass="w-full"
+          formControlName="description"
+          placeholder="أدخل ملاحظات أو وصف الوصفة...">
+        </textarea>
+      </div>
+    </div>
+
+    <!-- Summary KPI Cards -->
+    <div class="recipe-summary-bar grid grid-cols-1 sm:grid-cols-2 gap-3">
+      <div class="summary-kpi-card total-card">
+        <div class="kpi-icon">
+          <i class="pi pi-receipt"></i>
+        </div>
+        <div class="kpi-content">
+          <span class="kpi-label">{{ "RETURN.TOTAL" | translate }}</span>
+          <span class="kpi-value">{{ (getRecipeTotal() | number : '1.2-2') || '0.00' }}</span>
+        </div>
+      </div>
+
+      <div class="summary-kpi-card person-card">
+        <div class="kpi-icon">
+          <i class="pi pi-users"></i>
+        </div>
+        <div class="kpi-content">
+          <span class="kpi-label">{{ "FINANCE.AMOUNT_PER_PERSON" | translate }}</span>
+          <span class="kpi-value">{{ (getRecipeTotalPerPerson() | number : '1.2-2') || '0.00' }}</span>
+        </div>
+      </div>
+    </div>
+  </form>
+
+  <app-recipe-entries-editable-table #recipeEntriesTable [isReadOnly]="isReadOnly"
+    [mainPurchaseClassOptions]="mainPurchaseClassOptions" [data]="recipeFormGroup.controls.recipeEntries.value"
+    [mainPurchaseClasses]="mainPurchaseClasses"
+    [numberOfPersons]="recipeFormGroup.controls.numberOfPersons.value"
+    (valueChange)="onRecipeEntriesChanged($event)"></app-recipe-entries-editable-table>
+
+  <small class="text-red-500 p-error block text-xs my-1"
+    *ngIf="recipeFormGroup.controls.recipeEntries.invalid && isSubmitted">
+    <ng-container *ngIf="recipeFormGroup.controls.recipeEntries.errors">
+      <div *ngIf="recipeFormGroup.controls.recipeEntries.errors.minLength">
+        {{ translate.instant("DATA.RECIPE_ENTRIES_REQUIRED") }}
+      </div>
+    </ng-container>
+  </small>
+
+  <div class="flex justify-content-end gap-2 no-print mt-2" *ngIf="!isEditMode">
+    <p-button styleClass="rounded-md" icon="pi pi-save" [label]="translate.instant('FINANCE.SAVE')" (onClick)="saveRecipe()"
+      [disabled]="isReadOnly" />
+    <p-button styleClass="rounded-md" icon="pi pi-check" [label]="translate.instant('FINANCE.SAVE_AND_CONTINUE')" severity="success"
+      (onClick)="saveAndContinue()" [disabled]="isReadOnly || !isFormValid" />
+    <p-button styleClass="rounded-md" icon="pi pi-times" [label]="translate.instant('FINANCE.CANCEL')" severity="secondary"
+      (onClick)="navigateToRecipesPage()" />
+  </div>
+
+  <div class="flex justify-content-end gap-2 no-print mt-2" *ngIf="isEditMode">
+    <p-button styleClass="rounded-md" icon="pi pi-save" [label]="translate.instant('FINANCE.SAVE')" (onClick)="saveRecipe()"
+      [disabled]="isReadOnly || !isFormValid" />
+    <p-button styleClass="rounded-md" icon="pi pi-times" [label]="translate.instant('FINANCE.CANCEL')" severity="secondary"
+      (onClick)="navigateToRecipesPage()" />
+  </div>
+</p-panel>
+
+<p-panel *ngIf="!loading && isEditMode" styleClass="mt-4">
+  <ng-template pTemplate="header">
+    <div class="flex items-center gap-2">
+      <i class="pi pi-send text-primary text-xl"></i>
+      <span class="font-bold text-xl text-gray-800 dark:text-gray-100">
+        {{ translate.instant('DATA.RECIPE_EXIT_OPERATION') }}
+      </span>
+    </div>
+  </ng-template>
+
+  <form *ngIf="!loading" [formGroup]="exitRecipeFormGroup" class="recipe-form-container" novalidate>
+    <div class="grid grid-cols-1 md:grid-cols-12 gap-4 items-end">
+      <div class="col-span-1 md:col-span-6 flex flex-col">
+        <label for="numberOfPersonsExit" class="form-label font-semibold text-gray-700 dark:text-gray-200">
+          {{ translate.instant("DATA.NUMBER_OF_PERSONS") }}
+        </label>
+        <div class="flex gap-2 items-center">
+          <p-inputNumber id="numberOfPersonsExit" formControlName="numberOfPersons" [min]="1" maxFractionDigits="0"
+            [showButtons]="true" styleClass="w-full flex rtl:flex-row-reverse"></p-inputNumber>
+          <p-button styleClass="rounded-md text-nowrap" icon="pi pi-refresh" [label]="translate.instant('FINANCE.LOAD')"
+            (onClick)="loadExitRecipeOperation()" />
+        </div>
+        <small class="text-red-500 p-error block mt-1" *ngIf="
+            recipeFormGroup.controls.numberOfPersons.invalid &&
+            (recipeFormGroup.controls.numberOfPersons.touched || isSubmitted)
+          ">
+          {{ translate.instant("DATA.NUMBER_OF_PERSONS_REQUIRED") }}
+        </small>
+      </div>
+    </div>
+  </form>
+
+  <app-exit-recipe-entries-editable-table #exitRecipeEntriesTable [isReadOnly]="isReadOnly"
+    [mainPurchaseClassOptions]="mainPurchaseClassOptions" [data]="exitRecipeFormGroup.controls.recipeEntries.value"
+    [mainPurchaseClasses]="mainPurchaseClasses"
+    [numberOfPersons]="exitRecipeFormGroup.controls.numberOfPersons.value"
+    (valueChange)="onExitRecipeEntriesChanged($event)"></app-exit-recipe-entries-editable-table>
+
+  <small class="text-red-500 p-error block text-base my-2"
+    *ngIf="exitRecipeFormGroup.controls.recipeEntries.invalid && isSubmitted">
+    <ng-container *ngIf="exitRecipeFormGroup.controls.recipeEntries.errors">
+      <div *ngIf="exitRecipeFormGroup.controls.recipeEntries.errors.minLength">
+        {{ translate.instant("DATA.RECIPE_ENTRIES_REQUIRED") }}
+      </div>
+    </ng-container>
+  </small>
+
+  <div class="recipe-summary-bar grid grid-cols-1 sm:grid-cols-2 gap-4 my-3">
+    <div class="summary-kpi-card total-card">
+      <div class="kpi-icon">
+        <i class="pi pi-dollar"></i>
+      </div>
+      <div class="kpi-content">
+        <span class="kpi-label">{{ "RETURN.TOTAL" | translate }}</span>
+        <span class="kpi-value">{{ (getExitRecipeTotal() | number : '1.2-2') || '0.00' }}</span>
+      </div>
+    </div>
+
+    <div class="summary-kpi-card person-card">
+      <div class="kpi-icon">
+        <i class="pi pi-users"></i>
+      </div>
+      <div class="kpi-content">
+        <span class="kpi-label">{{ "FINANCE.AMOUNT_PER_PERSON" | translate }}</span>
+        <span class="kpi-value">{{ (getExitRecipeTotalPerPerson() | number : '1.2-2') || '0.00' }}</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="flex justify-content-end gap-2 no-print mt-3">
+    <p-button styleClass="rounded-md" icon="pi pi-times" [label]="translate.instant('FINANCE.CANCEL')" severity="secondary"
+      (onClick)="clearExitRecipeForm()" />
+    <p-button styleClass="rounded-md" icon="pi pi-send" [label]="translate.instant('FINANCE.SEND_TO_EXIT_PERMIT')" [disabled]="isReadOnly"
+      (onClick)="sendToExitPermit()" />
+  </div>
+</p-panel>
+
+<ng-container *ngIf="isEditMode">
+  <div class="absolute top-0 left-[-100%]" *ngIf="docData && docColumns.length > 0">
+    <app-print-document #printComponent [headerTemplate]="headerTemplate" [footerTemplate]="footerTemplate"
+      [bodyTemplate]="bodyTemplate" [data]="docData" [columns]="docColumns" [summaryTemplate]="summaryTemplate">
+    </app-print-document>
+
+    <!-- Header Template -->
+    <ng-template #headerTemplate>
+      <div class="w-full flex flex-col  rounded-lg p-8">
+
+        @if (companyDetails) {
+        <ng-container class="container m-0 p-0">
+          <div class="py-1 px-1 flex justify-between ">
+            <div class="w-full ltr:text-left text-right">
+              <p class="font-semibold text-lg m-0 p-0">
+                {{companyDetails.arabicName}}
+              </p>
+              <p class="font-semibold text-lg m-0 p-0" *ngIf="companyDetails.city">
+                {{companyDetails.city}}
+              </p>
+              <p class="font-semibold text-lg m-0 p-0">
+                {{companyDetails.phone}}
+              </p>
+              <p class="font-semibold text-lg m-0 p-0">
+                {{ "INVOICE.TAXNUMBER"| translate}}: {{companyDetails.taxNumber}}
+              </p>
+            </div>
+            <div class="flex w-full justify-center items-center">
+              <img [src]="companyDetails?.logoUrl || ''" alt="company-logo" width="100" height="100">
+            </div>
+            <div class="w-full ltr:text-right text-left">
+              <p class="font-semibold text-lg m-0 p-0">
+                {{companyDetails.englishName}}
+              </p>
+              <p class="font-semibold text-lg m-0 p-0" *ngIf="companyDetails.city">
+                {{companyDetails.city}}
+              </p>
+              <p class="font-semibold text-lg m-0 p-0">
+                {{companyDetails.phone}}
+              </p>
+              <p class="font-semibold text-lg m-0 p-0">
+                TAX No: {{companyDetails.taxNumber}}
+              </p>
+            </div>
+          </div>
+
+        </ng-container>
+        }
+
+      </div>
+      <div class="flex-1 w-full text-center">
+        <h2 class="text-4xl font-bold">{{ "FINANCE.RECIPE" | translate}} ({{currentRecipe.referenceNumber}})</h2>
+      </div>
+    </ng-template>
+
+    <!-- Body Template -->
+    <ng-template #bodyTemplate>
+      <div class="flex justify-center  gap-4 w-full">
+        <p class="w-1/3 text-center font-semibold text-2xl m-0">{{"DATA.RECIPE_NAME"| translate}}:
+          {{activeLanguage==='en'?currentRecipe.mainSalesClass.englishName:currentRecipe.mainSalesClass.arabicName}}</p>
+        <p *ngIf="currentRecipe.description" class="w-1/3 text-center font-semibold text-2xl m-0">
+          {{"FINANCE.DESCRIPTION"| translate}}: {{currentRecipe.description}}</p>
+      </div>
+    </ng-template>
+
+    <!-- Footer Template -->
+    <ng-template #footerTemplate>
+      <div class="w-full border border-slate-900 rounded-2xl flex justify-end">
+        <!--copyright-->
+        SmartAndPro ERP &copy;
+      </div>
+      <div class="w-full border-t border-slate-900 rounded-2xl flex justify-center border absolute" style="bottom: 0;">
+        {{companyDetails?.getFullAddress()}}
+      </div>
+    </ng-template>
+
+    <ng-template #summaryTemplate>
+      <div class="w-full">
+        <table class="w-full border border-gray-900">
+          <tbody>
+            <tr>
+              <td class="p-2 border border-gray-900">
+                <strong class=" text-dark">{{"RETURN.TOTAL"|translate}}</strong>
+              </td>
+              <td class="p-2 text-center border border-gray-900">{{getRecipeTotal()}}</td>
+            </tr>
+            <tr>
+              <td class="p-2 border border-gray-900">
+                <strong class=" text-dark">{{"FINANCE.AMOUNT_PER_PERSON"|translate}}</strong>
+              </td>
+              <td class="p-2 text-center border border-gray-900">{{getRecipeTotalPerPerson()}}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+    </ng-template>
+
+
+  </div>
+</ng-container>
+
+<p-confirmDialog></p-confirmDialog>
+<p-toast></p-toast>

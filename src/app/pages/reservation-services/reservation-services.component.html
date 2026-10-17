@@ -1,0 +1,282 @@
+<p-table #dt1 [value]="reservationServices" [columns]="columns" [resizableColumns]="true" columnResizeMode="expand"
+  dataKey="id" [rows]="pageSize" [totalRecords]="totalRecords" [lazy]="true"
+  (onLazyLoad)="loadReservationServiceLazy($event)" styleClass="p-datatable-gridlines scroller custom-paginator-table"
+  [rowsPerPageOptions]="[10, 25, 50]" [loading]="loading" [paginator]="true"
+  [paginatorLocale]="activeLanguage === 'en' ? 'en-US' : 'ar-SA'" [sortField]="'createdAt'" [sortOrder]="-1"
+  [showCurrentPageReport]="true"
+  currentPageReportTemplate="اجمالي {{ reservationServices?.length ? (reservationServices.length) : '' }}"
+  paginatorTemplate="CurrentPageReport PrevPageLink PageLinks NextPageLink RowsPerPageDropdown">
+  <ng-template pTemplate="caption">
+    <div class="flex rtl:flex-row-reverse justify-between gap-2">
+      <div class="flex gap-2">
+        <p-button styleClass="rounded-md w-auto text-nowrap" icon="pi pi-external-link"
+          [label]="translate.instant('FINANCE.EXPORT')" (onClick)="exportExcel()" />
+        <p-button styleClass="rounded-md w-auto text-nowrap	" [label]="translate.instant('FINANCE.CLEAR_FILTERS')"
+          [outlined]="true" icon="pi pi-filter-slash" [iconPos]="activeLanguage === 'ar' ? 'right' : 'left'"
+          (onClick)="clear(dt1)" />
+        <p-button *ngIf="hasPermission(PERMISSIONS.ReservationService.Create)" styleClass="rounded-md w-auto text-nowrap	"
+          [label]="translate.instant('FINANCE.ADD_RESERVATION_SERVICE')" [outlined]="true" icon="pi pi-plus"
+          (onClick)="showAddReservationServiceDialog()" />
+      </div>
+
+      <ng-container *ngIf="reservationServices.length === 0 && !loading">
+        <div class="flex justify-center items-center w-full">
+          <p class="text-center font-semibold text-xl w-full flex justify-center">
+            {{ "FINANCE.NO_RESERVATION_SERVICES" | translate }}
+          </p>
+        </div>
+      </ng-container>
+      <span class="p-input-icon-left ml-auto">
+        <i class="pi pi-search"></i>
+        <input pInputText type="text" [(ngModel)]="searchValue" (input)="filter(dt1, $event)"
+          [placeholder]="translate.instant('FINANCE.SEARCH')" />
+      </span>
+    </div>
+  </ng-template>
+  <ng-template pTemplate="header" let-columns>
+    <tr>
+      <th style="width: 3rem" class="text-center">
+        #
+      </th>
+      <th style="min-width: fit-content" *ngFor="let column of columns" pResizableColumn
+        [pSortableColumn]="column.field">
+        <div class="flex align-items-center">
+          {{ column.header }}
+          <p-sortIcon [field]="column.field" class="mx-1 "></p-sortIcon>
+          <p-columnFilter *ngIf="column.filter" [type]="column.filterType" [field]="column.field" display="menu" />
+        </div>
+      </th>
+      <th style="min-width: fit-content">
+        <div class="flex align-items-center text-base">
+          {{ "FINANCE.ACTIONS" | translate }}
+        </div>
+      </th>
+    </tr>
+  </ng-template>
+  <ng-template pTemplate="body" let-Entry let-rowIndex="rowIndex">
+    <tr *ngIf="reservationServices.length > 0" class="hover:bg-gray-200 cursor-pointer transition-colors duration-200"
+      (click)="hasPermission(PERMISSIONS.ReservationService.Update) ? showAddReservationServiceDialog(Entry) : null"
+      (contextmenu)="openSalesRepPanel($event, opCustomerProfile, Entry)">
+      <td class="text-sm text-center">
+        {{ (dt1?.first || 0) + rowIndex + 1 }}
+      </td>
+      <td class="text-lg text-center">
+        <div *ngIf="Entry.logoUrl; else noLogo" class="flex justify-center">
+          <img [src]="Entry.logoUrl" alt="Service Logo" class="w-12 h-12 object-cover rounded-md shadow" />
+        </div>
+        <ng-template #noLogo>
+          <i class="pi pi-image text-2xl text-gray-400"></i>
+        </ng-template>
+      </td>
+      <td class="text-lg rtl:text-right">
+        {{ Entry.arabicName }}
+      </td>
+      <td class="text-lg rtl:text-right">
+        {{ Entry.englishName }}
+      </td>
+      <td class="text-lg text-center">
+        <i class="pi" [ngClass]="{
+            'text-green-500 pi-check-circle': Entry.revenueMainAccountConnected,
+            'text-red-500 pi-times-circle': !Entry.revenueMainAccountConnected
+          }"></i>
+      </td>
+      <td class="text-lg text-center">
+        <i class="pi" [ngClass]="{
+            'text-green-500 pi-check-circle': Entry.expenseMainAccountConnected,
+            'text-red-500 pi-times-circle': !Entry.expenseMainAccountConnected
+          }"></i>
+      </td>
+      <td class="text-lg rtl:text-right">
+        {{
+        Entry.createdAt ? (Entry.createdAt | customDate : "yyyy/MM/dd" : "": "ar-SA"): '-'
+        }}
+      </td>
+      <td class="text-lg rtl:text-right flex gap-2">
+        <ng-container *ngIf="hasPermission(PERMISSIONS.ReservationService.Update) || hasPermission(PERMISSIONS.ReservationService.Delete)">
+
+          <p-button [text]="true"
+            (onClick)="openSalesRepPanel($event, opCustomerProfile, Entry) ; $event.stopPropagation()"
+            severity="secondary" styleClass="p-button-outlined rounded-xl">
+            <ng-template pTemplate="icon">
+              <i class="pi pi-cog text-xl"></i>
+            </ng-template>
+          </p-button>
+        </ng-container>
+      </td>
+    </tr>
+  </ng-template>
+</p-table>
+<p-overlayPanel #opCustomerProfile appendTo="body" [dismissable]="true">
+  <div class="flex flex-column gap-3 w-auto p-1">
+    <p-button *ngIf="hasPermission(PERMISSIONS.ReservationService.Update)" icon="pi pi-pencil" class="p-button-secondary" [label]="translate.instant('FINANCE.EDIT')"
+      styleClass="rounded-lg p-button-secondary w-full"
+      (onClick)="showAddReservationServiceDialog(selectedEntry)"></p-button>
+    <p-button *ngIf="!isFrontal && !selectedEntry?.isFrontal" icon="pi pi-send" class="p-button-info"
+      [label]="translate.instant('FINANCE.SEND_TO_FRONTAL')" styleClass="rounded-lg p-button-info w-full"
+      (onClick)="sendToFrontal(selectedEntry)"></p-button>
+    <p-button *ngIf="hasPermission(PERMISSIONS.ReservationService.Delete)" icon="pi pi-trash" class="p-button-danger" [label]="translate.instant('FINANCE.DELETE')"
+      styleClass="rounded-lg p-button-danger w-full"
+      (onClick)="confirmReservationServiceDeletion($event, selectedEntry)"></p-button>
+  </div>
+</p-overlayPanel>
+
+<p-dialog [header]="
+      reservationServiceFormGroup.controls.id.value
+      ? translate.instant('FINANCE.EDIT_RESERVATION_SERVICE')
+      : translate.instant('FINANCE.ADD_RESERVATION_SERVICE')
+  " [(visible)]="reservationServiceSignalDialogVisible"
+  [style]="{ width: '75vw', maxWidth: '1200px', maxHeight: '95vh' }"
+  [contentStyle]="{ maxHeight: 'calc(95vh - 110px)' }" [breakpoints]="{ '960px': '85vw', '640px': '95vw' }"
+  [modal]="true" [dismissableMask]="true" [closeOnEscape]="true" [maximizable]="true" styleClass="hotel-form-dialog reservation-services-dialog"
+  (onHide)="closeReservationServiceDialog()">
+  <form [formGroup]="reservationServiceFormGroup" (ngSubmit)="saveReservationService()"
+    class="grid grid-cols-1 md:grid-cols-2 gap-x-4 gap-y-2.5 p-1 py-1" novalidate>
+    <!-- رفع/عرض الشعار -->
+    <div class="col-span-1 md:col-span-2 flex flex-col items-center gap-3">
+      <div *ngIf="reservationServiceFormGroup.controls.logo.value" class="flex justify-center">
+        <img [src]="reservationServiceFormGroup.controls.logo.value" alt="reservation-service-logo"
+          class="rounded shadow max-h-40" />
+      </div>
+      <p-fileUpload class="w-auto" name="logo" mode="basic" chooseIcon="pi pi-upload"
+        (uploadHandler)="onReservationServiceFileSelected($event)" customUpload="true" [auto]="true" accept="image/*"
+        maxFileSize="15000000" chooseLabel="{{ activeLanguage === 'en' ? 'Upload Image' : 'رفع صورة' }}"
+        #reservationServiceFileUploader></p-fileUpload>
+      <div *ngIf="isFileUploading" class="w-full p-2 mt-2 h-full border rounded-md flex items-center justify-center">
+        <i class="pi pi-spin pi-spinner" style="font-size: 2rem"></i>
+      </div>
+    </div>
+
+    <!-- الاسم بالعربية -->
+    <div class="field">
+      <label for="arabicName" class="block text-sm font-semibold mb-1">
+        {{ translate.instant('FINANCE.ARABIC_NAME') }} <span class="text-red-500">*</span>
+      </label>
+      <input pInputText type="text" id="arabicName" formControlName="arabicName" class="input w-full" />
+      <small class="text-red-500 p-error block text-xs"
+        *ngIf="reservationServiceFormGroup.controls.arabicName.invalid && reservationServiceFormGroup.controls.arabicName.touched">
+        {{ translate.instant('FINANCE.ARABIC_NAME_REQUIRED') }}
+      </small>
+    </div>
+
+    <!-- الاسم بالإنجليزية -->
+    <div class="field">
+      <label for="englishName" class="block text-sm font-semibold mb-1">
+        {{ translate.instant('FINANCE.ENGLISH_NAME') }} <span class="text-red-500">*</span>
+      </label>
+      <input pInputText type="text" id="englishName" formControlName="englishName" class="input w-full" />
+      <small class="text-red-500 p-error block text-xs"
+        *ngIf="reservationServiceFormGroup.controls.englishName.invalid && reservationServiceFormGroup.controls.englishName.touched">
+        {{ translate.instant('FINANCE.ENGLISH_NAME_REQUIRED') }}
+      </small>
+    </div>
+
+    <!-- غير منطقية في خدمة الحجز — تم تعليقها مؤقتاً
+    <div class="field">
+      <label class="block text-sm font-semibold mb-1">{{ 'DATA.CONTACT_NUMBER' | translate }}</label>
+      <input pInputText type="text" formControlName="contactNumber" class="input w-full" />
+    </div>
+
+    <div class="field">
+      <label class="block text-sm font-semibold mb-1">{{ 'DATA.EMAIL' | translate }}</label>
+      <input pInputText type="email" formControlName="email" class="input w-full" />
+      <small class="text-red-500 p-error block text-xs"
+        *ngIf="reservationServiceFormGroup.controls.email.invalid && reservationServiceFormGroup.controls.email.touched">
+        {{ 'DATA.EMAIL_INVALID' | translate }}
+      </small>
+    </div>
+
+    <div class="field">
+      <label class="block text-sm font-semibold mb-1">{{ 'DATA.BANK_NAME' | translate }}</label>
+      <input pInputText type="text" formControlName="bankName" class="input w-full" />
+    </div>
+
+    <div class="field">
+      <label class="block text-sm font-semibold mb-1">{{ 'FINANCE.BANK_ACCOUNT_NUMBER' | translate }}</label>
+      <input pInputText type="text" formControlName="bankAccountNumber" class="input w-full" />
+    </div>
+
+    <div class="field">
+      <label class="block text-sm font-semibold mb-1">{{ 'DATA.IBAN' | translate }} (IBAN)</label>
+      <input pInputText type="text" formControlName="iban" class="input w-full" />
+    </div>
+
+    <div class="field">
+      <label class="block text-sm font-semibold mb-1">{{ 'DATA.TAX_NUMBER' | translate }}</label>
+      <input pInputText type="text" formControlName="taxNumber" class="input w-full" />
+    </div>
+    -->
+
+    <!-- قسم الحسابات - حساب الإيراد (عمود 1) وحساب المصروف (عمود 2) جنب بعض -->
+    <div class="field">
+      <label for="revenueDetailAccount" class="block text-sm font-semibold mb-1">
+        {{ translate.instant('FINANCE.CHOOSE_HOTEL_PARENT_DETAIL_ACCOUNT') }} - {{
+        translate.instant('FINANCE.REVENUE_MAIN_ACCOUNT') }}
+      </label>
+      <p-dropdown [options]="detailAccountOptions" [filter]="true" [(ngModel)]="selectedRevenueDetailAccountId"
+        [ngModelOptions]="{standalone: true}" id="revenueDetailAccount" styleClass="w-full" appendTo="body"
+        variant="filled" [showClear]="true">
+      </p-dropdown>
+    </div>
+
+    <div class="field">
+      <label for="expenseDetailAccount" class="block text-sm font-semibold mb-1">
+        {{ translate.instant('FINANCE.CHOOSE_HOTEL_PARENT_DETAIL_ACCOUNT') }} - {{
+        translate.instant('FINANCE.EXPENSE_MAIN_ACCOUNT') }}
+      </label>
+      <p-dropdown [options]="detailAccountOptions" [filter]="true" [(ngModel)]="selectedExpenseDetailAccountId"
+        [ngModelOptions]="{standalone: true}" id="expenseDetailAccount" styleClass="w-full" appendTo="body"
+        variant="filled" [showClear]="true">
+      </p-dropdown>
+    </div>
+
+    <!-- الحسابات الرئيسية / تنبيهات الإنشاء التلقائي -->
+    <div class="field">
+      <ng-container *ngIf="selectedRevenueDetailAccountId !== null">
+        <label for="revenueMainAccountId" class="block text-sm font-semibold mb-1">
+          {{ translate.instant('FINANCE.REVENUE_MAIN_ACCOUNT') }}
+        </label>
+        <p-dropdown id="revenueMainAccountId" formControlName="revenueMainAccountId"
+          [options]="revenueMainAccountOptionsFromDetail" [filter]="true" [showClear]="true" styleClass="w-full"
+          appendTo="body" variant="filled">
+        </p-dropdown>
+      </ng-container>
+      <small class="text-gray-500 block mt-1" *ngIf="selectedRevenueDetailAccountId === null">
+        <i class="pi pi-info-circle me-1"></i>
+        {{ activeLanguage === 'ar' ? 'سيتم إنشاء حساب إيراد رئيسي تلقائياً عند الحفظ' : 'A revenue main account will be
+        created automatically on save' }}
+      </small>
+    </div>
+
+    <div class="field">
+      <ng-container *ngIf="selectedExpenseDetailAccountId !== null">
+        <label for="expenseMainAccountId" class="block text-sm font-semibold mb-1">
+          {{ translate.instant('FINANCE.EXPENSE_MAIN_ACCOUNT') }}
+        </label>
+        <p-dropdown id="expenseMainAccountId" formControlName="expenseMainAccountId"
+          [options]="expenseMainAccountOptionsFromDetail" [filter]="true" [showClear]="true" styleClass="w-full"
+          appendTo="body" variant="filled">
+        </p-dropdown>
+      </ng-container>
+      <small class="text-gray-500 block mt-1" *ngIf="selectedExpenseDetailAccountId === null">
+        <i class="pi pi-info-circle me-1"></i>
+        {{ activeLanguage === 'ar' ? 'سيتم إنشاء حساب مصروف رئيسي تلقائياً عند الحفظ' : 'An expense main account will be
+        created automatically on save' }}
+      </small>
+    </div>
+  </form>
+
+
+  <hr class="mt-2 mb-1" />
+
+  <p-footer>
+    <div class="flex justify-content-end gap-2">
+      <p-button styleClass="rounded-md" [label]="translate.instant('FINANCE.CANCEL')" severity="secondary"
+        (onClick)="closeReservationServiceDialog()" />
+      <p-button styleClass="rounded-md" [label]="translate.instant('FINANCE.SAVE')" (onClick)="saveReservationService()"
+        [disabled]="reservationServiceFormGroup.invalid" />
+    </div>
+  </p-footer>
+</p-dialog>
+
+<p-confirmDialog> </p-confirmDialog>
+<p-toast />

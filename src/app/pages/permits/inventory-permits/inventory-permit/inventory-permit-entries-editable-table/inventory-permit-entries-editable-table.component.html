@@ -1,0 +1,355 @@
+<div class="permit-table-container">
+  <!-- Controls Bar -->
+  <div class="table-toolbar flex flex-wrap items-center justify-between gap-3 p-3 mb-3">
+    <div class="flex items-center gap-4">
+      <span class="pricing-mode-title text-sm font-semibold text-gray-700">
+        <i class="pi pi-tags me-1 text-primary"></i>
+        طريقة التسعير:
+      </span>
+      <div class="flex align-items-center gap-2">
+        <p-radioButton
+          name="lastPrice"
+          inputId="lastPrice"
+          id="lastPrice"
+          value="lastPrice"
+          [(ngModel)]="priceMode"
+          (onClick)="setPriceModeLastPrice()"
+        />
+        <label for="lastPrice" class="cursor-pointer text-sm font-medium mb-0">
+          {{ "DATA.LAST_PRICE" | translate }}
+        </label>
+      </div>
+      <div class="flex align-items-center gap-2">
+        <p-radioButton
+          name="averagePrice"
+          inputId="averagePrice"
+          id="averagePrice"
+          value="averagePrice"
+          [(ngModel)]="priceMode"
+          (onClick)="setPriceModeAveragePrice()"
+        />
+        <label for="averagePrice" class="cursor-pointer text-sm font-medium mb-0">
+          {{ "DATA.AVERAGE_PRICE" | translate }}
+        </label>
+      </div>
+    </div>
+
+    <div class="flex items-center gap-3">
+      <span class="badge badge-light-primary text-xs px-3 py-2 font-bold rounded-pill">
+        عدد الأصناف: {{ rowGroups.length }}
+      </span>
+      <button 
+        *ngIf="!isReadOnly"
+        type="button" 
+        pButton
+        icon="pi pi-plus" 
+        [label]="'FINANCE.ADD_NEW_ENTRY' | translate" 
+        (click)="addRow()"
+        class="p-button-primary p-button-sm rounded-lg"
+      >
+      </button>
+    </div>
+  </div>
+
+  <!-- Form & Table -->
+  <form [formGroup]="tableForm">
+    <div class="table-responsive-wrapper">
+      <table class="custom-erp-table">
+        <thead>
+          <tr>
+            <th class="th-index">#</th>
+            <th class="th-class">{{ "DATA.CLASS" | translate }}</th>
+            <th class="th-unit">{{ "DATA.MEASUREMENT_UNIT" | translate }}</th>
+            <th class="th-qty">{{ "DATA.QUANTITY" | translate }}</th>
+            <th class="th-stock">{{ "DATA.IN_STOCK" | translate }}</th>
+            <th class="th-batch">Batch No</th>
+            <th class="th-shelf">رقم الرف</th>
+            <th class="th-row">رقم الصف</th>
+            <th class="th-expiry">تاريخ الصلاحية</th>
+            <th class="th-price">{{ "DATA.UNIT_PRICE" | translate }}</th>
+            <th class="th-subprice">سعر القطاعي</th>
+            <th class="th-subprice">سعر الجملة</th>
+            <th class="th-subprice">جملة الجملة</th>
+            <th class="th-total">{{ "FINANCE.TOTAL_AMOUNT" | translate }}</th>
+            <th class="th-action"></th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngIf="rowGroups.length === 0">
+            <td colspan="15" class="empty-state-cell text-center py-6 text-muted">
+              <i class="pi pi-inbox text-3xl mb-2 block"></i>
+              <span>لا توجد مدخلات حالياً. اضغط على "إضافة مدخل جديد" لإضافة أصناف.</span>
+            </td>
+          </tr>
+          <tr *ngFor="let row of rowGroups; let rowIndex = index; trackBy: trackByFn" [formGroup]="row" class="erp-table-row">
+            <!-- Row Index -->
+            <td class="td-index text-center font-bold text-gray-600">
+              {{ rowIndex + 1 }}
+            </td>
+
+            <!-- Dynamic Columns -->
+            <ng-container *ngFor="let col of columns; let colIndex = index">
+              <!-- Item / Class Dropdown -->
+              <td *ngIf="col.field === 'mainPurchaseClassId'" class="td-class">
+                <p-dropdown
+                  [readonly]="isReadOnly"
+                  appendTo="body"
+                  [options]="mainPurchaseClassOptions"
+                  [filter]="true"
+                  filterBy="label"
+                  [showClear]="true"
+                  placeholder="اختر الصنف..."
+                  formControlName="mainPurchaseClassId"
+                  (onChange)="handleMainPurchaseClassChange(rowIndex, colIndex, $event)"
+                  [class.invalid]="isInvalid(rowIndex, colIndex)"
+                  styleClass="w-full cell-dropdown"
+                  #inputCell
+                >
+                </p-dropdown>
+                <small *ngIf="isInvalid(rowIndex, colIndex)" class="error-text">
+                  {{ 'DATA.CLASS_REQUIRED' | translate }}
+                </small>
+              </td>
+
+              <!-- Unit Name -->
+              <td *ngIf="col.field === 'measurementUnitName'" class="td-unit text-center">
+                <span class="unit-badge">
+                  {{ getMeasurementUnitName(row) || '-' }}
+                </span>
+              </td>
+
+              <!-- Quantity -->
+              <td *ngIf="col.field === 'quantity'" class="td-qty">
+                <p-inputNumber
+                  [readonly]="isReadOnly"
+                  min="0"
+                  [max]="permitType === 'exit' ? getStockAmount(row) : 999999"
+                  class="w-full"
+                  styleClass="w-full cell-input-number"
+                  minFractionDigits="0"
+                  maxFractionDigits="2"
+                  formControlName="{{ col.field }}"
+                  (keydown)="onEnter($event, rowIndex, colIndex)"
+                  (input)="formatInputNumber($event)"
+                  [class.invalid]="isInvalid(rowIndex, colIndex)"
+                  #inputCell
+                />
+                <small *ngIf="isInvalid(rowIndex, colIndex)" class="error-text">
+                  {{ permitType === 'exit'
+                    ? ('DATA.QUANTITY_REQUIRED_OR_MORE_THAN_STOCK' | translate)
+                    : ('DATA.QUANTITY_REQUIRED' | translate)
+                  }}
+                </small>
+              </td>
+
+              <!-- In Stock -->
+              <td *ngIf="col.field === 'inStock'" class="td-stock text-center">
+                <span class="stock-badge font-bold" [class.stock-zero]="getStockAmount(row) <= 0">
+                  {{ getStockAmount(row) | number : "1.0-2" }}
+                </span>
+              </td>
+
+              <!-- Batch No -->
+              <td *ngIf="col.field === 'batchNo'" class="td-batch">
+                <input
+                  [readonly]="isReadOnly"
+                  type="text"
+                  pInputText
+                  class="w-full cell-input"
+                  [class.invalid]="isMissingBatchForRow(row)"
+                  formControlName="batchNo"
+                  placeholder="Batch No"
+                  (keydown)="onEnter($event, rowIndex, colIndex)"
+                  #inputCell
+                />
+                <small *ngIf="isMissingBatchForRow(row)" class="error-text">
+                  Batch No مطلوب
+                </small>
+              </td>
+              
+              <!-- Shelf Number -->
+              <td *ngIf="col.field === 'shelfNumber'" class="td-shelf">
+                <input
+                  [readonly]="isReadOnly"
+                  type="text"
+                  pInputText
+                  class="w-full cell-input"
+                  formControlName="shelfNumber"
+                  placeholder="الرف"
+                  #inputCell
+                />
+              </td>
+              
+              <!-- Row Number -->
+              <td *ngIf="col.field === 'rowNumber'" class="td-row">
+                <input
+                  [readonly]="isReadOnly"
+                  type="text"
+                  pInputText
+                  class="w-full cell-input"
+                  formControlName="rowNumber"
+                  placeholder="الصف"
+                  #inputCell
+                />
+              </td>
+              
+              <!-- Expiry Date -->
+              <td *ngIf="col.field === 'expiryDate'" class="td-expiry">
+                <p-calendar
+                  [disabled]="isReadOnly"
+                  formControlName="expiryDate"
+                  dateFormat="dd/mm/yy"
+                  [showIcon]="true"
+                  appendTo="body"
+                  styleClass="w-full cell-calendar"
+                  [inputStyleClass]="isMissingExpiryForRow(row) ? 'w-full cell-input invalid' : 'w-full cell-input'"
+                  placeholder="تاريخ الصلاحية"
+                  #inputCell
+                />
+                <small *ngIf="isMissingExpiryForRow(row)" class="error-text">
+                  تاريخ الصلاحية مطلوب
+                </small>
+              </td>
+              
+              <!-- Unit Price -->
+              <td *ngIf="col.field === 'unitPrice'" class="td-price">
+                <p-inputNumber
+                  [readonly]="isReadOnly"
+                  [minFractionDigits]="0"
+                  [maxFractionDigits]="2"
+                  min="0"
+                  class="w-full"
+                  styleClass="w-full cell-input-number"
+                  formControlName="{{ col.field }}"
+                  (keydown)="onEnter($event, rowIndex, colIndex)"
+                  (input)="formatInputNumber($event)"
+                  [class.invalid]="isInvalid(rowIndex, colIndex)"
+                  #inputCell
+                />
+                <small *ngIf="isInvalid(rowIndex, colIndex)" class="error-text">
+                  {{ 'DATA.UNIT_PRICE_REQUIRED' | translate }}
+                </small>
+              </td>
+
+              <!-- Retail Price -->
+              <td *ngIf="col.field === 'retailPrice'" class="td-subprice">
+                <p-inputNumber
+                  [readonly]="isReadOnly"
+                  [minFractionDigits]="0"
+                  [maxFractionDigits]="2"
+                  min="0"
+                  class="w-full"
+                  styleClass="w-full cell-input-number"
+                  formControlName="retailPrice"
+                  (keydown)="onEnter($event, rowIndex, colIndex)"
+                  (input)="formatInputNumber($event)"
+                  #inputCell
+                />
+              </td>
+
+              <!-- Wholesale Price -->
+              <td *ngIf="col.field === 'wholesalePrice'" class="td-subprice">
+                <p-inputNumber
+                  [readonly]="isReadOnly"
+                  [minFractionDigits]="0"
+                  [maxFractionDigits]="2"
+                  min="0"
+                  class="w-full"
+                  styleClass="w-full cell-input-number"
+                  formControlName="wholesalePrice"
+                  (keydown)="onEnter($event, rowIndex, colIndex)"
+                  (input)="formatInputNumber($event)"
+                  #inputCell
+                />
+              </td>
+
+              <!-- Bulk Price -->
+              <td *ngIf="col.field === 'bulkPrice'" class="td-subprice">
+                <p-inputNumber
+                  [readonly]="isReadOnly"
+                  [minFractionDigits]="0"
+                  [maxFractionDigits]="2"
+                  min="0"
+                  class="w-full"
+                  styleClass="w-full cell-input-number"
+                  formControlName="bulkPrice"
+                  (keydown)="onEnter($event, rowIndex, colIndex)"
+                  (input)="formatInputNumber($event)"
+                  #inputCell
+                />
+              </td>
+            </ng-container>
+
+            <!-- Line Total -->
+            <td class="td-total text-center font-bold text-primary">
+              {{
+                ((row.get('unitPrice')?.value || 0) * (row.get('quantity')?.value || 0)) | number : "1.2-2"
+              }}
+            </td>
+
+            <!-- Delete Action -->
+            <td class="td-action text-center">
+              <button
+                type="button"
+                pButton
+                [disabled]="isReadOnly"
+                (click)="deleteRow(rowIndex)"
+                icon="pi pi-trash"
+                class="p-button-rounded p-button-danger p-button-text p-button-sm action-delete-btn"
+                pTooltip="حذف البند"
+                tooltipPosition="top"
+              ></button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Actions & Summary Footer -->
+    <div class="table-footer-bar flex flex-wrap items-center justify-between gap-3 mt-3 p-3">
+      <div class="actions">
+        <button
+          type="button"
+          pButton
+          [disabled]="isReadOnly"
+          (click)="addRow()"
+          icon="pi pi-plus"
+          [label]="'FINANCE.ADD_NEW_ENTRY' | translate"
+          class="p-button-outlined p-button-primary p-button-sm add-row-btn"
+        ></button>
+      </div>
+
+      <div class="table-summary-cards flex items-center gap-4">
+        <div class="summary-card">
+          <span class="summary-label">إجمالي الكمية:</span>
+          <span class="summary-val text-primary font-bold">
+            {{ getTotalQuantity() | number : "1.0-2" }}
+          </span>
+        </div>
+        <div class="summary-card highlight">
+          <span class="summary-label">{{ "FINANCE.TOTAL_AMOUNT" | translate }}:</span>
+          <span class="summary-val text-success font-bold">
+            {{ getInventoryPermitEntriesTotal() | number : "1.2-2" }}
+          </span>
+        </div>
+      </div>
+    </div>
+  </form>
+</div>
+<!--
+<div class="flex gap-2 w-full">
+  <div class=" w-[30%]">
+  </div>
+  <div class=" w-[20%]">
+    <p class="text-xl font-bold underline">
+      {{ this.getInventoryPermitEntriesDebitTotal() | currency : "SAR" : "symbol-narrow" : "1.0-2" : "ar-SA" }}
+    </p>
+  </div>
+  <div class=" w-[20%]">
+    <p class="text-xl font-bold underline">
+      {{ this.getInventoryPermitEntriesCreditTotal() | currency : "SAR" : "symbol-narrow" : "1.0-2" : "ar-SA" }}
+    </p>
+  </div>
+  <div class="w-[30%]"></div>
+</div>
+-->

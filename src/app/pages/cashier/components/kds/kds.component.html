@@ -1,0 +1,348 @@
+﻿<div class="kds-shell">
+  <p-toast position="top-left"></p-toast>
+
+  <!-- KDS Header -->
+  <header class="kds-header">
+    <div class="kds-brand-row">
+      <div class="kds-brand">
+        <div class="kds-icon">
+          <i class="pi pi-desktop"></i>
+          <span class="live-pulse-dot"></span>
+        </div>
+        <div class="brand-text">
+          <h1>{{ 'CASHIER_KDS.PAGE_TITLE' | translate }}</h1>
+          <p>{{ 'CASHIER_KDS.PAGE_SUBTITLE' | translate }}</p>
+        </div>
+      </div>
+
+      <!-- Real-time Digital Clock -->
+      <div class="kds-digital-clock" *ngIf="currentTime()">
+        <i class="pi pi-clock"></i>
+        <span>{{ currentTime() }}</span>
+      </div>
+    </div>
+
+    <!-- Center: Station Filter & Stats -->
+    <div class="kds-center-row">
+      <!-- Station Filter Pills -->
+      <div class="station-mode-selector">
+        <button
+          type="button"
+          class="station-btn"
+          [class.active]="screenMode() === 'all'"
+          (click)="setScreenMode('all')">
+          <i class="pi pi-th-large"></i>
+          <span>{{ 'CASHIER_KDS.ALL' | translate }}</span>
+        </button>
+        <button
+          type="button"
+          class="station-btn"
+          [class.active]="screenMode() === 'kitchen'"
+          (click)="setScreenMode('kitchen')">
+          <i class="pi pi-bolt"></i>
+          <span>{{ 'CASHIER_KDS.KITCHEN' | translate }}</span>
+        </button>
+        <button
+          type="button"
+          class="station-btn"
+          [class.active]="screenMode() === 'bar'"
+          (click)="setScreenMode('bar')">
+          <i class="pi pi-filter"></i>
+          <span>{{ 'CASHIER_KDS.BAR' | translate }}</span>
+        </button>
+      </div>
+
+      <!-- Quick KPI Counters -->
+      <div class="kds-stats-strip">
+        <div class="stat-pill new">
+          <span class="stat-num">{{ newOrders.length }}</span>
+          <span class="stat-lbl">{{ 'CASHIER_KDS.NEW_ORDER' | translate }}</span>
+        </div>
+        <div class="stat-pill prep">
+          <span class="stat-num">{{ preparingOrders.length }}</span>
+          <span class="stat-lbl">{{ 'CASHIER_KDS.PREPARING' | translate }}</span>
+        </div>
+        <div class="stat-pill ready">
+          <span class="stat-num">{{ readyOrders.length }}</span>
+          <span class="stat-lbl">{{ 'CASHIER_KDS.READY' | translate }}</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Controls & Actions -->
+    <div class="kds-controls">
+      <button
+        *ngIf="orders().length > 0"
+        pButton
+        type="button"
+        icon="pi pi-trash"
+        label="مسح الطلبات"
+        class="kds-ctrl-btn clear-btn"
+        (click)="clearAllOrders()"
+        pTooltip="مسح وتصفية جميع الطلبات السابقة">
+      </button>
+
+      <button
+        pButton
+        type="button"
+        [icon]="soundEnabled() ? 'pi pi-volume-up' : 'pi pi-volume-off'"
+        [class.sound-off]="!soundEnabled()"
+        class="kds-ctrl-btn sound-btn"
+        (click)="toggleSound()"
+        [pTooltip]="soundEnabled() ? ('CASHIER_KDS.SOUND_ON' | translate) : ('CASHIER_KDS.SOUND_OFF' | translate)">
+      </button>
+
+      <button
+        pButton
+        type="button"
+        [icon]="isFullscreen() ? 'pi pi-window-minimize' : 'pi pi-window-maximize'"
+        class="kds-ctrl-btn fs-btn"
+        (click)="toggleFullscreen()"
+        pTooltip="ملء الشاشة">
+      </button>
+
+      <button
+        pButton
+        type="button"
+        icon="pi pi-map"
+        class="kds-ctrl-btn floor-btn"
+        routerLink="/cashier/floor"
+        pTooltip="مخطط الصالة">
+      </button>
+
+      <button
+        pButton
+        type="button"
+        icon="pi pi-list"
+        class="kds-ctrl-btn live-btn"
+        routerLink="/cashier/live-orders"
+        [pTooltip]="'CASHIER_KDS.MANAGE_ORDERS' | translate">
+      </button>
+    </div>
+  </header>
+
+  <!-- KDS 3-Column Board -->
+  <main class="kds-board">
+    <!-- Column 1: New Orders -->
+    <section class="kds-column new-col">
+      <div class="column-header new-header">
+        <div class="col-title-wrap">
+          <i class="pi pi-bell"></i>
+          <span>{{ 'CASHIER_KDS.NEW_ORDERS_COL' | translate }}</span>
+        </div>
+        <div class="col-count-badge">{{ newOrders.length }}</div>
+      </div>
+
+      <div class="orders-scroll-list">
+        <article
+          *ngFor="let order of newOrders"
+          class="kds-ticket-card new-ticket">
+          <!-- Ticket Header -->
+          <div class="ticket-head">
+            <div class="ticket-id-wrap">
+              <span class="order-no">#{{ order.orderNo }}</span>
+              <span class="source-tag">{{ getSourceLabel(order.source) }}</span>
+            </div>
+            <div class="table-tag" *ngIf="order.tableNumber">
+              <i class="pi" [ngClass]="{
+                'pi-shopping-bag': order.orderType === OrderType.Takeaway,
+                'pi-car': order.orderType === OrderType.Delivery,
+                'pi-table': !order.orderType || order.orderType === OrderType.DineIn
+              }"></i>
+              <span>طاولة {{ order.tableNumber }}</span>
+            </div>
+          </div>
+
+          <!-- Items Checklist -->
+          <div class="ticket-items-list">
+            <div
+              *ngFor="let item of order.items; let idx = index"
+              class="ticket-item-row"
+              [class.checked]="isItemDone(order.id, idx)"
+              (click)="toggleItemDone(order.id, idx)">
+              <div class="item-left">
+                <span class="qty-pill">×{{ item.quantity }}</span>
+                <span class="item-text">{{ item.itemName }}</span>
+              </div>
+              <span *ngIf="item.notes" class="item-note-badge">
+                <i class="pi pi-comment"></i> {{ item.notes }}
+              </span>
+            </div>
+          </div>
+
+          <!-- Ticket Footer -->
+          <div class="ticket-footer">
+            <div class="elapsed-badge" [class.overdue]="isOverdue(order)">
+              <i class="pi pi-clock"></i>
+              <span>{{ 'CASHIER_KDS.AGO' | translate }} {{ order.createdAt | customDate: 'HH:mm' }}</span>
+            </div>
+            <button
+              pButton
+              type="button"
+              [label]="'CASHIER_KDS.START_PREPARING' | translate"
+              icon="pi pi-play"
+              class="kds-action-btn start-prep-btn"
+              (click)="updateStatus(order.id, orderStatus.Preparing)">
+            </button>
+          </div>
+        </article>
+
+        <!-- Empty State -->
+        <div *ngIf="newOrders.length === 0" class="empty-kds-col">
+          <div class="empty-icon-circle">
+            <i class="pi pi-check-circle"></i>
+          </div>
+          <h4>{{ 'CASHIER_KDS.NO_NEW_ORDERS' | translate }}</h4>
+          <p>جميع الطلبات الجديدة تم استلامها والبدء في تحضيرها</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Column 2: Preparing Orders -->
+    <section class="kds-column prep-col">
+      <div class="column-header prep-header">
+        <div class="col-title-wrap">
+          <i class="pi pi-cog"></i>
+          <span>{{ 'CASHIER_KDS.PREPARING_COL' | translate }}</span>
+        </div>
+        <div class="col-count-badge">{{ preparingOrders.length }}</div>
+      </div>
+
+      <div class="orders-scroll-list">
+        <article
+          *ngFor="let order of preparingOrders"
+          class="kds-ticket-card prep-ticket"
+          [class.overdue]="isOverdue(order)">
+          <!-- Ticket Header -->
+          <div class="ticket-head">
+            <div class="ticket-id-wrap">
+              <span class="order-no">#{{ order.orderNo }}</span>
+              <span class="source-tag">{{ getSourceLabel(order.source) }}</span>
+            </div>
+            <div class="table-tag" *ngIf="order.tableNumber">
+              <i class="pi" [ngClass]="{
+                'pi-shopping-bag': order.orderType === OrderType.Takeaway,
+                'pi-car': order.orderType === OrderType.Delivery,
+                'pi-table': !order.orderType || order.orderType === OrderType.DineIn
+              }"></i>
+              <span>طاولة {{ order.tableNumber }}</span>
+            </div>
+          </div>
+
+          <!-- Items Checklist with Interactive Strike-through -->
+          <div class="ticket-items-list">
+            <div
+              *ngFor="let item of order.items; let idx = index"
+              class="ticket-item-row"
+              [class.checked]="isItemDone(order.id, idx)"
+              (click)="toggleItemDone(order.id, idx)">
+              <div class="item-left">
+                <span class="qty-pill">×{{ item.quantity }}</span>
+                <span class="item-text">{{ item.itemName }}</span>
+              </div>
+              <span *ngIf="item.notes" class="item-note-badge">
+                <i class="pi pi-comment"></i> {{ item.notes }}
+              </span>
+            </div>
+          </div>
+
+          <!-- Ticket Footer -->
+          <div class="ticket-footer">
+            <div class="elapsed-badge prep-timer" [class.overdue]="isOverdue(order)">
+              <i class="pi pi-stopwatch"></i>
+              <span>{{ getElapsedMinutes(order) }} {{ 'CASHIER_KDS.MINUTES' | translate }}</span>
+              <span *ngIf="isOverdue(order)" class="overdue-tag">{{ 'CASHIER_KDS.DELAYED' | translate }}</span>
+            </div>
+            <button
+              pButton
+              type="button"
+              [label]="'CASHIER_KDS.READY_BTN' | translate"
+              icon="pi pi-check-circle"
+              class="kds-action-btn ready-btn"
+              (click)="updateStatus(order.id, orderStatus.Ready)">
+            </button>
+          </div>
+        </article>
+
+        <!-- Empty State -->
+        <div *ngIf="preparingOrders.length === 0" class="empty-kds-col">
+          <div class="empty-icon-circle">
+            <i class="pi pi-clock"></i>
+          </div>
+          <h4>{{ 'CASHIER_KDS.NO_PREPARING_ORDERS' | translate }}</h4>
+          <p>لا توجد طلبات قيد التحضير في الوقت الحالي</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Column 3: Ready Orders -->
+    <section class="kds-column ready-col">
+      <div class="column-header ready-header">
+        <div class="col-title-wrap">
+          <i class="pi pi-check-square"></i>
+          <span>{{ 'CASHIER_KDS.READY_COL' | translate }}</span>
+        </div>
+        <div class="col-count-badge">{{ readyOrders.length }}</div>
+      </div>
+
+      <div class="orders-scroll-list">
+        <article
+          *ngFor="let order of readyOrders"
+          class="kds-ticket-card ready-ticket">
+          <!-- Ticket Header -->
+          <div class="ticket-head">
+            <div class="ticket-id-wrap">
+              <span class="order-no">#{{ order.orderNo }}</span>
+              <span class="source-tag">{{ getSourceLabel(order.source) }}</span>
+            </div>
+            <div class="table-tag" *ngIf="order.tableNumber">
+              <i class="pi" [ngClass]="{
+                'pi-shopping-bag': order.orderType === OrderType.Takeaway,
+                'pi-car': order.orderType === OrderType.Delivery,
+                'pi-table': !order.orderType || order.orderType === OrderType.DineIn
+              }"></i>
+              <span>طاولة {{ order.tableNumber }}</span>
+            </div>
+          </div>
+
+          <!-- Items Checklist -->
+          <div class="ticket-items-list">
+            <div
+              *ngFor="let item of order.items; let idx = index"
+              class="ticket-item-row checked">
+              <div class="item-left">
+                <span class="qty-pill">×{{ item.quantity }}</span>
+                <span class="item-text">{{ item.itemName }}</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Ticket Footer -->
+          <div class="ticket-footer">
+            <div class="ready-time-badge">
+              <i class="pi pi-check"></i>
+              <span>{{ 'CASHIER_KDS.READY_SINCE' | translate }} {{ order.actualReadyAt | customDate: 'HH:mm' }}</span>
+            </div>
+            <button
+              pButton
+              type="button"
+              [label]="'CASHIER_KDS.SERVED_BTN' | translate"
+              icon="pi pi-send"
+              class="kds-action-btn served-btn"
+              (click)="markServed(order.id)">
+            </button>
+          </div>
+        </article>
+
+        <!-- Empty State -->
+        <div *ngIf="readyOrders.length === 0" class="empty-kds-col">
+          <div class="empty-icon-circle">
+            <i class="pi pi-inbox"></i>
+          </div>
+          <h4>{{ 'CASHIER_KDS.NO_READY_ORDERS' | translate }}</h4>
+          <p>لا توجد طلبات جاهزة للتسليم حالياً</p>
+        </div>
+      </div>
+    </section>
+  </main>
+</div>

@@ -1,0 +1,350 @@
+﻿<div class="channel-manager-container d-flex flex-column gap-6 p-6" dir="rtl">
+  <!-- Top Header Selector -->
+  <div class="card glass-card border-0 shadow-sm rounded-4 overflow-hidden mb-2">
+    <div class="card-body p-5 d-flex flex-wrap justify-content-between align-items-center gap-4">
+      <div class="d-flex align-items-center gap-3">
+        <div class="icon-badge rounded-circle bg-primary-light d-flex align-items-center justify-content-center">
+          <i class="bi bi-shuffle text-primary fs-3"></i>
+        </div>
+        <div>
+          <h2 class="card-title fw-bold text-dark mb-1 fs-3">مدير قنوات الفندق (Channel Manager)</h2>
+          <p class="text-muted mb-0 fs-6">قم بإعداد ومزامنة التوافر والأسعار والحجوزات لـ 12 منصة حجز عالمية</p>
+        </div>
+      </div>
+      
+      <div class="d-flex align-items-center gap-3 min-w-250px">
+        <label class="fw-bold text-muted mb-0 me-2 text-nowrap">اختر فندق الـ ERP:</label>
+        <select class="form-select border rounded-3 p-3 text-dark bg-white shadow-sm" 
+                [(ngModel)]="selectedHotelId" 
+                (change)="onHotelChange()">
+          <option *ngFor="let hotel of erpHotels" [value]="hotel.id">
+            {{ hotel.arabicName || hotel.englishName }}
+          </option>
+        </select>
+      </div>
+    </div>
+  </div>
+
+  <!-- Notification Banner -->
+  <div *ngIf="message" class="alert d-flex align-items-center rounded-3 p-4 border-0 animate-fade-in" 
+       [ngClass]="isError ? 'alert-danger bg-danger-light text-danger' : 'alert-success bg-success-light text-success'">
+    <i class="bi fs-4 me-3" [ngClass]="isError ? 'bi-exclamation-triangle-fill' : 'bi-check-circle-fill'"></i>
+    <div class="fw-semibold">{{ message }}</div>
+  </div>
+
+  <div class="row g-6" *ngIf="selectedHotelId">
+    <!-- Main Content Area -->
+    <div class="col-lg-9">
+      <div class="card rounded-4 border-0 shadow-sm h-100 overflow-hidden bg-white">
+        <!-- Navigation Tabs -->
+        <div class="card-header bg-light border-bottom p-0">
+          <ul class="nav nav-stretch nav-line-tabs nav-line-tabs-2x border-transparent fs-5 fw-bold px-6">
+            <li class="nav-item">
+              <a class="nav-link text-active-primary py-4 pointer" 
+                 [ngClass]="{'active': activeTab === 'settings'}" 
+                 (click)="activeTab = 'settings'">
+                <i class="bi bi-gear-fill me-2 fs-5"></i>إعدادات الاتصال
+              </a>
+            </li>
+            <li class="nav-item" *ngIf="connection">
+              <a class="nav-link text-active-primary py-4 pointer" 
+                 [ngClass]="{'active': activeTab === 'rooms'}" 
+                 (click)="activeTab = 'rooms'">
+                <i class="bi bi-door-open-fill me-2 fs-5"></i>ربط أنواع الغرف
+              </a>
+            </li>
+            <li class="nav-item" *ngIf="connection">
+              <a class="nav-link text-active-primary py-4 pointer" 
+                 [ngClass]="{'active': activeTab === 'rates'}" 
+                 (click)="activeTab = 'rates'">
+                <i class="bi bi-tag-fill me-2 fs-5"></i>ربط خطط الأسعار
+              </a>
+            </li>
+            <li class="nav-item" *ngIf="connection">
+              <a class="nav-link text-active-primary py-4 pointer" 
+                 [ngClass]="{'active': activeTab === 'logs'}" 
+                 (click)="activeTab = 'logs'">
+                <i class="bi bi-activity me-2 fs-5"></i>سجلات التدقيق والمزامنة
+              </a>
+            </li>
+            <li class="nav-item" *ngIf="connection">
+              <a class="nav-link text-active-primary py-4 pointer" 
+                 [ngClass]="{'active': activeTab === 'dlq'}" 
+                 (click)="activeTab = 'dlq'">
+                <i class="bi bi-bug-fill me-2 fs-5 text-danger"></i>سلة المعالجة المرفوضة
+              </a>
+            </li>
+          </ul>
+        </div>
+
+        <div class="card-body p-6">
+          <div *ngIf="loading" class="d-flex flex-column align-items-center justify-content-center py-10">
+            <div class="spinner-border text-primary" role="status"></div>
+            <span class="text-muted mt-3">جاري تحميل البيانات...</span>
+          </div>
+
+          <!-- Tab Content -->
+          <div *ngIf="!loading">
+            <!-- 1. Connection Settings Tab -->
+            <div *ngIf="activeTab === 'settings'" class="tab-pane-content">
+              <h3 class="fw-bold text-dark mb-4 fs-4 border-bottom pb-3">إعدادات الاتصال بمدير القنوات</h3>
+              <div class="row g-4">
+                <div class="col-md-6">
+                  <label class="form-label fw-bold text-muted fs-7">مزود الخدمة (Provider):</label>
+                  <input type="text" class="form-control rounded-3 p-3" [(ngModel)]="providerName" readonly>
+                </div>
+                <div class="col-md-6">
+                  <label class="form-label fw-bold text-muted fs-7">معرف المنشأة في مدير القنوات (Property ID):</label>
+                  <input type="text" class="form-control rounded-3 p-3 placeholder-gray-400" 
+                         [(ngModel)]="channelPropertyId" placeholder="مثال: prop_sukoon_123">
+                </div>
+                <div class="col-12">
+                  <label class="form-label fw-bold text-muted fs-7">رابط خدمة مدير القنوات (API Endpoint):</label>
+                  <input type="text" class="form-control rounded-3 p-3 placeholder-gray-400" 
+                         [(ngModel)]="apiEndpoint" placeholder="https://api.channex.io/api/v1">
+                </div>
+                <div class="col-12">
+                  <label class="form-label fw-bold text-muted fs-7">مفتاح بروتوكول واجهة التطبيقات الخاص بك (API Key):</label>
+                  <input type="password" class="form-control rounded-3 p-3 placeholder-gray-400" 
+                         [(ngModel)]="apiKey" placeholder="ادخل مفتاح الـ API">
+                </div>
+                <div class="col-12">
+                  <label class="form-label fw-bold text-muted fs-7">كلمة السر المشتركة لحماية الـ Webhooks (Webhook Secret):</label>
+                  <input type="text" class="form-control rounded-3 p-3 placeholder-gray-400" 
+                         [(ngModel)]="webhookSecret" placeholder="ادخل سر التوثيق HMAC-SHA256">
+                </div>
+                
+                <div class="col-12 mt-6">
+                  <button class="btn btn-primary px-6 py-3 rounded-3" (click)="saveConnection()">
+                    <i class="bi bi-save-fill me-2 fs-6"></i>حفظ إعدادات الاتصال
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <!-- 2. Room Mappings Tab -->
+            <div *ngIf="activeTab === 'rooms'" class="tab-pane-content">
+              <div class="d-flex justify-content-between align-items-center mb-4 pb-3 border-bottom">
+                <h3 class="fw-bold text-dark mb-0 fs-4">ربط أنواع الغرف في الـ ERP مع مدير القنوات</h3>
+                <span class="badge bg-light-primary text-primary fs-7">تحديث التوافر والغرف</span>
+              </div>
+              
+              <div class="table-responsive rounded-3 overflow-hidden border">
+                <table class="table align-middle table-row-dashed fs-6 gy-5 px-4 mb-0">
+                  <thead class="bg-light">
+                    <tr class="text-start text-muted fw-bold fs-7 text-uppercase gs-0">
+                      <th class="ps-4">نوع الغرفة في الـ ERP</th>
+                      <th>معرف الغرفة في مدير القنوات (Room Type ID)</th>
+                      <th>الاسم المخصص في القنوات</th>
+                      <th class="pe-4">تجاوز التوافر الأقصى (اختياري)</th>
+                    </tr>
+                  </thead>
+                  <tbody class="text-gray-600 fw-semibold">
+                    <tr *ngFor="let rm of roomMappings" class="hover-bg-light">
+                      <td class="ps-4 fw-bold text-dark">{{ rm.erpRoomName }}</td>
+                      <td>
+                        <input type="text" class="form-control rounded-3 p-2 placeholder-gray-400 min-w-200px" 
+                               [(ngModel)]="rm.channelRoomId" placeholder="مثال: room_qd_999">
+                      </td>
+                      <td>
+                        <input type="text" class="form-control rounded-3 p-2 placeholder-gray-400 min-w-150px" 
+                               [(ngModel)]="rm.roomName" placeholder="رباعي - Channex">
+                      </td>
+                      <td class="pe-4">
+                        <input type="number" class="form-control rounded-3 p-2 min-w-80px max-w-120px" 
+                               [(ngModel)]="rm.maxAllocationOverride" placeholder="الحد الأقصى">
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+              <div class="col-12 mt-6">
+                <button class="btn btn-primary px-6 py-3 rounded-3" (click)="saveRoomMappings()">
+                  <i class="bi bi-save-fill me-2 fs-6"></i>حفظ وربط الغرف
+                </button>
+              </div>
+            </div>
+
+            <!-- 3. Rate Mappings Tab -->
+            <div *ngIf="activeTab === 'rates'" class="tab-pane-content">
+              <div class="d-flex justify-content-between align-items-center mb-4 pb-3 border-bottom">
+                <h3 class="fw-bold text-dark mb-0 fs-4">ربط المواسم في الـ ERP مع خطط أسعار مدير القنوات</h3>
+                <span class="badge bg-light-primary text-primary fs-7">الأسعار والنسب المضافة</span>
+              </div>
+              
+              <div class="table-responsive rounded-3 overflow-hidden border">
+                <table class="table align-middle table-row-dashed fs-6 gy-5 px-4 mb-0">
+                  <thead class="bg-light">
+                    <tr class="text-start text-muted fw-bold fs-7 text-uppercase gs-0">
+                      <th class="ps-4">الموسم في الـ ERP</th>
+                      <th>معرف خطة الأسعار في مدير القنوات (Rate Plan ID)</th>
+                      <th>الاسم المخصص</th>
+                      <th class="pe-4">نسبة الربح المضافة لأسعار الـ OTAs (%)</th>
+                    </tr>
+                  </thead>
+                  <tbody class="text-gray-600 fw-semibold">
+                    <tr *ngFor="let rate of rateMappings" class="hover-bg-light">
+                      <td class="ps-4 fw-bold text-dark">{{ rate.erpSeasonName }}</td>
+                      <td>
+                        <input type="text" class="form-control rounded-3 p-2 placeholder-gray-400 min-w-200px" 
+                               [(ngModel)]="rate.channelRateId" placeholder="مثال: rate_hajj_777">
+                      </td>
+                      <td>
+                        <input type="text" class="form-control rounded-3 p-2 placeholder-gray-400 min-w-150px" 
+                               [(ngModel)]="rate.rateName" placeholder="خطة موسم الحج">
+                      </td>
+                      <td class="pe-4">
+                        <div class="input-group min-w-100px max-w-150px">
+                          <input type="number" class="form-control rounded-start-3 p-2" 
+                                 [(ngModel)]="rate.markupPercentage">
+                          <span class="input-group-text bg-light">%</span>
+                        </div>
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+              <div class="col-12 mt-6">
+                <button class="btn btn-primary px-6 py-3 rounded-3" (click)="saveRateMappings()">
+                  <i class="bi bi-save-fill me-2 fs-6"></i>حفظ وربط خطط الأسعار
+                </button>
+              </div>
+            </div>
+
+            <!-- 4. Sync Logs Tab -->
+            <div *ngIf="activeTab === 'logs'" class="tab-pane-content">
+              <div class="d-flex justify-content-between align-items-center mb-4 pb-3 border-bottom">
+                <h3 class="fw-bold text-dark mb-0 fs-4">سجلات تدقيق ومزامنة البيانات الفورية</h3>
+                <button class="btn btn-sm btn-light-primary px-4 py-2" (click)="loadLogsAndErrors()">
+                  <i class="bi bi-arrow-clockwise me-1"></i>تحديث السجلات
+                </button>
+              </div>
+
+              <div class="table-responsive rounded-3 overflow-hidden border">
+                <table class="table align-middle table-row-dashed fs-6 gy-4 px-4 mb-0">
+                  <thead class="bg-light">
+                    <tr class="text-start text-muted fw-bold fs-7 text-uppercase gs-0">
+                      <th class="ps-4">الاتجاه</th>
+                      <th>نوع الحدث</th>
+                      <th>كود الاستجابة</th>
+                      <th>حالة المزامنة</th>
+                      <th>الخطأ (إن وجد)</th>
+                      <th class="pe-4">تاريخ المزامنة</th>
+                    </tr>
+                  </thead>
+                  <tbody class="text-gray-600 fw-semibold">
+                    <tr *ngFor="let log of logs" class="hover-bg-light">
+                      <td class="ps-4">
+                        <span class="badge px-3 py-1.5" 
+                              [ngClass]="log.direction === 'Incoming' ? 'bg-light-success text-success' : 'bg-light-primary text-primary'">
+                          <i class="bi me-1" [ngClass]="log.direction === 'Incoming' ? 'bi-arrow-down-left' : 'bi-arrow-up-right'"></i>
+                          {{ log.direction === 'Incoming' ? 'وارد' : 'صادر' }}
+                        </span>
+                      </td>
+                      <td class="fw-bold">{{ log.eventType }}</td>
+                      <td>
+                        <span class="fw-semibold" [ngClass]="log.responseCode >= 200 && log.responseCode < 300 ? 'text-success' : 'text-danger'">
+                          {{ log.responseCode }}
+                        </span>
+                      </td>
+                      <td>
+                        <span class="badge rounded-pill" [ngClass]="log.isSuccess ? 'bg-success text-white' : 'bg-danger text-white'">
+                          {{ log.isSuccess ? 'نجح' : 'فشل' }}
+                        </span>
+                      </td>
+                      <td class="max-w-200px text-truncate" [title]="log.errorMessage || ''">
+                        <span class="text-danger fs-7">{{ log.errorMessage || '-' }}</span>
+                      </td>
+                      <td class="pe-4 fs-7 text-muted">{{ log.createdAt | customDate: 'yyyy-MM-dd HH:mm:ss' }}</td>
+                    </tr>
+                    <tr *ngIf="logs.length === 0">
+                      <td colspan="6" class="text-center py-6 text-muted">لا توجد سجلات مزامنة حالية لهذا الفندق.</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            <!-- 5. DLQ Errors Tab -->
+            <div *ngIf="activeTab === 'dlq'" class="tab-pane-content">
+              <div class="d-flex justify-content-between align-items-center mb-4 pb-3 border-bottom">
+                <h3 class="fw-bold text-dark mb-0 fs-4 text-danger">سلة العمليات الواردة والصادرة المرفوضة (DLQ)</h3>
+                <button class="btn btn-sm btn-light-danger px-4 py-2" (click)="loadLogsAndErrors()">
+                  <i class="bi bi-arrow-clockwise me-1"></i>تحديث البيانات
+                </button>
+              </div>
+
+              <div class="d-flex flex-column gap-4">
+                <div *ngFor="let dlq of deadLetters" class="card border border-danger-subtle bg-light-danger rounded-3 p-4">
+                  <div class="d-flex justify-content-between align-items-start mb-2">
+                    <div class="d-flex align-items-center gap-3">
+                      <span class="badge bg-danger text-white px-3 py-1">فشل نهائي</span>
+                      <span class="fw-bold text-dark fs-6">{{ dlq.eventName }}</span>
+                    </div>
+                    <span class="text-muted fs-7">{{ dlq.createdAt | customDate: 'yyyy-MM-dd HH:mm:ss' }}</span>
+                  </div>
+                  <p class="text-danger fw-semibold mb-2 fs-7"><i class="bi bi-bug-fill me-1"></i>خطأ المعالجة: {{ dlq.errorMessage }}</p>
+                  <div class="bg-white rounded p-3 border border-gray-200 mt-2">
+                    <div class="fs-7 fw-bold text-muted mb-1 text-uppercase">محتوى الرسالة (Payload):</div>
+                    <pre class="bg-light rounded p-2 mb-0 overflow-auto max-h-150px fs-8 text-dark" dir="ltr">{{ dlq.payload }}</pre>
+                  </div>
+                </div>
+
+                <div *ngIf="deadLetters.length === 0" class="text-center py-10 text-muted">
+                  <i class="bi bi-shield-check-fill text-success fs-1 mb-3"></i>
+                  <p class="fw-bold">رائع! سلة العمليات المرفوضة فارغة ولا توجد أي أخطاء تتطلب مراجعة إدارية.</p>
+                </div>
+              </div>
+            </div>
+
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Quick Actions Sidebar Panel -->
+    <div class="col-lg-3">
+      <div class="card rounded-4 border-0 shadow-sm overflow-hidden bg-white mb-6">
+        <div class="card-header bg-light border-bottom p-5">
+          <h4 class="fw-bold text-dark mb-0 fs-5">إجراءات المزامنة الفورية</h4>
+        </div>
+        <div class="card-body p-5 d-flex flex-column gap-4">
+          <div *ngIf="!connection" class="text-center p-4 bg-light rounded-3 text-muted fs-7">
+            الرجاء ربط وحفظ إعدادات الفندق أولاً لتفعيل عمليات المزامنة الفورية.
+          </div>
+
+          <div *ngIf="connection" class="d-flex flex-column gap-4">
+            <button class="btn btn-light-primary w-100 py-3 rounded-3 text-start d-flex align-items-center justify-content-between" 
+                    [disabled]="syncing" (click)="triggerSyncAvailability()">
+              <div>
+                <div class="fw-bold text-dark fs-6">دفع التوافر (Availability)</div>
+                <div class="text-muted fs-8 mt-0.5">مزامنة فترات حجز الغرف فورياً</div>
+              </div>
+              <i *ngIf="!syncing" class="bi bi-arrow-repeat text-primary fs-4"></i>
+              <div *ngIf="syncing" class="spinner-border spinner-border-sm text-primary" role="status"></div>
+            </button>
+
+            <button class="btn btn-light-success w-100 py-3 rounded-3 text-start d-flex align-items-center justify-content-between" 
+                    [disabled]="syncing" (click)="triggerSyncRates()">
+              <div>
+                <div class="fw-bold text-dark fs-6">دفع الأسعار والمواسم (Rates)</div>
+                <div class="text-muted fs-8 mt-0.5">مزامنة خطط الأسعار والربح</div>
+              </div>
+              <i *ngIf="!syncing" class="bi bi-currency-dollar text-success fs-4"></i>
+              <div *ngIf="syncing" class="spinner-border spinner-border-sm text-success" role="status"></div>
+            </button>
+
+            <div class="border-top my-3"></div>
+
+            <div class="d-flex align-items-start gap-3 bg-light p-3 rounded-3">
+              <i class="bi bi-info-circle-fill text-primary fs-4 mt-0.5"></i>
+              <p class="mb-0 fs-7 text-muted leading-sm">
+                عمليات الدفع الفوري تقوم بتحديث الأسعار والتوافر الحالية فورياً وتخزين المعالجات في Outbox ليقوم السيرفر بإرسالها لـ Channex.
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

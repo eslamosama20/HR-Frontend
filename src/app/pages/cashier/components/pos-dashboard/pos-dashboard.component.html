@@ -1,0 +1,1218 @@
+﻿<div class="pos-shell">
+  <p-toast></p-toast>
+  <p-confirmDialog></p-confirmDialog>
+
+  <div *ngIf="loading() || checkoutLoading()" class="loading-layer">
+    <div class="loading-card">
+      <i class="pi pi-spin pi-spinner text-primary" style="font-size: 1.8rem;"></i>
+      <div class="flex flex-column align-items-start">
+        <span style="font-weight: 800; font-size: 1rem; color: #0f172a;">{{ checkoutLoading() ? 'جاري تنفيذ وتأكيد العملية...' : ('CASHIER_POS.LOADING_POS_DATA' | translate) }}</span>
+        <small *ngIf="checkoutLoading()" style="color: #64748b; font-weight: 600;">تأكيد الدفع وإصدار الفاتورة</small>
+      </div>
+    </div>
+  </div>
+
+  <div class="pos-unified-card">
+    <header class="pos-header">
+    <!-- Top Row: Brand & Title on Right | Action Buttons on Left -->
+    <div class="pos-header-top">
+      <div class="header-brand">
+        <span class="brand-icon">
+          <i class="pi pi-shopping-cart"></i>
+        </span>
+        <div>
+          <h1>{{ 'CASHIER_POS.PAGE_TITLE' | translate }}</h1>
+          <p>{{ 'CASHIER_POS.PAGE_SUBTITLE' | translate }}</p>
+        </div>
+      </div>
+
+      <!-- Navigation & Reports Links (Top Row) -->
+      <div class="header-actions">
+        <button pButton type="button" icon="pi pi-file" label="إدارة الفواتير" class="action-btn soft-btn" routerLink="/cashier/invoice-control"></button>
+        <button pButton type="button" icon="pi pi-file-edit" label="تقرير الإغلاق (Z-Report)" class="action-btn soft-btn" routerLink="/cashier/z-report"></button>
+        <button pButton type="button" icon="pi pi-clock" [label]="'CASHIER_POS.SESSION_MANAGEMENT' | translate" class="action-btn soft-btn" routerLink="/cashier/session"></button>
+        <button pButton type="button" icon="pi pi-chart-line" [label]="'CASHIER_POS.CASHIER_REPORTS' | translate" class="action-btn soft-btn" routerLink="/cashier/reports"></button>
+        <button *ngIf="canAccessRestaurantMode()" pButton type="button" icon="pi pi-map" [label]="'CASHIER_POS.TABLES_MAP' | translate" class="action-btn soft-btn" routerLink="/cashier/floor"></button>
+      </div>
+    </div>
+
+    <!-- Bottom Row: Session Status & Colored Action Buttons & Metrics -->
+    <div class="pos-header-bottom">
+      <div class="header-bottom-group">
+        <!-- Status Pill -->
+        <div class="header-status" [class.is-open]="currentSession()">
+          <i class="pi" [ngClass]="currentSession() ? 'pi-check-circle' : 'pi-exclamation-triangle'"></i>
+          <span>{{ (currentSession() ? 'CASHIER_POS.SESSION_OPEN' : 'CASHIER_POS.SESSION_CLOSED') | translate }} — {{ currentSession()?.cashierUserName || ('CASHIER_POS.PLEASE_OPEN_SESSION' | translate) }}</span>
+        </div>
+
+        <!-- Colored Action Buttons (Bottom Row) -->
+        <div class="header-colored-actions">
+          <button *ngIf="currentSession()" pButton type="button" icon="pi pi-building" label="المخازن" class="action-btn soft-btn" (click)="openEditSessionStoresDialog()" [pTooltip]="'تعديل مخازن الوردية'"></button>
+          <button pButton type="button" icon="pi pi-pause" [label]="'CASHIER_POS.HOLD_ORDER' | translate" class="action-btn warning-btn" (click)="openHoldDialog()" [disabled]="cart().length === 0"></button>
+          <button pButton type="button" icon="pi pi-list" [label]="'CASHIER_POS.HELD_ORDERS' | translate" class="action-btn info-btn" (click)="openHeldOrdersList()">
+             <span class="badge" *ngIf="heldOrders().length > 0">{{ heldOrders().length }}</span>
+          </button>
+          <!-- Salla Orders Button -->
+          <button *ngIf="!isPharmacyMode" pButton type="button" icon="pi pi-box" [label]="'CASHIER_POS.SALLA_ORDERS_BTN' | translate" class="action-btn warning-btn" routerLink="/cashier/salla-orders">
+             <span class="badge" *ngIf="sallaPendingCount() > 0">{{ sallaPendingCount() }}</span>
+          </button>
+          <!-- Zid Orders Button -->
+          <button *ngIf="!isPharmacyMode" pButton type="button" icon="pi pi-shopping-bag" label="Zid Orders" class="action-btn info-btn" routerLink="/cashier/zid-cashier-orders">
+             <span class="badge" *ngIf="zidPendingCount() > 0">{{ zidPendingCount() }}</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Compact Metrics -->
+      <div class="header-metrics">
+        <div class="metric-pill">
+          <span>{{ 'CASHIER_POS.ITEMS_IN_CART' | translate }}:</span>
+          <strong>{{ cart().length }}</strong>
+        </div>
+        <div class="metric-pill highlight">
+          <span>{{ 'CASHIER_POS.GRAND_TOTAL' | translate }}:</span>
+          <strong>{{ cartTotal() | number:'1.2-2' }} ر.س.</strong>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- Pharmacy Mode Indicator Bar -->
+  <div *ngIf="isPharmacyMode" class="pharmacy-mode-bar">
+    <i class="pi pi-shield"></i>
+    <span>وضع الصيدلية مفعّل — الأدوية تُصرف مع تسجيل الباتش وتاريخ الصلاحية.</span>
+  </div>
+
+  <main class="pos-main">
+    <section class="products-panel">
+      <div class="pharmacy-catalog-bar" *ngIf="isPharmacyMode">
+        <div class="catalog-segment">
+          <button
+            type="button"
+            class="segment-btn"
+            [class.active]="catalogPane === 'products'"
+            (click)="onCatalogPaneChange('products')">
+            {{ 'CASHIER_POS.CATALOG_TAB_PRODUCTS' | translate }}
+          </button>
+          <button
+            type="button"
+            class="segment-btn"
+            [class.active]="catalogPane === 'readyRx'"
+            (click)="onCatalogPaneChange('readyRx')">
+            {{ 'CASHIER_POS.CATALOG_TAB_READY_RX' | translate }}
+            <span class="badge" *ngIf="readyPrescriptions().length > 0">{{ readyPrescriptions().length }}</span>
+          </button>
+        </div>
+        <a
+          routerLink="/cashier/pharmacy-patients"
+          class="segment-btn"
+          style="display: inline-flex; align-items: center; gap: 0.4rem; text-decoration: none; font-size: 0.85rem; padding: 0.45rem 0.9rem; border-radius: 8px; background: rgba(59, 130, 246, 0.08); color: #2563eb; font-weight: 600; border: 1px solid rgba(59, 130, 246, 0.2); cursor: pointer; transition: all 0.2s ease;">
+          <i class="pi pi-users" style="font-size: 0.9rem;"></i>
+          <span>{{ 'PHARMACY_PATIENTS.PAGE_TITLE' | translate }}</span>
+        </a>
+      </div>
+
+      <ng-container *ngIf="!isPharmacyMode || catalogPane === 'products'">
+      <div class="panel-head">
+        <div class="panel-title-area">
+          <h2>
+            <i class="pi pi-box"></i>
+            <span>{{ 'CASHIER_POS.AVAILABLE_PRODUCTS' | translate }}</span>
+          </h2>
+          <p>{{ 'CASHIER_POS.SELECT_PRODUCT_SUBTITLE' | translate }}</p>
+        </div>
+        <div class="panel-tools">
+          <div class="view-mode-switcher">
+            <button
+              type="button"
+              class="view-btn"
+              [class.active]="viewMode() === 'grid'"
+              (click)="switchViewMode('grid')"
+              title="عرض شبكي (كروت)">
+              <i class="pi pi-th-large"></i>
+              <span>شبكة</span>
+            </button>
+            <button
+              type="button"
+              class="view-btn"
+              [class.active]="viewMode() === 'list'"
+              (click)="switchViewMode('list')"
+              title="عرض قائمة (جدول)">
+              <i class="pi pi-list"></i>
+              <span>قائمة</span>
+            </button>
+          </div>
+
+          <div class="pricing-mode-switcher">
+            <button *ngIf="canViewRetailPrice()" class="pricing-btn" [class.active]="pricingMode() === 'retail'" (click)="switchPricingMode('retail')">قطاعي</button>
+            <button *ngIf="canViewWholesalePrice()" class="pricing-btn" [class.active]="pricingMode() === 'wholesale'" (click)="switchPricingMode('wholesale')">جملة</button>
+            <button *ngIf="canViewBulkPrice()" class="pricing-btn" [class.active]="pricingMode() === 'bulk'" (click)="switchPricingMode('bulk')">جملة الجملة</button>
+            <button *ngIf="canViewPurchasePrice()" class="pricing-btn" [class.active]="pricingMode() === 'purchase'" (click)="switchPricingMode('purchase')">سعر الشراء</button>
+          </div>
+          <button
+            pButton
+            type="button"
+            class="toggle-images-btn"
+            *ngIf="viewMode() === 'grid'"
+            [icon]="showProductImages() ? 'pi pi-eye-slash' : 'pi pi-image'"
+            [label]="(showProductImages() ? 'CASHIER_POS.HIDE_IMAGES' : 'CASHIER_POS.SHOW_IMAGES') | translate"
+            (click)="toggleProductImages()">
+          </button>
+          <span class="products-count">
+            <i class="pi pi-box"></i>
+            <span>{{ 'CASHIER_POS.TOTAL_PRODUCTS' | translate }}: {{ displayProducts.length }}</span>
+          </span>
+          <span class="favorites-count">
+            <i class="pi pi-star-fill"></i>
+            <span>{{ 'CASHIER_POS.FAVORITES' | translate }}: {{ favoriteCount }}</span>
+          </span>
+        </div>
+      </div>
+
+      <div class="search-box">
+        <span class="search-input-wrap">
+          <i class="pi pi-search"></i>
+          <input
+            pInputText
+            type="text"
+            [(ngModel)]="searchTerm"
+            (keyup.enter)="onSearch()"
+            [placeholder]="'CASHIER_POS.SEARCH_PLACEHOLDER' | translate"
+          />
+        </span>
+        <button pButton type="button" icon="pi pi-search" [label]="'CASHIER_POS.SEARCH_BTN' | translate" class="search-btn" (click)="onSearch()"></button>
+      </div>
+
+      <div class="favorites-note" *ngIf="!canManageFavorites()">
+        <i class="pi pi-lock"></i>
+        <span>{{ 'CASHIER_POS.FAVORITES_PERM_NOTE' | translate }}</span>
+      </div>
+
+      <!-- Categories Chips Bar -->
+      <div class="categories-bar" *ngIf="categories.length > 0">
+        <button
+          type="button"
+          class="category-chip"
+          [class.active]="selectedCategory() === null"
+          (click)="selectCategory(null)">
+          <i class="pi pi-th-large"></i>
+          <span>جميع الأصناف</span>
+          <small class="cat-count">({{ products().length }})</small>
+        </button>
+        <button
+          *ngFor="let cat of categories"
+          type="button"
+          class="category-chip"
+          [class.active]="selectedCategory() === cat.id"
+          (click)="selectCategory(cat.id)">
+          <span>{{ cat.name }}</span>
+          <small class="cat-count">({{ cat.count }})</small>
+        </button>
+      </div>
+
+      <!-- Grid View -->
+      <div
+        *ngIf="viewMode() === 'grid' && displayProducts.length > 0"
+        class="products-grid"
+        [class.no-images]="!showProductImages()">
+        <article
+          *ngFor="let product of displayProducts"
+          class="product-card"
+          [class.has-no-image]="!showProductImages()"
+          [class.out-of-stock]="product.availableQuantity <= 0"
+          (click)="addToCart(product)">
+          
+          <div class="product-media" *ngIf="showProductImages()">
+            <img
+              *ngIf="product.image"
+              [src]="product.image"
+              [alt]="product.nameAr || product.nameEn"
+              loading="lazy"
+              (error)="onProductImageError($event)"
+            />
+            <div *ngIf="!product.image" class="product-placeholder">
+              <i class="pi pi-box"></i>
+            </div>
+
+            <!-- Overlaid Action Buttons on Top of Media -->
+            <div class="media-overlay-actions">
+              <button
+                type="button"
+                class="favorite-btn"
+                [class.active]="product.isFavorite"
+                [disabled]="!canManageFavorites()"
+                [attr.title]="canManageFavorites() ? (product.isFavorite ? 'إزالة من المفضلة' : 'إضافة للمفضلة') : 'متاح للمدير أو الأدمن فقط'"
+                (click)="toggleFavorite(product, $event)">
+                <i class="pi" [ngClass]="product.isFavorite ? 'pi-star-fill' : 'pi-star'"></i>
+              </button>
+              <button
+                type="button"
+                class="product-info-btn"
+                title="تفاصيل الصنف وموقع التخزين (الرف والصف والتشغيلة)"
+                (click)="openProductDetails(product, $event)">
+                <i class="pi pi-info-circle"></i>
+              </button>
+            </div>
+
+            <!-- Code badge on bottom edge of image -->
+            <span class="media-code-badge" *ngIf="product.code" [title]="product.code">
+              {{ product.code }}
+            </span>
+          </div>
+
+          <div class="product-header-row">
+            <span class="stock-badge" [class.low-stock]="product.availableQuantity <= 5">
+              {{ 'CASHIER_POS.AVAILABLE_QTY' | translate }}: {{ product.availableQuantity }}
+            </span>
+            <div class="no-img-actions" *ngIf="!showProductImages()">
+              <button
+                type="button"
+                class="favorite-btn"
+                [class.active]="product.isFavorite"
+                [disabled]="!canManageFavorites()"
+                (click)="toggleFavorite(product, $event)">
+                <i class="pi" [ngClass]="product.isFavorite ? 'pi-star-fill' : 'pi-star'"></i>
+              </button>
+              <button
+                type="button"
+                class="product-info-btn"
+                (click)="openProductDetails(product, $event)">
+                <i class="pi pi-info-circle"></i>
+              </button>
+            </div>
+          </div>
+
+          <h3 class="product-title" [title]="product.nameAr || product.nameEn">{{ product.nameAr || product.nameEn }}</h3>
+
+          <div class="product-batch-meta" *ngIf="product.batchNo || product.expiryDate">
+            <span class="batch-pill-badge" *ngIf="product.batchNo" [title]="'رقم التشغيلة: ' + product.batchNo">
+              <i class="pi pi-tag"></i> باتش: <strong>{{ product.batchNo }}</strong>
+            </span>
+            <span class="expiry-pill-badge" *ngIf="product.expiryDate" [title]="'تاريخ الصلاحية: ' + (product.expiryDate | customDate: 'yyyy/MM/dd')">
+              <i class="pi pi-calendar"></i> {{ product.expiryDate | customDate: 'yyyy/MM/dd' }}
+            </span>
+          </div>
+
+          <div class="product-bottom">
+            <div class="price-wrap">
+              <strong class="price-val">{{ getActivePrice(product) | number:'1.2-2' }}</strong>
+              <span class="currency-label">ر.س</span>
+            </div>
+            <small class="unit-label">{{ (product.unitName ? product.unitName : 'CASHIER_POS.UNIT_PIECE') | translate }}</small>
+          </div>
+        </article>
+      </div>
+
+      <!-- List View -->
+      <div
+        *ngIf="viewMode() === 'list' && displayProducts.length > 0"
+        class="products-list-wrap">
+        <table class="products-table">
+          <thead>
+            <tr>
+              <th style="width: 75px;"></th>
+              <th>كود الصنف</th>
+              <th>اسم المنتج</th>
+              <th>الكمية المتاحة</th>
+              <th>الوحدة</th>
+              <th>السعر</th>
+              <th style="width: 80px;">إجراء</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr
+              *ngFor="let product of displayProducts"
+              class="product-row"
+              [class.out-of-stock]="product.availableQuantity <= 0"
+              (click)="addToCart(product)">
+              <td (click)="$event.stopPropagation()">
+                <div class="d-flex align-items-center gap-1">
+                  <button
+                    type="button"
+                    class="favorite-btn list-fav"
+                    [class.active]="product.isFavorite"
+                    [disabled]="!canManageFavorites()"
+                    [attr.title]="canManageFavorites() ? (product.isFavorite ? 'إزالة من المفضلة' : 'إضافة للمفضلة') : 'متاح للمدير أو الأدمن فقط'"
+                    (click)="toggleFavorite(product, $event)">
+                    <i class="pi" [ngClass]="product.isFavorite ? 'pi-star-fill' : 'pi-star'"></i>
+                  </button>
+                  <button
+                    type="button"
+                    class="product-info-btn list-info"
+                    title="تفاصيل الصنف وموقع التخزين (الرف والصف والتشغيلة)"
+                    (click)="openProductDetails(product, $event)">
+                    <i class="pi pi-info-circle"></i>
+                  </button>
+                </div>
+              </td>
+              <td>
+                <span class="product-code-badge" *ngIf="product.code">
+                  {{ product.code }}
+                </span>
+                <span *ngIf="!product.code" class="text-muted">-</span>
+              </td>
+              <td>
+                <div class="d-flex align-items-center gap-2 flex-wrap">
+                  <strong class="list-item-name">{{ product.nameAr || product.nameEn }}</strong>
+                  <span class="batch-pill-badge" *ngIf="product.batchNo">
+                    <i class="pi pi-tag"></i> باتش: {{ product.batchNo }}
+                  </span>
+                  <span class="expiry-pill-badge" *ngIf="product.expiryDate">
+                    <i class="pi pi-calendar"></i> {{ product.expiryDate | customDate: 'yyyy/MM/dd' }}
+                  </span>
+                </div>
+              </td>
+              <td>
+                <span class="stock-badge" [class.low-stock]="product.availableQuantity <= 5">
+                  {{ product.availableQuantity }}
+                </span>
+              </td>
+              <td>
+                <span class="unit-text">{{ (product.unitName ? product.unitName : 'CASHIER_POS.UNIT_PIECE') | translate }}</span>
+              </td>
+              <td>
+                <strong class="list-item-price">{{ getActivePrice(product) | number:'1.2-2' }} <small>ر.س</small></strong>
+              </td>
+              <td>
+                <button
+                  type="button"
+                  class="list-add-btn"
+                  [disabled]="product.availableQuantity <= 0"
+                  (click)="addToCart(product); $event.stopPropagation()">
+                  <i class="pi pi-plus"></i>
+                  <span>إضافة</span>
+                </button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <ng-container *ngIf="displayProducts.length === 0">
+        <div class="empty-state">
+          <i class="pi pi-inbox"></i>
+          <h3>{{ 'CASHIER_POS.NO_PRODUCTS_FOUND' | translate }}</h3>
+          <p>{{ 'CASHIER_POS.TRY_ANOTHER_SEARCH' | translate }}</p>
+        </div>
+      </ng-container>
+      </ng-container>
+
+      <div class="ready-rx-panel" *ngIf="isPharmacyMode && catalogPane === 'readyRx'">
+        <div *ngIf="readyRxLoading()" class="ready-rx-state loading">
+          <i class="pi pi-spin pi-spinner"></i>
+          <span>{{ 'CASHIER_POS.LOADING_POS_DATA' | translate }}</span>
+        </div>
+        <div *ngIf="!readyRxLoading() && readyRxError()" class="ready-rx-state error">
+          <i class="pi pi-exclamation-triangle"></i>
+          <p>{{ readyRxError() }}</p>
+          <button pButton type="button" icon="pi pi-refresh" class="p-button-sm" [label]="'CASHIER_POS.READY_RX_RETRY' | translate" (click)="loadReadyPrescriptions()"></button>
+        </div>
+        <div *ngIf="!readyRxLoading() && !readyRxError() && readyPrescriptions().length === 0" class="ready-rx-state empty">
+          <i class="pi pi-inbox"></i>
+          <p>{{ 'CASHIER_POS.READY_RX_EMPTY' | translate }}</p>
+        </div>
+        <div class="ready-rx-cards" *ngIf="!readyRxLoading() && !readyRxError() && readyPrescriptions().length > 0">
+          <article class="ready-rx-card" *ngFor="let rx of readyPrescriptions()">
+            <header class="rx-card-header">
+              <div class="rx-card-info">
+                <div class="rx-badge-group">
+                  <span class="rx-no-badge"><i class="pi pi-file-o"></i> {{ rx.prescriptionNo }}</span>
+                  <span class="rx-patient-tag"><i class="pi pi-user"></i> {{ rx.patientName }}</span>
+                </div>
+              </div>
+              <button
+                pButton
+                type="button"
+                class="p-button-success p-button-sm rx-add-btn"
+                icon="pi pi-shopping-cart"
+                [label]="'CASHIER_POS.READY_RX_ADD' | translate"
+                [disabled]="prescriptionAlreadyInCart(rx.prescriptionId)"
+                (click)="addReadyPrescriptionToCart(rx)">
+              </button>
+            </header>
+
+            <div class="rx-table-container">
+              <p-table [value]="rx.lines" styleClass="p-datatable-sm p-datatable-striped ready-rx-table" [tableStyle]="{'min-width': '100%'}">
+                <ng-template pTemplate="header">
+                  <tr>
+                    <th style="width: 42%;">{{ 'CASHIER_POS.READY_RX_LINES' | translate }}</th>
+                    <th style="width: 22%;">{{ 'CASHIER_POS.READY_RX_PRICE_QTY' | translate }}</th>
+                    <th style="width: 16%; text-align: center;">{{ 'CASHIER_POS.READY_RX_BATCH' | translate }}</th>
+                    <th style="width: 20%; text-align: center;">{{ 'CASHIER_POS.READY_RX_EXPIRY' | translate }}</th>
+                  </tr>
+                </ng-template>
+                <ng-template pTemplate="body" let-line>
+                  <tr>
+                    <td>
+                      <div class="rx-line-name">{{ line.name }}</div>
+                      <div class="rx-shares-container" *ngIf="line.patientShare != null || line.insuranceShare != null">
+                        <span class="rx-share-chip patient" *ngIf="line.patientShare != null">
+                          <i class="pi pi-user"></i>
+                          <span>{{ 'CASHIER_POS.READY_RX_PATIENT_SHARE' | translate }}:</span>
+                          <strong>{{ (line.patientShare ?? 0) | number:'1.2-2' }} ر.س</strong>
+                        </span>
+                        <span class="rx-share-chip insurance" *ngIf="line.insuranceShare != null">
+                          <i class="pi pi-shield"></i>
+                          <span>{{ 'CASHIER_POS.READY_RX_INSURANCE_SHARE' | translate }}:</span>
+                          <strong>{{ (line.insuranceShare ?? 0) | number:'1.2-2' }} ر.س</strong>
+                        </span>
+                      </div>
+                      <div class="rx-alloc-wrapper" *ngIf="line.allocationStatus">
+                        <span class="rx-alloc-pill" [ngClass]="'alloc-' + line.allocationStatus">
+                          <i class="pi pi-check-circle"></i>
+                          {{ line.allocationStatus === 'allocated' || line.allocationStatus === 'committed' ? 'تم حجز الصنف' : (line.allocationStatus === 'ready' || line.allocationStatus === 'dispensed' ? 'جاهز للصرف' : 'متاح بالصيدلية') }}
+                        </span>
+                      </div>
+                    </td>
+                    <td>
+                      <div class="rx-price-cell">
+                        <span class="rx-qty-badge">{{ line.quantity }}</span>
+                        <span class="rx-multiply">×</span>
+                        <span class="rx-unit-price">{{ line.unitPrice | number:'1.2-2' }} ر.س</span>
+                      </div>
+                    </td>
+                    <td style="text-align: center;">
+                      <span class="rx-batch-pill" *ngIf="line.batchNo">
+                        <i class="pi pi-tag"></i> {{ line.batchNo }}
+                      </span>
+                      <span class="rx-dash" *ngIf="!line.batchNo">—</span>
+                    </td>
+                    <td style="text-align: center;">
+                      <div class="rx-expiry-cell" *ngIf="line.expiryDate">
+                        <div class="rx-expiry-val" [ngClass]="{ 'exp-warn': expirySeverity(line.expiryDate) === 'warn', 'exp-danger': expirySeverity(line.expiryDate) === 'danger', 'exp-ok': expirySeverity(line.expiryDate) === 'ok' }">
+                          <i class="pi pi-calendar"></i>
+                          <span>{{ line.expiryDate }}</span>
+                        </div>
+                        <span class="rx-expiry-tag warn" *ngIf="expirySeverity(line.expiryDate) === 'warn'">{{ 'CASHIER_POS.READY_RX_NEAR_EXPIRY' | translate }}</span>
+                        <span class="rx-expiry-tag danger" *ngIf="expirySeverity(line.expiryDate) === 'danger'">{{ 'CASHIER_POS.READY_RX_EXPIRED' | translate }}</span>
+                      </div>
+                      <span class="rx-dash" *ngIf="!line.expiryDate">—</span>
+                    </td>
+                  </tr>
+                </ng-template>
+              </p-table>
+            </div>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <aside class="cart-panel">
+      <!-- Premium Mode Switcher -->
+      <div class="premium-mode-switcher" *ngIf="(canAccessSupermarketMode() ? 1 : 0) + (canAccessPharmacyMode() && enablePharmacyMode ? 1 : 0) + (canAccessRestaurantMode() ? 1 : 0) > 1">
+        <button type="button" *ngIf="canAccessSupermarketMode()" [class.active]="!isPharmacyMode && !isRestaurantMode" (click)="setMode('normal')">
+          <i class="pi pi-shopping-cart"></i>
+          <span>بيع عادي</span>
+        </button>
+        <button type="button" *ngIf="canAccessPharmacyMode() && enablePharmacyMode" [class.active]="isPharmacyMode" (click)="setMode('pharmacy')">
+          <i class="pi pi-shield"></i>
+          <span>صيدلية</span>
+        </button>
+        <button type="button" *ngIf="canAccessRestaurantMode()" [class.active]="isRestaurantMode" (click)="setMode('restaurant')">
+          <i class="pi pi-shop"></i>
+          <span>مطعم</span>
+        </button>
+      </div>
+
+      <!-- Header: Icon + Title + Count Badge -->
+      <div class="cart-header">
+        <h2>
+          <i class="pi pi-shopping-cart"></i>
+          <span>{{ 'CASHIER_POS.SHOPPING_CART' | translate }}</span>
+        </h2>
+        <span class="cart-badge">{{ cart().length }}</span>
+      </div>
+
+      <!-- Customer Inputs (اسم العميل ورقم الهاتف) -->
+      <div class="customer-box">
+        <div class="customer-field">
+          <label class="field-label">{{ 'CASHIER_POS.CUSTOMER_NAME' | translate }}</label>
+          <p-autoComplete 
+            #customerAutoComplete
+            [(ngModel)]="selectedCustomer" 
+            [suggestions]="filteredCustomers" 
+            (completeMethod)="searchCustomers($event)" 
+            (onSelect)="onCustomerSelect($event)" 
+            (onClear)="customerName = ''; selectedCustomerId = null;"
+            (ngModelChange)="onCustomerTextChange($event)"
+            (onFocus)="onCustomerFocus(customerAutoComplete)"
+            (click)="onCustomerFocus(customerAutoComplete)"
+            field="arabicName" 
+            [dropdown]="true" 
+            [forceSelection]="false"
+            [minLength]="0"
+            [completeOnFocus]="true"
+            [placeholder]="'CASHIER_POS.NAME_PLACEHOLDER' | translate" 
+            styleClass="w-100"
+            inputStyleClass="customer-input w-100"
+            emptyMessage="عميل جديد (سيتم حفظه تلقائياً)">
+            <ng-template let-customer pTemplate="item">
+              <div class="d-flex align-items-center justify-content-between w-100 gap-2">
+                <div class="d-flex flex-column">
+                  <span class="font-weight-bold">{{ customer.arabicName || customer.englishName }}</span>
+                  <small *ngIf="customer.contactNumber" class="text-muted"><i class="pi pi-phone" style="font-size: 0.75rem;"></i> {{ customer.contactNumber }}</small>
+                </div>
+                <span *ngIf="customer.taxNumber" class="badge badge-light-primary" style="font-size: 0.7rem;">ضريبي</span>
+              </div>
+            </ng-template>
+          </p-autoComplete>
+        </div>
+        <div class="customer-field">
+          <label class="field-label">{{ 'CASHIER_POS.CUSTOMER_PHONE' | translate }}</label>
+          <input 
+            pInputText 
+            type="tel" 
+            inputmode="numeric"
+            [(ngModel)]="customerPhone" 
+            (keypress)="onlyNumberKey($event)"
+            (input)="onCustomerPhoneInput($event)"
+            [placeholder]="'CASHIER_POS.PHONE_PLACEHOLDER' | translate" 
+            class="customer-input" />
+        </div>
+      </div>
+
+      <!-- Order Type Section (نوع الطلب) -->
+      <div class="cart-section" *ngIf="isRestaurantMode">
+        <label class="section-label">نوع الطلب</label>
+        <div class="pill-options">
+          <button type="button" class="pill-btn" [class.active]="orderType === OrderType.Takeaway" (click)="setOrderType(OrderType.Takeaway)">
+            <i class="pi pi-shopping-bag"></i>
+            <span>تيك أواي</span>
+          </button>
+          <button type="button" class="pill-btn" [class.active]="orderType === OrderType.Delivery" (click)="setOrderType(OrderType.Delivery)">
+            <i class="pi pi-car"></i>
+            <span>توصيل</span>
+          </button>
+          <button *ngIf="canDineIn()" type="button" class="pill-btn" [class.active]="orderType === OrderType.DineIn" (click)="setOrderType(OrderType.DineIn)">
+            <i class="pi pi-users"></i>
+            <span>محلي</span>
+          </button>
+        </div>
+
+        <!-- Table Selector for Dine-In -->
+        <div class="table-selector-box mt-2" *ngIf="orderType === OrderType.DineIn && canAssignTable()">
+          <label class="field-label text-xs mb-1 block text-600 font-semibold">
+            <i class="pi pi-map-marker text-primary mr-1"></i> ربط بالطاولة (اختياري)
+          </label>
+          <p-dropdown
+            [options]="availableTablesOptions"
+            [(ngModel)]="selectedTableId"
+            placeholder="اختر الطاولة..."
+            [showClear]="true"
+            appendTo="body"
+            styleClass="w-full">
+          </p-dropdown>
+        </div>
+      </div>
+
+      <!-- Cart Items List -->
+      <div class="cart-items">
+        <article *ngFor="let item of cart()" class="cart-item">
+          <!-- Item Info (Right side in RTL) -->
+          <div class="item-main-info">
+            <h3 class="item-name">{{ item.itemName }}</h3>
+            <span class="item-unit-price">{{ item.unitPrice | number:'1.2-2' }} ر.س.</span>
+            
+            <div *ngIf="item.prescriptionMeta as pm" class="rx-cart-meta">
+              <small class="rx-no"><i class="pi pi-file-edit"></i> {{ pm.prescriptionNo || pm.prescriptionId }}</small>
+              <small *ngIf="pm.batchNo"><i class="pi pi-box"></i> {{ 'CASHIER_POS.READY_RX_BATCH' | translate }}: {{ pm.batchNo }}</small>
+              <small *ngIf="pm.expiryDate" [ngClass]="{ 'exp-warn-text': expirySeverity(pm.expiryDate) === 'warn', 'exp-danger-text': expirySeverity(pm.expiryDate) === 'danger' }">
+                <i class="pi pi-calendar"></i> {{ 'CASHIER_POS.READY_RX_EXPIRY' | translate }}: {{ pm.expiryDate }}
+              </small>
+              <div class="rx-shares-row" *ngIf="pm.patientShare != null || pm.insuranceShare != null">
+                <span>{{ 'CASHIER_POS.READY_RX_PATIENT_SHARE' | translate }}: {{ (pm.patientShare ?? 0) | number:'1.2-2' }}</span>
+                <span>{{ 'CASHIER_POS.READY_RX_INSURANCE_SHARE' | translate }}: {{ (pm.insuranceShare ?? 0) | number:'1.2-2' }}</span>
+              </div>
+            </div>
+            <div *ngIf="item.modifiers && item.modifiers.length > 0" class="item-modifiers-list">
+              <small *ngFor="let mod of item.modifiers" class="mod-chip">{{ mod.name }}</small>
+            </div>
+          </div>
+
+          <!-- Quantity Controls Stepper (- QTY +) -->
+          <div class="item-qty-stepper" *ngIf="!item.prescriptionMeta">
+            <button type="button" class="step-btn minus" (click)="updateQuantity(item, item.quantity - 1)" [disabled]="item.quantity <= 0.01">
+              <i class="pi pi-minus"></i>
+            </button>
+            <input
+              type="number"
+              class="qty-input"
+              [value]="item.quantity"
+              min="1"
+              [max]="item.availableQuantity || 9999"
+              (change)="onQuantityInputChange(item, $event)"
+              (keyup.enter)="onQuantityInputChange(item, $event)"
+              (click)="$event.stopPropagation()" />
+            <button type="button" class="step-btn plus" (click)="updateQuantity(item, item.quantity + 1)" [disabled]="item.quantity >= (item.availableQuantity || 9999)">
+              <i class="pi pi-plus"></i>
+            </button>
+          </div>
+
+          <div class="item-qty-stepper pharmacy-qty-badge" *ngIf="item.prescriptionMeta">
+            <span class="qty-num">× {{ item.quantity }}</span>
+          </div>
+
+          <!-- Total Price & Delete Button (Left side in RTL) -->
+          <div class="item-price-actions">
+            <strong class="item-total-price">{{ item.totalAmount | number:'1.2-2' }} ر.س.</strong>
+            <button type="button" class="item-trash-btn" (click)="confirmRemoveFromCart(item)" title="إزالة من السلة">
+              <i class="pi pi-trash"></i>
+            </button>
+          </div>
+        </article>
+
+        <div *ngIf="cart().length === 0" class="empty-cart">
+          <i class="pi pi-shopping-cart"></i>
+          <p>{{ 'CASHIER_POS.EMPTY_CART_MSG' | translate }}</p>
+        </div>
+      </div>
+
+      <!-- Totals Section -->
+      <div class="totals-box">
+        <div class="total-row">
+          <span>{{ 'CASHIER_POS.SUBTOTAL' | translate }}</span>
+          <strong>{{ cartSubtotal() | number:'1.2-2' }} ر.س.</strong>
+        </div>
+        <div class="total-row discount-row" *ngIf="canApplyDiscount() || cartDiscount() > 0" [class.has-discount]="cartDiscount() > 0">
+          <div class="discount-label-wrap">
+            <span>{{ 'CASHIER_POS.DISCOUNT' | translate }}</span>
+            <button *ngIf="canApplyDiscount()" pButton type="button" [icon]="cartDiscount() > 0 ? 'pi pi-pencil' : 'pi pi-plus'" 
+              class="p-button-text p-button-sm p-button-rounded discount-action-btn" 
+              [class.p-button-danger]="cartDiscount() > 0"
+              [class.p-button-secondary]="cartDiscount() === 0"
+              (click)="openCustomDiscountDialog()" 
+              [title]="'CASHIER_POS.APPLY_CUSTOM_DISCOUNT' | translate"
+              [disabled]="cart().length === 0">
+            </button>
+          </div>
+          <strong [class.danger]="cartDiscount() > 0" [class.text-muted]="cartDiscount() === 0">
+            {{ cartDiscount() > 0 ? ('- ' + (cartDiscount() | number:'1.2-2')) : '0.00' }} ر.س.
+          </strong>
+        </div>
+        <div class="total-row">
+          <span>{{ 'CASHIER_POS.TOTAL_AFTER_DISCOUNT' | translate }}</span>
+          <strong>{{ cartTotalAfterDiscount() | number:'1.2-2' }} ر.س.</strong>
+        </div>
+        <div class="total-row">
+          <span>الضريبة 15%</span>
+          <strong>{{ cartTax() | number:'1.2-2' }} ر.س.</strong>
+        </div>
+        <div class="grand-total-row">
+          <span>{{ 'CASHIER_POS.TOTAL_FINAL' | translate }}</span>
+          <strong class="grand-price">{{ cartTotal() | number:'1.2-2' }} ر.س.</strong>
+        </div>
+        <div class="grand-total-row" *ngIf="hasInsuranceAdjustedPaymentDue()">
+          <span>Patient Due</span>
+          <strong class="grand-price">{{ paymentDueAmount() | number:'1.2-2' }} ر.س.</strong>
+        </div>
+      </div>
+
+      <!-- Payment Method Section (طريقة الدفع) -->
+      <div class="cart-section">
+        <label class="section-label">طريقة الدفع</label>
+        <div class="pill-options">
+          <button type="button" class="pill-btn" [class.active]="paymentMethod === 0" (click)="paymentMethod = 0; calculateChange()">
+            <i class="pi pi-wallet"></i>
+            <span>نقدي</span>
+          </button>
+          <button type="button" class="pill-btn" [class.active]="paymentMethod === 1" (click)="paymentMethod = 1; calculateChange()">
+            <i class="pi pi-credit-card"></i>
+            <span>بطاقة</span>
+          </button>
+          <button type="button" class="pill-btn" [class.active]="paymentMethod === 3" (click)="paymentMethod = 3; calculateChange()">
+            <i class="pi pi-sliders-h"></i>
+            <span>دفع مختلط</span>
+          </button>
+          <button type="button" class="pill-btn" [class.active]="paymentMethod === 2" (click)="paymentMethod = 2; calculateChange()">
+            <i class="pi pi-user"></i>
+            <span>آجل</span>
+          </button>
+        </div>
+      </div>
+
+
+
+      <!-- Cart Footer Action Buttons -->
+      <div class="cart-footer-actions">
+        <button
+          type="button"
+          class="checkout-submit-btn"
+          (click)="openPaymentDialog()"
+          [disabled]="cart().length === 0">
+          <span>إرسال الطلب</span>
+          <i class="pi pi-check-circle"></i>
+        </button>
+        <button
+          type="button"
+          class="cart-delete-all-btn"
+          (click)="confirmClearCart()"
+          [disabled]="cart().length === 0"
+          title="مسح السلة">
+          <i class="pi pi-trash"></i>
+        </button>
+        <button
+          *ngIf="lastReceipt()"
+          type="button"
+          class="cart-print-btn"
+          (click)="showReceiptDialog = true"
+          title="طباعة آخر فاتورة">
+          <i class="pi pi-print"></i>
+        </button>
+      </div>
+    </aside>
+  </main>
+  </div>
+</div>
+
+<p-dialog
+  [(visible)]="showPaymentDialog"
+  [modal]="true"
+  [draggable]="false"
+  [resizable]="false"
+  [style]="{width: '480px', maxWidth: '95vw'}"
+  styleClass="pos-payment-dialog"
+  [header]="'CASHIER_POS.CONFIRM_PAYMENT' | translate">
+  <div class="payment-dialog">
+    <!-- Total Amount Card -->
+    <div class="payment-total-card">
+      <div class="payment-card-header">
+        <span>{{ 'CASHIER_POS.TOTAL_AMOUNT_PAY' | translate }}</span>
+        <span class="selected-method-pill">
+          <i class="pi" [ngClass]="paymentMethod === 0 ? 'pi-wallet' : (paymentMethod === 1 ? 'pi-credit-card' : 'pi-user')"></i>
+          {{ paymentMethod === 0 ? 'نقدي' : (paymentMethod === 1 ? 'بطاقة' : 'آجل') }}
+        </span>
+      </div>
+      <strong class="total-amount-val">{{ cartTotal() | number:'1.2-2' }} ر.س.</strong>
+    </div>
+    <div class="payment-total-card" *ngIf="hasInsuranceAdjustedPaymentDue()">
+      <span>Patient Due</span>
+      <strong class="total-amount-val">{{ paymentDueAmount() | number:'1.2-2' }} ر.س.</strong>
+    </div>
+
+    <!-- Paid Amount (if Cash) -->
+    <div *ngIf="paymentMethod === 0" class="paid-amount-box">
+      <label class="section-label">{{ 'CASHIER_POS.PAID_AMOUNT' | translate }}</label>
+      <p-inputNumber
+        [(ngModel)]="paidAmount"
+        (ngModelChange)="calculateChange()"
+        [minFractionDigits]="2"
+        [maxFractionDigits]="2"
+        mode="decimal"
+        [disabled]="!canEditPrice()"
+        class="w-full"
+        inputStyleClass="w-full payment-input">
+      </p-inputNumber>
+    </div>
+
+    <!-- Mixed Payment Breakdown Section -->
+    <div *ngIf="paymentMethod === 3" class="mixed-payment-section mt-3">
+      <div class="mb-3">
+        <label class="section-label text-sm mb-1 block"><i class="pi pi-wallet text-success mr-1"></i> جزء نقدي (Cash)</label>
+        <p-inputNumber
+          [(ngModel)]="mixedCashAmount"
+          (ngModelChange)="onMixedAmountChange()"
+          [min]="0"
+          [max]="getPaymentDueAmount()"
+          [maxFractionDigits]="2"
+          placeholder="0"
+          mode="decimal"
+          class="w-full"
+          inputStyleClass="w-full">
+        </p-inputNumber>
+      </div>
+
+      <div class="mb-3">
+        <label class="section-label text-sm mb-1 block"><i class="pi pi-credit-card text-primary mr-1"></i> جزء بطاقة / فيزا (Card/Visa)</label>
+        <p-inputNumber
+          [(ngModel)]="mixedCardAmount"
+          (ngModelChange)="onMixedAmountChange()"
+          [min]="0"
+          [max]="getPaymentDueAmount()"
+          [maxFractionDigits]="2"
+          placeholder="0"
+          mode="decimal"
+          class="w-full"
+          inputStyleClass="w-full">
+        </p-inputNumber>
+      </div>
+
+      <div class="mb-3">
+        <label class="section-label text-sm mb-1 block"><i class="pi pi-building text-info mr-1"></i> جزء طريقة أخرى (تحويل بنكي / شيك)</label>
+        <p-inputNumber
+          [(ngModel)]="mixedOtherAmount"
+          (ngModelChange)="onMixedAmountChange()"
+          [min]="0"
+          [max]="getPaymentDueAmount()"
+          [maxFractionDigits]="2"
+          placeholder="0"
+          mode="decimal"
+          class="w-full"
+          inputStyleClass="w-full">
+        </p-inputNumber>
+      </div>
+
+      <!-- Mixed Status Banner -->
+      <div class="p-2 border-round text-sm mt-2 flex justify-content-between align-items-center"
+           [ngClass]="isMixedPaymentBalanced() ? 'bg-green-50 text-green-700 border-1 border-green-200' : 'bg-orange-50 text-orange-700 border-1 border-orange-200'">
+        <span>
+          <i class="pi" [ngClass]="isMixedPaymentBalanced() ? 'pi-check-circle' : 'pi-exclamation-triangle'"></i>
+          {{ isMixedPaymentBalanced() ? 'المجموع متطابق تماماً مع الفاتورة' : 'المتبقي للتغطية:' }}
+        </span>
+        <strong>{{ (getPaymentDueAmount() - getMixedTotal()) | number:'1.2-2' }} ر.س</strong>
+      </div>
+    </div>
+
+    <!-- Change Box -->
+    <div *ngIf="paymentMethod === 0 && changeAmount > 0" class="change-box">
+      <span>{{ 'CASHIER_POS.CHANGE_AMOUNT' | translate }}</span>
+      <strong>{{ changeAmount | number:'1.2-2' }} ر.س.</strong>
+    </div>
+
+    <!-- Thermal Print Format Selection (80mm vs 58mm) -->
+    <div class="print-format-selection mt-3 pt-3" style="border-top: 1px dashed #e2e8f0;">
+      <label class="section-label" style="display: block; font-size: 0.86rem; font-weight: 700; color: #475569; margin-bottom: 0.5rem;">
+        <i class="pi pi-print mr-1 text-primary"></i> خيار طباعة الإيصال الحراري:
+      </label>
+      
+      <div class="print-options-grid" style="display: flex; flex-direction: column; gap: 0.5rem;">
+        <!-- Thermal 80mm -->
+        <div class="print-option-card"
+             (click)="selectedCheckoutPrintType = 'Thermal80mm'"
+             style="display: flex; align-items: center; justify-content: space-between; padding: 0.65rem 0.9rem; border: 1.5px solid; border-radius: 9px; cursor: pointer; transition: all 0.2s ease;"
+             [style.border-color]="selectedCheckoutPrintType === 'Thermal80mm' ? '#10b981' : '#e2e8f0'"
+             [style.background]="selectedCheckoutPrintType === 'Thermal80mm' ? 'rgba(16, 185, 129, 0.05)' : '#ffffff'">
+          <div style="display: flex; align-items: center; gap: 0.75rem;">
+            <i class="pi pi-receipt" style="font-size: 1.6rem; color: #10b981;"></i>
+            <div>
+              <div style="font-weight: 700; font-size: 0.92rem; color: #1e293b;">إيصال حراري 80 ملم</div>
+              <div style="font-size: 0.76rem; color: #64748b; margin-top: 0.1rem;">طباعة حرارية بعرض 80 ملم</div>
+            </div>
+          </div>
+          <input type="radio" name="checkoutPrintType" value="Thermal80mm"
+                 [checked]="selectedCheckoutPrintType === 'Thermal80mm'"
+                 (change)="selectedCheckoutPrintType = 'Thermal80mm'"
+                 style="accent-color: #10b981; width: 1.15rem; height: 1.15rem; cursor: pointer;">
+        </div>
+
+        <!-- Thermal 58mm -->
+        <div class="print-option-card"
+             (click)="selectedCheckoutPrintType = 'Thermal58mm'"
+             style="display: flex; align-items: center; justify-content: space-between; padding: 0.65rem 0.9rem; border: 1.5px solid; border-radius: 9px; cursor: pointer; transition: all 0.2s ease;"
+             [style.border-color]="selectedCheckoutPrintType === 'Thermal58mm' ? '#10b981' : '#e2e8f0'"
+             [style.background]="selectedCheckoutPrintType === 'Thermal58mm' ? 'rgba(16, 185, 129, 0.05)' : '#ffffff'">
+          <div style="display: flex; align-items: center; gap: 0.75rem;">
+            <i class="pi pi-receipt" style="font-size: 1.6rem; color: #10b981;"></i>
+            <div>
+              <div style="font-weight: 700; font-size: 0.92rem; color: #1e293b;">إيصال حراري 58 ملم</div>
+              <div style="font-size: 0.76rem; color: #64748b; margin-top: 0.1rem;">طباعة حرارية بعرض 58 ملم</div>
+            </div>
+          </div>
+          <input type="radio" name="checkoutPrintType" value="Thermal58mm"
+                 [checked]="selectedCheckoutPrintType === 'Thermal58mm'"
+                 (change)="selectedCheckoutPrintType = 'Thermal58mm'"
+                 style="accent-color: #10b981; width: 1.15rem; height: 1.15rem; cursor: pointer;">
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <ng-template pTemplate="footer">
+    <button pButton type="button" [label]="'CASHIER_POS.CANCEL' | translate" icon="pi pi-times" class="p-button-outlined" (click)="showPaymentDialog = false" [disabled]="checkoutLoading()"></button>
+    <button pButton type="button" [label]="'CASHIER_POS.CONFIRM_PAYMENT' | translate" icon="pi pi-check" class="p-button-primary" (click)="confirmCompleteTransaction()" [loading]="checkoutLoading()"></button>
+    <button pButton type="button" [label]="'CASHIER_POS.PAY_AND_PRINT' | translate" icon="pi pi-print" class="p-button-warning" (click)="confirmCompleteTransaction(true)" [loading]="checkoutLoading()"></button>
+  </ng-template>
+</p-dialog>
+
+<p-dialog
+  [(visible)]="showReceiptDialog"
+  [modal]="true"
+  [draggable]="false"
+  [resizable]="false"
+  [style]="{width: '450px', maxWidth: '96vw'}"
+  styleClass="receipt-preview-dialog"
+  [header]="'CASHIER_POS.RECEIPT_PREVIEW' | translate">
+  <div class="receipt-dialog-wrap">
+    <div class="receipt-template-badge">
+      <span>{{ 'CASHIER_POS.CURRENT_TEMPLATE' | translate }}</span>
+      <strong>{{ selectedReceiptTemplateLabel }}</strong>
+    </div>
+
+    <app-cashier-receipt-template-preview
+      [templateId]="selectedReceiptTemplateId()"
+      [receipt]="lastReceipt()">
+    </app-cashier-receipt-template-preview>
+  </div>
+
+  <ng-template pTemplate="footer">
+    <button pButton type="button" [label]="'CASHIER_POS.CLOSE' | translate" class="p-button-text" (click)="showReceiptDialog = false"></button>
+    <button pButton type="button" [label]="'CASHIER_POS.PRINT_RECEIPT' | translate" icon="pi pi-print" (click)="printCustomerReceipt()"></button>
+  </ng-template>
+</p-dialog>
+
+<!-- Modifiers Dialog -->
+<p-dialog [(visible)]="showModifiersDialog" [modal]="true" [header]="'CASHIER_POS.PRODUCT_MODIFIERS' | translate" [style]="{width: '450px'}">
+  <div class="modifiers-list" *ngIf="selectedCartItem">
+    <h3 class="mb-3">{{ selectedCartItem.itemName }}</h3>
+    <div *ngFor="let mod of availableModifiers" class="mod-checkbox-item">
+      <p-checkbox name="modifiersGroup" [value]="mod" [(ngModel)]="selectedModifiers" [inputId]="'mod'+mod.id"></p-checkbox>
+      <label [for]="'mod'+mod.id" class="ml-2">
+        {{mod.name}} <span class="mod-price" *ngIf="mod.price > 0">(+{{mod.price}} {{ 'CASHIER_POS.SAR' | translate }})</span>
+      </label>
+    </div>
+  </div>
+  <ng-template pTemplate="footer">
+    <button pButton [label]="'CASHIER_POS.CANCEL' | translate" icon="pi pi-times" class="p-button-text" (click)="showModifiersDialog = false"></button>
+    <button pButton [label]="'CASHIER_POS.SAVE_CHANGES' | translate" icon="pi pi-check" (click)="saveModifiers()"></button>
+  </ng-template>
+</p-dialog>
+
+<!-- Custom Discount Dialog -->
+<p-dialog [(visible)]="showCustomDiscountDialog" [modal]="true" [header]="'CASHIER_POS.APPLY_CUSTOM_DISCOUNT' | translate" [style]="{width: '400px'}">
+  <div class="discount-type-selector mb-3">
+    <div class="flex gap-3">
+      <div class="flex align-items-center">
+        <p-radioButton name="discountType" value="percent" [(ngModel)]="customDiscountType" inputId="dt1"></p-radioButton>
+        <label for="dt1" class="ml-2">{{ 'CASHIER_POS.PERCENTAGE' | translate }}</label>
+      </div>
+      <div class="flex align-items-center">
+        <p-radioButton name="discountType" value="amount" [(ngModel)]="customDiscountType" inputId="dt2"></p-radioButton>
+        <label for="dt2" class="ml-2">{{ 'CASHIER_POS.FIXED_AMOUNT' | translate }}</label>
+      </div>
+    </div>
+  </div>
+  <div class="discount-value-input">
+    <div class="flex justify-content-between align-items-center mb-1">
+      <label>
+        {{ 'CASHIER_POS.DISCOUNT_VALUE' | translate }} 
+        <span class="text-muted text-xs">({{ customDiscountType === 'percent' ? '%' : 'ر.س' }})</span>
+      </label>
+      <small *ngIf="maxAllowedDiscountAmount > 0" class="text-primary font-bold">
+        الحد الأقصى: 
+        <span *ngIf="customDiscountType === 'amount'">{{ maxAllowedDiscountAmount | number:'1.2-2' }} ر.س</span>
+        <span *ngIf="customDiscountType === 'percent'">{{ maxAllowedDiscountPercent | number:'1.2-2' }}%</span>
+      </small>
+    </div>
+    <p-inputNumber 
+      [(ngModel)]="customDiscountValue" 
+      mode="decimal"
+      locale="en-US"
+      [min]="0" 
+      [max]="customDiscountType === 'percent' ? 100 : cartSubtotal()" 
+      [minFractionDigits]="0"
+      [maxFractionDigits]="2"
+      placeholder="0.00"
+      class="w-full" 
+      inputStyleClass="w-full">
+    </p-inputNumber>
+  </div>
+  <ng-template pTemplate="footer">
+    <button pButton [label]="'CASHIER_POS.CANCEL' | translate" icon="pi pi-times" class="p-button-text" (click)="showCustomDiscountDialog = false"></button>
+    <button pButton [label]="'CASHIER_POS.APPLY' | translate" icon="pi pi-check" class="p-button-success" (click)="applyCustomDiscount()"></button>
+  </ng-template>
+</p-dialog>
+
+<!-- Hold Order Confirm Dialog -->
+<p-dialog [(visible)]="showHoldConfirmDialog" [modal]="true" [header]="'CASHIER_POS.HOLD_CURRENT_ORDER' | translate" [style]="{width: '400px'}">
+  <div class="mb-3">
+    <label>{{ 'CASHIER_POS.ORDER_NAME_REF' | translate }}</label>
+    <input pInputText type="text" [(ngModel)]="holdOrderName" class="w-full mt-2" [placeholder]="'CASHIER_POS.ENTER_HOLD_NAME' | translate" />
+  </div>
+  <ng-template pTemplate="footer">
+    <button pButton [label]="'CASHIER_POS.CANCEL' | translate" icon="pi pi-times" class="p-button-text" (click)="showHoldConfirmDialog = false"></button>
+    <button pButton [label]="'CASHIER_POS.HOLD' | translate" icon="pi pi-pause" class="p-button-warning" (click)="confirmHoldOrder()"></button>
+  </ng-template>
+</p-dialog>
+
+<!-- Held Orders List Dialog -->
+<p-dialog [(visible)]="showHeldOrdersDialog" [modal]="true" [header]="'CASHIER_POS.HELD_ORDERS' | translate" [style]="{width: '600px'}">
+  <div class="held-orders-alert" style="background: rgba(17, 116, 207, 0.08); border: 1px solid rgba(17, 116, 207, 0.25); border-radius: 6px; padding: 0.6rem 1rem; margin: 0 0.5rem 1rem; display: flex; align-items: center; gap: 0.5rem; color: #1174cf; font-size: 0.85rem; line-height: 1.4; font-family: 'Cairo', sans-serif;">
+    <i class="pi pi-database"></i>
+    <span><strong>تنبيه الطلبات المعلقة:</strong> يتم حفظ وتحميل الطلبات المعلقة من الخادم حسب المتجر والجلسة ونقطة البيع الحالية.</span>
+  </div>
+  <div class="held-orders-alert" style="display: none; background: rgba(243, 146, 55, 0.1); border: 1px solid rgba(243, 146, 55, 0.3); border-radius: 6px; padding: 0.6rem 1rem; margin: 0 0.5rem 1rem; align-items: center; gap: 0.5rem; color: #c46d11; font-size: 0.85rem; line-height: 1.4; font-family: 'Cairo', sans-serif;">
+    <i class="pi pi-exclamation-triangle"></i>
+    <span><strong>تنبيه تجميد الطلبات:</strong> الطلبات المجمدة/المعلقة تُحفظ مؤقتاً في ذاكرة المتصفح النشطة فقط وتضيع تلقائياً عند تحديث أو إغلاق الصفحة.</span>
+  </div>
+
+  <div *ngIf="heldOrders().length === 0" class="text-center p-3">
+    {{ 'CASHIER_POS.NO_HELD_ORDERS' | translate }}
+  </div>
+  <p-table [value]="heldOrders()" [loading]="heldOrdersLoading()" *ngIf="heldOrders().length > 0">
+    <ng-template pTemplate="header">
+      <tr>
+        <th>{{ 'CASHIER_POS.NAME' | translate }}</th>
+        <th>{{ 'CASHIER_POS.TIME' | translate }}</th>
+        <th>{{ 'CASHIER_POS.ITEMS' | translate }}</th>
+        <th>{{ 'CASHIER_POS.ACTIONS' | translate }}</th>
+      </tr>
+    </ng-template>
+    <ng-template pTemplate="body" let-order>
+      <tr>
+        <td>{{ order.name }}</td>
+        <td>{{ order.time | customDate: 'shortTime' }}</td>
+        <td>{{ order.cart.length }} {{ 'CASHIER_POS.ITEM_COUNT' | translate }}</td>
+        <td>
+          <button pButton icon="pi pi-refresh" class="p-button-rounded p-button-success p-button-text" [title]="'CASHIER_POS.RESTORE' | translate" (click)="restoreHeldOrder(order.id)"></button>
+          <button pButton icon="pi pi-trash" class="p-button-rounded p-button-danger p-button-text" [title]="'CASHIER_POS.DELETE' | translate" (click)="confirmDeleteHeldOrder(order.id)"></button>
+        </td>
+      </tr>
+    </ng-template>
+  </p-table>
+</p-dialog>
+
+<!-- Edit Active Session Stores Dialog in POS -->
+<p-dialog [(visible)]="showEditStoresDialog" [modal]="true" [draggable]="false" [resizable]="false"
+  [style]="{width: '520px', maxWidth: '95vw'}" header="تعديل مخازن الوردية الحالية" appendTo="body">
+  <div class="p-3">
+    <div style="background: rgba(17, 116, 207, 0.08); border: 1px solid rgba(17, 116, 207, 0.25); border-radius: 8px; padding: 0.75rem 1rem; margin-bottom: 1rem; display: flex; align-items: center; gap: 0.5rem; color: #1174cf; font-size: 0.85rem; line-height: 1.4;">
+      <i class="pi pi-info-circle" style="font-size: 1.1rem;"></i>
+      <span>يمكنك إضافة أو حذف مخازن من الوردية الحالية وسيقوم النظام بتحديث الأصناف المتاحة فورياً.</span>
+    </div>
+
+    <!-- Current Selected Stores Preview (Horizontal) -->
+    <div class="current-stores-preview" *ngIf="getSelectedStoreNames().length > 0"
+      style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 0.65rem 0.85rem; margin-bottom: 1rem;">
+      <span style="font-size: 0.8rem; font-weight: 700; color: #475569; display: block; margin-bottom: 0.4rem;">المخازن المحددة حالياً:</span>
+      <div style="display: flex; flex-wrap: wrap; gap: 0.4rem; align-items: center;">
+        <span *ngFor="let name of getSelectedStoreNames()"
+          style="background: #e0f2fe; color: #0369a1; border: 1px solid #bae6fd; font-size: 0.83rem; font-weight: 700; padding: 0.25rem 0.65rem; border-radius: 6px; display: inline-flex; align-items: center; gap: 0.35rem;">
+          <i class="pi pi-building" style="font-size: 0.85rem;"></i>
+          {{ name }}
+        </span>
+      </div>
+    </div>
+
+    <div class="field" style="margin-bottom: 1rem;">
+      <label style="font-weight: 700; display: block; margin-bottom: 0.5rem;">المخازن المربوطة بالوردية <span class="text-danger">*</span></label>
+      <p-multiSelect
+        [options]="allStoreOptions"
+        [(ngModel)]="editSessionStoreIds"
+        defaultLabel="يرجى اختيار مخزن أو أكثر"
+        [selectedItemsLabel]="'{0} مخازن محددة'"
+        [maxSelectedLabels]="2"
+        optionLabel="label"
+        optionValue="value"
+        appendTo="body"
+        [filter]="true"
+        filterBy="label"
+        filterPlaceholder="بحث باسم المخزن..."
+        scrollHeight="200px"
+        [style]="{ width: '100%' }"
+        styleClass="w-full">
+      </p-multiSelect>
+    </div>
+  </div>
+  <ng-template pTemplate="footer">
+    <button pButton type="button" label="إلغاء" icon="pi pi-times" class="p-button-text"
+      (click)="showEditStoresDialog = false"></button>
+    <button pButton type="button" label="حفظ وتحديث الأصناف" icon="pi pi-check" class="p-button-success"
+      (click)="saveEditedSessionStores()"></button>
+  </ng-template>
+</p-dialog>
+
+<!-- Product Location & Batch Details Dialog -->
+<p-dialog
+  [(visible)]="showProductDetailsDialog"
+  [modal]="true"
+  [draggable]="false"
+  [resizable]="false"
+  [style]="{ width: '560px', maxWidth: '95vw' }"
+  header="تفاصيل الصنف وموقع التخزين"
+  appendTo="body"
+  styleClass="product-details-dialog">
+  
+  <div class="product-details-modal-content p-2" *ngIf="selectedProductForDetails() as prod">
+    <!-- Header banner -->
+    <div class="prod-header-card d-flex align-items-center justify-content-between p-3 mb-3 rounded" style="background: linear-gradient(135deg, #f0fdf4 0%, #e0f2fe 100%); border: 1px solid #bae6fd;">
+      <div>
+        <h3 class="m-0 text-primary font-bold fs-5">{{ prod.nameAr || prod.nameEn }}</h3>
+        <small class="text-muted" *ngIf="prod.nameEn && prod.nameAr">{{ prod.nameEn }}</small>
+        <div class="mt-1 d-flex gap-2 align-items-center">
+          <span class="badge bg-secondary text-dark" *ngIf="prod.code">كود: {{ prod.code }}</span>
+          <span class="badge bg-info text-white" *ngIf="prod.barcode">باركود: {{ prod.barcode }}</span>
+        </div>
+      </div>
+      <div class="text-end">
+        <span class="fs-4 fw-bolder text-success">{{ getActivePrice(prod) | number:'1.2-2' }} <small>ر.س</small></span>
+        <small class="d-block text-muted">{{ prod.unitName || 'قطعة' }}</small>
+      </div>
+    </div>
+
+    <!-- Location & Batch Info Grid -->
+    <div class="row g-3 mb-3">
+      <!-- Shelf Location -->
+      <div class="col-6">
+        <div class="info-stat-card p-3 rounded" style="background: #f8fafc; border: 1px solid #e2e8f0;">
+          <div class="d-flex align-items-center gap-2 mb-1 text-primary">
+            <i class="pi pi-inbox fs-5"></i>
+            <span class="fw-bold fs-7">رقم الرف (Shelf)</span>
+          </div>
+          <div class="fs-5 fw-bolder text-dark">
+            {{ prod.shelfNumber || 'غير محدد' }}
+          </div>
+        </div>
+      </div>
+
+      <!-- Row Location -->
+      <div class="col-6">
+        <div class="info-stat-card p-3 rounded" style="background: #f8fafc; border: 1px solid #e2e8f0;">
+          <div class="d-flex align-items-center gap-2 mb-1 text-primary">
+            <i class="pi pi-align-justify fs-5"></i>
+            <span class="fw-bold fs-7">رقم الصف / العمود (Row)</span>
+          </div>
+          <div class="fs-5 fw-bolder text-dark">
+            {{ prod.rowNumber || 'غير محدد' }}
+          </div>
+        </div>
+      </div>
+
+      <!-- Batch No -->
+      <div class="col-6">
+        <div class="info-stat-card p-3 rounded" style="background: #f8fafc; border: 1px solid #e2e8f0;">
+          <div class="d-flex align-items-center gap-2 mb-1 text-warning">
+            <i class="pi pi-box fs-5"></i>
+            <span class="fw-bold fs-7">رقم التشغيلة (Batch No)</span>
+          </div>
+          <div class="fs-6 fw-bold text-dark font-monospace">
+            {{ prod.batchNo || 'غير محدد' }}
+          </div>
+        </div>
+      </div>
+
+      <!-- Expiry Date -->
+      <div class="col-6">
+        <div class="info-stat-card p-3 rounded" style="background: #f8fafc; border: 1px solid #e2e8f0;">
+          <div class="d-flex align-items-center gap-2 mb-1 text-danger">
+            <i class="pi pi-calendar fs-5"></i>
+            <span class="fw-bold fs-7">تاريخ الصلاحية (Expiry)</span>
+          </div>
+          <div class="fs-6 fw-bold text-dark">
+            <span *ngIf="prod.expiryDate">{{ prod.expiryDate | customDate: 'yyyy-MM-dd' }}</span>
+            <span *ngIf="!prod.expiryDate" class="text-muted">غير محدد</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Stock & Prices Overview -->
+    <div class="p-3 rounded mb-2" style="background: #f1f5f9; border: 1px solid #cbd5e1;">
+      <div class="d-flex justify-content-between align-items-center mb-2">
+        <span class="text-muted fw-bold">الكمية المتاحة بالمخزن:</span>
+        <span class="badge" [ngClass]="prod.availableQuantity > 0 ? 'bg-success text-white' : 'bg-danger text-white'" style="font-size: 0.9rem;">
+          {{ prod.availableQuantity }} {{ prod.unitName || 'قطعة' }}
+        </span>
+      </div>
+      <div class="d-flex justify-content-between align-items-center pt-2 border-top">
+        <span class="text-muted">سعر القطاعي: <strong>{{ (prod.retailPrice || prod.sellingPrice) | number:'1.2-2' }} ر.س</strong></span>
+        <span class="text-muted" *ngIf="prod.wholesalePrice">سعر الجملة: <strong>{{ prod.wholesalePrice | number:'1.2-2' }} ر.س</strong></span>
+      </div>
+    </div>
+  </div>
+
+  <ng-template pTemplate="footer">
+    <button pButton type="button" label="إغلاق" icon="pi pi-times" class="p-button-text" (click)="closeProductDetails()"></button>
+    <button pButton type="button" label="إضافة إلى السلة" icon="pi pi-shopping-cart" class="p-button-primary"
+      [disabled]="!selectedProductForDetails() || (selectedProductForDetails()?.availableQuantity ?? 0) <= 0"
+      (click)="addToCart(selectedProductForDetails()!); closeProductDetails()"></button>
+  </ng-template>
+</p-dialog>

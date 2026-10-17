@@ -1,0 +1,71 @@
+<div class="content">
+  <div class="container">
+    <div class="row align-items-stretch justify-content-center no-gutters">
+      <div class="col-md-12">
+        <div class="form h-100 contact-wrap p-5">
+          <h3 class="text-center" *ngIf="!companyId">Add Company Profile</h3>
+          <h3 class="text-center" *ngIf="companyId">Edit Company Profile</h3>
+
+          <form [formGroup]="companyForm" (ngSubmit)="onSubmit()" class="mb-5">
+
+        
+
+            <!-- Form Fields -->
+            <div class="row">
+              <div class="col-md-6 form-group mb-3">
+                <label for="arabicName">Arabic Name:</label>
+                <input class="form-control" formControlName="arabicName" id="arabicName" placeholder="Arabic Name">
+              </div>
+              <div class="col-md-6 form-group mb-3">
+                <label for="englishName">English Name:</label>
+                <input class="form-control" formControlName="englishName" id="englishName" placeholder="English Name">
+              </div>
+              <div class="col-md-6 form-group mb-3">
+                <label for="mobile">Mobile:</label>
+                <input class="form-control" formControlName="mobile" id="mobile" placeholder="Mobile">
+              </div>
+              <div class="col-md-6 form-group mb-3">
+                <label for="email">Email:</label>
+                <input class="form-control" formControlName="email" id="email" placeholder="Email">
+              </div>
+              <div class="col-md-6 form-group mb-3">
+                <label for="address">Address:</label>
+                <input class="form-control" formControlName="address" id="address" placeholder="Address">
+              </div>
+              <div class="col-md-6 form-group mb-3">
+                <label for="city">City:</label>
+                <input class="form-control" formControlName="city" id="city" placeholder="City">
+              </div>
+              <div class="col-md-6 form-group mb-3">
+                <label for="nationality">Nationality:</label>
+                <input class="form-control" formControlName="nationalty" id="nationalty" placeholder="Nationality">
+              </div>
+              <div class="col-md-6 form-group mb-3">
+                <label for="currency">Currency:</label>
+                <input class="form-control" formControlName="currency" id="currency" placeholder="Currency">
+              </div>
+              <div class="col-md-6 form-group mb-3">
+                <label for="vatNumber">VAT Number:</label>
+                <input class="form-control" formControlName="vatNumber" id="vatNumber" placeholder="VAT Number">
+              </div>
+              <div class="col-md-6 form-group mb-3">
+                <label for="logo">Logo URL:</label>
+                <input class="form-control" formControlName="logo" id="logo" placeholder="Logo URL">
+              </div>
+              
+            </div>
+                <!-- Submit Button -->
+                <div class="row justify-content-center mb-3">
+                  <div class="col-md-3 text-center">
+                    <button class="btn btn-primary" type="submit" [disabled]="companyForm.invalid">
+                      {{ companyId ? 'Update' : 'Add' }} Profile
+                    </button>
+                  </div>
+                </div>
+
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

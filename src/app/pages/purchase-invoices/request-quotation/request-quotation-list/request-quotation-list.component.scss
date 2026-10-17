@@ -1,0 +1,560 @@
+td,
+th {
+  padding: 0.5rem;
+}
+
+/* Fix overlay panel and dropdown positioning issues */
+.container-fluid {
+  overflow: visible !important;
+}
+
+/* Ensure table allows overlays to show - BUT maintain horizontal scroll */
+::ng-deep .p-datatable {
+  .p-datatable-wrapper {
+    overflow-y: visible !important;
+    overflow-x: auto; /* Keep horizontal scroll */
+  }
+  
+  .p-datatable-scrollable-wrapper {
+    overflow-y: visible !important;
+    overflow-x: auto; /* Keep horizontal scroll */
+  }
+  
+  .p-datatable-scrollable-body {
+    overflow-y: visible !important;
+    overflow-x: auto; /* Keep horizontal scroll */
+  }
+}
+
+/* Boost z-index for all overlays */
+::ng-deep {
+  .p-overlaypanel {
+    z-index: 1100 !important;
+    /* Ensure overlay stays within viewport and above taskbar */
+    max-height: calc(100vh - 100px) !important;
+  }
+  
+  .p-overlaypanel-content {
+    overflow-y: visible !important;
+    overflow-x: visible !important;
+  }
+  
+  .p-paginator .p-dropdown-panel {
+    z-index: 1100 !important;
+  }
+}
+
+// :host {
+//   --table-head-bg: #46bbeb;
+//   --table-header-text: #ffffff;
+// }
+
+/* Same style as purchase-invoice-list: fixed yellow header without theme */
+::ng-deep .p-datatable .p-datatable-thead > tr > th {
+  background-color: #fff5cc !important;
+  color: #111827 !important; /* Suitable text color on yellow */
+}
+::ng-deep .p-datatable .p-datatable-thead > tr > th:hover,
+::ng-deep .p-datatable .p-datatable-thead > tr > th:focus {
+  background-color: #fff5cc !important;
+  color: #111827 !important;
+}
+
+/* Dropdown z-index fix - must be higher than modal */
+::ng-deep .dropdown-panel-high-z {
+  z-index: 9999 !important;
+}
+
+/* Force PrimeNG dropdown overlay to appear above modal */
+::ng-deep .p-dropdown-panel {
+  z-index: 9999 !important;
+}
+
+/* Modal Styling */
+.rq-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(21, 25, 32, 0.55);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1050;
+}
+
+.rq-modal {
+  width: min(600px, 92vw);
+  background: #fff;
+  border-radius: 10px;
+  overflow: hidden;
+  box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+  display: flex;
+  flex-direction: column;
+}
+
+.rq-modal-danger {
+  border-top: 4px solid #dc3545;
+}
+
+.rq-modal-header,
+.rq-modal-footer {
+  padding: 12px 16px;
+  background: #f8f9fa;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.rq-modal-body {
+  padding: 16px;
+}
+
+.btn-close {
+  border: none;
+  background: transparent;
+  opacity: .6;
+}
+
+.btn-close:hover { opacity: 1; }
+
+/* PrimeNG Table Styling - Match quotation-list */
+::ng-deep .p-datatable {
+  border: 1px solid #e5e7eb !important;
+  border-radius: 8px !important;
+  overflow: hidden !important;
+  width: 100% !important;
+  position: relative !important;
+}
+
+::ng-deep .p-datatable-wrapper {
+  overflow-x: auto !important;
+  overflow-y: hidden !important;
+  position: relative !important;
+}
+
+::ng-deep .p-datatable.p-datatable-scrollable .p-datatable-wrapper {
+  min-width: 100% !important;
+}
+
+::ng-deep .p-datatable.p-datatable-scrollable .p-datatable-thead > tr > th,
+::ng-deep .p-datatable.p-datatable-scrollable .p-datatable-tbody > tr > td {
+  white-space: nowrap !important;
+}
+
+::ng-deep .p-datatable.p-datatable-gridlines {
+  .p-datatable-thead > tr > th {
+    border: 1px solid #e5e7eb !important;
+    border-bottom: 2px solid #d1d5db !important;
+  }
+
+  .p-datatable-tbody > tr > td {
+    border: 1px solid #e5e7eb !important;
+  }
+
+  .p-datatable-tbody > tr:last-child > td {
+    border-bottom: 1px solid #e5e7eb !important;
+  }
+}
+
+/* Theme-aware table header colors - COMMENTED OUT to use fixed yellow color above */
+// ::ng-deep .p-datatable .p-datatable-thead > tr > th {
+//   background: var(--table-head-bg) !important;
+//   color: var(--table-header-text) !important;
+// }
+
+/* RTL Support */
+body {
+  text-align: right;
+  direction: rtl;
+}
+
+table {
+  direction: rtl;
+  text-align: right;
+}
+
+p,
+div {
+  direction: rtl;
+  text-align: right;
+}
+
+.p-column-resizer {
+  border-left: 3.5px solid #d9d9d9 !important;
+  opacity: 0.5 !important;
+}
+
+:dir(rtl) .p-column-resizer {
+  border-left: 3.5px solid #d9d9d9 !important;
+  opacity: 0.5 !important;
+  right : unset !important; left : 0 !important;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .flex.rtl\\:flex-row-reverse {
+    flex-direction: column !important;
+    gap: 0.75rem !important;
+  }
+  
+  .flex.gap-2 {
+    flex-direction: column !important;
+    width: 100% !important;
+    
+    p-button {
+      width: 100% !important;
+      
+      ::ng-deep .p-button {
+        width: 100% !important;
+      }
+    }
+  }
+  
+  .p-input-icon-left {
+    width: 100% !important;
+    
+    input {
+      width: 100% !important;
+    }
+  }
+  
+  ::ng-deep .p-datatable {
+    .p-datatable-thead > tr > th,
+    .p-datatable-tbody > tr > td {
+      padding: 0.5rem 0.25rem !important;
+      font-size: 0.7rem !important;
+      min-width: 100px !important;
+      white-space: nowrap !important;
+    }
+  }
+}
+
+/* =========================
+   New centered pagination (Total + pages + page/rows) all centered
+   ========================= */
+::ng-deep .custom-paginator-table .p-paginator {
+  direction: rtl;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: .5rem;
+  padding: .5rem .75rem;
+  border-top: 1px solid #e5e7eb;
+  background: #fff;
+  flex-wrap: wrap;
+}
+
+/* "Total" */
+::ng-deep .custom-paginator-table .p-paginator .p-paginator-current {
+  color: #111827;
+  font-weight: 600;
+  white-space: nowrap;
+  margin: 0;
+}
+
+/* Pages */
+::ng-deep .custom-paginator-table .p-paginator .p-paginator-pages {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: .25rem;
+  direction: ltr;
+  margin: 0;
+}
+
+/* Page button */
+::ng-deep .custom-paginator-table .p-paginator .p-paginator-page {
+  min-width: 34px;
+  height: 34px;
+  border-radius: 8px;
+  border: 1px solid transparent;
+  color: #374151;
+}
+
+/* Hover */
+::ng-deep .custom-paginator-table .p-paginator .p-paginator-page:not(.p-highlight):hover {
+  background: #f3f4f6;
+  border-color: #e5e7eb;
+}
+
+/* Active */
+::ng-deep .custom-paginator-table .p-paginator .p-paginator-page.p-highlight {
+  background: #eaf2ff;
+  border-color: #93c5fd;
+  color: #1d4ed8;
+  font-weight: 600;
+}
+
+/* Prev/Next */
+::ng-deep .custom-paginator-table .p-paginator .p-paginator-prev,
+::ng-deep .custom-paginator-table .p-paginator .p-paginator-next {
+  width: 34px;
+  height: 34px;
+  border-radius: 8px;
+}
+
+::ng-deep .custom-paginator-table .p-paginator .p-paginator-prev:hover,
+::ng-deep .custom-paginator-table .p-paginator .p-paginator-next:hover {
+  background: #f3f4f6;
+}
+
+/* Rows per page (page/ + dropdown) */
+::ng-deep .custom-paginator-table .p-paginator .p-paginator-rpp-options {
+  display: inline-flex;
+  align-items: center;
+  gap: .35rem;
+  margin: 0;
+}
+
+/* page/ label */
+::ng-deep .custom-paginator-table .p-paginator .p-paginator-rpp-options::before {
+  content: "page /";
+  color: #6b7280;
+  font-size: 14px;
+  white-space: nowrap;
+}
+
+/* Dropdown size */
+::ng-deep .custom-paginator-table .p-paginator .p-dropdown {
+  min-width: 80px;
+}
+
+/* Ellipsis */
+::ng-deep .custom-paginator-table .p-paginator .p-paginator-ellipsis {
+  color: #6b7280;
+  padding: 0 .25rem;
+}
+
+@media (max-width: 576px) {
+  ::ng-deep .p-datatable {
+    .p-datatable-thead > tr > th,
+    .p-datatable-tbody > tr > td {
+      padding: 0.375rem 0.125rem !important;
+      font-size: 0.65rem !important;
+      min-width: 80px !important;
+    }
+  }
+  
+  ::ng-deep .p-paginator {
+    flex-direction: row !important;
+    flex-wrap: wrap !important;
+    gap: 0.5rem !important;
+    padding: 0.5rem !important;
+    font-size: 0.75rem !important;
+    justify-content: center !important;
+    
+    .p-paginator-left-content,
+    .p-paginator-right-content {
+      width: auto !important;
+      justify-content: center !important;
+      font-size: 0.75rem !important;
+    }
+    
+    .p-paginator-pages {
+      display: flex !important;
+      flex-wrap: wrap !important;
+      justify-content: center !important;
+      gap: 0.25rem !important;
+    }
+    
+    .p-paginator-page,
+    .p-paginator-prev,
+    .p-paginator-next,
+    .p-paginator-first,
+    .p-paginator-last {
+      min-width: 2rem !important;
+      height: 2rem !important;
+      font-size: 0.75rem !important;
+    }
+    
+    .p-dropdown {
+      font-size: 0.75rem !important;
+      
+      .p-inputtext {
+        padding: 0.25rem 0.5rem !important;
+        font-size: 0.75rem !important;
+      }
+    }
+    
+    .p-paginator-rpp-options {
+      font-size: 0.75rem !important;
+    }
+  }
+}
+
+/* Force consistent table header colors across all themes - COMMENTED OUT to use fixed yellow color */
+// :host,
+// :host-context(.light-green-mode),
+// :host-context([data-bs-theme="light-green"]),
+// :host-context(body.light-green),
+// :host-context(.light-indigo-mode),
+// :host-context([data-bs-theme="light-indigo"]),
+// :host-context(body.light-indigo),
+// :host-context(.light-darkblue-mode),
+// :host-context([data-bs-theme="light-darkblue"]),
+// :host-context(body.light-darkblue) {
+//   --table-head-bg: #46bbeb !important;
+//   --table-header-text: #ffffff !important;
+// }
+
+/* Share Dialog Styles */
+::ng-deep .share-dialog {
+  .share-header {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 0.5rem 0;
+
+    .icon-chip {
+      width: 48px;
+      height: 48px;
+      border-radius: 12px;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-size: 1.5rem;
+      flex-shrink: 0;
+    }
+
+    .title {
+      flex: 1;
+
+      .title-main {
+        font-size: 1.1rem;
+        font-weight: 600;
+        color: #1f2937;
+        margin-bottom: 0.25rem;
+      }
+
+      .title-sub {
+        font-size: 0.875rem;
+        color: #6b7280;
+      }
+    }
+  }
+
+  .share-tab {
+    padding: 1.5rem 0 0.5rem;
+
+    .media {
+      display: flex;
+      align-items: flex-start;
+      gap: 1rem;
+      margin-bottom: 1.5rem;
+      padding: 1rem;
+      background: #f9fafb;
+      border-radius: 8px;
+
+      .chip {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.25rem;
+        flex-shrink: 0;
+      }
+
+      .chip-whatsapp {
+        background: #25d366;
+        color: white;
+      }
+
+      .media-body {
+        flex: 1;
+
+        .media-title {
+          font-weight: 600;
+          color: #1f2937;
+          margin-bottom: 0.25rem;
+        }
+
+        .media-sub {
+          font-size: 0.875rem;
+          color: #6b7280;
+          line-height: 1.5;
+        }
+      }
+    }
+
+    .form-row {
+      margin-bottom: 1.5rem;
+
+      label {
+        display: block;
+        font-weight: 500;
+        color: #374151;
+        margin-bottom: 0.5rem;
+        font-size: 0.875rem;
+      }
+
+      input {
+        width: 100%;
+        padding: 0.625rem 0.875rem;
+        border: 1px solid #d1d5db;
+        border-radius: 6px;
+        font-size: 0.9375rem;
+        transition: all 0.2s;
+
+        &:focus {
+          outline: none;
+          border-color: #667eea;
+          box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+      }
+
+      .err {
+        display: block;
+        color: #ef4444;
+        font-size: 0.8125rem;
+        margin-top: 0.375rem;
+      }
+    }
+
+    .actions {
+      display: flex;
+      gap: 0.75rem;
+      justify-content: flex-end;
+      padding-top: 0.5rem;
+
+      button {
+        min-width: 100px;
+      }
+    }
+  }
+}
+
+::ng-deep .p-tabview {
+  .p-tabview-nav {
+    background: transparent;
+    border-bottom: 2px solid #e5e7eb;
+
+    li {
+      .p-tabview-nav-link {
+        padding: 0.875rem 1.25rem;
+        font-weight: 500;
+        color: #6b7280;
+        border: none;
+        background: transparent;
+        transition: all 0.2s;
+
+        &:hover {
+          background: #f9fafb;
+          color: #374151;
+        }
+      }
+
+      &.p-highlight .p-tabview-nav-link {
+        color: #667eea;
+        border-bottom: 2px solid #667eea;
+      }
+    }
+  }
+
+  .p-tabview-panels {
+    padding: 0;
+    background: transparent;
+  }
+}

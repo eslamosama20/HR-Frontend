@@ -1,0 +1,255 @@
+<div class="content">
+  <div class="container-fluid ">
+    <div class="row align-items-stretch justify-content-center no-gutters">
+      <div class="col-md-12">
+        <div class="fixed inset-0 bg-gray-500 bg-opacity-75 flex items-center justify-center z-50" *ngIf="loading">
+          <i class="pi pi-spin pi-spinner" style="font-size: 2rem"></i>
+        </div>
+        <div *ngIf="!loading" class="form h-100 contact-wrap p-5">
+          <div class="mb-3">
+            <app-back-button></app-back-button>
+          </div>
+
+          <h3 class="text-center">{{"RETURN.PURCHASE_RETURN_DETAILS"|translate}}</h3>
+          <form class="mb-5" method="post" [formGroup]="returnForm">
+            <!-- Form Fields -->
+            <div class="row">
+              <!-- Supplier Dropdown -->
+              <div class="form-group col-md-6">
+                <label>{{ "RETURN.SELECTSUPPLIER" | translate }}</label>
+                <p-dropdown [options]="suppliers" formControlName="supplierDetailsId" placeholder="" optionLabel="label"
+                  optionValue="value" [filter]="true" styleClass="w-full">
+                </p-dropdown>
+                <div *ngIf="returnForm.get('supplierDetailsId')?.invalid && (returnForm.get('supplierDetailsId')?.touched || returnForm.get('supplierDetailsId')?.dirty)" class="text-danger small mt-1">
+                  <small *ngIf="returnForm.get('supplierDetailsId')?.errors?.['required']">{{'VALIDATION.REQUIRED' | translate}}</small>
+                </div>
+              </div>
+
+                <!-- Description Field -->
+                <div class="col-md-6 form-group mb-3">
+                  <label for="description">{{"RETURN.DESCRIPTION"|translate}}:</label>
+                  <input class="form-control" formControlName="description" name="description" id="description"
+                    [placeholder]="'RETURN.DESCRIPTION' | translate" maxlength="200" />
+                  <div class="d-flex justify-content-between align-items-center mt-1">
+                    <div class="text-muted small">
+                      <span [class.text-warning]="(returnForm.get('description')?.value?.length || 0) >= 100 && (returnForm.get('description')?.value?.length || 0) < 200"
+                            [class.text-danger]="(returnForm.get('description')?.value?.length || 0) === 200">
+                        {{returnForm.get('description')?.value?.length || 0}}
+                        <span *ngIf="(returnForm.get('description')?.value?.length || 0) >= 100">/200</span>
+                      </span>
+                    </div>
+                    <!-- Warning for 100-199 characters -->
+                    <small *ngIf="(returnForm.get('description')?.value?.length || 0) >= 100 && (returnForm.get('description')?.value?.length || 0) < 200" 
+                           class="text-warning">
+                      <i class="pi pi-exclamation-triangle"></i> 
+                      {{ activeLanguage === 'ar' ? 'النص طويل' : 'Text is long' }}
+                    </small>
+                    <!-- Message for exactly 200 characters -->
+                    <small *ngIf="(returnForm.get('description')?.value?.length || 0) === 200" 
+                           class="text-danger">
+                      <i class="pi pi-exclamation-triangle"></i> 
+                      {{ activeLanguage === 'ar' ? 'لقد وصلت الى الحد الاقصى' : 'You have reached the maximum limit' }}
+                    </small>
+                  </div>
+                  <div
+                    *ngIf="returnForm.get('description')?.invalid && (returnForm.get('description')?.touched || returnForm.get('description')?.dirty)"
+                    class="text-danger">
+                    <small *ngIf="returnForm.get('description')?.errors?.required">{{'VALIDATION.REQUIRED' |
+                      translate}}</small>
+                    <small *ngIf="returnForm.get('description')?.errors?.maxlength">{{'VALIDATION.MAX_LENGTH' |
+                      translate}} 200 </small>
+                  </div>
+                </div>
+
+              <!-- Store Dropdown -->
+              <div class="col-md-6 form-group mb-3">
+                <label>{{"INVOICE.STORE_DETAILS"|translate}}:</label>
+                <p-dropdown [options]="stores" formControlName="storeDetailsId" placeholder="Select a Store" optionLabel="label" optionValue="value"
+                  [filter]="true" styleClass="w-full" (onChange)="loadDefaultStoreDetails($event)">
+                </p-dropdown>
+                <div *ngIf="returnForm.get('storeDetailsId')?.invalid && (returnForm.get('storeDetailsId')?.touched || returnForm.get('storeDetailsId')?.dirty)" class="text-danger small mt-1">
+                  <small *ngIf="returnForm.get('storeDetailsId')?.errors?.['required']">{{'VALIDATION.REQUIRED' | translate}}</small>
+                </div>
+              </div>
+
+              <!-- Issue Date -->
+              <div class="col-md-6 form-group mb-3">
+                <label>{{"RETURN.ISSUE_DATE"|translate}}:</label>
+                <p-calendar [showIcon]="true" [iconDisplay]="'input'" [dateFormat]="'dd/mm/yy'" appendTo="body"
+                  styleClass="w-full" formControlName="issueDate" [showButtonBar]="true" variant="filled">
+                  <ng-template pTemplate="inputicon">
+                    <i class="pi pi-calendar "></i>
+                  </ng-template>
+                </p-calendar>
+                <div *ngIf="returnForm.get('issueDate')?.invalid && (returnForm.get('issueDate')?.touched || returnForm.get('issueDate')?.dirty)" class="text-danger small mt-1">
+                  <small *ngIf="returnForm.get('issueDate')?.errors?.['required']">{{'VALIDATION.REQUIRED' | translate}}</small>
+                </div>
+              </div>
+              <div class="w-[40%]">
+                <label for="purchaseInvoiceId">الفاتورة</label>
+                <p-dropdown [options]="purchaseInvoices" formControlName="purchaseInvoiceId" placeholder="اختر الفاتورة"
+                  optionLabel="label" optionValue="value" [filter]="true" styleClass="w-full">
+                </p-dropdown>
+                <div
+                  *ngIf="returnForm.get('purchaseInvoiceId')?.invalid && (returnForm.get('purchaseInvoiceId')?.touched || returnForm.get('purchaseInvoiceId')?.dirty)"
+                  class="text-danger">
+                  <small *ngIf="returnForm.get('purchaseInvoiceId')?.errors?.required">{{'VALIDATION.REQUIRED' |
+                    translate}}</small>
+                </div>
+              </div>
+            </div>
+
+            <!-- Items Table -->
+            <div formArrayName="purchaseReturnItems">
+              <h5 class="text-dark">{{"INVOICE.ITEMSLIST" | translate}}</h5>
+
+              <!-- Add Item Button -->
+              <div class="text-end mb-3">
+                <button class="btn btn-success rounded-pill shadow-sm px-4" type="button" (click)="addItem()">
+                  <i class="fas fa-plus-circle me-2"></i>{{"INVOICE.ADDITEM" | translate}}
+                </button>
+              </div>
+              <table class="table table-bordered">
+                <thead>
+                  <tr>
+                    <th class="w-10"></th>
+                    <th class="w-52">{{"RETURN.NAME"|translate}}</th>
+                    <th class="w-56">{{"REPORT.SELECTSTORE"|translate}}</th>
+                    <th class="w-32">{{"RETURN.UNIT"|translate}}</th>
+                    <th class="w-22">{{"RETURN.QUANTITY"|translate}}</th>
+                    <th class="w-22">{{"RETURN.AVAILABLE_QUANTITY"|translate}}</th>
+                    <th class="w-22">{{"RETURN.PRICE"|translate}}</th>
+                    <th class="w-32">{{"RETURN.NETPRICE"|translate}}</th>
+                    <th class="w-32">{{"RETURN.TOTAL"|translate}}</th>
+                    <th></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr *ngFor="let item of purchaseReturnItems.controls; let i = index" [formGroupName]="i">
+                    <td>{{ i + 1}}</td>
+                    <td>
+                      <p-dropdown [options]="mainPurchaseArray" formControlName="mainPurchaseClassId"
+                        (onChange)="onPurchaseClick($event, item); updateAvailableQuantity(item, i)" optionLabel="arabicName" optionValue="id"
+                        [filter]="true" styleClass="w-full">
+                      </p-dropdown>
+                    </td>
+                    <td>
+                      <p-dropdown [options]="stores" formControlName="storeDetailsId" placeholder="Select a Store"
+                        optionLabel="label" optionValue="value" [filter]="true" styleClass="w-full"
+                        (onChange)="onStoreChange($event, i)">
+                      </p-dropdown>
+                    </td>
+                    <td class="font-bold text-lg">{{ item.get('unit').value }}</td>
+                    <td>
+                      <input class="form-control" [id]="'quantity' + i" type="number" formControlName="quantity" 
+                             [class.is-invalid]="isQuantityExceeded(item)"
+                             (input)="onQuantityChange(item, i)">
+                      <div *ngIf="item.get('quantity')?.invalid && (item.get('quantity')?.touched || item.get('quantity')?.dirty)" class="text-danger small mt-1">
+                        <div *ngIf="item.get('quantity')?.errors?.['required']" class="validation-error">
+                          <small>{{'VALIDATION.REQUIRED' | translate}}</small>
+                        </div>
+                        <div *ngIf="item.get('quantity')?.errors?.['min']" class="validation-error">
+                          <small>{{'VALIDATION.INVALID_VALUE' | translate}}</small>
+                        </div>
+                        <div *ngIf="item.get('quantity')?.errors?.['exceedsAvailable']" class="validation-error">
+                          <small>
+                            <i class="pi pi-exclamation-triangle me-1"></i>
+                            {{'VALIDATION.QUANTITY_EXCEEDS_AVAILABLE' | translate}} 
+                            <strong>({{getAvailableQuantitySync(item)}})</strong>
+                          </small>
+                        </div>
+                      </div>
+                    </td>
+                    <td>
+                      <input class="form-control" [id]="'availableQuantity' + i" type="number" 
+                             [value]="getAvailableQuantitySync(item)" readonly>
+                    </td>
+                    <td>
+                      <input class="form-control" [id]="'price' + i" type="number" formControlName="price">
+                      <div *ngIf="item.get('price')?.invalid && (item.get('price')?.touched || item.get('price')?.dirty)" class="text-danger small mt-1">
+                        <small *ngIf="item.get('price')?.errors?.['required']">{{'VALIDATION.REQUIRED' | translate}}</small>
+                        <small *ngIf="item.get('price')?.errors?.['min']">{{'VALIDATION.INVALID_VALUE' | translate}}</small>
+                      </div>
+                    </td>
+                    <td>
+                      <input class="form-control" [id]="'netPriceItem' + i" type="number" formControlName="netPrice"
+                        readonly>
+                    </td>
+                    <td>
+                      <input class="form-control" [id]="'totalPriceItem' + i" type="number" formControlName="totalPrice"
+                        readonly>
+                    </td>
+                    <td>
+                      <button type="button" class="btn btn-danger btn-sm remove-btn" (click)="removeItem(i)">
+                        <i class="fas fa-trash-alt"></i>
+                      </button>
+                    </td>
+                  </tr>
+
+                  <tr class="bg-primary text-white"
+                    style="cursor: pointer; box-shadow: 0px 2px 5px rgba(0, 0, 0, 0.1);">
+                    <td colspan="6" class="text-right font-weight-bold"
+                      style="font-size: 1.2rem; padding-right: 1.5rem;">
+                      {{ "FINANCE.TOTALS" | translate }}
+                    </td>
+                    <td class="w-32" style="font-size: 1.2rem; font-weight: bold;">
+                      {{ getTotalPrice() }}
+                    </td>
+                    <td class="w-32" style="font-size: 1.2rem; font-weight: bold;">
+                      {{ getTotalPriceWithTax() }}
+                    </td>
+                    <td></td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+
+
+            <!-- Footer Buttons Section -->
+            <div class="flex justify-between gap-4 fixed bottom-0 bg-slate-100 p-4">
+              <div class="w-[15%] flex mt-4 items-center justify-center h-full">
+                <label>{{"INVOICE.APPLY_TAX"|translate}}</label>
+                <p-inputSwitch [ngModelOptions]="{standalone: true}" (onChange)="toggleApplyTax($event)"
+                  [(ngModel)]="taxApplied" />
+              </div>
+              <div class="w-[20%] form-group mb-3">
+                <label for="taxAmount">{{"RETURN.TAXAMOUNT"|translate}}</label>
+                <input class="form-control" [value]="getTaxAmount()" name="taxAmount" id="taxAmount" readonly>
+              </div>
+              <div class="w-[20%] form-group mb-3">
+                <label for="netPrice">{{"RETURN.NETPRICEWITHDISCOUNT"|translate}}</label>
+                <input class="form-control" [value]="getNetPrice()" name="netPrice" id="netPrice" readonly>
+              </div>
+              <div class="w-[20%] form-group mb-3">
+                <label for="totalPrice">{{"RETURN.TOTALWITHTAX"|translate}}</label>
+                <input class="form-control" [value]="getTotalPriceWithTax()" name="totalPrice" id="totalPrice" readonly>
+              </div>
+
+              <div class="w-[40%] flex justify-center items-center gap-4">
+                <div class="flex w-full items-center text-center">
+                  <button class="btn w-full h-[50px] p-3" style="background-color: #1E90FF; color: white;"
+                    (click)="submitForm($event, false)">{{"RETURN.SAVERETURN"|translate}}</button>
+                </div>
+                <div class="flex w-full items-center text-center" *ngIf="!isEditMode">
+                  <button class="btn w-full h-[50px] p-3" style="background-color: #28A745; color: white;"
+                    (click)="submitForm($event, true)">{{"DATA.SANE_AND_CONTINUE"|translate}}</button>
+                </div>
+                <div class="flex w-full items-center text-center">
+                  <button class="btn w-full h-[50px] p-3" style="background-color: #DC3545; color: white;"
+                    (click)="cancel()">{{"DATA.CANCEL"|translate}}</button>
+                </div>
+              </div>
+
+            </div>
+
+          </form>
+
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<p-confirmDialog></p-confirmDialog>
+<p-toast></p-toast>

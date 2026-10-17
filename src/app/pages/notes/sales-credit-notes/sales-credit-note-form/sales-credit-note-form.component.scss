@@ -1,0 +1,117 @@
+.table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.unit-column {
+  background-color: #ffffff; /* Match this to the other cells */
+}
+.table td, .table th {
+  padding: 2px;
+  margin: 0;
+  border: 1px solid #ddd;
+  text-align: center;
+  vertical-align: middle;
+}
+
+// .table td:nth-child(1),
+// .table td:nth-child(4),
+// .table td:nth-child(6),
+// .table td:nth-child(7),
+// .table td:nth-child(10),
+// .table td:nth-child(11)
+//   {
+//   width: 50px;
+// }
+// .table td:nth-child(13){
+//   width: 40px;
+// }
+// .table td:nth-child(2) {
+//   width: 150px;
+// }
+// .table td:nth-child(3) {
+//   width: 200px;
+// }
+// .table td:nth-child(5) {
+//   width: 100px;
+// }
+// .table td:nth-child(8),
+// .table td:nth-child(9),
+// .table td:nth-child(12)  {
+//   width: 150px;
+// }
+
+.remove-btn {
+  width: 100%;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: none;
+  background-color: transparent;
+}
+// .table td:nth-child(3) {
+//   width: 300px;
+// }
+// .table td:nth-child(8),
+// .table td:nth-child(9) {
+//   width: 100px;
+// }
+
+.remove-btn i {
+  font-size: 16px;
+  color: #d9534f;
+}
+// .modal-fullscreen {
+//   width: 100%;
+//   height: 100%;
+//   margin: 0;
+//   top: 0;
+//   left: 0;
+// }
+
+// .modal-fullscreen .modal-content {
+//   height: 100vh;
+//   overflow-y: auto;
+// }
+.modal-maximized {
+  width: 100vw;
+  height: 100vh;
+  top: 0;
+  left: 0;
+  margin: 0;
+  padding: 0;
+}
+
+.modal-minimized {
+  width: 650px; /* Adjust this width */
+  height: 600px; /* Adjust this height */
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  margin-top: -300px; /* Half of the height */
+  margin-left: -325px; /* Half of the width */
+  z-index: 1050; /* Make sure it’s above other content */
+}
+
+
+.table input{
+  padding: 3px !important;
+  padding-left: 6px !important;
+  padding-right: 6px !important;
+}
+
+
+
+
+/* Main content container - with subtle padding away from edges */
+.content-container {
+  min-height: 100vh;
+  padding: 0.5rem 0.75rem;
+  box-sizing: border-box;
+
+  @media (max-width: 768px) {
+    padding: 0.5rem 0.5rem;
+  }
+}

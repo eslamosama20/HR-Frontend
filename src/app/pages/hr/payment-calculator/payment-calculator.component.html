@@ -1,0 +1,333 @@
+<div class="flex flex-col gap-2">
+  <p-card header="حساب المرتبات" class="w-full" styleClass="w-full">
+    <div class="flex flex-col gap-8 w-full">
+      <div class="flex gap-4">
+        <p-calendar
+          [(ngModel)]="selectedDate"
+          (onSelect)="checkIfMonthFinished()"
+          view="month"
+          dateFormat="mm/yy"
+          [readonlyInput]="true"
+          showButtonBar="true"
+          class="max-w-full"
+          styleClass="reverse-calendar-header"
+          appendTo="body"
+          [maxDate]="maxSelectableDate"
+        />
+        <p-button
+          styleClass="rounded-md"
+          [label]="'تحديث'"
+          (onClick)="loadData()"
+        />
+        <p
+          *ngIf="monthNote"
+          class="text-center font-bold text-2xl w-full flex justify-center text-rose-700 underline">
+          {{monthNote}}
+        </p>
+      </div>
+    </div>
+  </p-card>
+  <p-card header="مصنع 1" class="w-full" styleClass="w-full">
+    <div class="flex flex-col gap-8 w-full">
+      <p-button
+        *ngIf="paymentResults.factory1Payments.length > 0 && !loading"
+        styleClass="rounded-md"
+        label="تحميل"
+        (onClick)="downloadAsExcel(1)"
+      />
+      <table class="w-full border border-gray-900 border-collapse">
+        <thead>
+        <tr>
+          <th rowspan="3" class="text-center border border-gray-900 w-8">م</th>
+          <th rowspan="3" class="text-center border border-gray-900">الاسم</th>
+          <th rowspan="3" class="text-center border border-gray-900">الوظيفة</th>
+          <th rowspan="3" class="text-center border border-gray-900">المرتب الأساسي</th>
+          <th rowspan="3" class="text-center border border-gray-900">التكميلي</th>
+          <th rowspan="3" class="text-center border border-gray-900">المكافآت</th>
+          <th rowspan="3" class="text-center border border-gray-900">الاجر المستحق</th>
+          <th colspan="9" class="text-center border border-gray-900">تفاصيل المستقطع</th>
+
+          <th rowspan="3" class="text-center border border-gray-900">اجمالي المستقطع</th>
+          <th rowspan="3" class="text-center border border-gray-900">صافي المرتب</th>
+        </tr>
+        <tr>
+          <th colspan="3" class="text-center border border-gray-900">غياب</th>
+          <th colspan="3" class="text-center border border-gray-900">التأخيرات</th>
+          <th rowspan="2" class="text-center border border-gray-900">السٌلف</th>
+          <th rowspan="2" class="text-center border border-gray-900">التأمينات</th>
+          <th rowspan="2" class="text-center border border-gray-900">الجزاء</th>
+        </tr>
+        <tr>
+          <th class="text-center border border-gray-900">عدد الأيام</th>
+          <th class="text-center border border-gray-900">اجر اليوم</th>
+          <th class="text-center border border-gray-900">الاجمالي</th>
+          <th class="text-center border border-gray-900">عدد ساعات التأخير</th>
+          <th class="text-center border border-gray-900">اجر الساعة</th>
+          <th class="text-center border border-gray-900">الاجمالي</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr *ngFor="let paymentResult of paymentResults.factory1Payments; let i = index">
+          <td class="text-center border border-gray-900">
+            {{i+1}}
+          </td>
+          <td class="text-center border border-gray-900">
+            {{paymentResult.employeeName}}
+          </td>
+          <td class="text-center border border-gray-900">
+            {{paymentResult.employeeTypeName}}
+          </td>
+          <td class="text-center border border-gray-900">
+            {{paymentResult.monthlyRate | number : "1.0-2"}}
+          </td>
+          <td class="text-center border border-gray-900">
+            {{paymentResult.supplementaryRate |  number : "1.0-2"}}
+          </td>
+          <td class="text-center border border-gray-900">
+            {{paymentResult.totalBonuses |  number : "1.0-2"}}
+          </td>
+          <td class="text-center border border-gray-900">
+            {{paymentResult.totalSalary |  number : "1.0-2"}}
+          </td>
+          <td class="text-center border border-gray-900">
+            {{paymentResult.absentDaysCount}}
+          </td>
+          <td class="text-center border border-gray-900">
+            {{paymentResult.dailyRate |  number : "1.0-2"}}
+          </td>
+          <td class="text-center border border-gray-900">
+            {{paymentResult.totalAbsentPenalty |  number : "1.0-2"}}
+          </td>
+          <td class="text-center border border-gray-900">
+            {{paymentResult.totalLateHours}}
+          </td>
+          <td class="text-center border border-gray-900">
+            {{paymentResult.hourlyRate |  number : "1.0-2"}}
+          </td>
+          <td class="text-center border border-gray-900">
+            {{paymentResult.totalLateEntryPenalty |  number : "1.0-2"}}
+          </td>
+          <td class="text-center border border-gray-900">
+            {{paymentResult.totalLoans |  number : "1.0-2"}}
+          </td>
+          <td class="text-center border border-gray-900">
+            {{paymentResult.insurance |  number : "1.0-2"}}
+          </td>
+          <td class="text-center border border-gray-900">
+            {{paymentResult.totalPenalties |  number : "1.0-2"}}
+          </td>
+          <td class="text-center border border-gray-900">
+            {{paymentResult.totalSubtractedAmount |  number : "1.0-2"}}
+          </td>
+          <td class="text-center border border-gray-900" colspan="2">
+            {{paymentResult.netPay |  number : "1.0-2"}}
+          </td>
+        </tbody>
+      </table>
+    </div>
+  </p-card>
+
+
+  <p-card header="مصنع 2" class="w-full" styleClass="w-full">
+    <div class="flex flex-col gap-8 w-full">
+      <p-button
+        *ngIf="paymentResults.factory2Payments.length > 0 && !loading"
+        styleClass="rounded-md"
+        label="تحميل"
+        (onClick)="downloadAsExcel(2)"
+      />
+      <table class="w-full border border-gray-900 border-collapse">
+        <thead>
+        <tr>
+          <th rowspan="3" class="text-center border border-gray-900 w-8">م</th>
+          <th rowspan="3" class="text-center border border-gray-900">الاسم</th>
+          <th rowspan="3" class="text-center border border-gray-900">الوظيفة</th>
+          <th rowspan="3" class="text-center border border-gray-900">المرتب الأساسي</th>
+          <th rowspan="3" class="text-center border border-gray-900">التكميلي</th>
+          <th rowspan="3" class="text-center border border-gray-900">المكافآت</th>
+          <th rowspan="3" class="text-center border border-gray-900">الاجر المستحق</th>
+          <th colspan="9" class="text-center border border-gray-900">تفاصيل المستقطع</th>
+
+          <th rowspan="3" class="text-center border border-gray-900">اجمالي المستقطع</th>
+          <th rowspan="3" class="text-center border border-gray-900">صافي المرتب</th>
+        </tr>
+        <tr>
+          <th colspan="3" class="text-center border border-gray-900">غياب</th>
+          <th colspan="3" class="text-center border border-gray-900">التأخيرات</th>
+          <th rowspan="2" class="text-center border border-gray-900">السٌلف</th>
+          <th rowspan="2" class="text-center border border-gray-900">التأمينات</th>
+          <th rowspan="2" class="text-center border border-gray-900">الجزاء</th>
+        </tr>
+        <tr>
+          <th class="text-center border border-gray-900">عدد الأيام</th>
+          <th class="text-center border border-gray-900">اجر اليوم</th>
+          <th class="text-center border border-gray-900">الاجمالي</th>
+          <th class="text-center border border-gray-900">عدد ساعات التأخير</th>
+          <th class="text-center border border-gray-900">اجر الساعة</th>
+          <th class="text-center border border-gray-900">الاجمالي</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr *ngFor="let paymentResult of paymentResults.factory2Payments; let i = index">
+          <td class="text-center border border-gray-900">
+            {{i+1}}
+          </td>
+          <td class="text-center border border-gray-900">
+            {{paymentResult.employeeName}}
+          </td>
+          <td class="text-center border border-gray-900">
+            {{paymentResult.employeeTypeName}}
+          </td>
+          <td class="text-center border border-gray-900">
+            {{paymentResult.monthlyRate | number : "1.0-2"}}
+          </td>
+          <td class="text-center border border-gray-900">
+            {{paymentResult.supplementaryRate |  number : "1.0-2"}}
+          </td>
+          <td class="text-center border border-gray-900">
+            {{paymentResult.totalBonuses |  number : "1.0-2"}}
+          </td>
+          <td class="text-center border border-gray-900">
+            {{paymentResult.totalSalary |  number : "1.0-2"}}
+          </td>
+          <td class="text-center border border-gray-900">
+            {{paymentResult.absentDaysCount}}
+          </td>
+          <td class="text-center border border-gray-900">
+            {{paymentResult.dailyRate |  number : "1.0-2"}}
+          </td>
+          <td class="text-center border border-gray-900">
+            {{paymentResult.totalAbsentPenalty |  number : "1.0-2"}}
+          </td>
+          <td class="text-center border border-gray-900">
+            {{paymentResult.totalLateHours}}
+          </td>
+          <td class="text-center border border-gray-900">
+            {{paymentResult.hourlyRate |  number : "1.0-2"}}
+          </td>
+          <td class="text-center border border-gray-900">
+            {{paymentResult.totalLateEntryPenalty |  number : "1.0-2"}}
+          </td>
+          <td class="text-center border border-gray-900">
+            {{paymentResult.totalLoans |  number : "1.0-2"}}
+          </td>
+          <td class="text-center border border-gray-900">
+            {{paymentResult.insurance |  number : "1.0-2"}}
+          </td>
+          <td class="text-center border border-gray-900">
+            {{paymentResult.totalPenalties |  number : "1.0-2"}}
+          </td>
+          <td class="text-center border border-gray-900">
+            {{paymentResult.totalSubtractedAmount |  number : "1.0-2"}}
+          </td>
+          <td class="text-center border border-gray-900" colspan="2">
+            {{paymentResult.netPay |  number : "1.0-2"}}
+          </td>
+        </tbody>
+      </table>
+    </div>
+  </p-card>
+
+  <p-card header="مصنع 3" class="w-full" styleClass="w-full">
+    <div class="flex flex-col gap-8 w-full">
+      <p-button
+        *ngIf="paymentResults.factory3Payments.length > 0 && !loading"
+        styleClass="rounded-md"
+        label="تحميل"
+        (onClick)="downloadAsExcel(3)"
+      />
+      <table class="w-full border border-gray-900 border-collapse">
+        <thead>
+        <tr>
+          <th rowspan="3" class="text-center border border-gray-900 w-8">م</th>
+          <th rowspan="3" class="text-center border border-gray-900">الاسم</th>
+          <th rowspan="3" class="text-center border border-gray-900">الوظيفة</th>
+          <th rowspan="3" class="text-center border border-gray-900">المرتب الأساسي</th>
+          <th rowspan="3" class="text-center border border-gray-900">التكميلي</th>
+          <th rowspan="3" class="text-center border border-gray-900">المكافآت</th>
+          <th rowspan="3" class="text-center border border-gray-900">الاجر المستحق</th>
+          <th colspan="9" class="text-center border border-gray-900">تفاصيل المستقطع</th>
+
+          <th rowspan="3" class="text-center border border-gray-900">اجمالي المستقطع</th>
+          <th rowspan="3" class="text-center border border-gray-900">صافي المرتب</th>
+        </tr>
+        <tr>
+          <th colspan="3" class="text-center border border-gray-900">غياب</th>
+          <th colspan="3" class="text-center border border-gray-900">التأخيرات</th>
+          <th rowspan="2" class="text-center border border-gray-900">السٌلف</th>
+          <th rowspan="2" class="text-center border border-gray-900">التأمينات</th>
+          <th rowspan="2" class="text-center border border-gray-900">الجزاء</th>
+        </tr>
+        <tr>
+          <th class="text-center border border-gray-900">عدد الأيام</th>
+          <th class="text-center border border-gray-900">اجر اليوم</th>
+          <th class="text-center border border-gray-900">الاجمالي</th>
+          <th class="text-center border border-gray-900">عدد ساعات التأخير</th>
+          <th class="text-center border border-gray-900">اجر الساعة</th>
+          <th class="text-center border border-gray-900">الاجمالي</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr *ngFor="let paymentResult of paymentResults.factory3Payments; let i = index">
+          <td class="text-center border border-gray-900">
+            {{i+1}}
+          </td>
+          <td class="text-center border border-gray-900">
+            {{paymentResult.employeeName}}
+          </td>
+          <td class="text-center border border-gray-900">
+            {{paymentResult.employeeTypeName}}
+          </td>
+          <td class="text-center border border-gray-900">
+            {{paymentResult.monthlyRate | number : "1.0-2"}}
+          </td>
+          <td class="text-center border border-gray-900">
+            {{paymentResult.supplementaryRate |  number : "1.0-2"}}
+          </td>
+          <td class="text-center border border-gray-900">
+            {{paymentResult.totalBonuses |  number : "1.0-2"}}
+          </td>
+          <td class="text-center border border-gray-900">
+            {{paymentResult.totalSalary |  number : "1.0-2"}}
+          </td>
+          <td class="text-center border border-gray-900">
+            {{paymentResult.absentDaysCount}}
+          </td>
+          <td class="text-center border border-gray-900">
+            {{paymentResult.dailyRate |  number : "1.0-2"}}
+          </td>
+          <td class="text-center border border-gray-900">
+            {{paymentResult.totalAbsentPenalty |  number : "1.0-2"}}
+          </td>
+          <td class="text-center border border-gray-900">
+            {{paymentResult.totalLateHours}}
+          </td>
+          <td class="text-center border border-gray-900">
+            {{paymentResult.hourlyRate |  number : "1.0-2"}}
+          </td>
+          <td class="text-center border border-gray-900">
+            {{paymentResult.totalLateEntryPenalty |  number : "1.0-2"}}
+          </td>
+          <td class="text-center border border-gray-900">
+            {{paymentResult.totalLoans |  number : "1.0-2"}}
+          </td>
+          <td class="text-center border border-gray-900">
+            {{paymentResult.insurance |  number : "1.0-2"}}
+          </td>
+          <td class="text-center border border-gray-900">
+            {{paymentResult.totalPenalties |  number : "1.0-2"}}
+          </td>
+          <td class="text-center border border-gray-900">
+            {{paymentResult.totalSubtractedAmount |  number : "1.0-2"}}
+          </td>
+          <td class="text-center border border-gray-900" colspan="2">
+            {{paymentResult.netPay |  number : "1.0-2"}}
+          </td>
+        </tbody>
+      </table>
+    </div>
+  </p-card>
+
+  <p-toast></p-toast>
+
+</div>

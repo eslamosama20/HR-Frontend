@@ -1,0 +1,965 @@
+<div class="reports-page">
+
+  <!-- ===== Tabs Bar ===== -->
+  <div class="tabs">
+    <button class="tab-btn" (click)="setTab('summary')"              [class.active]="activeTab==='summary'">{{ 'RESERVATION_REPORTS.ROOM_AVAILABILITY' | translate }}</button>
+    <button class="tab-btn" (click)="setTab('balance')"              [class.active]="activeTab==='balance'">{{ 'RESERVATION_REPORTS.ROOMS_AVAILABILITY_BALANCE' | translate }}</button>
+    <button class="tab-btn" (click)="setTab('arrivalsByHotel')"      [class.active]="activeTab==='arrivalsByHotel'">{{ 'RESERVATION_REPORTS.ROOM_ARRIVAL_ALL_HOTELS' | translate }}</button>
+    <button class="tab-btn" (click)="setTab('roomingAvailability')"  [class.active]="activeTab==='roomingAvailability'">{{ 'RESERVATION_REPORTS.ROOMING_AVAILABILITY' | translate }}</button>
+    <button class="tab-btn" (click)="setTab('roomingList')"          [class.active]="activeTab==='roomingList'">{{ 'RESERVATION_REPORTS.ROOMING_LIST' | translate }}</button>
+    <button class="tab-btn" (click)="setTab('arrivalsDetail')"       [class.active]="activeTab==='arrivalsDetail'">{{ 'RESERVATION_REPORTS.ARRIVALS_DURING_PERIOD' | translate }}</button>
+    <button class="tab-btn"
+        (click)="setTab('dailyReport')"
+        [class.active]="activeTab==='dailyReport'">{{ 'RESERVATION_REPORTS.DAILY_HOTEL_REPORT' | translate }}</button>
+        <button class="tab-btn"
+        (click)="setTab('saleAllotments')"
+        [class.active]="activeTab==='saleAllotments'">{{ 'RESERVATION_REPORTS.SALE_ALLOTMENTS' | translate }}</button>
+
+<button class="tab-btn"
+        (click)="setTab('departuresDetail')"
+        [class.active]="activeTab==='departuresDetail'">
+  {{ 'RESERVATION_REPORTS.DEPARTURES_DURING_PERIOD' | translate }}
+</button>
+
+  </div>
+
+  <!-- ===== Global States (loading / empty) ===== -->
+  <div class="state" *ngIf="isLoading">
+    <div class="spinner"></div>
+    <div>{{ 'RESERVATION_REPORTS.LOADING' | translate }}</div>
+  </div>
+
+  <div class="state empty" *ngIf="!isLoading && (!isLoaded || !dates.length)">
+    {{ 'RESERVATION_REPORTS.NO_DATA' | translate }}
+  </div>
+
+  <!-- ===== TAB: Summary (توافر الغرف) ===== -->
+  <ng-container *ngIf="activeTab==='summary'">
+    <h2 class="section-title">{{ 'RESERVATION_REPORTS.ROOM_AVAILABILITY' | translate }}</h2>
+  <!-- Filters (Summary) -->
+  <form [formGroup]="summaryForm" class="filters-bar" *ngIf="!isLoading && isLoaded">
+    <div class="filter-row">
+      <label>{{ 'RESERVATION_REPORTS.HOTEL' | translate }}:
+        <select formControlName="hotelId">
+          <option value="">{{ 'RESERVATION_REPORTS.ALL' | translate }}</option>
+          <option *ngFor="let h of hotelsForFilter" [value]="h.id">{{ pickName(h) }}</option>
+        </select>
+      </label>
+
+      <label>{{ 'RESERVATION_REPORTS.VIEW' | translate }}:
+        <select formControlName="viewId">
+          <option value="">{{ 'RESERVATION_REPORTS.ALL' | translate }}</option>
+          <option *ngFor="let v of viewsForFilter" [value]="v.id">{{ pickName(v) }}</option>
+        </select>
+      </label>
+
+      <label>{{ 'RESERVATION_REPORTS.ROOM_TYPE' | translate }}:
+        <select formControlName="roomTypeId">
+          <option value="">{{ 'RESERVATION_REPORTS.ALL' | translate }}</option>
+          <option *ngFor="let rt of roomTypesForFilter" [value]="rt.id">{{ pickName(rt) }}</option>
+        </select>
+      </label>
+
+      <label>{{ 'RESERVATION_REPORTS.FROM' | translate }}:
+        <input type="date" formControlName="fromDate" />
+      </label>
+
+      <label>{{ 'RESERVATION_REPORTS.TO' | translate }}:
+        <input type="date" formControlName="toDate" />
+      </label>
+
+      <label>{{ 'RESERVATION_REPORTS.TYPE' | translate }}:
+        <select formControlName="reservationType">
+          <option value="">{{ 'RESERVATION_REPORTS.ALL' | translate }}</option>
+          <option value="Direct">{{ 'RESERVATION_REPORTS.DIRECT' | translate }}</option>
+          <option value="Allotment">{{ 'RESERVATION_REPORTS.ALLOTMENT' | translate }}</option>
+          <option value="AgentDirect">{{ 'RESERVATION_REPORTS.AGENT_DIRECT' | translate }}</option>
+        </select>
+      </label>
+
+      <label class="grow">{{ 'RESERVATION_REPORTS.COMPANY' | translate }}:
+        <input type="text" [placeholder]="'RESERVATION_REPORTS.COMPANY_NAME_PLACEHOLDER' | translate" formControlName="companyName" />
+      </label>
+
+      <label>
+        <input type="checkbox" formControlName="showAvgRoomRate" />
+        {{ 'RESERVATION_REPORTS.SHOW_AVG_ROOM_RATE' | translate }}
+      </label>
+
+      <button type="button" class="btn-search" (click)="applySummaryFilters()">
+        <i class="pi pi-search"></i>
+        {{ 'RESERVATION_REPORTS.SEARCH' | translate }}
+      </button>
+    </div>
+  </form>
+
+<div class="table-wrapper" *ngIf="!isLoading && isLoaded && summaryDatesView.length">
+  <div class="grid-table" [style.--cols]="(summaryDatesView.length).toString()">
+    <!-- الزاوية اليسار -->
+    <div class="cell cell-header left-corner"></div>
+
+    <!-- هيدر الأعمدة (التواريخ المقتصة حسب الفلاتر) -->
+    <ng-container *ngFor="let d of summaryDatesView">
+      <div class="cell cell-header col-header">
+        <div class="date">{{ dateShort(d) }}</div>
+        <div class="day">{{ dayName(d) }}</div>
+      </div>
+    </ng-container>
+
+    <!-- صفوف معلومات التاريخ/اليوم/الحدث -->
+    <ng-container *ngFor="let row of infoRows">
+      <div class="cell row-label">{{ row.label }}</div>
+      <ng-container *ngFor="let d of summaryDatesView">
+        <div class="cell">{{ row.value(d) }}</div>
+      </ng-container>
+    </ng-container>
+
+    <!-- صفوف المؤشرات (مع إخفاء/إظهار Avg Room Rate حسب الـ checkbox) -->
+    <ng-container *ngFor="let row of metricRows">
+      <ng-container *ngIf="metricVisible(row)">
+        <div class="cell row-label" [ngClass]="row.rowClass">
+          {{ row.label }}
+        </div>
+
+        <ng-container *ngFor="let d of summaryDatesView; let vi = index">
+          <div class="cell" [ngClass]="row.rowClass">
+            <ng-container [ngSwitch]="row.key">
+              <span *ngSwitchCase="'occupancyPct'">{{ valueForSummary(row, vi) }}%</span>
+              <span *ngSwitchCase="'avgRoomRate'">{{ valueForSummary(row, vi) }} SAR</span>
+              <span *ngSwitchDefault>{{ valueForSummary(row, vi) }}</span>
+            </ng-container>
+          </div>
+        </ng-container>
+      </ng-container>
+    </ng-container>
+  </div>
+</div>
+
+  </ng-container>
+
+  <!-- ===== TAB: Rooms Availability - Total Balance ===== -->
+  <ng-container *ngIf="activeTab==='balance'">
+    <h2 class="section-title mt-40">{{ 'RESERVATION_REPORTS.ROOMS_AVAILABILITY_BALANCE' | translate }}</h2>
+
+<div class="filters-bar" *ngIf="!isLoading && isLoaded">
+  <div class="filter-row">
+    <label>{{ 'RESERVATION_REPORTS.FROM' | translate }}:
+      <input type="date" (change)="onBalanceDate('from', $any($event.target).value)" />
+    </label>
+
+    <label>{{ 'RESERVATION_REPORTS.TO' | translate }}:
+      <input type="date" (change)="onBalanceDate('to', $any($event.target).value)" />
+    </label>
+
+    <label>{{ 'RESERVATION_REPORTS.HOTEL' | translate }}:
+      <select (change)="setBalanceFilter('hotelId', $any($event.target).value)">
+        <option value="">{{ 'RESERVATION_REPORTS.ALL' | translate }}</option>
+        <option *ngFor="let h of hotelsForFilter" [value]="h.id">{{ pickName(h) }}</option>
+      </select>
+    </label>
+
+    <label>{{ 'RESERVATION_REPORTS.TYPE' | translate }}:
+      <select (change)="setBalanceFilter('reservationType', $any($event.target).value)">
+        <option value="">{{ 'RESERVATION_REPORTS.ALL' | translate }}</option>
+        <option value="Direct">{{ 'RESERVATION_REPORTS.DIRECT' | translate }}</option>
+        <option value="Allotment">{{ 'RESERVATION_REPORTS.ALLOTMENT' | translate }}</option>
+        <option value="AgentDirect">{{ 'RESERVATION_REPORTS.AGENT_DIRECT' | translate }}</option>
+      </select>
+    </label>
+
+    <label>{{ 'RESERVATION_REPORTS.MIN_BALANCE' | translate }}:
+      <input type="number" min="0" (input)="setBalanceFilter('minBalance', $any($event.target).value)" />
+    </label>
+
+    <label>{{ 'RESERVATION_REPORTS.MAX_BALANCE' | translate }}:
+      <input type="number" min="0" (input)="setBalanceFilter('maxBalance', $any($event.target).value)" />
+    </label>
+
+    <label class="grow">
+      {{ 'RESERVATION_REPORTS.SEARCH' | translate }}:
+      <input type="text" [placeholder]="'RESERVATION_REPORTS.HOTEL_NAME_PLACEHOLDER' | translate" (input)="setBalanceFilter('search', $any($event.target).value)" />
+    </label>
+
+    <label>
+      <input type="checkbox" (change)="toggleBalanceFilter('hideEmpty', $any($event.target).checked)" />
+      {{ 'RESERVATION_REPORTS.HIDE_EMPTY' | translate }}
+    </label>
+
+    <button type="button" class="btn-reset" (click)="resetBalanceFilters()">{{ 'RESERVATION_REPORTS.RESET' | translate }}</button>
+  </div>
+</div>
+
+     <div class="report-table-wrapper" *ngIf="!isLoading && isLoaded && balanceDatesView.length">
+    <table class="report-table">
+      <thead>
+        <tr>
+          <th class="sn">{{ 'RESERVATION_REPORTS.SN' | translate }}</th>
+          <th class="hotel">{{ 'RESERVATION_REPORTS.HOTEL_NAME' | translate }}</th>
+          <th *ngFor="let d of balanceDatesView" class="day-col">{{ dateShortNoYear(d) }}</th>
+        </tr>
+      </thead>
+
+      <tbody>
+        <tr *ngFor="let row of balanceRowsView">
+          <td class="sn">{{ row.sn }}</td>
+          <td class="hotel">{{ row.hotelName }}</td>
+          <td *ngFor="let v of row.values" class="num">{{ v }}</td>
+        </tr>
+      </tbody>
+
+      <tfoot>
+        <tr>
+          <td class="sn"></td>
+          <td class="hotel"></td>
+          <td *ngFor="let t of balanceTotalsView" class="num total">{{ t }}</td>
+        </tr>
+      </tfoot>
+    </table>
+  </div>
+  </ng-container>
+
+  <!-- ===== TAB: Room Arrival - All Hotels ===== -->
+  <ng-container *ngIf="activeTab==='arrivalsByHotel'">
+    <h2 class="section-title mt-40">{{ 'RESERVATION_REPORTS.ROOM_ARRIVAL_ALL_HOTELS' | translate }}</h2>
+<div class="filters-bar" *ngIf="!isLoading && isLoaded">
+  <div class="filter-row">
+
+    <label>{{ 'RESERVATION_REPORTS.FROM' | translate }}:
+      <input type="date" (change)="onArrivalByHotelDate('from', $any($event.target).value)" />
+    </label>
+
+    <label>{{ 'RESERVATION_REPORTS.TO' | translate }}:
+      <input type="date" (change)="onArrivalByHotelDate('to', $any($event.target).value)" />
+    </label>
+
+    <label>{{ 'RESERVATION_REPORTS.HOTEL' | translate }}:
+      <select (change)="setArrivalByHotelFilter('hotelId', $any($event.target).value)">
+        <option value="">{{ 'RESERVATION_REPORTS.ALL' | translate }}</option>
+        <option *ngFor="let h of hotelsForFilter" [value]="h.id">{{ pickName(h) }}</option>
+      </select>
+    </label>
+
+    <label>{{ 'RESERVATION_REPORTS.MIN_ARRIVALS' | translate }}:
+      <input type="number" min="0" (input)="setArrivalByHotelFilter('min', $any($event.target).value)" />
+    </label>
+
+    <label>{{ 'RESERVATION_REPORTS.MAX_ARRIVALS' | translate }}:
+      <input type="number" min="0" (input)="setArrivalByHotelFilter('max', $any($event.target).value)" />
+    </label>
+
+    <label class="grow">{{ 'RESERVATION_REPORTS.SEARCH' | translate }}:
+      <input type="text" [placeholder]="'RESERVATION_REPORTS.HOTEL_NAME_PLACEHOLDER' | translate" (input)="setArrivalByHotelFilter('search', $any($event.target).value)" />
+    </label>
+
+    <label>
+      <input type="checkbox" (change)="toggleArrivalByHotelFilter('hideEmpty', $any($event.target).checked)" />
+      {{ 'RESERVATION_REPORTS.HIDE_EMPTY' | translate }}
+    </label>
+
+    <button type="button" class="btn-reset" (click)="resetArrivalByHotelFilters()">{{ 'RESERVATION_REPORTS.RESET' | translate }}</button>
+  </div>
+</div>
+
+    <div class="report-table-wrapper" *ngIf="!isLoading && isLoaded && dates.length">
+      <table class="report-table">
+        <thead>
+          <tr>
+            <th class="sn">{{ 'RESERVATION_REPORTS.SERIAL' | translate }}</th>
+            <th class="hotel">{{ 'RESERVATION_REPORTS.HOTEL_NAME' | translate }}</th>
+            <th *ngFor="let d of arrivalDatesView" class="day-col">{{ dateShort(d) }}</th>
+
+          </tr>
+        </thead>
+        <tbody>
+           <tr *ngFor="let row of arrivalRowsView">
+            <td class="sn">{{ row.sn }}</td>
+            <td class="hotel">{{ row.hotelName }}</td>
+            <td *ngFor="let v of row.values" class="num">{{ v }}</td>
+          </tr>
+        </tbody>
+        <tfoot>
+          <tr>
+            <td class="sn"></td>
+            <td class="hotel"></td>
+           <td *ngFor="let t of arrivalTotalsView" class="num total">{{ t }}</td>
+
+          </tr>
+        </tfoot>
+      </table>
+    </div>
+  </ng-container>
+
+  <!-- ===== TAB: Rooming Availability ===== -->
+  <ng-container *ngIf="activeTab==='roomingAvailability'">
+    <h2 class="section-title mt-40">{{ 'RESERVATION_REPORTS.ROOMING_AVAILABILITY' | translate }}</h2>
+<!-- ===== Rooming Availability Filters Bar ===== -->
+<div class="filters-bar" *ngIf="!isLoading && isLoaded">
+  <div class="filter-row">
+
+    <label>
+      {{ 'RESERVATION_REPORTS.HOTEL' | translate }}:
+      <select (change)="setRoomingAvailFilter('hotelId', $any($event.target).value)">
+        <option value="">{{ 'RESERVATION_REPORTS.ALL' | translate }}</option>
+        <option *ngFor="let h of hotelsForFilter" [value]="h.id">{{ pickName(h) }}</option>
+      </select>
+    </label>
+
+    <label>
+      {{ 'RESERVATION_REPORTS.ROOM_TYPE' | translate }}:
+      <select (change)="setRoomingAvailFilter('roomTypeName', $any($event.target).value)">
+        <option value="">{{ 'RESERVATION_REPORTS.ALL' | translate }}</option>
+        <option *ngFor="let n of roomTypeNamesForAvailFilter" [value]="n">{{ n }}</option>
+      </select>
+    </label>
+
+    <label>
+      {{ 'RESERVATION_REPORTS.DATE' | translate }}:
+      <input type="date" (change)="onRoomingAvailDate($any($event.target).value)" />
+    </label>
+
+    <label>
+      {{ 'RESERVATION_REPORTS.METRIC' | translate }}:
+      <select (change)="setRoomingAvailFilter('metric', $any($event.target).value)">
+        <option value="">{{ 'RESERVATION_REPORTS.ALL' | translate }}</option>
+        <option *ngFor="let m of roomingMetrics" [value]="m">{{ m }}</option>
+      </select>
+    </label>
+
+    <label>
+      <input type="checkbox" (change)="toggleRoomingAvailFilter('hideEmpty', $any($event.target).checked)">
+      {{ 'RESERVATION_REPORTS.HIDE_EMPTY_ROWS' | translate }}
+    </label>
+
+    <label>
+      <input type="checkbox" (change)="toggleRoomingAvailFilter('percentOnly', $any($event.target).checked)">
+      {{ 'RESERVATION_REPORTS.PERCENTAGES_ONLY' | translate }}
+    </label>
+
+    <label class="grow">
+      {{ 'RESERVATION_REPORTS.SEARCH' | translate }}:
+      <input type="text" [placeholder]="'RESERVATION_REPORTS.SEARCH_ROOM_TYPES' | translate" (input)="setRoomingAvailFilter('search', $any($event.target).value)">
+    </label>
+
+    <button type="button" class="btn-reset" (click)="resetRoomingAvailFilters()">{{ 'RESERVATION_REPORTS.RESET' | translate }}</button>
+  </div>
+</div>
+
+    <div class="report-table-wrapper" *ngFor="let t of roomingTablesView">
+
+      <div class="rooming-head">
+        <div><strong>{{ 'RESERVATION_REPORTS.HOTEL' | translate }}</strong> : {{ t.hotelName }}</div>
+        <div><strong>{{ 'RESERVATION_REPORTS.FROM_DATE' | translate }}</strong> : {{ dateShort(t.fromDate) }}</div>
+      </div>
+
+      <table class="report-table rooming">
+        <thead>
+          <tr>
+            <th class="rooming-label">{{ 'RESERVATION_REPORTS.ROOM_TYPE' | translate }}</th>
+            <th *ngFor="let c of t.columns" class="day-col">{{ c }}</th>
+          </tr>
+        </thead>
+
+        <tbody>
+          <tr *ngFor="let r of t.rows">
+            <td class="rooming-label">{{ r.label }}</td>
+            <td *ngFor="let v of r.values" class="num">
+              {{ r.isPercent ? (v + '%') : v }}
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </ng-container>
+
+  <!-- ===== TAB: Rooming List ===== -->
+  <ng-container *ngIf="activeTab==='roomingList'">
+    <h2 class="section-title mt-40">{{ 'RESERVATION_REPORTS.ROOMING_LIST' | translate }}</h2>
+  <!-- ===== Rooming List Filters Bar ===== -->
+  <div class="filters-bar" *ngIf="!isLoading && isLoaded">
+    <div class="filter-row">
+
+      <label>
+        {{ 'RESERVATION_REPORTS.FROM' | translate }}:
+        <input type="date" (change)="onRoomingDate('from', $any($event.target).value)" />
+      </label>
+
+      <label>
+        {{ 'RESERVATION_REPORTS.TO' | translate }}:
+        <input type="date" (change)="onRoomingDate('to', $any($event.target).value)" />
+      </label>
+
+      <label>
+        {{ 'RESERVATION_REPORTS.HOTEL' | translate }}:
+        <select (change)="setRoomingFilter('hotelId', $any($event.target).value)">
+          <option value="">{{ 'RESERVATION_REPORTS.ALL' | translate }}</option>
+          <option *ngFor="let h of hotelsForFilter" [value]="h.id">{{ pickName(h) }}</option>
+        </select>
+      </label>
+
+      <label>
+        {{ 'RESERVATION_REPORTS.GUEST' | translate }}:
+        <input type="text" [placeholder]="'RESERVATION_REPORTS.GUEST_NAME_PLACEHOLDER' | translate" (input)="setRoomingFilter('guest', $any($event.target).value)" />
+      </label>
+
+      <label class="grow">
+        {{ 'RESERVATION_REPORTS.ROOM_TYPE_TEXT' | translate }}:
+        <input type="text" [placeholder]="'RESERVATION_REPORTS.SEARCH_ROOM_TYPE' | translate" (input)="setRoomingFilter('roomTypeQuery', $any($event.target).value)" />
+      </label>
+
+      <label class="grow">
+        {{ 'RESERVATION_REPORTS.SEARCH' | translate }}:
+        <input type="text" [placeholder]="'RESERVATION_REPORTS.RSV_ROOM_NO_PLACEHOLDER' | translate" (input)="setRoomingFilter('search', $any($event.target).value)" />
+      </label>
+
+      <button type="button" class="btn-reset" (click)="resetRoomingFilters()">{{ 'RESERVATION_REPORTS.RESET' | translate }}</button>
+    </div>
+  </div>
+
+    <div class="report-table-wrapper" *ngIf="!isLoading && isLoaded && dates.length">
+      <div
+        class="rooming-head"
+       *ngFor="let g of roomingListGroupsView"
+
+        style="margin-top: 20px;"
+      >
+        <div style="margin-bottom: 8px;">
+          <strong>{{ 'RESERVATION_REPORTS.HOTEL' | translate }}</strong> : {{ g.hotelName }}
+        </div>
+        <div style="margin-bottom: 8px;">
+          <strong>{{ 'RESERVATION_REPORTS.ARRIVAL_FROM' | translate }}</strong> : {{ dateShort(dates[0]) }}
+          &nbsp;&nbsp;
+          <strong>{{ 'RESERVATION_REPORTS.TO' | translate }}</strong> : {{ dateShort(dates[dates.length - 1]) }}
+        </div>
+        <div style="margin-bottom: 12px;">
+          <strong>{{ 'RESERVATION_REPORTS.CLIENT' | translate }}</strong> : {{ 'RESERVATION_REPORTS.ALL_CLIENTS' | translate }} &nbsp;&nbsp;
+          <strong>{{ 'RESERVATION_REPORTS.COMPANY' | translate }}</strong> : {{ 'RESERVATION_REPORTS.ALL_COMPANIES' | translate }} &nbsp;&nbsp;
+          <strong>{{ 'RESERVATION_REPORTS.SOURCE' | translate }}</strong> : {{ 'RESERVATION_REPORTS.ALL_SOURCES' | translate }}
+        </div>
+
+        <table class="report-table">
+          <thead>
+            <tr>
+              <th class="sn">{{ 'RESERVATION_REPORTS.SN' | translate }}</th>
+              <th class="guest">{{ 'RESERVATION_REPORTS.GUEST_NAME' | translate }}</th>
+              <th class="room-type">{{ 'RESERVATION_REPORTS.ROOM_TYPE_COL' | translate }}</th>
+              <th class="date">{{ 'RESERVATION_REPORTS.CHECK_IN' | translate }}</th>
+              <th class="date">{{ 'RESERVATION_REPORTS.CHECK_OUT' | translate }}</th>
+              <th class="rsrv">{{ 'RESERVATION_REPORTS.HTL_RSV_NO' | translate }}</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let row of g.rows">
+              <td class="sn">{{ row.sn }}</td>
+              <td class="guest">{{ row.guestName }}</td>
+              <td class="room-type">
+                <div *ngFor="let line of row.roomTypeLines">{{ line }}</div>
+              </td>
+              <td class="date">{{ dateShort(row.checkIn) }}</td>
+              <td class="date">{{ dateShort(row.checkOut) }}</td>
+              <td class="rsrv">{{ row.hotelReservationNo || '-' }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </ng-container>
+
+  <!-- ===== TAB: Arrivals during period ===== -->
+  <ng-container *ngIf="activeTab==='arrivalsDetail'">
+    <h2 class="section-title mt-40">{{ 'RESERVATION_REPORTS.ARRIVALS_DURING_PERIOD' | translate }}</h2>
+
+    <!-- ===== Filters Bar (UPDATED) ===== -->
+    <div class="filters-bar" *ngIf="!isLoading && isLoaded">
+      <div class="filter-row">
+
+        <label>
+          {{ 'RESERVATION_REPORTS.FROM' | translate }}:
+          <input type="date" (change)="onFilterDate('from', $any($event.target).value)" />
+        </label>
+
+        <label>
+          {{ 'RESERVATION_REPORTS.TO' | translate }}:
+          <input type="date" (change)="onFilterDate('to', $any($event.target).value)" />
+        </label>
+
+        <label>
+          {{ 'RESERVATION_REPORTS.HOTEL' | translate }}:
+          <select (change)="setFilter('hotelId', $any($event.target).value)">
+            <option value="">{{ 'RESERVATION_REPORTS.ALL' | translate }}</option>
+            <option *ngFor="let h of hotelsForFilter" [value]="h.id">{{ pickName(h) }}</option>
+          </select>
+        </label>
+
+        <label>
+          {{ 'RESERVATION_REPORTS.COMPANY_CLIENT' | translate }}:
+          <input type="text" [placeholder]="'RESERVATION_REPORTS.TYPE_COMPANY_NAME' | translate" (input)="setFilter('companyName', $any($event.target).value)" />
+        </label>
+
+        <label>
+          {{ 'RESERVATION_REPORTS.NATIONALITY' | translate }}:
+          <input type="text" [placeholder]="'RESERVATION_REPORTS.NATIONALITY_PLACEHOLDER' | translate" (input)="setFilter('nationality', $any($event.target).value)" />
+        </label>
+
+        <label class="grow">
+          {{ 'RESERVATION_REPORTS.ROOM_TYPE_TEXT' | translate }}:
+          <input type="text" [placeholder]="'RESERVATION_REPORTS.SEARCH_ROOM_TYPE_MEAL_VIEW' | translate" (input)="setFilter('roomTypeQuery', $any($event.target).value)" />
+        </label>
+
+        <label>
+          {{ 'RESERVATION_REPORTS.ROOM_TYPE_ID' | translate }}:
+          <select (change)="setFilter('roomTypeId', $any($event.target).value)">
+            <option value="">{{ 'RESERVATION_REPORTS.ALL' | translate }}</option>
+            <option *ngFor="let rt of roomTypesForFilter" [value]="rt.id">{{ pickName(rt) }}</option>
+          </select>
+        </label>
+
+        <label>
+          {{ 'RESERVATION_REPORTS.VIEW' | translate }}:
+          <select (change)="setFilter('viewId', $any($event.target).value)">
+            <option value="">{{ 'RESERVATION_REPORTS.ALL' | translate }}</option>
+            <option *ngFor="let v of viewsForFilter" [value]="v.id">{{ pickName(v) }}</option>
+          </select>
+        </label>
+
+        <label>
+          {{ 'RESERVATION_REPORTS.TYPE' | translate }}:
+          <select (change)="setFilter('reservationType', $any($event.target).value)">
+            <option value="">{{ 'RESERVATION_REPORTS.ALL' | translate }}</option>
+            <option value="Direct">{{ 'RESERVATION_REPORTS.DIRECT' | translate }}</option>
+            <option value="Allotment">{{ 'RESERVATION_REPORTS.ALLOTMENT' | translate }}</option>
+            <option value="AgentDirect">{{ 'RESERVATION_REPORTS.AGENT_DIRECT' | translate }}</option>
+          </select>
+        </label>
+
+        <label>
+          {{ 'RESERVATION_REPORTS.STATUS' | translate }}:
+          <select (change)="setFilter('cancelled', $any($event.target).value)">
+            <option value="">{{ 'RESERVATION_REPORTS.ALL' | translate }}</option>
+            <option value="active">{{ 'RESERVATION_REPORTS.ACTIVE' | translate }}</option>
+            <option value="cancelled">{{ 'RESERVATION_REPORTS.CANCELLED' | translate }}</option>
+          </select>
+        </label>
+
+        <label>
+          {{ 'RESERVATION_REPORTS.MIN_ROOMS' | translate }}:
+          <input type="number" min="0" (input)="setFilter('minRooms', $any($event.target).value)" />
+        </label>
+        <label>
+          {{ 'RESERVATION_REPORTS.MAX_ROOMS' | translate }}:
+          <input type="number" min="0" (input)="setFilter('maxRooms', $any($event.target).value)" />
+        </label>
+
+        <label>
+          {{ 'RESERVATION_REPORTS.MIN_RATE' | translate }}:
+          <input type="number" min="0" (input)="setFilter('minRate', $any($event.target).value)" />
+        </label>
+        <label>
+          {{ 'RESERVATION_REPORTS.MAX_RATE' | translate }}:
+          <input type="number" min="0" (input)="setFilter('maxRate', $any($event.target).value)" />
+        </label>
+
+        <label class="grow">
+          {{ 'RESERVATION_REPORTS.SEARCH' | translate }}:
+          <input type="text" [placeholder]="'RESERVATION_REPORTS.RSV_GUEST_PLACEHOLDER' | translate" (input)="setFilter('search', $any($event.target).value)" />
+        </label>
+
+        <button type="button" class="btn-reset" (click)="resetFilters()">{{ 'RESERVATION_REPORTS.RESET' | translate }}</button>
+      </div>
+    </div>
+
+    <div class="report-table-wrapper" *ngIf="!isLoading && isLoaded && arrivalsDetailRows.length">
+      <table class="report-table">
+        <thead>
+          <tr>
+            <th class="sn">{{ 'RESERVATION_REPORTS.SERIAL' | translate }}</th>
+            <th class="state">{{ 'RESERVATION_REPORTS.STATE' | translate }}</th>
+            <th class="rsv">{{ 'RESERVATION_REPORTS.RSV_NO' | translate }}</th>
+            <th class="date">{{ 'RESERVATION_REPORTS.FROM_COL' | translate }}</th>
+            <th class="date">{{ 'RESERVATION_REPORTS.TILL' | translate }}</th>
+            <th class="rsrv">{{ 'RESERVATION_REPORTS.HTL_RSV_NO' | translate }}</th>
+            <th class="guest">{{ 'RESERVATION_REPORTS.GUEST_NAME' | translate }}</th>
+            <th class="hotel">{{ 'RESERVATION_REPORTS.HOTEL' | translate }}</th>
+            <th class="agent">{{ 'RESERVATION_REPORTS.AGENT' | translate }}</th>
+            <th class="nat">{{ 'RESERVATION_REPORTS.NATIONALITY_COL' | translate }}</th>
+            <th class="roomType">{{ 'RESERVATION_REPORTS.ROOM_TYPE_COL' | translate }}</th>
+            <th class="rooms">{{ 'RESERVATION_REPORTS.ROOMS' | translate }}</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let r of arrivalsDetailRowsView">
+            <td class="sn">{{ r.serial }}</td>
+            <td class="state">{{ r.state }}</td>
+            <td class="rsv">{{ r.rsvNo }}</td>
+            <td class="date">{{ dateShort(r.from) }}</td>
+            <td class="date">{{ dateShort(r.till) }}</td>
+            <td class="rsrv">{{ r.hotelReservationNo || '-' }}</td>
+            <td class="guest">{{ r.guestName }}</td>
+            <td class="hotel">{{ r.hotelName }}</td>
+            <td class="agent">{{ r.agentName }}</td>
+            <td class="nat">{{ r.nationality }}</td>
+            <td class="roomType">
+              <div *ngFor="let line of r.roomTypeLines">{{ line }}</div>
+            </td>
+            <td class="rooms num">{{ r.totalRooms }}</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </ng-container>
+<!-- ===== TAB: Daily Hotel Report ===== -->
+<ng-container *ngIf="activeTab==='dailyReport'">
+  <h2 class="section-title mt-40">{{ 'RESERVATION_REPORTS.DAILY_HOTEL_REPORT' | translate }}</h2>
+
+  <!-- فلاتر التقرير اليومي -->
+  <div class="filters-bar" *ngIf="!isLoading && isLoaded">
+    <div class="filter-row">
+      <label>{{ 'RESERVATION_REPORTS.DATE' | translate }}:
+        <input type="date" (change)="onDailyDate($any($event.target).value)" />
+      </label>
+
+      <label>{{ 'RESERVATION_REPORTS.HOTEL' | translate }}:
+        <select (change)="setDailyFilter('hotelId', $any($event.target).value)">
+          <option value="">{{ 'RESERVATION_REPORTS.AUTO' | translate }}</option>
+          <option *ngFor="let h of hotelsForFilter" [value]="h.id">{{ pickName(h) }}</option>
+        </select>
+      </label>
+    </div>
+  </div>
+
+  <!-- رأس التقرير كما الصورة -->
+  <div class="report-table-wrapper" *ngIf="!isLoading && isLoaded">
+    <div class="rooming-head" style="margin-bottom:12px">
+      <div><strong>{{ 'RESERVATION_REPORTS.DATE' | translate }}</strong> : {{ dateShort(dailyFilters.date || dates[0]) }}
+        &nbsp;&nbsp;&nbsp; <strong>{{ 'RESERVATION_REPORTS.BRANCH' | translate }}</strong> : {{ 'RESERVATION_REPORTS.ALL_BRANCHES' | translate }}
+      </div>
+      <div><strong>{{ 'RESERVATION_REPORTS.HOTEL' | translate }}</strong> : {{ dailyHotelName || '-' }}</div>
+      <div><strong>{{ 'RESERVATION_REPORTS.CLIENT' | translate }}</strong> : {{ 'RESERVATION_REPORTS.ALL_CLIENTS' | translate }}</div>
+    </div>
+
+    <!-- جدول الملخص (Stock/Arrival/In House/Departure/Total Balance) -->
+    <table class="report-table">
+      <thead>
+        <tr>
+          <th class="room-type">{{ 'RESERVATION_REPORTS.ROOM_TYPE_COL' | translate }}</th>
+          <th class="num">{{ 'RESERVATION_REPORTS.STOCK' | translate }}</th>
+          <th class="num">{{ 'RESERVATION_REPORTS.ARRIVAL' | translate }}</th>
+          <th class="num">{{ 'RESERVATION_REPORTS.IN_HOUSE' | translate }}</th>
+          <th class="num">{{ 'RESERVATION_REPORTS.DEPARTURE' | translate }}</th>
+          <th class="num">{{ 'RESERVATION_REPORTS.TOTAL_BALANCE' | translate }}</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let r of dailySummaryRows">
+          <td class="room-type">{{ r.roomType }}</td>
+          <td class="num">{{ r.stock }}</td>
+          <td class="num">{{ r.arrival }}</td>
+          <td class="num">{{ r.inHouse }}</td>
+          <td class="num">{{ r.departure }}</td>
+          <td class="num">{{ r.balance }}</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <!-- عنوان صغير -->
+    <div style="margin-top:18px; font-weight:bold;">{{ 'RESERVATION_REPORTS.ARRIVALS' | translate }}</div>
+
+    <!-- جدول Arrivals -->
+    <table class="report-table" style="margin-top:6px;">
+      <thead>
+        <tr>
+          <th class="sn">{{ 'RESERVATION_REPORTS.SERIAL' | translate }}</th>
+          <th class="state">{{ 'RESERVATION_REPORTS.STATE' | translate }}</th>
+          <th class="rsv">{{ 'RESERVATION_REPORTS.RSV_NO' | translate }}</th>
+          <th class="date">{{ 'RESERVATION_REPORTS.FROM_COL' | translate }}</th>
+          <th class="date">{{ 'RESERVATION_REPORTS.TILL' | translate }}</th>
+          <th class="guest">{{ 'RESERVATION_REPORTS.GUEST_NAME' | translate }}</th>
+          <th class="agent">{{ 'RESERVATION_REPORTS.AGENT' | translate }}</th>
+          <th class="rooms">{{ 'RESERVATION_REPORTS.ROOMS' | translate }}</th>
+          <th class="roomType">{{ 'RESERVATION_REPORTS.ROOM_TYPE_COL' | translate }}</th>
+          <th class="mp">{{ 'RESERVATION_REPORTS.MP' | translate }}</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let r of dailyArrivalsRowsView">
+          <td class="sn">{{ r.serial }}</td>
+          <td class="state">{{ r.state }}</td>
+          <td class="rsv">{{ r.rsvNo }}</td>
+          <td class="date">{{ dateShort(r.from) }}</td>
+          <td class="date">{{ dateShort(r.till) }}</td>
+          <td class="guest">{{ r.guestName }}</td>
+          <td class="agent">{{ r.agentName }}</td>
+          <td class="rooms num">{{ r.totalRooms }}</td>
+          <td class="roomType">
+            <div *ngFor="let line of r.roomTypeLines">{{ line }}</div>
+          </td>
+          <td class="mp">-</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</ng-container>
+<ng-container *ngIf="activeTab==='saleAllotments'">
+  <h2 class="section-title mt-40">{{ 'RESERVATION_REPORTS.SALE_ALLOTMENTS' | translate }}</h2>
+
+  <!-- فلاتر التاب -->
+  <div class="filters-bar" *ngIf="!isLoading && isLoaded">
+    <div class="filter-row">
+
+      <label>{{ 'RESERVATION_REPORTS.FROM' | translate }}:
+        <input type="date" (change)="onSaleDate('from', $any($event.target).value)" />
+      </label>
+
+      <label>{{ 'RESERVATION_REPORTS.TO' | translate }}:
+        <input type="date" (change)="onSaleDate('to', $any($event.target).value)" />
+      </label>
+
+      <label>{{ 'RESERVATION_REPORTS.HOTEL' | translate }}:
+        <select (change)="setSaleFilter('hotelId', $any($event.target).value)">
+          <option value="">{{ 'RESERVATION_REPORTS.ALL' | translate }}</option>
+          <option *ngFor="let h of hotelsForFilter" [value]="h.id">{{ pickName(h) }}</option>
+        </select>
+      </label>
+
+      <label>{{ 'RESERVATION_REPORTS.TYPE' | translate }}:
+        <select (change)="setSaleFilter('reservationType', $any($event.target).value)">
+          <option value="">{{ 'RESERVATION_REPORTS.ALL' | translate }}</option>
+          <option value="Direct">{{ 'RESERVATION_REPORTS.DIRECT' | translate }}</option>
+          <option value="Allotment">{{ 'RESERVATION_REPORTS.ALLOTMENT' | translate }}</option>
+          <option value="AgentDirect">{{ 'RESERVATION_REPORTS.AGENT_DIRECT' | translate }}</option>
+        </select>
+      </label>
+
+      <label class="grow">{{ 'RESERVATION_REPORTS.COMPANY_CLIENT' | translate }}:
+        <input type="text" [placeholder]="'RESERVATION_REPORTS.TYPE_COMPANY_NAME' | translate"
+               (input)="setSaleFilter('companyName', $any($event.target).value)" />
+      </label>
+
+      <label>{{ 'RESERVATION_REPORTS.ROOM_TYPE_ID' | translate }}:
+        <select (change)="setSaleFilter('roomTypeId', $any($event.target).value)">
+          <option value="">{{ 'RESERVATION_REPORTS.ALL' | translate }}</option>
+          <option *ngFor="let rt of roomTypesForFilter" [value]="rt.id">{{ pickName(rt) }}</option>
+        </select>
+      </label>
+
+      <label>{{ 'RESERVATION_REPORTS.VIEW' | translate }}:
+        <select (change)="setSaleFilter('viewId', $any($event.target).value)">
+          <option value="">{{ 'RESERVATION_REPORTS.ALL' | translate }}</option>
+          <option *ngFor="let v of viewsForFilter" [value]="v.id">{{ pickName(v) }}</option>
+        </select>
+      </label>
+
+      <label>{{ 'RESERVATION_REPORTS.MIN_ROOMS' | translate }}:
+        <input type="number" min="0" (input)="setSaleFilter('minRooms', $any($event.target).value)" />
+      </label>
+
+      <label>{{ 'RESERVATION_REPORTS.MAX_ROOMS' | translate }}:
+        <input type="number" min="0" (input)="setSaleFilter('maxRooms', $any($event.target).value)" />
+      </label>
+
+      <button type="button" class="btn-reset" (click)="resetSaleFilters()">{{ 'RESERVATION_REPORTS.RESET' | translate }}</button>
+    </div>
+  </div>
+
+  <div class="report-table-wrapper" *ngIf="!isLoading && isLoaded && saleDatesView.length">
+    <div class="rooming-head" style="margin-bottom:12px">
+      <div>
+        <strong>{{ 'RESERVATION_REPORTS.FROM_DATE' | translate }}</strong> : {{ dateShort(saleDatesView[0]) }}
+        &nbsp;&nbsp;&nbsp; <strong>{{ 'RESERVATION_REPORTS.TO_DATE' | translate }}</strong> : {{ dateShort(saleDatesView[saleDatesView.length - 1]) }}
+        &nbsp;&nbsp;&nbsp; <strong>{{ 'RESERVATION_REPORTS.COMPANY' | translate }}</strong> : {{ saleFilters.companyName || ('RESERVATION_REPORTS.ALL_COMPANIES' | translate) }}
+      </div>
+      <div><strong>{{ 'RESERVATION_REPORTS.HOTEL' | translate }}</strong> : {{ saleHotelName }}</div>
+      <div>
+        <strong>{{ 'RESERVATION_REPORTS.CLIENT' | translate }}</strong> : {{ 'RESERVATION_REPORTS.ALL_CLIENTS' | translate }}
+     <strong>{{ 'RESERVATION_REPORTS.ROOM_TYPE' | translate }}</strong> :
+{{ saleFilters.roomTypeId ? roomTypeNameById(saleFilters.roomTypeId) : ('RESERVATION_REPORTS.ALL_ROOM_TYPES' | translate) }}
+
+
+        &nbsp;&nbsp;&nbsp; <strong>{{ 'RESERVATION_REPORTS.SOURCE' | translate }}</strong> : {{ 'RESERVATION_REPORTS.ALL_SOURCES' | translate }}
+      </div>
+    </div>
+
+    <div class="table-wrapper">
+      <div class="grid-table" [style.--cols]="(saleDatesView.length).toString()">
+        <div class="cell cell-header left-corner"></div>
+
+        <!-- هيدر التواريخ (مقصوص حسب من/إلى) -->
+        <ng-container *ngFor="let d of saleDatesView">
+          <div class="cell cell-header col-header">
+            <div class="date">{{ dateShort(d) }}</div>
+            <div class="day">{{ dayName(d) }}</div>
+          </div>
+        </ng-container>
+
+        <!-- Date / Day / Event -->
+        <ng-container *ngFor="let row of infoRows">
+          <div class="cell row-label">{{ row.label }}</div>
+          <ng-container *ngFor="let d of saleDatesView">
+            <div class="cell">{{ row.value(d) }}</div>
+          </ng-container>
+        </ng-container>
+
+        <!-- مؤشرات الجدول -->
+        <ng-container *ngFor="let row of saleMetricRows">
+          <div class="cell row-label" [ngClass]="row.rowClass">
+            {{ row.label }}
+          </div>
+          <ng-container *ngFor="let d of saleDatesView; let vi = index">
+            <div class="cell" [ngClass]="row.rowClass">
+              <ng-container [ngSwitch]="row.key">
+                <span *ngSwitchCase="'occupancyPct'">{{ valueForSale(row, vi) }}%</span>
+                <span *ngSwitchCase="'avgRoomRate'">{{ valueForSale(row, vi) }} {{ 'RESERVATION_REPORTS.SAR' | translate }}</span>
+                <span *ngSwitchDefault>{{ valueForSale(row, vi) }}</span>
+              </ng-container>
+            </div>
+          </ng-container>
+        </ng-container>
+
+      </div>
+    </div>
+  </div>
+</ng-container>
+<!-- ===== TAB: Departures during period ===== -->
+<ng-container *ngIf="activeTab==='departuresDetail'">
+  <h2 class="section-title mt-40">{{ 'RESERVATION_REPORTS.DEPARTURES_DURING_PERIOD' | translate }}</h2>
+
+  <!-- Filters -->
+  <div class="filters-bar" *ngIf="!isLoading && isLoaded">
+    <div class="filter-row">
+
+      <label>
+        {{ 'RESERVATION_REPORTS.FROM' | translate }}:
+        <input type="date" (change)="onDeparturesFilterDate('from', $any($event.target).value)" />
+      </label>
+
+      <label>
+        {{ 'RESERVATION_REPORTS.TO' | translate }}:
+        <input type="date" (change)="onDeparturesFilterDate('to', $any($event.target).value)" />
+      </label>
+
+      <label>
+        {{ 'RESERVATION_REPORTS.HOTEL' | translate }}:
+        <select (change)="setDeparturesFilter('hotelId', $any($event.target).value)">
+          <option value="">{{ 'RESERVATION_REPORTS.ALL' | translate }}</option>
+          <option *ngFor="let h of hotelsForFilter" [value]="h.id">{{ pickName(h) }}</option>
+        </select>
+      </label>
+
+      <label>
+        {{ 'RESERVATION_REPORTS.COMPANY_CLIENT' | translate }}:
+        <input type="text" [placeholder]="'RESERVATION_REPORTS.TYPE_COMPANY_NAME' | translate" (input)="setDeparturesFilter('companyName', $any($event.target).value)" />
+      </label>
+
+      <label>
+        {{ 'RESERVATION_REPORTS.NATIONALITY' | translate }}:
+        <input type="text" [placeholder]="'RESERVATION_REPORTS.NATIONALITY_PLACEHOLDER' | translate" (input)="setDeparturesFilter('nationality', $any($event.target).value)" />
+      </label>
+
+      <label class="grow">
+        {{ 'RESERVATION_REPORTS.ROOM_TYPE_TEXT' | translate }}:
+        <input type="text" [placeholder]="'RESERVATION_REPORTS.SEARCH_ROOM_TYPE_MEAL_VIEW' | translate" (input)="setDeparturesFilter('roomTypeQuery', $any($event.target).value)" />
+      </label>
+
+      <label>
+        {{ 'RESERVATION_REPORTS.ROOM_TYPE_ID' | translate }}:
+        <select (change)="setDeparturesFilter('roomTypeId', $any($event.target).value)">
+          <option value="">{{ 'RESERVATION_REPORTS.ALL' | translate }}</option>
+          <option *ngFor="let rt of roomTypesForFilter" [value]="rt.id">{{ pickName(rt) }}</option>
+        </select>
+      </label>
+
+      <label>
+        {{ 'RESERVATION_REPORTS.VIEW' | translate }}:
+        <select (change)="setDeparturesFilter('viewId', $any($event.target).value)">
+          <option value="">{{ 'RESERVATION_REPORTS.ALL' | translate }}</option>
+          <option *ngFor="let v of viewsForFilter" [value]="v.id">{{ pickName(v) }}</option>
+        </select>
+      </label>
+
+      <label>
+        {{ 'RESERVATION_REPORTS.TYPE' | translate }}:
+        <select (change)="setDeparturesFilter('reservationType', $any($event.target).value)">
+          <option value="">{{ 'RESERVATION_REPORTS.ALL' | translate }}</option>
+          <option value="Direct">{{ 'RESERVATION_REPORTS.DIRECT' | translate }}</option>
+          <option value="Allotment">{{ 'RESERVATION_REPORTS.ALLOTMENT' | translate }}</option>
+          <option value="AgentDirect">{{ 'RESERVATION_REPORTS.AGENT_DIRECT' | translate }}</option>
+        </select>
+      </label>
+
+      <label>
+        {{ 'RESERVATION_REPORTS.STATUS' | translate }}:
+        <select (change)="setDeparturesFilter('cancelled', $any($event.target).value)">
+          <option value="">{{ 'RESERVATION_REPORTS.ALL' | translate }}</option>
+          <option value="active">{{ 'RESERVATION_REPORTS.ACTIVE' | translate }}</option>
+          <option value="cancelled">{{ 'RESERVATION_REPORTS.CANCELLED' | translate }}</option>
+        </select>
+      </label>
+
+      <label>
+        {{ 'RESERVATION_REPORTS.MIN_ROOMS' | translate }}:
+        <input type="number" min="0" (input)="setDeparturesFilter('minRooms', $any($event.target).value)" />
+      </label>
+      <label>
+        {{ 'RESERVATION_REPORTS.MAX_ROOMS' | translate }}:
+        <input type="number" min="0" (input)="setDeparturesFilter('maxRooms', $any($event.target).value)" />
+      </label>
+
+      <label>
+        {{ 'RESERVATION_REPORTS.MIN_RATE' | translate }}:
+        <input type="number" min="0" (input)="setDeparturesFilter('minRate', $any($event.target).value)" />
+      </label>
+      <label>
+        {{ 'RESERVATION_REPORTS.MAX_RATE' | translate }}:
+        <input type="number" min="0" (input)="setDeparturesFilter('maxRate', $any($event.target).value)" />
+      </label>
+
+      <label class="grow">
+        {{ 'RESERVATION_REPORTS.SEARCH' | translate }}:
+        <input type="text" [placeholder]="'RESERVATION_REPORTS.RSV_GUEST_PLACEHOLDER' | translate" (input)="setDeparturesFilter('search', $any($event.target).value)" />
+      </label>
+
+      <button type="button" class="btn-reset" (click)="resetDeparturesFilters()">{{ 'RESERVATION_REPORTS.RESET' | translate }}</button>
+    </div>
+  </div>
+
+  <!-- Table -->
+  <div class="report-table-wrapper" *ngIf="!isLoading && isLoaded && departuresDetailRows.length">
+    <table class="report-table">
+      <thead>
+        <tr>
+          <th class="sn">{{ 'RESERVATION_REPORTS.SERIAL' | translate }}</th>
+          <th class="state">{{ 'RESERVATION_REPORTS.STATE' | translate }}</th>
+          <th class="rsv">{{ 'RESERVATION_REPORTS.RSV_NO' | translate }}</th>
+          <th class="date">{{ 'RESERVATION_REPORTS.FROM_COL' | translate }}</th>
+          <th class="date">{{ 'RESERVATION_REPORTS.TILL' | translate }}</th>
+          <th class="rsrv">{{ 'RESERVATION_REPORTS.HTL_RSV_NO' | translate }}</th>
+          <th class="guest">{{ 'RESERVATION_REPORTS.GUEST_NAME' | translate }}</th>
+          <th class="hotel">{{ 'RESERVATION_REPORTS.HOTEL' | translate }}</th>
+          <th class="agent">{{ 'RESERVATION_REPORTS.AGENT' | translate }}</th>
+          <th class="nat">{{ 'RESERVATION_REPORTS.NATIONALITY_COL' | translate }}</th>
+          <th class="roomType">{{ 'RESERVATION_REPORTS.ROOM_TYPE_COL' | translate }} / {{ 'RESERVATION_REPORTS.MP' | translate }} / {{ 'RESERVATION_REPORTS.VIEW' | translate }}</th>
+          <th class="rooms">{{ 'RESERVATION_REPORTS.ROOMS' | translate }}</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let r of departuresDetailRowsView">
+          <td class="sn">{{ r.serial }}</td>
+          <td class="state">{{ r.state }}</td>
+          <td class="rsv">{{ r.rsvNo }}</td>
+          <td class="date">{{ dateShort(r.from) }}</td>
+          <td class="date">{{ dateShort(r.till) }}</td>
+          <td class="rsrv">{{ r.hotelReservationNo || '-' }}</td>
+          <td class="guest">{{ r.guestName }}</td>
+          <td class="hotel">{{ r.hotelName }}</td>
+          <td class="agent">{{ r.agentName }}</td>
+          <td class="nat">{{ r.nationality }}</td>
+          <td class="roomType">
+            <div *ngFor="let line of r.roomTypeLines">{{ line }}</div>
+          </td>
+          <td class="rooms num">{{ r.totalRooms }}</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</ng-container>
+
+</div>

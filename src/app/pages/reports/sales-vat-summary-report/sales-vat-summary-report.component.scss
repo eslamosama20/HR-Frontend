@@ -1,0 +1,43 @@
+// Add any custom styles if needed
+.sales-header-bg {
+  background-color: #42acff !important;
+  color: #ffffff !important;
+}
+
+/* Panel header styling */
+::ng-deep .p-panel .p-panel-header {
+  background-color: #42acff !important;
+  color: #ffffff !important;
+}
+
+::ng-deep .p-panel .p-panel-header * {
+  color: #ffffff !important;
+}
+
+.clickable-table {
+  cursor: pointer;
+  transition: opacity 0.2s;
+}
+
+.clickable-table:hover {
+  opacity: 0.8;
+}
+
+/* Print styles for header */
+@media print {
+  .sales-header-bg,
+  th.sales-header-bg {
+    background-color: #42acff !important;
+    color: #ffffff !important;
+  }
+}
+
+
+/* Larger table text (1.125rem) as requested */
+.sales-vat-summary-report table th,
+.sales-vat-summary-report table td,
+.clickable-table th,
+.clickable-table td {
+  font-size: 1.125rem !important;
+}
+

@@ -1,0 +1,565 @@
+<div class="content-container">
+  <!-- ✅ Header Action Bar -->
+  <div class="header-actions-bar" *ngIf="!loading">
+    <div class="header-title-section">
+      <h1>
+        {{ "INVOICE.QUOTATION_DETAILS" | translate }}
+        <span class="ms-3 text-secondary" style="font-size: 1.1rem;" *ngIf="invoiceForm.get('invoiceNo')?.value">
+          # {{ invoiceForm.get('invoiceNo')?.value }}
+        </span>
+      </h1>
+    </div>
+
+    <div class="actions-buttons-group">
+      <!-- Print -->
+      <button
+        type="button"
+        class="btn-primary-action btn-print"
+        (click)="printUnsavedQuotation()"
+        [attr.aria-label]="'DATA.PRINT' | translate"
+      >
+        <i class="pi pi-print"></i>
+        <span>{{ "DATA.PRINT" | translate }}</span>
+      </button>
+
+      <!-- Save -->
+      <button
+        type="submit"
+        class="btn-primary-action"
+        (click)="submitForm()"
+        [attr.aria-label]="'DATA.SAVE' | translate"
+      >
+        <i class="pi pi-save"></i>
+        <span>{{ "DATA.SAVE" | translate }}</span>
+      </button>
+
+      <app-back-button [modernStyle]="false"></app-back-button>
+    </div>
+  </div>
+
+  <!-- ✅ Spinner Loading Overlay -->
+  <div
+    class="fixed inset-0 bg-gray-500 bg-opacity-75 flex items-center justify-center z-50"
+    *ngIf="loading"
+    role="status"
+    aria-label="Loading"
+  >
+    <i class="pi pi-spin pi-spinner text-white" style="font-size: 3rem" aria-hidden="true"></i>
+    <span class="sr-only">Loading...</span>
+  </div>
+
+  <p-toast></p-toast>
+
+  <!-- ✅ Form Body -->
+  <form [formGroup]="invoiceForm" *ngIf="!loading">
+    <!-- Card 1: General Info -->
+    <div class="modern-card">
+      <div class="modern-card-header">
+        <div class="modern-card-title">
+          <i class="pi pi-file"></i>
+          <span>{{ "INVOICE.QUOTATION_DETAILS" | translate }}</span>
+        </div>
+      </div>
+      <div class="modern-card-body card-form-grid-12">
+
+        <!-- Project Link Switch Toggle -->
+        <div class="form-field-group span-12 flex items-center gap-3 py-2 border-b border-gray-100 mb-3">
+          <label class="form-label mb-0 font-semibold cursor-pointer" for="projectToggle">
+            {{ activeLanguage === 'ar' ? 'هل هو مرتبط بالمشاريع؟' : 'Is this linked to projects?' }}
+          </label>
+          <div class="flex items-center gap-2">
+            <button
+              type="button"
+              id="projectToggle"
+              class="btn btn-sm"
+              [class.btn-success]="isLinkedToProjects"
+              [class.btn-outline-secondary]="!isLinkedToProjects"
+              (click)="onProjectToggleChange(!isLinkedToProjects)"
+            >
+              <i class="pi" [class.pi-check]="isLinkedToProjects" [class.pi-times]="!isLinkedToProjects"></i>
+              <span class="ms-1">{{ (isLinkedToProjects ? (activeLanguage === 'ar' ? 'نعم' : 'Yes') : (activeLanguage === 'ar' ? 'لا' : 'No')) }}</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Project Selection (conditional) -->
+        <div class="form-field-group span-4" *ngIf="isLinkedToProjects">
+          <label for="projectId" class="form-label">
+            {{ activeLanguage === 'ar' ? 'اختر المشروع' : 'Select Project' }}
+          </label>
+          <p-dropdown
+            inputId="projectId"
+            [options]="projects"
+            formControlName="projectId"
+            optionLabel="label"
+            optionValue="value"
+            [filter]="true"
+            appendTo="body"
+            styleClass="w-full input-like"
+            [placeholder]="(activeLanguage === 'ar' ? 'اختر المشروع' : 'Select Project')">
+          </p-dropdown>
+        </div>
+
+        <!-- Customer Selection -->
+        <div class="form-field-group span-4">
+          <label for="customerProfileId" class="form-label">
+            {{ "INVOICE.SELECTCUSTOMER" | translate }}
+          </label>
+          <p-dropdown
+            inputId="customerProfileId"
+            [options]="customers"
+            formControlName="customerProfileId"
+            optionLabel="label"
+            optionValue="value"
+            [filter]="true"
+            appendTo="body"
+            styleClass="w-full input-like"
+            [placeholder]="'INVOICE.SELECTCUSTOMER' | translate"
+            (onChange)="onCustomerChange($event)">
+          </p-dropdown>
+        </div>
+
+        <!-- Department Selection (conditional) -->
+        <div class="form-field-group span-4" *ngIf="isLinkedToProjects">
+          <label for="customerDepartmentId" class="form-label">
+            {{ activeLanguage === 'ar' ? 'اختر الإدارة' : 'Select Department' }}
+          </label>
+          <p-dropdown
+            inputId="customerDepartmentId"
+            [options]="filteredDepartments"
+            formControlName="customerDepartmentId"
+            optionLabel="label"
+            optionValue="value"
+            [filter]="true"
+            appendTo="body"
+            styleClass="w-full input-like"
+            [placeholder]="(activeLanguage === 'ar' ? 'اختر الإدارة' : 'Select Department')">
+          </p-dropdown>
+        </div>
+
+        <!-- Price Quote File Attachment (When linked to Project) -->
+        <div class="form-field-group span-4" *ngIf="isLinkedToProjects">
+          <label for="quoteFile" class="form-label font-semibold">
+            {{ activeLanguage === 'ar' ? 'مرفق عرض السعر' : 'Price Quote Attachment' }}
+          </label>
+          <input
+            type="file"
+            id="quoteFile"
+            class="form-control input-like"
+            accept=".pdf,.doc,.docx,.png,.jpg,.jpeg"
+            (change)="onQuoteFileSelected($event)"
+          />
+          <small class="text-primary text-xs mt-1 block" *ngIf="selectedQuoteFile">
+            <i class="pi pi-file me-1"></i>{{ selectedQuoteFile.name }}
+          </small>
+        </div>
+
+        <!-- Issue Date -->
+        <div [class]="isLinkedToProjects ? 'form-field-group span-4' : 'form-field-group span-2'">
+          <label for="issueDate" class="form-label">{{ "INVOICE.ISSUE_DATE" | translate }}</label>
+          <p-calendar
+            inputId="issueDate"
+            [showIcon]="false"
+            [dateFormat]="'dd/mm/yy'"
+            appendTo="body"
+            styleClass="w-full"
+            inputStyleClass="w-full input-like"
+            formControlName="issueDate"
+            [showButtonBar]="true"
+            ariaLabel="{{ 'INVOICE.ISSUE_DATE' | translate }}"
+          >
+          </p-calendar>
+          <small
+            class="text-red-500 text-xs mt-1 block"
+            *ngIf="invoiceForm.get('issueDate')?.invalid && (invoiceForm.get('issueDate')?.touched || invoiceForm.get('issueDate')?.dirty)"
+          >
+            {{ "INVOICE.ISSUE_DATE_REQUIRED" | translate }}
+          </small>
+        </div>
+
+        <!-- Description -->
+        <div [class]="isLinkedToProjects ? 'form-field-group span-8' : 'form-field-group span-6'">
+          <label for="description" class="form-label">{{ "INVOICE.DESCRIPTION" | translate }}</label>
+          <input
+            type="text"
+            class="input-like w-full"
+            formControlName="description"
+            name="description"
+            id="description"
+            [placeholder]="'INVOICE.DESCRIPTION' | translate"
+            maxlength="1000"
+          />
+          <small
+            class="text-red-500 text-xs mt-1 block"
+            *ngIf="invoiceForm.get('description')?.invalid && (invoiceForm.get('description')?.touched || invoiceForm.get('description')?.dirty)"
+          >
+            {{ activeLanguage === "ar" ? "النص لا يجب أن يتجاوز 1000 حرف" : "Text must not exceed 1000 characters" }}
+          </small>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- ✅ Items Table -->
+    <div formArrayName="saleItems" class="mt-3">
+      <div class="table-section-header">
+        <h3 class="table-section-title">{{ "INVOICE.SALESEINVOICEDETAILS" | translate }}</h3>
+        <button
+          type="button"
+          class="btn-add-entry"
+          (click)="addItem()"
+          [title]="'INVOICE.ADDITEM' | translate"
+        >
+          <i class="pi pi-plus"></i>
+          <span>{{ "INVOICE.ADDITEM" | translate }}</span>
+        </button>
+      </div>
+
+      <div class="table-container">
+        <table class="premium-table">
+          <thead>
+            <tr>
+              <th style="width: 40px; min-width: 40px;">#</th>
+              <th>{{ "INVOICE.NAME" | translate }}</th>
+              <th style="width: 100px; min-width: 100px;">{{ "INVOICE.UNIT" | translate }}</th>
+              <th style="width: 90px; min-width: 90px;">{{ "INVOICE.QUANTITY" | translate }}</th>
+              <th style="width: 110px; min-width: 110px;">{{ "INVOICE.PRICE" | translate }}</th>
+              <th style="width: 110px; min-width: 110px;">{{ "INVOICE.NETPRICE" | translate }}</th>
+              <th style="width: 110px; min-width: 110px;">{{ "INVOICE.TOTAL" | translate }}</th>
+              <th style="width: 50px; min-width: 50px;"></th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr
+              *ngFor="let item of saleItems.controls; let i = index"
+              [formGroupName]="i"
+            >
+              <td>{{ i + 1 }}</td>
+              <td>
+                <p-dropdown
+                  [options]="mainSalesArray"
+                  formControlName="mainSalesClassId"
+                  (onChange)="onSalesClick($event, item)"
+                  placeholder=""
+                  optionLabel="displayName"
+                  optionValue="id"
+                  [filter]="true"
+                  styleClass="w-full input-like"
+                  appendTo="body"
+                >
+                </p-dropdown>
+                <small
+                  class="text-red-500 block text-xs"
+                  *ngIf="item.get('mainSalesClassId')?.invalid && (item.get('mainSalesClassId')?.touched || item.get('mainSalesClassId')?.dirty)"
+                >
+                  {{ "VALIDATION.REQUIRED" | translate }}
+                </small>
+              </td>
+              <td class="font-semibold text-gray-700 bg-gray-50">
+                {{ item.get('unit').value }}
+              </td>
+              <td>
+                <input
+                  class="input-like w-full text-center"
+                  min="0.01"
+                  step="any"
+                  [id]="'quantity' + i"
+                  type="number"
+                  (blur)="normalizeControlDecimals(item, 'quantity', 3)"
+                  formControlName="quantity"
+                />
+                <div
+                  *ngIf="item.get('quantity')?.invalid && (item.get('quantity')?.touched || item.get('quantity')?.dirty)"
+                  class="text-red-500 text-xs mt-1"
+                >
+                  <span *ngIf="item.get('quantity')?.errors?.required">{{ "VALIDATION.REQUIRED" | translate }}</span>
+                  <span *ngIf="item.get('quantity')?.errors?.min">{{ "VALIDATION.MIN" | translate:{min: 0.01} }}</span>
+                </div>
+              </td>
+              <td>
+                <input
+                  class="input-like w-full text-center"
+                  [id]="'price' + i"
+                  type="number"
+                  step="1"
+                  (blur)="normalizeControlDecimals(item, 'price', 2)"
+                  formControlName="price"
+                />
+                <div
+                  *ngIf="item.get('price')?.invalid && (item.get('price')?.touched || item.get('price')?.dirty)"
+                  class="text-red-500 text-xs mt-1"
+                >
+                  <span *ngIf="item.get('price')?.errors?.required">{{ "VALIDATION.REQUIRED" | translate }}</span>
+                  <span *ngIf="item.get('price')?.errors?.min">{{ "VALIDATION.MIN" | translate:{min: 0} }}</span>
+                </div>
+              </td>
+              <td class="font-semibold text-gray-700 bg-gray-50">
+                <input
+                  class="input-like w-full text-center"
+                  [id]="'netPriceItem' + i"
+                  type="number"
+                  step="0.01"
+                  [value]="item.get('netPrice')?.value !== 0 && item.get('netPrice')?.value !== null ? item.get('netPrice')?.value : ''"
+                  readonly
+                  tabindex="-1"
+                />
+              </td>
+              <td class="font-semibold text-gray-700 bg-gray-50">
+                <input
+                  class="input-like w-full text-center"
+                  [id]="'totalPriceItem' + i"
+                  type="number"
+                  step="0.01"
+                  [value]="item.get('totalPrice')?.value !== 0 && item.get('totalPrice')?.value !== null ? item.get('totalPrice')?.value : ''"
+                  readonly
+                  tabindex="-1"
+                />
+              </td>
+              <td>
+                <button
+                  type="button"
+                  class="btn-delete-row"
+                  (click)="removeItem(i)"
+                  [attr.aria-label]="'Remove item ' + (i + 1)"
+                >
+                  <i class="pi pi-trash" aria-hidden="true"></i>
+                </button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ✅ Totals Dashboard Card -->
+    <div class="totals-dashboard">
+      <div class="totals-dashboard-header">
+        <div class="totals-dashboard-title">
+          <i class="pi pi-chart-bar"></i>
+          <span>{{ "RESERVATION.TOTALS_SUMMARY_ANALYSIS" | translate }}</span>
+        </div>
+      </div>
+
+      <div class="totals-grid">
+        <!-- Net Price (Without Tax) -->
+        <div class="total-item-box">
+          <div class="total-item-label">{{ "INVOICE.NETPRICE" | translate }}</div>
+          <div class="total-item-value">
+            {{ invoiceForm.get('netPrice')?.value !== 0 ? invoiceForm.get('netPrice')?.value : '0.00' }}
+          </div>
+        </div>
+
+        <!-- Tax Amount -->
+        <div class="total-item-box">
+          <div class="total-item-label">{{ "INVOICE.TAXAMOUNT" | translate }}</div>
+          <div class="total-item-value">
+            {{ invoiceForm.get('taxAmount')?.value !== 0 ? invoiceForm.get('taxAmount')?.value : '0.00' }}
+          </div>
+        </div>
+
+        <!-- Total with Tax -->
+        <div class="total-item-box">
+          <div class="total-item-label">{{ "INVOICE.TOTALWITHTAX" | translate }}</div>
+          <div class="total-item-value success">
+            {{ invoiceForm.get('totalPrice')?.value !== 0 ? invoiceForm.get('totalPrice')?.value : '0.00' }}
+          </div>
+        </div>
+      </div>
+    </div>
+  </form>
+</div>
+
+<!-- Print Component Template -->
+<ng-container *ngIf="companyDetails && printDataRows.length > 0">
+  <app-print-document
+    #printComponent
+    [headerTemplate]="headerTemplate"
+    [footerTemplate]="footerTemplate"
+    [summaryTemplate]="summaryTemplate"
+    [data]="printDataRows"
+    [columns]="printDataColumns"
+    [showStamp]="showStamp">
+  </app-print-document>
+
+  <!-- Header Template -->
+  <ng-template #headerTemplate>
+    <div class="w-full flex flex-col">
+      <ng-container class="container m-0 p-0" *ngIf="companyDetails">
+        <div class="py-1 px-1 flex justify-between">
+          <div class="w-full ltr:text-left text-right">
+            <p class="font-semibold text-lg m-0 p-0">
+              {{companyDetails.arabicName}}
+            </p>
+            <p class="font-semibold text-lg m-0 p-0" *ngIf="companyDetails.city">
+              {{companyDetails.city}}
+            </p>
+            <p class="font-semibold text-lg m-0 p-0" *ngIf="companyDetails.phone">
+              {{companyDetails.phone}}
+            </p>
+            <p class="font-semibold text-lg m-0 p-0">
+              الرقم الضريبي: {{companyDetails.taxNumber}}
+            </p>
+          </div>
+          <div class="w-full flex justify-center items-center">
+            <img *ngIf="companyDetails.logoUrl || companyDetails['logo']"
+                 [src]="companyDetails?.logoUrl || (companyDetails['logo'] ? 'data:image/*;base64,' + companyDetails['logo'] : '')"
+                 alt="company-logo" width="100" height="100">
+          </div>
+          <div class="w-full text-left ltr:text-right">
+            <p class="font-semibold text-lg m-0 p-0">
+              {{companyDetails.englishName}}
+            </p>
+            <p class="font-semibold text-lg m-0 p-0" *ngIf="companyDetails.city">
+              {{companyDetails.city}}
+            </p>
+            <p class="font-semibold text-lg m-0 p-0" *ngIf="companyDetails.phone">
+              {{companyDetails.phone}}
+            </p>
+            <p class="font-semibold text-lg m-0 p-0">
+              TAX No: {{companyDetails.taxNumber}}
+            </p>
+          </div>
+        </div>
+      </ng-container>
+      
+      <div class="flex justify-between items-center w-full text-center border border-slate-900">
+        <div class="w-full text-end ltr:text-start p-2">
+          <p class="font-semibold text-lg m-0">{{"INVOICE.DATE"| translate}}: {{invoiceForm.get('issueDate')?.value | customDate:'yyyy-MM-dd'}}</p>
+        </div>
+        <div class="w-full flex justify-center">
+          <h2 class="text-2xl font-bold">{{ "INVOICE.QUOTATION"|translate }}</h2>
+        </div>
+        <div class="w-full p-2">
+          <p class="font-semibold text-lg m-0 text-start ltr:text-end">
+            {{"INVOICE.QUOTATION_NO"|translate}}: {{invoiceForm.get('invoiceNo')?.value}}
+          </p>
+        </div>
+      </div>
+
+      <div class="flex justify-between py-4 items-center">
+        <p class="m-0 p-0">{{"INVOICE.CLIENTNAME"|translate}}: {{getCustomerName()}}</p>
+      </div>
+    </div>
+  </ng-template>
+
+  <!-- Summary Template -->
+  <ng-template #summaryTemplate>
+    <div class="w-full flex justify-between items-start gap-4" style="page-break-inside: avoid; break-inside: avoid; margin-top: 15px;">
+      <!-- Left Section: Company Terms & Conditions and Bank Accounts -->
+      <div class="flex-grow text-sm" *ngIf="anyPolicyChecked || anyBankChecked"
+           [style.text-align]="activeLanguage === 'ar' ? 'right' : 'left'"
+           style="font-size: 0.88rem; line-height: 1.4; color: #000 !important;">
+           
+        <!-- Terms and Conditions Block -->
+        <div *ngIf="anyPolicyChecked" class="mb-3">
+          <strong class="text-dark mb-1 d-block font-bold" style="text-align: inherit; color: #000 !important; font-size: 0.92rem;">
+            {{ activeLanguage === 'ar' ? 'الشروط والأحكام:' : 'Terms & Conditions:' }}
+          </strong>
+          <ul class="m-0 p-0 w-full" 
+              [style.direction]="activeLanguage === 'ar' ? 'rtl' : 'ltr'"
+              [style.text-align]="activeLanguage === 'ar' ? 'right' : 'left'"
+              style="list-style: none; color: #000 !important; font-weight: 500; display: block !important;">
+            <ng-container *ngFor="let policy of selectedPolicies">
+              <li *ngIf="policy.checked" class="mb-1" style="text-align: inherit; color: #000 !important; display: block !important; width: 100% !important; clear: both !important; white-space: pre-line !important;">
+                {{ activeLanguage === 'ar' ? policy.name : policy.nameEn }}
+              </li>
+            </ng-container>
+          </ul>
+        </div>
+
+        <!-- Bank Accounts Block -->
+        <div *ngIf="anyBankChecked">
+          <strong class="text-dark mb-1 d-block font-bold" style="text-align: inherit; color: #000 !important; font-size: 0.92rem;">
+            {{ activeLanguage === 'ar' ? 'الحسابات البنكية للشركة' : 'Company Bank Accounts' }}
+          </strong>
+          <ul class="m-0 p-0 w-full"
+              [style.direction]="activeLanguage === 'ar' ? 'rtl' : 'ltr'"
+              [style.text-align]="activeLanguage === 'ar' ? 'right' : 'left'"
+              style="list-style: none; color: #000 !important; font-weight: 500; display: block !important;">
+            <ng-container *ngFor="let bank of selectedBanks">
+              <li *ngIf="bank.checked" class="mb-1" style="text-align: inherit; color: #000 !important; display: block !important; width: 100% !important; clear: both !important;">
+                <div style="display: flex; flex-wrap: wrap; gap: 4px 8px; align-items: center; width: 100%;">
+                  <span>{{ activeLanguage === 'ar' ? 'اسم الحساب: ' : 'Account Name: ' }}<span class="font-bold" style="color: #000 !important;">{{ bank.accountName }}</span></span>
+                  <span>-</span>
+                  <span>{{ activeLanguage === 'ar' ? bank.bankName : bank.bankNameEn }} : <span class="font-bold" style="color: #000 !important;">{{ bank.accountNumber }}</span></span>
+                  <span style="white-space: nowrap;">(IBAN: <span class="font-bold" style="color: #000 !important;">{{ bank.iban }}</span>)</span>
+                  <span *ngIf="bank.swiftCode" style="white-space: nowrap;">(SWIFT: <span class="font-bold" style="color: #000 !important;">{{ bank.swiftCode }}</span>)</span>
+                </div>
+              </li>
+            </ng-container>
+          </ul>
+        </div>
+      </div>
+
+      <!-- Spacer block shown only when NEITHER policies NOR bank accounts are checked -->
+      <div class="flex-grow animate-fade-in" *ngIf="!anyPolicyChecked && !anyBankChecked"></div>
+
+      <!-- Right Section: Original Totals Table -->
+      <div style="width: 280px; flex-shrink: 0;">
+        <table class="w-full border border-gray-900">
+          <tbody>
+            <tr>
+              <td class="p-2 border border-gray-900">
+                <strong class="text-dark">{{"INVOICE.TOTAL"|translate}}</strong>
+              </td>
+              <td class="p-2 text-center border border-gray-900">{{invoiceForm.get('netPrice')?.value | formatDecimal}}</td>
+            </tr>
+            <tr *ngIf="invoiceForm.get('discountAmount')?.value > 0">
+              <td class="p-2 border border-gray-900">
+                <strong class="text-dark">{{'INVOICE.DISCOUNT'|translate}}</strong>
+              </td>
+              <td class="p-2 text-center border border-gray-900">{{invoiceForm.get('discountAmount')?.value | formatDecimal}}</td>
+            </tr>
+            <tr>
+              <td class="p-2 border border-gray-900">
+                <strong class="text-dark"> {{"INVOICE.ADDEDTAX"|translate}}</strong>
+              </td>
+              <td class="p-2 text-center border border-gray-900">{{invoiceForm.get('taxAmount')?.value | formatDecimal}}</td>
+            </tr>
+            <tr>
+              <td class="p-2 border border-gray-900">
+                <strong class="text-dark"> {{"INVOICE.TOTALWITHTAX"|translate}}</strong>
+              </td>
+              <td class="p-2 text-center border border-gray-900">
+                <strong class="text-dark">{{invoiceForm.get('totalPrice')?.value | formatDecimal}}</strong>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </ng-template>
+
+  <!-- Footer Template -->
+  <ng-template #footerTemplate>
+    <div class="w-full flex flex-col gap-4">
+      <div *ngIf="showCompanySignature || showCustomerSignature" class="w-full border border-slate-900 rounded-2xl flex justify-between p-2">
+        <div *ngIf="showCompanySignature" [style.width]="showCustomerSignature ? '45%' : '100%'" class="h-24 text-center font-semibold text-sm">
+          <p class="m-0 p-0 text-slate-800" style="font-size: 0.95rem;">
+            {{getCompanyName()}}
+          </p>
+          <p class="m-0 p-0 w-full ltr:text-left rtl:text-right text-xs" style="font-size: 0.9rem;">
+            {{ "INVOICE.SIGNATURE" | translate }}: <span class="text-xs font-light">...................................................................................................</span>
+          </p>
+          <div *ngIf="showStamp && companyDetails?.stampUrl" class="mt-1 flex justify-center">
+            <img [src]="companyDetails?.stampUrl || ''" alt="company-stamp" width="90" height="90">
+          </div>
+        </div>
+        <div *ngIf="showCustomerSignature" [style.width]="showCompanySignature ? '45%' : '100%'" class="h-24 text-center font-semibold text-sm">
+          <p class="m-0 p-0 text-slate-800" style="font-size: 0.95rem;">
+            {{getCustomerName()}}
+          </p>
+          <p class="m-0 p-0 w-full ltr:text-left rtl:text-right text-xs" style="font-size: 0.9rem;">
+            {{ "INVOICE.SIGNATURE" | translate }}: <span class="text-xs font-light">...................................................................................................</span>
+          </p>
+        </div>
+      </div>
+      <div class="address-footer absolute left-0 right-0 border border-slate-900 rounded-2xl flex justify-center py-2 text-center text-sm font-medium" style="bottom: 0;">
+        {{activeLanguage=='ar'?companyDetails?.getFullArabicAddress():companyDetails?.getFullAddress()}}
+      </div>
+    </div>
+  </ng-template>
+</ng-container>
+
+<!-- Toast Messages -->
+<p-toast></p-toast>

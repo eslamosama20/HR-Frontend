@@ -1,0 +1,404 @@
+﻿<div class="session-shell">
+  <p-toast></p-toast>
+
+  <div *ngIf="loading()" class="loading-overlay">
+    <div class="loading-card">
+      <i class="pi pi-spin pi-spinner"></i>
+      <span>{{ 'AUDIT_LOG.LOADING' | translate }}</span>
+    </div>
+  </div>
+
+  <div class="session-unified-card">
+    <!-- Header -->
+    <header class="session-header">
+      <div class="session-header-top">
+        <div class="header-title">
+          <div>
+            <h1>{{ 'AUDIT_LOG.PAGE_TITLE' | translate }}</h1>
+            <p>{{ 'AUDIT_LOG.PAGE_SUBTITLE' | translate }}</p>
+          </div>
+        </div>
+
+        <div class="header-actions">
+          <button pButton type="button" icon="pi pi-desktop" label="شاشة الكاشير (POS)" class="action-btn soft-btn" routerLink="/cashier/pos"></button>
+          <button pButton type="button" icon="pi pi-clock" [label]="'CASHIER_POS.SESSION_MANAGEMENT' | translate" class="action-btn soft-btn" routerLink="/cashier/session"></button>
+          <button pButton type="button" icon="pi pi-file" label="سجل الفواتير" class="action-btn soft-btn" routerLink="/cashier/invoice-control"></button>
+          <button pButton type="button" icon="pi pi-chart-pie" [label]="'CASHIER_REPORTS.PAGE_TITLE' | translate" class="action-btn soft-btn" routerLink="/cashier/reports"></button>
+          <button pButton type="button" icon="pi pi-file-pdf" label="تقرير Z" class="action-btn soft-btn" routerLink="/cashier/z-report"></button>
+          <button pButton type="button" icon="pi pi-shield" label="سجل الرقابة" class="action-btn soft-btn active-nav" routerLink="/cashier/audit-log"></button>
+          <button pButton type="button" icon="pi pi-download" [label]="'AUDIT_LOG.EXPORT_CSV' | translate" class="action-btn soft-btn" [loading]="exporting()" (click)="exportCsv()"></button>
+        </div>
+      </div>
+    </header>
+
+    <!-- Summary Stats Grid (52px Compact Standard) -->
+    <section class="stats-section">
+      <div class="summary-grid">
+        <article class="summary-card tx">
+          <div class="summary-card-head">
+            <i class="pi pi-history"></i>
+            <span>{{ 'AUDIT_LOG.EVENTS_TODAY' | translate }}</span>
+          </div>
+          <strong class="summary-val">{{ eventsTodayCount | number }}</strong>
+        </article>
+
+        <article class="summary-card credit">
+          <div class="summary-card-head">
+            <i class="pi pi-exclamation-triangle"></i>
+            <span>{{ 'AUDIT_LOG.WARNINGS' | translate }}</span>
+          </div>
+          <strong class="summary-val">{{ warningCount | number }}</strong>
+        </article>
+
+        <article class="summary-card expected">
+          <div class="summary-card-head">
+            <i class="pi pi-bolt"></i>
+            <span>{{ 'AUDIT_LOG.HIGH_RISK' | translate }}</span>
+          </div>
+          <strong class="summary-val">{{ dangerCount | number }}</strong>
+        </article>
+
+        <article class="summary-card sales">
+          <div class="summary-card-head">
+            <i class="pi pi-shopping-bag"></i>
+            <span>{{ 'AUDIT_LOG.TOTAL_SALES' | translate }}</span>
+          </div>
+          <strong class="summary-val">{{ salesAmount | number:'1.2-2' }} <small>ر.س</small></strong>
+        </article>
+
+        <article class="summary-card discount">
+          <div class="summary-card-head">
+            <i class="pi pi-replay"></i>
+            <span>{{ 'AUDIT_LOG.TOTAL_REFUNDS' | translate }}</span>
+          </div>
+          <strong class="summary-val">{{ refundsAmount | number:'1.2-2' }} <small>ر.س</small></strong>
+        </article>
+
+        <article class="summary-card cash">
+          <div class="summary-card-head">
+            <i class="pi pi-users"></i>
+            <span>{{ 'AUDIT_LOG.ACTIVE_USERS' | translate }}</span>
+          </div>
+          <strong class="summary-val">{{ distinctUsersCount | number }}</strong>
+        </article>
+      </div>
+    </section>
+
+    <!-- Filters Panel -->
+    <section class="filters-panel">
+      <div class="filters-grid">
+        <div class="filter-col search-col">
+          <label class="filter-label"><i class="pi pi-search"></i> {{ 'AUDIT_LOG.SEARCH' | translate }}</label>
+          <div class="search-wrap">
+            <i class="pi pi-search search-icon"></i>
+            <input
+              type="text"
+              class="search-input"
+              [(ngModel)]="searchTerm"
+              (keyup.enter)="refreshData()"
+              [placeholder]="'AUDIT_LOG.SEARCH_PLACEHOLDER' | translate" />
+            <button
+              *ngIf="searchTerm"
+              type="button"
+              class="search-clear-btn"
+              (click)="searchTerm = ''; refreshData()"
+              title="مسح البحث">
+              <i class="pi pi-times"></i>
+            </button>
+          </div>
+        </div>
+
+        <div class="filter-col">
+          <label class="filter-label"><i class="pi pi-list"></i> {{ 'AUDIT_LOG.EVENT_TYPE' | translate }}</label>
+          <p-dropdown
+            [options]="typeOptions"
+            optionLabel="label"
+            optionValue="value"
+            [(ngModel)]="selectedType"
+            (onChange)="refreshData()"
+            styleClass="w-full custom-filter-dropdown"
+            [placeholder]="'AUDIT_LOG.EVENT_TYPE' | translate">
+          </p-dropdown>
+        </div>
+
+        <div class="filter-col">
+          <label class="filter-label"><i class="pi pi-shield"></i> {{ 'AUDIT_LOG.SEVERITY' | translate }}</label>
+          <p-dropdown
+            [options]="severityOptions"
+            optionLabel="label"
+            optionValue="value"
+            [(ngModel)]="selectedSeverity"
+            styleClass="w-full custom-filter-dropdown"
+            [placeholder]="'AUDIT_LOG.SEVERITY' | translate">
+          </p-dropdown>
+        </div>
+
+        <div class="filter-col">
+          <label class="filter-label"><i class="pi pi-user"></i> {{ 'AUDIT_LOG.USER' | translate }}</label>
+          <p-dropdown
+            [options]="userOptions"
+            optionLabel="label"
+            optionValue="value"
+            [(ngModel)]="selectedUser"
+            styleClass="w-full custom-filter-dropdown"
+            [placeholder]="'AUDIT_LOG.USER' | translate">
+          </p-dropdown>
+        </div>
+
+        <div class="filter-col">
+          <label class="filter-label"><i class="pi pi-calendar"></i> {{ 'AUDIT_LOG.FROM' | translate }}</label>
+          <input type="date" class="date-input" [(ngModel)]="fromDate" (change)="refreshData()" />
+        </div>
+
+        <div class="filter-col">
+          <label class="filter-label"><i class="pi pi-calendar"></i> {{ 'AUDIT_LOG.TO' | translate }}</label>
+          <input type="date" class="date-input" [(ngModel)]="toDate" (change)="refreshData()" />
+        </div>
+
+        <div class="filter-col filter-action-col">
+          <button
+            pButton
+            type="button"
+            icon="pi pi-filter-slash"
+            class="p-button-outlined reset-btn"
+            [label]="'AUDIT_LOG.RESET' | translate"
+            (click)="clearFilters(dt)">
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <!-- Important Signals Strip -->
+    <section class="signals-strip" *ngIf="highlightedEvents.length > 0">
+      <article class="signal-card" *ngFor="let signalEvent of highlightedEvents; trackBy: trackByEvent">
+        <div class="signal-icon" [ngClass]="signalEvent.severity">
+          <i class="pi" [ngClass]="getActionIcon(signalEvent.actionType)"></i>
+        </div>
+        <div class="signal-content">
+          <strong>{{ getActionLabel(signalEvent.actionType) }}</strong>
+          <p>{{ signalEvent.message }}</p>
+          <small>{{ signalEvent.userName }} - {{ signalEvent.stationName }} - {{ signalEvent.occurredAt | customDate: 'HH:mm:ss' }}</small>
+        </div>
+        <button pButton type="button" icon="pi pi-angle-left" class="p-button-text p-button-sm signal-view-btn" (click)="openDetails(signalEvent)"></button>
+      </article>
+    </section>
+
+    <!-- Table Section -->
+    <section class="history-panel">
+      <div class="panel-head">
+        <div class="panel-title-group">
+          <h2>
+            <i class="pi pi-shield"></i>
+            <span>{{ 'AUDIT_LOG.EVENT_LOG' | translate }}</span>
+          </h2>
+          <p>سجل المراقبة والعمليات الحساسة ونشاط نقاط البيع</p>
+        </div>
+        <div class="count-pill">
+          <span>{{ filteredEvents.length }} {{ 'AUDIT_LOG.EVENT_COUNT' | translate }}</span>
+        </div>
+      </div>
+
+      <p-table
+        #dt
+        [value]="filteredEvents"
+        [paginator]="true"
+        [rows]="15"
+        [rowsPerPageOptions]="[15, 30, 50]"
+        [loading]="loading()"
+        styleClass="sessions-table audit-table"
+        [globalFilterFields]="['userName', 'roleName', 'stationName', 'referenceNo', 'message', 'actionType']"
+        [responsiveLayout]="'scroll'">
+
+        <ng-template pTemplate="header">
+          <tr>
+            <th pSortableColumn="occurredAt" style="width: 175px;">
+              <div class="d-flex align-items-center justify-content-between">
+                <span>{{ 'AUDIT_LOG.COL_DATETIME' | translate }}</span>
+                <div class="d-flex align-items-center">
+                  <p-sortIcon field="occurredAt"></p-sortIcon>
+                  <p-columnFilter type="date" field="occurredAt" display="menu"></p-columnFilter>
+                </div>
+              </div>
+            </th>
+
+            <th pSortableColumn="userName">
+              <div class="d-flex align-items-center justify-content-between">
+                <span>{{ 'AUDIT_LOG.USER' | translate }}</span>
+                <div class="d-flex align-items-center">
+                  <p-sortIcon field="userName"></p-sortIcon>
+                  <p-columnFilter type="text" field="userName" display="menu"></p-columnFilter>
+                </div>
+              </div>
+            </th>
+
+            <th pSortableColumn="actionType">
+              <div class="d-flex align-items-center justify-content-between">
+                <span>{{ 'AUDIT_LOG.EVENT_TYPE' | translate }}</span>
+                <div class="d-flex align-items-center">
+                  <p-sortIcon field="actionType"></p-sortIcon>
+                  <p-columnFilter type="text" field="actionType" display="menu"></p-columnFilter>
+                </div>
+              </div>
+            </th>
+
+            <th pSortableColumn="referenceNo" style="width: 130px;">
+              <div class="d-flex align-items-center justify-content-between">
+                <span>{{ 'AUDIT_LOG.COL_REF' | translate }}</span>
+                <div class="d-flex align-items-center">
+                  <p-sortIcon field="referenceNo"></p-sortIcon>
+                  <p-columnFilter type="text" field="referenceNo" display="menu"></p-columnFilter>
+                </div>
+              </div>
+            </th>
+
+            <th pSortableColumn="amount" class="text-end" style="width: 120px;">
+              <div class="d-flex align-items-center justify-content-between">
+                <span>{{ 'AUDIT_LOG.COL_AMOUNT' | translate }}</span>
+                <div class="d-flex align-items-center">
+                  <p-sortIcon field="amount"></p-sortIcon>
+                  <p-columnFilter type="numeric" field="amount" display="menu" currency="SAR"></p-columnFilter>
+                </div>
+              </div>
+            </th>
+
+            <th>
+              <div class="d-flex align-items-center justify-content-between">
+                <span>{{ 'AUDIT_LOG.COL_MESSAGE' | translate }}</span>
+                <p-columnFilter type="text" field="message" display="menu"></p-columnFilter>
+              </div>
+            </th>
+
+            <th pSortableColumn="severity" class="text-center" style="width: 110px;">
+              <div class="d-flex align-items-center justify-content-center">
+                <span>{{ 'AUDIT_LOG.SEVERITY' | translate }}</span>
+                <p-sortIcon field="severity"></p-sortIcon>
+              </div>
+            </th>
+
+            <th class="text-center" style="width: 75px;">
+              {{ 'AUDIT_LOG.VIEW_DETAILS' | translate }}
+            </th>
+          </tr>
+        </ng-template>
+
+        <ng-template pTemplate="body" let-event>
+          <tr>
+            <td>
+              <div class="date-cell">
+                <span>{{ event.occurredAt | customDate: 'yyyy/MM/dd' }}</span>
+                <small>{{ event.occurredAt | customDate: 'hh:mm:ss a' }}</small>
+              </div>
+            </td>
+            <td>
+              <div class="cashier-cell">
+                <strong>{{ event.userName }}</strong>
+                <small>{{ event.roleName }} • {{ event.stationName }}</small>
+              </div>
+            </td>
+            <td>
+              <span class="action-chip">
+                <i class="pi" [ngClass]="getActionIcon(event.actionType)"></i>
+                {{ getActionLabel(event.actionType) }}
+              </span>
+            </td>
+            <td>
+              <span class="ref-badge">{{ event.referenceNo || '-' }}</span>
+            </td>
+            <td class="text-end">
+              <span *ngIf="event.amount" class="amount">
+                <span class="amount-val">{{ event.amount | number:'1.2-2' }}</span>
+                <span class="currency-tag">ر.س</span>
+              </span>
+              <span *ngIf="!event.amount" class="text-muted">-</span>
+            </td>
+            <td>
+              <span class="msg-cell">{{ event.message }}</span>
+            </td>
+            <td class="text-center">
+              <p-tag
+                [value]="getSeverityLabel(event.severity)"
+                [severity]="getSeverityTag(event.severity)"
+                styleClass="status-pill">
+              </p-tag>
+            </td>
+            <td class="text-center">
+              <button
+                pButton
+                type="button"
+                icon="pi pi-eye"
+                class="action-btn-styled view-btn"
+                [pTooltip]="'AUDIT_LOG.VIEW_DETAILS' | translate"
+                tooltipPosition="top"
+                (click)="openDetails(event)">
+              </button>
+            </td>
+          </tr>
+        </ng-template>
+
+        <ng-template pTemplate="emptymessage">
+          <tr>
+            <td colspan="8" class="empty-table text-center">
+              {{ 'INVOICE_CONTROL.EMPTY_TABLE' | translate }}
+            </td>
+          </tr>
+        </ng-template>
+      </p-table>
+    </section>
+  </div>
+</div>
+
+<!-- Details Dialog -->
+<p-dialog
+  [(visible)]="showDetailsDialog"
+  [modal]="true"
+  [draggable]="false"
+  [resizable]="false"
+  [style]="{width:'780px', maxWidth:'96vw'}"
+  styleClass="invoice-dialog"
+  [header]="'AUDIT_LOG.DIALOG_DETAILS_TITLE' | translate">
+
+  <div *ngIf="selectedEvent() as event" class="dialog-body" style="direction: rtl;">
+    <div class="details-grid">
+      <article>
+        <span>{{ 'AUDIT_LOG.OPERATION' | translate }}</span>
+        <strong>{{ getActionLabel(event.actionType) }}</strong>
+      </article>
+      <article>
+        <span>{{ 'AUDIT_LOG.USER' | translate }}</span>
+        <strong>{{ event.userName }} ({{ event.roleName }})</strong>
+      </article>
+      <article>
+        <span>{{ 'AUDIT_LOG.STATION' | translate }}</span>
+        <strong>{{ event.stationName }}</strong>
+      </article>
+      <article>
+        <span>{{ 'AUDIT_LOG.COL_REF' | translate }}</span>
+        <strong>{{ event.referenceNo || '-' }}</strong>
+      </article>
+      <article>
+        <span>{{ 'AUDIT_LOG.COL_AMOUNT' | translate }}</span>
+        <strong>{{ event.amount ? (event.amount | number:'1.2-2') + ' ر.س' : '-' }}</strong>
+      </article>
+      <article>
+        <span>{{ 'AUDIT_LOG.COL_DATETIME' | translate }}</span>
+        <strong>{{ event.occurredAt | customDate: 'yyyy/MM/dd - hh:mm:ss a' }}</strong>
+      </article>
+    </div>
+
+    <div class="action-note">
+      <i class="pi pi-info-circle"></i>
+      <span>{{ event.message }}</span>
+    </div>
+
+    <div *ngIf="event.metadata && event.metadata.length > 0" class="totals-box">
+      <div *ngFor="let m of event.metadata">
+        <span>{{ m.label }}</span>
+        <strong>{{ m.value }}</strong>
+      </div>
+    </div>
+  </div>
+
+  <ng-template pTemplate="footer">
+    <button pButton type="button" label="إغلاق" class="p-button-text" (click)="showDetailsDialog = false"></button>
+  </ng-template>
+</p-dialog>

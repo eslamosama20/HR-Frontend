@@ -1,0 +1,1516 @@
+:host {
+  /* Theme Colors */
+  --primary-color: #3b82f6;        /* Brand Blue */
+  --primary-hover: #2563eb;        /* Darker Blue */
+  --primary-light: #e8f0ff;        /* Soft Blue */
+  --primary-focus: rgba(59, 130, 246, 0.15);
+  
+  --bg-main: #f8fafc;
+  --bg-card: #ffffff;
+  --border-color: #cbd5e1;
+  --border-hover: #94a3b8;
+  
+  --text-main: #0f172a;
+  --text-muted: #475569;
+  --text-light: #94a3b8;
+  
+  --danger-color: #ef4444;
+  --danger-hover: #dc2626;
+  --success-color: #10b981;
+  
+  --card-radius: 8px;
+  --shadow-sm: 0 1px 2px rgba(0,0,0,0.03);
+  --shadow-md: 0 4px 6px -1px rgba(0,0,0,0.03);
+}
+
+:host-context(.dark),
+:host-context(.p-dark) {
+  --bg-main: #0f172a;
+  --bg-card: #151f30;
+  --border-color: #1e3a8a;
+  --border-hover: #3b82f6;
+  --text-main: #f8fafc;
+  --text-muted: #cbd5e1;
+  --primary-light: rgba(59, 130, 246, 0.15);
+}
+
+/* =========================
+   ICON PICKER BASE
+   ========================= */
+
+/* Image Upload Widget */
+.image-upload-wrap {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+}
+
+.product-img-preview {
+  width: 60px;
+  height: 60px;
+  object-fit: cover;
+  border-radius: 8px;
+  border: 1px solid #d0d8e8;
+}
+
+.no-img-placeholder {
+  width: 60px;
+  height: 60px;
+  border-radius: 8px;
+  border: 1px dashed #b0b8cc;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  color: #9aa;
+  font-size: 0.65rem;
+  gap: 2px;
+  i { font-size: 1.2rem; }
+}
+
+.upload-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.3rem 0.75rem;
+  border-radius: 7px;
+  background: #e8f0fe;
+  color: #2563eb;
+  font-size: 0.75rem;
+  font-weight: 700;
+  cursor: pointer;
+  border: 1px solid #c5d5f8;
+  transition: background 0.15s;
+  &:hover { background: #d0e3fc; }
+}
+
+.remove-img-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.3rem 0.6rem;
+  border-radius: 7px;
+  background: #fee2e2;
+  color: #dc2626;
+  font-size: 0.73rem;
+  font-weight: 700;
+  cursor: pointer;
+  border: 1px solid #fca5a5;
+  transition: background 0.15s;
+  &:hover { background: #fecaca; }
+}
+
+.icon-picker-container {
+  max-width: 300px;
+  margin: 20px auto;
+  position: relative;
+}
+
+.icon-picker-container h3 {
+  text-align: center;
+  margin-bottom: 10px;
+}
+
+.icon-picker-container p {
+  margin-top: 20px;
+  text-align: center;
+}
+
+/* Ensure the button is visible */
+.icon-picker-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 3.5rem;
+  height: 3.5rem;
+  border-radius: 50%;
+  background-color: #bed9ff;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  z-index: 10;
+}
+
+.iconPicker__iconItem {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  background-color: transparent;
+}
+
+.selected {
+  border: 2px solid #007ad9;
+  border-radius: 5px;
+}
+
+p-scroller .p-scroller-content {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr 1fr;
+  gap: 10px;
+}
+
+/* =========================
+   BRAND-ALIGNED SALES CLASSES TREE DESIGN (Metronic Identity)
+   ========================= */
+
+/* Root Level Card (Level 1) */
+.root-card {
+  border: 1px solid #e2e8f0 !important;
+  border-radius: 10px !important;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04) !important;
+  background: #ffffff !important;
+  transition: all 0.2s ease !important;
+
+  &:hover {
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.07) !important;
+  }
+
+  .root-header {
+    background: #ffffff !important;
+    border-bottom: 1px solid #f1f5f9 !important;
+    border-radius: 10px 10px 0 0 !important;
+    padding: 0.75rem 1rem !important;
+
+    &.is-selected {
+      background: #f0f6ff !important;
+    }
+
+    .root-badge {
+      background: #3b82f6 !important;
+      color: #ffffff !important;
+      border-radius: 6px !important;
+      font-size: 0.85rem !important;
+      font-weight: 700 !important;
+      padding: 0.2rem 0.6rem !important;
+    }
+
+    .root-title {
+      font-size: 1.05rem !important;
+      color: #0f172a !important;
+      font-weight: 700 !important;
+    }
+  }
+}
+
+/* Header Level Row (Level 2) */
+.header-row {
+  background: #f8fafc !important;
+  border: 1px solid #e2e8f0 !important;
+  border-radius: 8px !important;
+  transition: all 0.15s ease !important;
+
+  &:hover {
+    background: #f1f5f9 !important;
+  }
+
+  &.is-selected {
+    background: #eff6ff !important;
+    border-color: #93c5fd !important;
+  }
+
+  .header-badge {
+    background: #eff6ff !important;
+    color: #2563eb !important;
+    border: 1px solid #bfdbfe !important;
+    border-radius: 6px !important;
+    font-size: 0.8rem !important;
+    font-weight: 700 !important;
+    padding: 0.15rem 0.55rem !important;
+  }
+
+  .header-title {
+    font-size: 0.95rem !important;
+    color: #1e293b !important;
+    font-weight: 600 !important;
+  }
+}
+
+/* Detail Level Row (Level 3) */
+.detail-row {
+  background: #ffffff !important;
+  border: 1px solid #e2e8f0 !important;
+  border-radius: 6px !important;
+  margin-top: 0.35rem !important;
+  transition: all 0.15s ease !important;
+
+  &:hover {
+    background: #f8fafc !important;
+  }
+
+  &.is-selected {
+    background: #f0f6ff !important;
+    border-color: #93c5fd !important;
+  }
+
+  .detail-badge {
+    background: #f1f5f9 !important;
+    color: #475569 !important;
+    border: 1px solid #cbd5e1 !important;
+    border-radius: 6px !important;
+    font-size: 0.78rem !important;
+    font-weight: 700 !important;
+    padding: 0.12rem 0.5rem !important;
+  }
+
+  .detail-title {
+    font-size: 0.9rem !important;
+    color: #334155 !important;
+    font-weight: 500 !important;
+  }
+}
+
+/* Main Level Item (Level 4) */
+.main-item {
+  background: #ffffff !important;
+  border: 1px solid #f1f5f9 !important;
+  border-radius: 6px !important;
+  margin-top: 0.25rem !important;
+  margin-inline-start: 1.5rem !important;
+  padding: 0.4rem 0.75rem !important;
+  transition: all 0.15s ease !important;
+
+  &:hover {
+    background: #f8fafc !important;
+    border-color: #e2e8f0 !important;
+  }
+
+  &.is-selected {
+    background: #eff6ff !important;
+    border-color: #93c5fd !important;
+  }
+
+  .main-badge {
+    background: #f1f5f9 !important;
+    color: #3b82f6 !important;
+    border: 1px solid #e2e8f0 !important;
+    border-radius: 5px !important;
+    font-size: 0.75rem !important;
+    font-weight: 700 !important;
+    padding: 0.1rem 0.45rem !important;
+  }
+
+  .main-title {
+    font-size: 0.88rem !important;
+    color: #475569 !important;
+  }
+}
+
+/* Tree Expansion Chevrons & Indentations */
+.expand-chevron {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  width: 24px !important;
+  height: 24px !important;
+  border-radius: 4px !important;
+  transition: all 0.2s ease !important;
+
+  &:hover {
+    background: rgba(59, 130, 246, 0.1) !important;
+    color: #2563eb !important;
+  }
+
+  i {
+    font-size: 0.85rem !important;
+    transition: transform 0.2s ease !important;
+  }
+}
+
+.root-body {
+  padding: 0.5rem 0.75rem 0.75rem 0.75rem !important;
+}
+
+.header-body {
+  padding-inline-start: 1.25rem !important;
+  margin-top: 0.25rem !important;
+  border-inline-start: 2px solid #e2e8f0 !important;
+  margin-inline-start: 0.75rem !important;
+}
+
+.detail-body {
+  padding-inline-start: 1rem !important;
+  margin-top: 0.25rem !important;
+  border-inline-start: 2px dashed #cbd5e1 !important;
+  margin-inline-start: 0.75rem !important;
+}
+
+/* =========================
+   TREE NODE CLICKABLE
+   ========================= */
+.tree-node-clickable {
+  cursor: pointer;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  background-color: transparent;
+  padding: 0.4rem 0.6rem !important;
+  margin: 0.1rem 0;
+  transition: all 0.2s ease-in-out;
+}
+
+.tree-node-clickable:hover {
+  background-color: #f1f5f9;
+  border-color: rgba(37, 99, 235, 0.08);
+}
+
+:host-context(.dark) .tree-node-clickable,
+:host-context(.p-dark) .tree-node-clickable {
+  background-color: transparent;
+  border-color: transparent;
+  color: #f8fafc;
+}
+
+:host-context(.dark) .tree-node-clickable:hover,
+:host-context(.p-dark) .tree-node-clickable:hover {
+  background-color: rgba(255, 255, 255, 0.04);
+}
+
+/* =========================
+   COMPACT MODE (page-wide)
+   IMPORTANT: For exact font match with Reservations, NO ZOOM.
+   ========================= */
+.compact-page {
+  zoom: 1 !important; /* كان 0.9 */
+}
+
+/* =========================
+   ULTRA COMPACT MODE (XS)
+   IMPORTANT: For exact font match with Reservations, NO ZOOM.
+   ========================= */
+.compact-page--xs {
+  zoom: 1 !important; /* كان 0.85 */
+}
+
+/* =========================
+   EXACT FONT SIZES = Reservations Page
+   Base + Responsive
+   ========================= */
+
+/* Base = 1rem */
+.compact-page,
+.compact-page--xs,
+.compact-page .p-component,
+.compact-page--xs .p-component,
+.compact-page .p-inputtext,
+.compact-page--xs .p-inputtext,
+.compact-page .p-dropdown-label,
+.compact-page--xs .p-dropdown-label,
+.compact-page .p-button,
+.compact-page--xs .p-button,
+.compact-page .p-tree,
+.compact-page--xs .p-tree,
+.compact-page .p-tree .p-treenode-label,
+.compact-page--xs .p-tree .p-treenode-label,
+.compact-page .tree-title,
+.compact-page--xs .tree-title,
+:host ::ng-deep .items-tree--xxs .node-text {
+  font-size: 1rem !important;          /* EXACT like Reservations desktop */
+  line-height: 1.25rem !important;     /* same feeling */
+}
+
+/* Small texts = 0.7rem (badge-like) */
+.compact-page .tree-code,
+.compact-page--xs .tree-code,
+.compact-page .tree-meta,
+.compact-page--xs .tree-meta,
+.compact-page .tree-tag,
+.compact-page--xs .tree-tag,
+:host ::ng-deep .items-tree--xxs .node-code {
+  font-size: 0.7rem !important;
+  line-height: 1rem !important;
+}
+
+/* Dialog title = 1.05rem */
+.compact-page .p-dialog .p-dialog-title,
+.compact-page--xs .p-dialog .p-dialog-title {
+  font-size: 1.05rem !important;
+}
+
+/* Responsive EXACT like Reservations */
+@media (max-width: 1200px) {
+  .compact-page,
+  .compact-page--xs,
+  .compact-page .p-component,
+  .compact-page--xs .p-component,
+  .compact-page .p-inputtext,
+  .compact-page--xs .p-inputtext,
+  .compact-page .p-dropdown-label,
+  .compact-page--xs .p-dropdown-label,
+  .compact-page .p-button,
+  .compact-page--xs .p-button,
+  .compact-page .p-tree,
+  .compact-page--xs .p-tree,
+  .compact-page .p-tree .p-treenode-label,
+  .compact-page--xs .p-tree .p-treenode-label,
+  .compact-page .tree-title,
+  .compact-page--xs .tree-title,
+  :host ::ng-deep .items-tree--xxs .node-text {
+    font-size: 0.8125rem !important;
+  }
+}
+
+@media (max-width: 992px) {
+  .compact-page,
+  .compact-page--xs,
+  .compact-page .p-component,
+  .compact-page--xs .p-component,
+  .compact-page .p-inputtext,
+  .compact-page--xs .p-inputtext,
+  .compact-page .p-dropdown-label,
+  .compact-page--xs .p-dropdown-label,
+  .compact-page .p-button,
+  .compact-page--xs .p-button,
+  .compact-page .p-tree,
+  .compact-page--xs .p-tree,
+  .compact-page .p-tree .p-treenode-label,
+  .compact-page--xs .p-tree .p-treenode-label,
+  .compact-page .tree-title,
+  .compact-page--xs .tree-title,
+  :host ::ng-deep .items-tree--xxs .node-text {
+    font-size: 0.75rem !important;
+  }
+}
+
+@media (max-width: 768px) {
+  .compact-page,
+  .compact-page--xs,
+  .compact-page .p-component,
+  .compact-page--xs .p-component,
+  .compact-page .p-inputtext,
+  .compact-page--xs .p-inputtext,
+  .compact-page .p-dropdown-label,
+  .compact-page--xs .p-dropdown-label,
+  .compact-page .p-button,
+  .compact-page--xs .p-button,
+  .compact-page .p-tree,
+  .compact-page--xs .p-tree,
+  .compact-page .p-tree .p-treenode-label,
+  .compact-page--xs .p-tree .p-treenode-label,
+  .compact-page .tree-title,
+  .compact-page--xs .tree-title,
+  :host ::ng-deep .items-tree--xxs .node-text {
+    font-size: 0.7rem !important;
+  }
+}
+
+@media (max-width: 576px) {
+  .compact-page,
+  .compact-page--xs,
+  .compact-page .p-component,
+  .compact-page--xs .p-component,
+  .compact-page .p-inputtext,
+  .compact-page--xs .p-inputtext,
+  .compact-page .p-dropdown-label,
+  .compact-page--xs .p-dropdown-label,
+  .compact-page .p-button,
+  .compact-page--xs .p-button,
+  .compact-page .p-tree,
+  .compact-page--xs .p-tree,
+  .compact-page .p-tree .p-treenode-label,
+  .compact-page--xs .p-tree .p-treenode-label,
+  .compact-page .tree-title,
+  .compact-page--xs .tree-title,
+  :host ::ng-deep .items-tree--xxs .node-text {
+    font-size: 0.65rem !important;
+  }
+}
+
+/* =========================
+   COMPACT SPACING (keep compact feel WITHOUT zoom)
+   ========================= */
+
+/* spacing utilities */
+.compact-page .p-2,
+.compact-page--xs .p-2 { padding: 0.35rem !important; }
+
+.compact-page--xs .p-1 { padding: 0.15rem !important; }
+
+.compact-page .px-10 { padding-left: 1rem !important; padding-right: 1rem !important; }
+.compact-page--xs .px-4 { padding-left: 0.4rem !important; padding-right: 0.4rem !important; }
+.compact-page--xs .px-2 { padding-left: 0.3rem !important; padding-right: 0.3rem !important; }
+
+.compact-page .gap-4 { gap: 0.5rem !important; }
+.compact-page--xs .gap-4 { gap: 0.25rem !important; }
+.compact-page--xs .gap-3 { gap: 0.2rem !important; }
+.compact-page--xs .gap-2 { gap: 0.2rem !important; }
+.compact-page--xs .gap-1 { gap: 0.15rem !important; }
+
+.compact-page--xs .mt-2 { margin-top: 0.25rem !important; }
+.compact-page--xs .mb-5 { margin-bottom: 0.4rem !important; }
+
+/* Buttons padding only */
+.compact-page .p-button,
+.compact-page--xs .p-button {
+  padding: 0.35rem 0.6rem !important;
+}
+.compact-page--xs .p-button {
+  padding: 0.18rem 0.45rem !important;
+  line-height: 1 !important;
+}
+
+.compact-page--xs .p-button.p-button-icon-only {
+  width: 1.9rem !important;
+  height: 1.9rem !important;
+  padding: 0 !important;
+}
+
+/* Tree spacing only */
+.compact-page .p-tree .p-treenode-content { padding: 0.2rem 0.35rem !important; }
+.compact-page--xs .p-tree .p-treenode-content { padding: 0.12rem 0.25rem !important; }
+
+/* Visual Indentation & Guidelines for Tree Levels */
+:host ::ng-deep .p-tree .p-treenode-children {
+  padding-inline-start: 1.8rem !important; /* Distinct offset for child levels */
+  margin-inline-start: 0.6rem !important;
+  border-inline-start: 1px dashed rgba(0, 0, 0, 0.1) !important; /* Clean guideline */
+}
+
+:host-context(.dark) :host ::ng-deep .p-tree .p-treenode-children,
+:host-context(.p-dark) :host ::ng-deep .p-tree .p-treenode-children {
+  border-inline-start: 1px dashed rgba(255, 255, 255, 0.12) !important;
+}
+
+/* Wrap each Root node group in a card with a blue border */
+:host ::ng-deep .p-tree > .p-tree-container > p-treenode > .p-treenode {
+  border: 1px solid #93c5fd !important;
+  border-radius: 8px !important;
+  margin-bottom: 1.25rem !important;
+  padding: 0.6rem !important;
+  background-color: #ffffff !important;
+  box-shadow: 0 1px 3px rgba(37, 99, 235, 0.04) !important;
+  transition: border-color 0.25s ease, box-shadow 0.25s ease !important;
+  
+  &:hover {
+    border-color: #2563eb !important;
+    box-shadow: 0 4px 10px rgba(37, 99, 235, 0.08) !important;
+  }
+  
+  /* Reset styles for descendant nodes inside the parent card */
+  .p-treenode {
+    border: none !important;
+    padding: 0 !important;
+    background-color: transparent !important;
+    box-shadow: none !important;
+    margin-bottom: 0 !important;
+  }
+}
+
+:host-context(.dark) :host ::ng-deep .p-tree > .p-tree-container > p-treenode > .p-treenode,
+:host-context(.p-dark) :host ::ng-deep .p-tree > .p-tree-container > p-treenode > .p-treenode {
+  border-color: #1e3a8a !important;
+  background-color: #151f30 !important; /* Premium dark background for card */
+  
+  &:hover {
+    border-color: #3b82f6 !important;
+  }
+}
+
+
+/* Premium Dialog Overrides */
+:host ::ng-deep {
+  .p-dialog {
+    border-radius: 12px !important;
+    overflow: hidden !important;
+    border: 1px solid var(--border-color) !important;
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04) !important;
+    background: var(--bg-card) !important;
+    height: auto !important;
+    min-height: auto !important;
+    max-height: 90vh !important;
+  }
+  
+  .p-dialog .p-dialog-header {
+    background-color: var(--primary-light) !important; /* Soft Brand Blue */
+    color: var(--primary-hover) !important; /* Brand Blue */
+    padding: 0.85rem 1.1rem !important;
+    border-bottom: 1px solid var(--border-color) !important;
+    
+    .p-dialog-title {
+      font-size: 1.05rem !important;
+      font-weight: 700 !important;
+    }
+    
+    .p-dialog-header-icon {
+      width: 1.85rem !important;
+      height: 1.85rem !important;
+      border-radius: 50% !important;
+      transition: all 0.2s !important;
+      
+      &:hover {
+        background-color: rgba(0, 0, 0, 0.05) !important;
+      }
+    }
+  }
+  
+  .p-dialog .p-dialog-content {
+    padding: 1.25rem 1.1rem !important;
+    background: var(--bg-card) !important;
+    color: var(--text-main) !important;
+    height: auto !important;
+    min-height: auto !important;
+    max-height: 70vh !important;
+    overflow-y: auto !important;
+    
+    label {
+      font-size: 0.85rem !important;
+      font-weight: 600 !important;
+      color: var(--text-muted) !important;
+      margin-bottom: 0.35rem !important;
+      display: block;
+    }
+    
+    /* Textareas and Inputs inside Dialog */
+    .p-inputtext, textarea {
+      width: 100% !important;
+      border-radius: 6px !important;
+      border: 1px solid var(--border-color) !important;
+      padding: 0.35rem 0.5rem !important;
+      font-size: 0.9rem !important;
+      background-color: var(--bg-card) !important;
+      color: var(--text-main) !important;
+      transition: border-color 0.2s ease, box-shadow 0.2s ease !important;
+      
+      &:focus {
+        border-color: var(--primary-color) !important;
+        box-shadow: 0 0 0 2px var(--primary-focus) !important;
+        outline: none !important;
+      }
+    }
+
+    textarea, .p-inputtextarea, textarea.p-inputtextarea {
+      resize: vertical !important;
+      overflow-y: auto !important;
+      min-height: 60px !important;
+    }
+  }
+  
+  .p-dialog .p-dialog-footer,
+  .p-dialog .flex.justify-content-end,
+  .editor-content .flex.justify-content-end {
+    padding: 0.75rem 1.1rem !important;
+    background: transparent !important;
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.5rem;
+  }
+
+  /* Secondary Cancel Button Styling */
+  p-button[severity="secondary"] .p-button,
+  .p-button-secondary,
+  .p-button.p-button-secondary {
+    background-color: var(--bg-main) !important;
+    border: 1px solid var(--border-color) !important;
+    color: var(--text-muted) !important;
+    border-radius: 6px !important;
+    font-weight: 600 !important;
+    padding: 0.35rem 0.75rem !important;
+    height: 32px !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    transition: all 0.2s ease !important;
+    
+    &:hover {
+      background-color: var(--border-hover) !important;
+      color: var(--text-main) !important;
+      border-color: var(--border-hover) !important;
+    }
+  }
+  
+  /* Primary Save Button Styling */
+  p-button:not([severity="secondary"]):not(.p-button-contrast):not(.p-button-secondary) .p-button:not(.btn-expand-all):not(.btn-collapse-all):not(.p-button-primary) {
+    background: #0891b2 !important;
+    border: 1px solid #0891b2 !important;
+    color: #fff !important;
+    border-radius: 6px !important;
+    font-weight: 600 !important;
+    padding: 0.35rem 0.75rem !important;
+    height: 32px !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    transition: all 0.2s ease !important;
+    
+    &:hover {
+      background: #0e7490 !important;
+      border-color: #0e7490 !important;
+      transform: translateY(-1px);
+    }
+    
+    &:disabled, &[disabled], &.p-disabled {
+      background: #cbd5e1 !important;
+      border-color: #cbd5e1 !important;
+      color: #94a3b8 !important;
+      opacity: 0.6 !important;
+      cursor: not-allowed !important;
+      transform: none !important;
+    }
+  }
+}
+
+/* PrimeNG Dropdown Premium Override */
+:host ::ng-deep .p-dropdown {
+  width: 100% !important;
+  background: var(--bg-card) !important;
+  border: 1px solid var(--border-color) !important;
+  border-radius: 6px !important;
+  transition: all 0.2s ease !important;
+  min-height: 2.2rem !important;
+  display: flex !important;
+  align-items: center !important;
+  color: var(--text-main) !important;
+  
+  &:hover {
+    border-color: #0891b2 !important;
+  }
+  
+  &.p-focus {
+    border-color: #0891b2 !important;
+    box-shadow: 0 0 0 3px rgba(8, 145, 178, 0.15) !important;
+  }
+}
+
+:host ::ng-deep .p-dropdown .p-dropdown-label {
+  padding: 0.35rem 0.5rem !important;
+  font-size: 0.9rem !important;
+  color: var(--text-main) !important;
+  display: flex !important;
+  align-items: center !important;
+}
+
+:host ::ng-deep .p-dropdown-panel {
+  background: var(--bg-card) !important;
+  border: 1px solid var(--border-color) !important;
+  border-radius: 8px !important;
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -4px rgba(0, 0, 0, 0.1) !important;
+  padding: 4px !important;
+  
+  .p-dropdown-items {
+    padding: 0 !important;
+  }
+  
+  .p-dropdown-item {
+    margin: 2px 0 !important;
+    padding: 0.45rem 0.6rem !important;
+    border-radius: 6px !important;
+    font-size: 0.88rem !important;
+    color: var(--text-muted) !important;
+    transition: all 0.15s ease !important;
+    
+    &:hover {
+      background: var(--bg-main) !important;
+      color: var(--text-main) !important;
+    }
+    
+    &.p-highlight {
+      background: rgba(8, 145, 178, 0.1) !important;
+      color: #0891b2 !important;
+      font-weight: 600 !important;
+    }
+  }
+  
+  .p-dropdown-header {
+    padding: 6px !important;
+    background: var(--bg-main) !important;
+    border-bottom: 1px solid var(--border-color) !important;
+    border-top-left-radius: 8px !important;
+    border-top-right-radius: 8px !important;
+    
+    .p-dropdown-filter-container {
+      width: 100% !important;
+      
+      .p-dropdown-filter {
+        padding: 0.35rem 0.5rem 0.35rem 1.8rem !important;
+        font-size: 0.85rem !important;
+        border: 1px solid var(--border-color) !important;
+        border-radius: 6px !important;
+        background: var(--bg-card) !important;
+        color: var(--text-main) !important;
+        
+        &:focus {
+          border-color: #0891b2 !important;
+          box-shadow: 0 0 0 2px rgba(8, 145, 178, 0.1) !important;
+        }
+      }
+      
+      .p-dropdown-filter-icon {
+        left: 0.5rem !important;
+        right: auto !important;
+        color: var(--text-muted) !important;
+      }
+    }
+  }
+}
+
+/* OverlayPanel spacing */
+.compact-page .p-overlaypanel-content,
+.compact-page--xs .p-overlaypanel-content { padding: 0.5rem !important; }
+
+.compact-page .p-overlaypanel .p-button { width: 100%; }
+
+/* =========================
+   ICON PICKER XS LAYOUT
+   ========================= */
+.compact-page--xs .icon-picker-container {
+  max-width: 220px !important;
+  margin: 8px auto !important;
+}
+
+.compact-page--xs .icon-picker-button {
+  width: 2.2rem !important;
+  height: 2.2rem !important;
+  border-radius: 50% !important;
+  background-color: #bed9ff !important;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.15) !important;
+}
+
+/* grid smaller */
+.compact-page--xs p-scroller .p-scroller-content {
+  grid-template-columns: repeat(5, 1fr) !important;
+  gap: 6px !important;
+}
+
+.compact-page--xs .iconPicker__iconItem {
+  width: 100% !important;
+  height: 100% !important;
+  padding: 0 !important;
+}
+
+.compact-page--xs .iconPicker__iconItem svg,
+.compact-page--xs .iconPicker__iconItem i {
+  width: 14px !important;
+  height: 14px !important;
+  font-size: 14px !important;
+}
+
+/* =========================
+   TOOLBAR SEARCH
+   ========================= */
+.toolbar-row {
+  direction: ltr;
+}
+
+.search-wrap .search-input {
+  display: block;
+}
+
+.search-wrap .p-inputtext {
+  height: 2.6rem;
+  border-radius: 12px;
+  padding-left: 2.2rem !important;
+  border: 1px solid rgba(0, 0, 0, 0.12);
+  background: #ffffff;
+  transition: all 0.2s ease;
+}
+
+.search-wrap .pi.pi-search {
+  color: #0891b2;
+  font-size: 1rem;
+}
+
+.search-wrap .p-inputtext:focus {
+  border-color: #0891b2;
+  box-shadow: 0 0 0 0.2rem rgba(8, 145, 178, 0.18);
+}
+
+:host-context(.dark) .search-wrap .p-inputtext,
+:host-context(.p-dark) .search-wrap .p-inputtext {
+  background: #0b1220;
+  border-color: rgba(255, 255, 255, 0.18);
+  color: #fff;
+}
+
+/* =========================
+   ITEMS TREE — XXX SMALL (ONLY TREE)
+   IMPORTANT: remove fixed px font-size because it breaks exact match
+   ========================= */
+/* ❌ Removed:
+:host ::ng-deep .items-tree--xxs { font-size: 9px !important; }
+*/
+
+/* Half screen tree */
+:host ::ng-deep .tree-half {
+  width: 48vw !important;
+  max-width: 48vw !important;
+  min-width: 420px !important;
+}
+
+:host ::ng-deep .tree-half.p-tree,
+:host ::ng-deep .tree-half .p-tree-container,
+:host ::ng-deep .tree-half .p-treenode,
+:host ::ng-deep .tree-half .p-treenode-content {
+  width: 100% !important;
+}
+
+:host ::ng-deep .tree-half .p-treenode-content {
+  display: flex !important;
+}
+
+/* tighter node spacing */
+:host ::ng-deep .items-tree--xxs .p-tree .p-treenode-content {
+  padding: 0.02rem 0.10rem !important;
+  min-height: 1.15rem !important;
+}
+
+:host ::ng-deep .items-tree--xxs .p-tree .p-tree-toggler {
+  width: 0.95rem !important;
+  height: 0.95rem !important;
+  margin-inline-end: 0.08rem !important;
+}
+
+/* layout for clickable row */
+:host ::ng-deep .items-tree--xxs .tree-node-clickable {
+  display: flex;
+  gap: 0.25rem;
+  padding: 0.10rem 0.14rem !important;
+}
+
+/* allow ellipsis */
+:host ::ng-deep .items-tree--xxs .tree-node-clickable > div:first-child,
+:host ::ng-deep .items-tree--xxs .tree-node-clickable .node-text {
+  min-width: 0 !important;
+}
+
+:host ::ng-deep .items-tree--xxs .node-name {
+  display: inline-block;
+  max-width: none !important;
+  overflow: visible !important;
+  text-overflow: clip !important;
+  white-space: normal !important;
+  vertical-align: bottom;
+}
+
+:host ::ng-deep .items-tree--xxs .node-code {
+  flex: 0 0 auto;
+  margin-inline-end: 0.15rem;
+}
+
+@media (max-width: 768px) {
+  :host ::ng-deep .items-tree--xxs .node-name {
+    max-width: none !important;
+  }
+}
+
+/* node icons */
+:host ::ng-deep .items-tree--xxs i.pi.pi-ellipsis-v {
+  font-size: inherit !important; /* match current font size */
+}
+
+/* buttons inside nodes - size only, font inherited */
+:host ::ng-deep .items-tree--xxs .p-button {
+  padding: 0 !important;
+  line-height: 1 !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  transition: all 0.2s ease-in-out !important;
+}
+
+:host ::ng-deep .items-tree--xxs .p-button.p-button-icon-only {
+  width: 1.9rem !important;
+  height: 1.9rem !important;
+  border-radius: 50% !important;
+}
+
+/* Specific styling for ADD button (+ icon) inside tree nodes */
+:host ::ng-deep .items-tree--xxs .p-button.p-button-contrast {
+  background-color: rgba(8, 145, 178, 0.08) !important;
+  border: 1px solid rgba(8, 145, 178, 0.15) !important;
+  color: #0891b2 !important;
+  
+  &:hover {
+    background-color: #0891b2 !important;
+    border-color: #0891b2 !important;
+    color: #ffffff !important;
+    transform: scale(1.08);
+  }
+}
+
+/* Specific styling for OPTIONS (ellipsis) button inside tree nodes */
+:host ::ng-deep .items-tree--xxs .p-button.p-button-secondary {
+  background-color: transparent !important;
+  border: none !important;
+  color: #64748b !important;
+  
+  &:hover {
+    background-color: #e2e8f0 !important;
+    color: #0f172a !important;
+    transform: scale(1.08);
+  }
+}
+
+:host-context(.dark) :host ::ng-deep .items-tree--xxs .p-button.p-button-secondary,
+:host-context(.p-dark) :host ::ng-deep .items-tree--xxs .p-button.p-button-secondary {
+  &:hover {
+    background-color: rgba(255, 255, 255, 0.1) !important;
+    color: #ffffff !important;
+  }
+}
+
+:host ::ng-deep .items-tree--xxs .p-button .p-button-icon {
+  font-size: 0.7rem !important;
+}
+
+/* icon picker inside nodes */
+:host ::ng-deep .items-tree--xxs .icon-picker-button {
+  width: 1.20rem !important;
+  height: 1.20rem !important;
+  border-radius: 50% !important;
+  box-shadow: none !important;
+}
+
+:host ::ng-deep .items-tree--xxs .icon-picker-button svg,
+:host ::ng-deep .items-tree--xxs .icon-picker-button i {
+  width: 10px !important;
+  height: 10px !important;
+  font-size: 10px !important;
+}
+
+:host ::ng-deep .items-tree--xxs.p-tree {
+  padding: 0 !important;
+  border: none !important;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+
+/* =========================
+   TREE + SIDE EDITOR LAYOUT
+   ========================= */
+:host {
+  --page-top: 5.5rem;
+  --page-footer: 3.5rem;
+}
+
+.tree-editor-wrap {
+  display: flex;
+  width: 100%;
+  gap: .5rem;
+  align-items: flex-start;
+  flex-wrap: nowrap;
+  flex-direction: row-reverse;
+  height: calc(100vh - var(--page-top) - var(--page-footer));
+  overflow: hidden;
+}
+
+.tree-editor-wrap.rtl {
+  flex-direction: row-reverse;
+}
+
+.tree-col {
+  width: 48vw;
+  max-width: 48vw;
+  min-width: 420px;
+  flex: 0 0 auto;
+  height: 100%;
+  overflow: auto;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.tree-col::-webkit-scrollbar {
+  width: 0;
+  height: 0;
+}
+
+.editor-col {
+  flex: 1 1 auto;
+  min-width: 320px;
+  min-height: 1px;
+  height: 100%;
+  position: sticky;
+  top: 0;
+  align-self: flex-start;
+}
+
+.editor-col.is-collapsed {
+  visibility: hidden;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.editor-card {
+  height: auto !important;
+  max-height: 100% !important;
+  border: 1px solid var(--border-color);
+  border-radius: var(--card-radius);
+  background: var(--bg-card);
+  box-shadow: var(--shadow-sm);
+  overflow: hidden;
+  transition: box-shadow 0.2s ease, border-color 0.2s ease;
+  
+  &:hover {
+    box-shadow: var(--shadow-md);
+    border-color: var(--border-hover);
+  }
+}
+
+.editor-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.5rem 0.75rem;
+  border-bottom: 1px solid var(--border-color);
+  background-color: var(--primary-light); /* light blue #e8f0ff */
+  border-top-left-radius: var(--card-radius);
+  border-top-right-radius: var(--card-radius);
+}
+
+.editor-title {
+  font-size: 1.0rem;
+  font-weight: 700;
+  color: var(--primary-hover); /* Brand Blue #2563eb */
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.editor-content {
+  padding: 0.75rem 0.9rem;
+  height: calc(100% - 2.8rem);
+  overflow: auto;
+  
+  .field {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    margin-bottom: 0.75rem;
+  }
+  
+  /* Style form inputs to look exactly like Reservations component */
+  input.p-inputtext, .p-inputtext:not(textarea) {
+    height: 32px !important;
+    border-radius: 6px !important;
+    border: 1px solid var(--border-color) !important;
+    padding: 0.25rem 0.5rem !important;
+    font-size: 0.9rem !important;
+    background-color: #ffffff !important;
+    color: var(--text-main) !important;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease !important;
+    
+    &:focus {
+      border-color: var(--primary-color) !important;
+      box-shadow: 0 0 0 2px var(--primary-focus) !important;
+      outline: none !important;
+    }
+  }
+
+  textarea.p-inputtext, textarea.p-inputtextarea, textarea {
+    height: auto;
+    min-height: 38px !important;
+    border-radius: 6px !important;
+    border: 1px solid var(--border-color) !important;
+    padding: 0.35rem 0.5rem !important;
+    font-size: 0.9rem !important;
+    background-color: #ffffff !important;
+    color: var(--text-main) !important;
+    resize: vertical !important;
+    overflow-y: auto !important;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease !important;
+    
+    &:focus {
+      border-color: var(--primary-color) !important;
+      box-shadow: 0 0 0 2px var(--primary-focus) !important;
+      outline: none !important;
+    }
+  }
+}
+
+
+/* =========================
+   EXPAND / COLLAPSE Buttons & Primary Button Styling
+   ========================= */
+:host ::ng-deep .btn-expand-all,
+:host ::ng-deep .p-button.btn-expand-all {
+  background: #e6f4ea !important;
+  border: 1px solid #137333 !important;
+  color: #137333 !important;
+  font-weight: 600 !important;
+  border-radius: 6px !important;
+  box-shadow: 0 1px 2px rgba(19, 115, 51, 0.05) !important;
+  transition: all 0.2s ease !important;
+  padding: 0.45rem 1.1rem !important;
+}
+:host ::ng-deep .btn-expand-all:hover,
+:host ::ng-deep .p-button.btn-expand-all:hover {
+  background: #137333 !important;
+  border-color: #137333 !important;
+  color: #fff !important;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 6px rgba(19, 115, 51, 0.15) !important;
+}
+
+:host ::ng-deep .btn-collapse-all,
+:host ::ng-deep .p-button.btn-collapse-all {
+  background: #fce8e6 !important;
+  border: 1px solid #c5221f !important;
+  color: #c5221f !important;
+  font-weight: 600 !important;
+  border-radius: 6px !important;
+  box-shadow: 0 1px 2px rgba(197, 34, 31, 0.05) !important;
+  transition: all 0.2s ease !important;
+  padding: 0.45rem 1.1rem !important;
+}
+:host ::ng-deep .btn-collapse-all:hover,
+:host ::ng-deep .p-button.btn-collapse-all:hover {
+  background: #c5221f !important;
+  border-color: #c5221f !important;
+  color: #fff !important;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 6px rgba(197, 34, 31, 0.15) !important;
+}
+
+:host ::ng-deep .p-button-primary.p-button {
+  background: #2563eb !important; /* Brand Blue */
+  border: 1px solid #2563eb !important;
+  color: #fff !important;
+  font-weight: 600 !important;
+  border-radius: 6px !important;
+  box-shadow: 0 1px 2px rgba(37, 99, 235, 0.1) !important;
+  transition: all 0.2s ease !important;
+  padding: 0.45rem 1.1rem !important;
+}
+:host ::ng-deep .p-button-primary.p-button:hover {
+  background: #1d4ed8 !important; /* Darker Blue */
+  border-color: #1d4ed8 !important;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 6px rgba(37, 99, 235, 0.2) !important;
+}
+
+/* Premium Typography & Hierarchy scale */
+:host ::ng-deep {
+  .tree-editor-wrap {
+    font-family: 'Inter', 'Roboto', 'Segoe UI', sans-serif;
+  }
+  
+  /* Capsule Badge for Reference Code */
+  .node-code {
+    background-color: rgba(37, 99, 235, 0.08) !important;
+    color: #2563eb !important;
+    padding: 0.25rem 0.75rem !important;
+    border-radius: 6px !important;
+    font-size: 1.05rem !important;
+    font-weight: 700 !important;
+    font-family: monospace !important;
+    margin-inline-end: 0.5rem !important;
+    display: inline-block !important;
+    border: 1px solid rgba(37, 99, 235, 0.2) !important;
+  }
+  
+  /* Category/Item Name */
+  .node-name {
+    color: var(--text-main) !important;
+    font-size: 0.9rem !important;
+    font-weight: 600 !important;
+    white-space: normal !important;
+    word-break: break-word !important;
+    overflow: visible !important;
+    text-overflow: clip !important;
+  }
+
+  /* Root nodes (Level 1) - Parent Class */
+  .p-tree > .p-tree-container > p-treenode > .p-treenode > .p-treenode-content {
+    .node-name {
+      font-size: 0.95rem !important;
+      font-weight: 700 !important;
+      color: var(--text-main) !important;
+    }
+    .node-code {
+      background-color: rgba(8, 145, 178, 0.1) !important;
+      color: #0891b2 !important;
+      border-color: rgba(8, 145, 178, 0.2) !important;
+    }
+  }
+
+  /* Sub levels (Level 2, 3, 4) */
+  .p-treenode-children {
+    .node-name {
+      font-size: 0.85rem !important;
+      font-weight: 500 !important;
+      color: var(--text-muted) !important;
+    }
+    .node-code {
+      background-color: rgba(100, 116, 139, 0.08) !important;
+      color: #64748b !important;
+      border-color: rgba(100, 116, 139, 0.15) !important;
+    }
+  }
+
+  /* Editor Typography */
+  .editor-col {
+    .editor-title {
+      font-size: 1.05rem !important;
+      font-weight: 700 !important;
+      color: #0f172a !important;
+    }
+    
+    label {
+      font-size: 0.85rem !important;
+      font-weight: 600 !important;
+      color: #475569 !important;
+      margin-bottom: 0.35rem !important;
+    }
+    
+    .p-inputtext, .p-dropdown-label {
+      font-size: 0.9rem !important;
+    }
+  }
+}
+
+/* Custom Accordion Grid Styles */
+.custom-accordion-grid {
+  width: 100%;
+}
+
+.root-card {
+  transition: all 0.25s ease;
+  margin-bottom: 1rem;
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  background-color: var(--bg-card);
+  box-shadow: var(--shadow-sm);
+  
+  &:hover {
+    box-shadow: var(--shadow-md);
+    border-color: var(--primary-hover);
+  }
+}
+
+.root-header {
+  border-bottom: 1px solid var(--border-color);
+  background-color: var(--primary-light);
+  padding: 0.6rem 0.9rem;
+  display: flex;
+  align-items: center;
+  
+  .root-title {
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: var(--primary-hover);
+  }
+}
+
+.root-body {
+  padding: 0.75rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+/* Guidelines and Indentation using logical properties */
+.header-item {
+  padding-inline-start: 1.2rem;
+  margin-inline-start: 0.6rem;
+  border-inline-start: 1px solid var(--border-color);
+  margin-top: 0.35rem;
+}
+
+.header-row {
+  display: flex;
+  align-items: center;
+  padding: 0.4rem 0.6rem;
+  border-radius: 8px;
+  transition: all 0.2s ease;
+  border-inline-start: 3px solid transparent;
+  
+  &:hover {
+    background-color: var(--bg-main);
+  }
+
+  &.is-selected {
+    background-color: rgba(8, 145, 178, 0.06) !important;
+    border-inline-start-color: #0891b2 !important;
+    font-weight: 600;
+  }
+}
+
+.detail-item {
+  margin-top: 0.35rem;
+  padding-inline-start: 1.2rem;
+  margin-inline-start: 0.6rem;
+  border-inline-start: 1px solid var(--border-color);
+}
+
+.detail-row {
+  display: flex;
+  align-items: center;
+  padding: 0.35rem 0.5rem;
+  border-radius: 6px;
+  transition: all 0.2s ease;
+  border-inline-start: 3px solid transparent;
+  
+  &:hover {
+    background-color: var(--bg-main);
+  }
+
+  &.is-selected {
+    background-color: rgba(8, 145, 178, 0.06) !important;
+    border-inline-start-color: #0891b2 !important;
+    font-weight: 600;
+  }
+}
+
+.detail-body {
+  padding-inline-start: 1.2rem;
+  margin-top: 0.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.main-item {
+  display: flex;
+  align-items: center;
+  padding: 0.3rem 0.5rem;
+  border-radius: 6px;
+  transition: all 0.2s ease;
+  border-inline-start: 3px solid transparent;
+  
+  &:hover {
+    background-color: var(--bg-main);
+  }
+
+  &.is-selected {
+    background-color: rgba(8, 145, 178, 0.06) !important;
+    border-inline-start-color: #0891b2 !important;
+    font-weight: 600;
+  }
+}
+
+.root-header {
+  border-inline-start: 3px solid transparent;
+  transition: all 0.2s ease;
+
+  &.is-selected {
+    background-color: rgba(8, 145, 178, 0.06) !important;
+    border-inline-start-color: #0891b2 !important;
+  }
+}
+
+/* Chevron Animations */
+.expand-chevron {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.25rem;
+  height: 1.25rem;
+  transition: transform 0.25s ease;
+  
+  i {
+    font-size: 0.75rem;
+    color: var(--text-light);
+  }
+}
+
+/* Force Large Font Sizes for all category codes */
+.node-code,
+.root-badge,
+.header-badge,
+.detail-badge,
+.main-badge {
+  font-size: 1.15rem !important;
+  font-weight: 800 !important;
+  padding: 0.25rem 0.75rem !important;
+  border-radius: 6px !important;
+  display: inline-block !important;
+}

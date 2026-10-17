@@ -1,0 +1,307 @@
+﻿<div class="session-shell" id="z-report-print">
+  <p-toast></p-toast>
+
+  <div *ngIf="loading()" class="loading-overlay">
+    <div class="loading-card">
+      <i class="pi pi-spin pi-spinner"></i>
+      <span>{{ 'CASHIER_Z_REPORT.LOADING_Z_REPORT' | translate }}</span>
+    </div>
+  </div>
+
+  <div class="session-unified-card">
+    <!-- Header -->
+    <header class="session-header no-print-hide">
+      <div class="session-header-top">
+        <div class="header-title">
+          <div>
+            <h1>{{ 'CASHIER_Z_REPORT.PAGE_TITLE' | translate }}</h1>
+            <p>{{ 'CASHIER_Z_REPORT.PAGE_SUBTITLE' | translate:{sessionNumber: reportData().sessionNumber} }}</p>
+          </div>
+        </div>
+
+        <div class="header-actions">
+          <button pButton type="button" icon="pi pi-desktop" label="شاشة الكاشير (POS)" class="action-btn soft-btn" routerLink="/cashier/pos"></button>
+          <button pButton type="button" icon="pi pi-clock" [label]="'CASHIER_POS.SESSION_MANAGEMENT' | translate" class="action-btn soft-btn" routerLink="/cashier/session"></button>
+          <button pButton type="button" icon="pi pi-file" label="سجل الفواتير" class="action-btn soft-btn" routerLink="/cashier/invoice-control"></button>
+          <button pButton type="button" icon="pi pi-chart-pie" [label]="'CASHIER_REPORTS.PAGE_TITLE' | translate" class="action-btn soft-btn" routerLink="/cashier/reports"></button>
+          <button pButton type="button" icon="pi pi-file-pdf" label="تقرير Z" class="action-btn soft-btn active-nav" routerLink="/cashier/z-report"></button>
+        </div>
+      </div>
+    </header>
+
+    <!-- Store Info (Print Header) -->
+    <div class="print-header screen-hidden">
+      <h2>{{ 'CASHIER_Z_REPORT.STORE_NAME' | translate }}</h2>
+      <p>{{ 'CASHIER_Z_REPORT.MAIN_BRANCH' | translate }}</p>
+      <hr />
+      <h3>{{ 'CASHIER_Z_REPORT.PAGE_TITLE' | translate }}</h3>
+    </div>
+
+    <div class="report-body">
+      <!-- Session Info Metadata -->
+      <section class="section-block">
+        <div class="panel-head">
+          <div class="panel-title-group">
+            <h2><i class="pi pi-info-circle"></i> <span>{{ 'CASHIER_Z_REPORT.SESSION_INFO' | translate }}</span></h2>
+          </div>
+        </div>
+        <div class="meta-strip-grid">
+          <article class="meta-item">
+            <span>{{ 'CASHIER_Z_REPORT.SESSION_NUMBER' | translate }}</span>
+            <strong>{{ reportData().sessionNumber }}</strong>
+          </article>
+          <article class="meta-item">
+            <span>{{ 'CASHIER_Z_REPORT.CASHIER' | translate }}</span>
+            <strong>{{ reportData().cashierName }}</strong>
+          </article>
+          <article class="meta-item">
+            <span>{{ 'CASHIER_Z_REPORT.BRANCH' | translate }}</span>
+            <strong>{{ reportData().branchName }}</strong>
+          </article>
+          <article class="meta-item">
+            <span>{{ 'CASHIER_Z_REPORT.OPEN_TIME' | translate }}</span>
+            <strong>{{ reportData().openTime | customDate: 'HH:mm' }}</strong>
+          </article>
+          <article class="meta-item">
+            <span>{{ 'CASHIER_Z_REPORT.CLOSE_TIME' | translate }}</span>
+            <strong>{{ reportData().closeTime ? (reportData().closeTime | customDate: 'HH:mm') : 'الوردية جارية' }}</strong>
+          </article>
+          <article class="meta-item">
+            <span>{{ 'CASHIER_Z_REPORT.SESSION_DURATION' | translate }}</span>
+            <strong>{{ closedDuration }}</strong>
+          </article>
+        </div>
+      </section>
+
+      <!-- Sales Summary KPIs -->
+      <section class="section-block">
+        <div class="panel-head">
+          <div class="panel-title-group">
+            <h2><i class="pi pi-chart-bar"></i> <span>{{ 'CASHIER_Z_REPORT.SALES_SUMMARY' | translate }}</span></h2>
+          </div>
+        </div>
+        <div class="summary-grid z-summary-grid">
+          <article class="summary-card sales">
+            <div class="summary-card-head">
+              <i class="pi pi-shopping-bag"></i>
+              <span>{{ 'CASHIER_Z_REPORT.TOTAL_SALES' | translate }}</span>
+            </div>
+            <strong class="summary-val">{{ reportData().totalSales | number:'1.2-2' }} <small>ر.س</small></strong>
+          </article>
+
+          <article class="summary-card cash">
+            <div class="summary-card-head">
+              <i class="pi pi-check-circle"></i>
+              <span>{{ 'CASHIER_Z_REPORT.NET_SALES' | translate }}</span>
+            </div>
+            <strong class="summary-val">{{ reportData().netSales | number:'1.2-2' }} <small>ر.س</small></strong>
+          </article>
+
+          <article class="summary-card credit">
+            <div class="summary-card-head">
+              <i class="pi pi-percentage"></i>
+              <span>{{ 'CASHIER_Z_REPORT.TOTAL_TAX' | translate:{taxRate: (taxRate | number:'1.0-1')} }}</span>
+            </div>
+            <strong class="summary-val">{{ reportData().totalTax | number:'1.2-2' }} <small>ر.س</small></strong>
+          </article>
+
+          <article class="summary-card discount">
+            <div class="summary-card-head">
+              <i class="pi pi-tag"></i>
+              <span>{{ 'CASHIER_Z_REPORT.TOTAL_DISCOUNTS' | translate }}</span>
+            </div>
+            <strong class="summary-val">{{ reportData().totalDiscounts | number:'1.2-2' }} <small>ر.س</small></strong>
+          </article>
+
+          <article class="summary-card tx">
+            <div class="summary-card-head">
+              <i class="pi pi-receipt"></i>
+              <span>{{ 'CASHIER_Z_REPORT.INVOICE_COUNT' | translate }}</span>
+            </div>
+            <strong class="summary-val">{{ reportData().totalTransactions }}</strong>
+          </article>
+
+          <article class="summary-card avg">
+            <div class="summary-card-head">
+              <i class="pi pi-chart-line"></i>
+              <span>{{ 'CASHIER_Z_REPORT.AVG_INVOICE_VALUE' | translate }}</span>
+            </div>
+            <strong class="summary-val">{{ reportData().averageTransactionValue | number:'1.2-2' }} <small>ر.س</small></strong>
+          </article>
+
+          <article class="summary-card expected">
+            <div class="summary-card-head">
+              <i class="pi pi-replay"></i>
+              <span>{{ 'CASHIER_Z_REPORT.TOTAL_REFUNDS' | translate }}</span>
+            </div>
+            <strong class="summary-val">{{ reportData().totalRefunds | number:'1.2-2' }} <small>ر.س</small></strong>
+          </article>
+        </div>
+      </section>
+
+      <!-- Split Sections: Payment Methods & Cash Reconciliation -->
+      <div class="split-sections-grid">
+        <!-- Payment Breakdown -->
+        <section class="section-block">
+          <div class="panel-head">
+            <div class="panel-title-group">
+              <h2><i class="pi pi-credit-card"></i> <span>{{ 'CASHIER_Z_REPORT.PAYMENT_METHODS_DISTRIBUTION' | translate }}</span></h2>
+            </div>
+          </div>
+          <div class="payment-breakdown">
+            <div class="payment-row" *ngFor="let method of [
+              { label: 'CASHIER_Z_REPORT.CASH' | translate, icon: 'pi-wallet', val: reportData().cashSales, color: '#059669' },
+              { label: 'CASHIER_Z_REPORT.CARD' | translate, icon: 'pi-credit-card', val: reportData().cardSales, color: '#2563eb' },
+              { label: 'CASHIER_Z_REPORT.CREDIT' | translate, icon: 'pi-calendar-plus', val: reportData().creditSales, color: '#d97706' }
+            ]">
+              <div class="payment-icon" [style.background]="method.color + '15'">
+                <i class="pi" [ngClass]="method.icon" [style.color]="method.color"></i>
+              </div>
+              <div class="payment-label">{{ method.label }}</div>
+              <div class="payment-bar-wrap">
+                <div class="payment-bar" [style.width]="getPercentOfTotal(method.val, reportData().totalSales) + '%'" [style.background]="method.color"></div>
+              </div>
+              <div class="payment-value">{{ method.val | number:'1.2-2' }} <small>ر.س</small></div>
+            </div>
+          </div>
+        </section>
+
+        <!-- Cash Reconciliation -->
+        <section class="section-block">
+          <div class="panel-head">
+            <div class="panel-title-group">
+              <h2><i class="pi pi-inbox"></i> <span>{{ 'CASHIER_Z_REPORT.CASH_RECONCILIATION' | translate }}</span></h2>
+            </div>
+          </div>
+          <div class="reconciliation-grid">
+            <div class="recon-item">
+              <span>{{ 'CASHIER_Z_REPORT.OPENING_BALANCE' | translate }}</span>
+              <strong>{{ reportData().openingCash | number:'1.2-2' }} <small>ر.س</small></strong>
+            </div>
+            <div class="recon-item">
+              <span>{{ 'CASHIER_Z_REPORT.CASH_SALES' | translate }}</span>
+              <strong class="positive">{{ reportData().cashSales | number:'1.2-2' }} <small>ر.س</small></strong>
+            </div>
+            <div class="recon-item" *ngIf="reportData().cashIn > 0">
+              <span>{{ 'CASHIER_Z_REPORT.CASH_IN' | translate }}</span>
+              <strong class="positive">{{ reportData().cashIn | number:'1.2-2' }} <small>ر.س</small></strong>
+            </div>
+            <div class="recon-item" *ngIf="reportData().cashOut > 0">
+              <span>{{ 'CASHIER_Z_REPORT.CASH_OUT' | translate }}</span>
+              <strong class="negative">{{ reportData().cashOut | number:'1.2-2' }} <small>ر.س</small></strong>
+            </div>
+            <div class="recon-item total">
+              <span>{{ 'CASHIER_Z_REPORT.EXPECTED_CASH' | translate }}</span>
+              <strong>{{ reportData().expectedCash | number:'1.2-2' }} <small>ر.س</small></strong>
+            </div>
+          </div>
+        </section>
+      </div>
+
+      <!-- Split Sections: Category Breakdown & Top Products -->
+      <div class="split-sections-grid">
+        <!-- Category Breakdown -->
+        <section class="section-block">
+          <div class="panel-head">
+            <div class="panel-title-group">
+              <h2><i class="pi pi-tags"></i> <span>{{ 'CASHIER_Z_REPORT.SALES_BY_CATEGORY' | translate }}</span></h2>
+            </div>
+          </div>
+          <div class="z-table-wrap">
+            <p-table [value]="reportData().categoryBreakdown" styleClass="sessions-table z-table" [responsiveLayout]="'scroll'">
+              <ng-template pTemplate="header">
+                <tr>
+                  <th style="text-align: right;">{{ 'CASHIER_Z_REPORT.CATEGORY' | translate }}</th>
+                  <th class="text-center">{{ 'CASHIER_Z_REPORT.SOLD_QTY' | translate }}</th>
+                  <th class="text-end">{{ 'CASHIER_Z_REPORT.AMOUNT' | translate }}</th>
+                  <th class="text-center" style="width: 140px;">{{ 'CASHIER_Z_REPORT.PERCENT_OF_TOTAL' | translate }}</th>
+                </tr>
+              </ng-template>
+              <ng-template pTemplate="body" let-cat>
+                <tr>
+                  <td><strong>{{ cat.name }}</strong></td>
+                  <td class="text-center"><span class="table-qty-pill">{{ cat.qty }}</span></td>
+                  <td class="text-end font-bold">{{ cat.amount | number:'1.2-2' }} <small>ر.س</small></td>
+                  <td>
+                    <div class="mini-bar-wrap">
+                      <div class="mini-bar" [style.width]="getPercentOfTotal(cat.amount, reportData().totalSales) + '%'"></div>
+                      <span>{{ getPercentOfTotal(cat.amount, reportData().totalSales) | number:'1.1-1' }}%</span>
+                    </div>
+                  </td>
+                </tr>
+              </ng-template>
+              <ng-template pTemplate="emptymessage">
+                <tr>
+                  <td colspan="4" class="empty-table text-center">لا توجد مبيعات تصنيفات مسجلة لهذه الوردية</td>
+                </tr>
+              </ng-template>
+            </p-table>
+          </div>
+        </section>
+
+        <!-- Top Products -->
+        <section class="section-block">
+          <div class="panel-head">
+            <div class="panel-title-group">
+              <h2><i class="pi pi-star"></i> <span>{{ 'CASHIER_Z_REPORT.TOP_SELLING_PRODUCTS' | translate }}</span></h2>
+            </div>
+          </div>
+          <div class="top-products-list">
+            <div class="top-product" *ngFor="let p of reportData().topProducts; let i = index">
+              <div class="rank" [ngClass]="'rank-'+i">{{ i + 1 }}</div>
+              <div class="product-info">
+                <strong>{{ p.name }}</strong>
+                <span>{{ p.qty }} {{ 'CASHIER_Z_REPORT.UNIT' | translate }}</span>
+              </div>
+              <div class="product-revenue">{{ p.revenue | number:'1.2-2' }} <small>ر.س</small></div>
+            </div>
+            <div *ngIf="!reportData().topProducts || reportData().topProducts.length === 0" class="empty-table text-center">
+              لا توجد أصناف مباعة مسجلة
+            </div>
+          </div>
+        </section>
+      </div>
+
+      <!-- Cash Actions Log -->
+      <section class="section-block" *ngIf="reportData().cashActions && reportData().cashActions.length > 0">
+        <div class="panel-head">
+          <div class="panel-title-group">
+            <h2><i class="pi pi-history"></i> <span>{{ 'CASHIER_Z_REPORT.CASH_ACTION_LOG' | translate }}</span></h2>
+          </div>
+        </div>
+        <div class="z-table-wrap">
+          <p-table [value]="reportData().cashActions" styleClass="sessions-table z-table">
+            <ng-template pTemplate="header">
+              <tr>
+                <th style="text-align: right;">{{ 'CASHIER_Z_REPORT.TYPE' | translate }}</th>
+                <th class="text-end">{{ 'CASHIER_Z_REPORT.AMOUNT' | translate }}</th>
+                <th style="text-align: right;">{{ 'CASHIER_Z_REPORT.REASON' | translate }}</th>
+                <th class="text-center">{{ 'CASHIER_Z_REPORT.TIME' | translate }}</th>
+              </tr>
+            </ng-template>
+            <ng-template pTemplate="body" let-action>
+              <tr>
+                <td>
+                  <span class="action-type-pill" [ngClass]="action.type">
+                    {{ (action.type === 'in' ? 'CASHIER_Z_REPORT.DEPOSIT' : 'CASHIER_Z_REPORT.WITHDRAW') | translate }}
+                  </span>
+                </td>
+                <td class="text-end font-bold" [style.color]="action.type === 'in' ? '#059669' : '#e11d48'">
+                  {{ action.amount | number:'1.2-2' }} <small>ر.س</small>
+                </td>
+                <td>{{ action.reason || '-' }}</td>
+                <td class="text-center font-bold">{{ action.time | customDate: 'HH:mm' }}</td>
+              </tr>
+            </ng-template>
+          </p-table>
+        </div>
+      </section>
+
+      <!-- Print Footer -->
+      <div class="print-footer screen-hidden">
+        <p>{{ 'CASHIER_Z_REPORT.PRINTED_AT' | translate }}: {{ reportDate | customDate: 'dd/MM/yyyy HH:mm' }}</p>
+        <p>{{ 'CASHIER_Z_REPORT.ACCOUNTANT_SIGNATURE' | translate }}: ________________</p>
+      </div>
+    </div>
+  </div>
+</div>

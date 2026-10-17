@@ -1,0 +1,31 @@
+#cal-heatmap {
+  margin: 20px;
+}
+
+
+:host ::ng-deep .reverse-calendar-header .p-datepicker-header {
+  flex-direction: row-reverse;
+}
+.legend {
+  display: flex;
+  flex-wrap: wrap;
+  font-family: sans-serif;
+  margin: 1em 0;
+}
+.legend-item {
+  display: flex;
+  align-items: center;
+  margin-left: 1.5em;
+  margin-bottom: 0.5em;
+  font-size: 0.9rem;
+}
+.legend-color {
+  width: 14px;
+  height: 14px;
+  margin-left: 3px;
+  border: 1px solid #999;
+  border-radius: 2px;
+}
+
+
+

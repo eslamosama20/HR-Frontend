@@ -1,0 +1,228 @@
+<p-table
+  #dt1
+  [value]="employmentTypes"
+  [columns]="columns"
+  [resizableColumns]="true"
+  columnResizeMode="expand"
+  dataKey="id"
+  [rows]="10"
+  styleClass="p-datatable-gridlines scroller"
+  [rowsPerPageOptions]="[10, 25, 50]"
+  [loading]="loading"
+  [paginator]="true"
+  [paginatorLocale]="activeLanguage === 'en' ? 'en-US' : 'ar-EG'"
+
+
+>
+  <ng-template pTemplate="caption">
+    <div class="flex flex-col rtl:flex-row-reverse justify-between gap-2">
+      <div class="flex gap-2">
+        <p-button
+          styleClass="rounded-md w-auto text-nowrap"
+          icon="pi pi-external-link"
+          [label]="translate.instant('FINANCE.EXPORT')"
+          (onClick)="exportExcel()"
+        />
+        <p-button
+          styleClass="rounded-md w-auto text-nowrap	"
+          [label]="translate.instant('FINANCE.CLEAR_FILTERS')"
+          [outlined]="true"
+          icon="pi pi-filter-slash"
+          (onClick)="clear(dt1)"
+        />
+        <p-button
+          styleClass="rounded-md w-auto text-nowrap	"
+          label="اضافة وظيفة"
+          [outlined]="true"
+          icon="pi pi-plus"
+          (onClick)="showAddEmploymentTypeDialog()"
+        />
+      </div>
+
+      <ng-container *ngIf="employmentTypes.length === 0 && !loading">
+        <div class="flex justify-center items-center w-full">
+          <p
+            class="text-center font-semibold text-xl w-full flex justify-center"
+          >
+            لا يوجد وظائف متاحة
+          </p>
+        </div>
+      </ng-container>
+      <span class="p-input-icon-left ml-auto">
+        <i class="pi pi-search"></i>
+        <input
+          pInputText
+          type="text"
+          [(ngModel)]="searchValue"
+          (input)="filter(dt1, $event)"
+          [placeholder]="translate.instant('FINANCE.SEARCH')"
+        />
+      </span>
+    </div>
+  </ng-template>
+  <ng-template pTemplate="header" let-columns>
+    <tr>
+      <th
+        style="min-width: fit-content"
+        *ngFor="let column of columns"
+        pResizableColumn
+        [pSortableColumn]="column.field"
+      >
+        <div class="flex align-items-center">
+          {{ column.header }}
+          <p-sortIcon [field]="column.field" class="mx-1 "></p-sortIcon>
+          <p-columnFilter
+            *ngIf="column.filter"
+            [type]="column.filterType"
+            [field]="column.field"
+            display="menu"
+          />
+        </div>
+      </th>
+      <th style="min-width: fit-content">
+        <div class="flex align-items-center text-base">
+          {{ "FINANCE.ACTIONS" | translate }}
+        </div>
+      </th>
+    </tr>
+  </ng-template>
+  <ng-template pTemplate="body" let-Entry>
+    <tr *ngIf="employmentTypes.length > 0">
+
+      <td class="text-lg rtl:text-right">
+        {{ Entry.code }}
+      </td>
+      <td class="text-lg rtl:text-right">
+        {{ Entry.description }}
+      </td>
+      <td class="text-lg rtl:text-right">
+        {{ Entry.weeklyDayOff | translateDays}}
+      </td>
+      <td class="text-lg rtl:text-right">
+          {{
+            Entry.createdAt ? (Entry.createdAt | date : "yyyy/MM/dd  hh:mm a" : "": "ar-EG"): '-'
+          }}
+      </td>
+      <td class="text-lg rtl:text-right flex gap-2">
+        <ng-container
+        >
+          <p-overlayPanel #opEmploymentType [autoZIndex]="false" [baseZIndex]="80">
+            <div class="flex flex-column gap-3 w-auto p-1">
+              <p-button
+                icon="pi pi-pencil"
+                class="p-button-secondary"
+                [label]="translate.instant('FINANCE.EDIT')"
+                styleClass="rounded-lg p-button-secondary w-full"
+                (onClick)="showAddEmploymentTypeDialog(Entry)"
+              ></p-button>
+              <p-button
+                icon="pi pi-trash"
+                class="p-button-danger"
+                [label]="translate.instant('FINANCE.DELETE')"
+                styleClass="rounded-lg p-button-danger w-full"
+                (onClick)="confirmEmploymentTypeDeletion($event, Entry)"
+              ></p-button>
+            </div>
+          </p-overlayPanel>
+          <p-button
+            [text]="true"
+            (onClick)="opEmploymentType.toggle($event)"
+            severity="secondary"
+            styleClass="p-button-outlined rounded-xl"
+          >
+            <ng-template pTemplate="icon">
+              <i class="pi pi-cog text-xl"></i>
+            </ng-template>
+          </p-button>
+        </ng-container>
+      </td>
+    </tr>
+  </ng-template>
+</p-table>
+
+<p-dialog
+  [header]="
+    employmentTypeFormGroup.controls.id.value
+      ? 'تعديل وظيفة'
+      : 'إضافة وظيفة'
+  "
+  [(visible)]="employmentTypeDialogVisible"
+  [style]="{ width: '70%' }"
+  (onHide)="closeEmploymentTypeDialog()"
+>
+
+  <form
+    [formGroup]="employmentTypeFormGroup"
+    (ngSubmit)="saveEmploymentType()"
+    class="flex flex-col gap-4 "
+    novalidate
+  >
+    <div class="field w-full">
+      <label for="code" class="block">المسمي الوظيفي</label>
+      <input
+        pInputText
+        type="text"
+        id="code"
+        formControlName="code"
+        class="input w-full"
+      />
+      <small
+        class="text-red-500 p-error block"
+        *ngIf="
+          employmentTypeFormGroup.controls.code.invalid &&
+          employmentTypeFormGroup.controls.code.touched
+        "
+      >
+        المسمي الوظيفي مطلوب
+      </small>
+    </div>
+
+    <div class="field w-full">
+      <label class="block">الوصف</label>
+      <textarea
+        type="text"
+        id="description"
+        formControlName="description"
+        class="input w-full"
+        rows="3"
+      ></textarea>
+    </div>
+    <div class="field w-full">
+      <label class="block">الاجازة الأسبوعية</label>
+      <p-multiSelect
+        id="weeklyDayOff"
+        formControlName="weeklyDayOff"
+        [options]="weeklyDayOffOptions"
+        optionLabel="label"
+        optionValue="value"
+        [style]="{'width':'100%'}"
+        placeholder="اختر الاجازة الأسبوعية"
+        appendTo="body"
+      ></p-multiSelect>
+    </div>
+
+  </form>
+
+  <hr class="mt-2 mb-1" />
+
+  <p-footer>
+    <div class="flex justify-content-end gap-2">
+      <p-button
+        styleClass="rounded-md"
+        [label]="translate.instant('FINANCE.CANCEL')"
+        severity="secondary"
+        (onClick)="closeEmploymentTypeDialog()"
+      />
+      <p-button
+        styleClass="rounded-md"
+        [label]="translate.instant('FINANCE.SAVE')"
+        (onClick)="saveEmploymentType()"
+        [disabled]="employmentTypeFormGroup.invalid"
+      />
+    </div>
+  </p-footer>
+</p-dialog>
+
+<p-confirmDialog> </p-confirmDialog>
+<p-toast />
+

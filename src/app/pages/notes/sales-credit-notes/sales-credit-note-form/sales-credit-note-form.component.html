@@ -1,0 +1,230 @@
+<div class="content-container min-h-screen">
+  <div class="container-fluid p-0">
+    <div class="row align-items-stretch justify-content-center no-gutters">
+      <div class="col-md-12">
+        <div class="fixed inset-0 bg-gray-500 bg-opacity-75 flex items-center justify-center z-50" *ngIf="loading">
+          <i class="pi pi-spin pi-spinner text-white" style="font-size: 3rem"></i>
+        </div>
+        <div *ngIf="!loading" class="bg-white p-2">
+          <p-toast></p-toast>
+
+          <header class="mb-2 border-b pb-2 flex justify-between items-center">
+            <div class="flex items-center gap-1">
+              <h3 class="text-lg font-bold text-slate-800 m-0">
+                {{ "NOTES.SALES_CREDIT_NOTE" | translate }}
+              </h3>
+              <div class="text-sm text-slate-500" *ngIf="currentInvoice">
+                <a class="text-blue-500 hover:underline" [routerLink]="'/invoices/'+ currentInvoice?.id" target="_blank">
+                  {{ "INVOICE.INVOICE_NO" | translate }} # {{ currentInvoice?.invoiceNo }}
+                </a>
+              </div>
+            </div>
+            <div class="flex items-center gap-1">
+              <button
+                type="button"
+                class="btn px-3 py-2 font-medium text-white transition-all flex items-center gap-1"
+                style="background-color: #007bff;"
+                (click)="submitForm($event)"
+              >
+                <i class="pi pi-check"></i>
+                {{ "DATA.SAVE" | translate }}
+              </button>
+              <button
+                type="button"
+                class="btn px-3 py-2 font-medium text-white transition-all flex items-center gap-1"
+                style="background-color: #dc3545;"
+                (click)="cancel()"
+              >
+                <i class="pi pi-times"></i>
+                {{ "DATA.CANCEL" | translate }}
+              </button>
+              <app-back-button></app-back-button>
+            </div>
+          </header>
+
+          <form class="mb-2" method="post" [formGroup]="salesCreditNoteForm">
+
+            <!-- Form Fields -->
+            <div class="row g-2 mb-2">
+              <!-- Customer Name -->
+              <div class="col-md-2">
+                <label for="customerProfileName" class="form-label mb-1">
+                  {{ "INVOICE.CUSTOMER_NAME" | translate }} <span class="text-danger">*</span>
+                </label>
+                <input class="form-control" formControlName="customerProfileName" name="customerProfileName" id="customerProfileName"
+                       [placeholder]="'INVOICE.CUSTOMER_NAME' | translate" readonly />
+              </div>
+              
+              <!-- Adjustment Reason -->
+              <div class="col-md-3">
+                <label for="adjustmentReason" class="form-label mb-1">
+                  {{ "NOTES.ADJUSTMENT_REASON" | translate }} <span class="text-danger">*</span>
+                </label>
+                <input class="form-control" formControlName="adjustmentReason" name="adjustmentReason" id="adjustmentReason"
+                       [placeholder]="'NOTES.ADJUSTMENT_REASON' | translate" />
+                <div
+                  *ngIf="salesCreditNoteForm.get('adjustmentReason')?.invalid && (salesCreditNoteForm.get('adjustmentReason')?.touched || salesCreditNoteForm.get('adjustmentReason')?.dirty)"
+                  class="text-danger">
+                  <small *ngIf="salesCreditNoteForm.get('adjustmentReason')?.errors?.required">{{ 'VALIDATION.REQUIRED' | translate }}</small>
+                </div>
+              </div>
+
+              <!-- Description Field -->
+              <div class="col-md-3">
+                <label for="description" class="form-label mb-1">{{ "INVOICE.DESCRIPTION" | translate }}</label>
+                <input class="form-control" formControlName="description" name="description" id="description"
+                  [placeholder]="'INVOICE.DESCRIPTION' | translate" />
+                <div
+                  *ngIf="salesCreditNoteForm.get('description')?.invalid && (salesCreditNoteForm.get('description')?.touched || salesCreditNoteForm.get('description')?.dirty)"
+                  class="text-danger">
+                  <small *ngIf="salesCreditNoteForm.get('description')?.errors?.required">{{ 'VALIDATION.REQUIRED' | translate }}</small>
+                </div>
+              </div>
+              
+              <!-- Issue Date -->
+              <div class="col-md-2">
+                <label for="issueDate" class="form-label mb-1">
+                  {{ "INVOICE.ISSUE_DATE" | translate }} <span class="text-danger">*</span>
+                </label>
+                <p-calendar [showIcon]="true" [iconDisplay]="'input'" [dateFormat]="'dd/mm/yy'" appendTo="body"
+                            styleClass="w-full" formControlName="issueDate" [showButtonBar]="true" variant="filled">
+                  <ng-template pTemplate="inputicon">
+                    <i class="pi pi-calendar"></i>
+                  </ng-template>
+                </p-calendar>
+              </div>
+              
+              <!-- Discount -->
+              <div class="col-md-2">
+                <label for="discountAmount" class="form-label mb-1">{{ "INVOICE.DISCOUNT" | translate }}</label>
+                <p-inputNumber
+                  formControlName="discountAmount"
+                  [min]="0"
+                  [max]="safeNetPrice"
+                  [maxFractionDigits]="4"
+                  [showButtons]="true"
+                  (onBlur)="recalculateSafeNetPrice()"
+                  styleClass="w-full"
+                  placeholder=""
+                />
+              </div>
+            </div>
+
+            <!-- Items Table -->
+            <div>
+              <div formArrayName="salesCreditNoteItems" class="mt-4">
+                <h5 class="text-dark">{{"INVOICE.ITEMSLIST" | translate}}</h5>
+
+                <table class="table table-bordered">
+                  <thead style="background-color: #46bbeb;">
+                    <tr>
+                      <th class="w-10 text-white !text-xl"></th>
+                      <th class="w-52 text-white !text-xl">{{"INVOICE.NAME"|translate}} <span class="text-danger">*</span></th>
+                      <th class="w-32 text-white !text-xl">{{"INVOICE.UNIT"|translate}}</th>
+                      <th class="w-22 text-white !text-xl">{{"INVOICE.QUANTITY"|translate}} <span class="text-danger">*</span></th>
+                      <th class="w-22 text-white !text-xl">{{"INVOICE.PRICE"|translate}} <span class="text-danger">*</span></th>
+                      <th class="w-32 text-white !text-xl">{{"INVOICE.NETPRICE"|translate}}</th>
+                      <th class="w-32 text-white !text-xl">{{"INVOICE.TOTAL"|translate}}</th>
+                      <th class="text-white">
+                        <button
+                          type="button"
+                          class="btn p-1 transition-all"
+                          style="background-color: #28a745; color: white;"
+                          (click)="addItem()"
+                          [attr.aria-label]="'INVOICE.ADDITEM' | translate"
+                          [title]="'INVOICE.ADDITEM' | translate"
+                        >
+                          <i class="fas fa-plus text-white" aria-hidden="true"></i>
+                        </button>
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr *ngFor="let item of salesCreditNoteItems.controls; let i = index" [formGroupName]="i">
+                      <td>
+                        {{ i + 1}}
+                      </td>
+                      <td>
+                        <p-dropdown [options]="mainSalesClassOptions" formControlName="mainSalesClassId"
+                          (onChange)="onSalesClick($event,item)" placeholder="" [filter]="true" styleClass="w-full [&>*]:p-1 !text-xl">
+                        </p-dropdown>
+                        <div
+                          *ngIf="item.get('mainSalesClassId')?.invalid && (item.get('mainSalesClassId')?.touched || item.get('mainSalesClassId')?.dirty)"
+                          class="text-danger">
+                          <small *ngIf="item.get('mainSalesClassId')?.errors?.required">{{'VALIDATION.REQUIRED' |
+                            translate}}</small>
+                        </div>
+                      </td>
+                      <td class="font-bold text-lg">
+                        {{ item.get('unit').value }}
+                      </td>
+                      <td>
+                        <input class="form-control !text-xl" min="0.01" [id]="'quantity' + i" type="number"
+                          formControlName="quantity">
+                        <div
+                          *ngIf="item.get('quantity')?.invalid && (item.get('quantity')?.touched || item.get('quantity')?.dirty)"
+                          class="text-danger">
+                          <small *ngIf="item.get('quantity')?.errors?.required">{{'VALIDATION.REQUIRED' |
+                            translate}}</small>
+                          <small *ngIf="item.get('quantity')?.errors?.min">{{'VALIDATION.MIN' | translate:{min: 1}
+                            }}</small>
+                          <small *ngIf="item.get('quantity')?.errors?.pattern">{{'VALIDATION.INTEGER_NUMBER' |
+                            translate}}</small>
+                        </div>
+                      </td>
+                      <td>
+                        <input class="form-control !text-xl" [id]="'price' + i" type="number" formControlName="price" />
+                        <div
+                          *ngIf="item.get('price')?.invalid && (item.get('price')?.touched || item.get('price')?.dirty)"
+                          class="text-danger">
+                          <small *ngIf="item.get('price')?.errors?.required">{{'VALIDATION.REQUIRED' |
+                            translate}}</small>
+                          <small *ngIf="item.get('price')?.errors?.min">{{'VALIDATION.MIN' | translate:{min: 0}
+                            }}</small>
+                        </div>
+                      </td>
+                      <td>
+                        {{ getItemNetPrice(item) | formatDecimal }}
+                      </td>
+                      <td>
+                        {{ getItemTotalPrice(item) | formatDecimal }}
+                      </td>
+                      <td>
+                        <button type="button" class="btn btn-danger btn-sm remove-btn" (click)="removeItem(i)">
+                          <i class="fas fa-trash-alt"></i>
+                        </button>
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+              
+              <!-- Summary Section -->
+              <div class="row g-2 mt-3 mb-3">
+                <div class="col-md-4">
+                  <label for="taxAmount" class="form-label mb-1">{{ "INVOICE.TAXAMOUNT" | translate }}</label>
+                  <input class="form-control" [value]="getTaxAmount() | formatDecimal" name="taxAmount" id="taxAmount"
+                    placeholder="" readonly>
+                </div>
+                <div class="col-md-4">
+                  <label for="netPrice" class="form-label mb-1">{{ "INVOICE.NETPRICEWITHDISCOUNT" | translate }}</label>
+                  <input class="form-control" [value]="getNetPrice() | formatDecimal" name="netPrice" id="netPrice"
+                    placeholder="" readonly>
+                </div>
+                <div class="col-md-4">
+                  <label for="totalPrice" class="form-label mb-1">{{ "INVOICE.TOTALWITHTAX" | translate }}</label>
+                  <input class="form-control" [value]="getTotalPrice() | formatDecimal" name="totalPrice" id="totalPrice"
+                    placeholder="" readonly>
+                </div>
+              </div>
+
+            </div>
+
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<p-confirmDialog></p-confirmDialog>

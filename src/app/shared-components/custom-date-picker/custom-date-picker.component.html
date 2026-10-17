@@ -1,0 +1,33 @@
+<p-calendar
+  #cal
+  [(ngModel)]="value"
+  (ngModelChange)="onModelChange($event)"
+  (onSelect)="onDateSelect($event)"
+  (onShow)="onCalendarShow(cal)"
+  [defaultDate]="todayDate"
+  [dateFormat]="dateFormat"
+  [showIcon]="showIcon"
+  [placeholder]="placeholder"
+  [appendTo]="appendTo || 'body'"
+  [disabled]="disabled"
+  [baseZIndex]="baseZIndex"
+  [styleClass]="styleClass"
+  [inputStyleClass]="inputStyleClass"
+>
+  <ng-template pTemplate="header">
+    <div class="custom-calendar-header">
+      <button type="button" class="custom-nav-btn" (click)="cal.navBackward($event)">
+        <i class="pi pi-chevron-left"></i>
+      </button>
+      <div class="custom-header-controls">
+        <select [value]="cal.currentMonth" (change)="onMonthSelect($any($event.target).value, cal)" class="custom-month-select">
+          <option *ngFor="let m of monthsList; let idx = index" [value]="idx">{{ m }}</option>
+        </select>
+        <input type="number" [value]="cal.currentYear" (input)="onYearInput($any($event.target).value, cal)" class="custom-year-input" />
+      </div>
+      <button type="button" class="custom-nav-btn" (click)="cal.navForward($event)">
+        <i class="pi pi-chevron-right"></i>
+      </button>
+    </div>
+  </ng-template>
+</p-calendar>

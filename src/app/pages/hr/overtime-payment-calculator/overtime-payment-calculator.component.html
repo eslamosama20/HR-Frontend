@@ -1,0 +1,136 @@
+<div class="flex flex-col gap-2">
+  <p-card header="حساب الأجر الإضافي" class="w-full" styleClass="w-full">
+    <div class="flex flex-col gap-8 w-full">
+      <div class="flex gap-4 items-end">
+        <p-calendar
+          [(ngModel)]="selectedDate"
+          (onSelect)="checkIfMonthFinished()"
+          view="month"
+          dateFormat="mm/yy"
+          [readonlyInput]="true"
+          showButtonBar="true"
+          class="max-w-full"
+          styleClass="reverse-calendar-header"
+          appendTo="body"
+          [maxDate]="maxSelectableDate"
+        />
+        <p-button label="تحديث" styleClass="rounded-md" (onClick)="loadData()" />
+        <p *ngIf="monthNote" class="font-bold text-rose-700 text-2xl text-center underline w-full">
+          {{ monthNote }}
+        </p>
+      </div>
+    </div>
+  </p-card>
+
+  <p-card header="مصنع 1 - الأجر الإضافي" class="w-full" styleClass="w-full">
+    <div class="flex flex-col gap-4">
+      <p-button
+        *ngIf="overtimePaymentResults.factory1OvertimePayments.length > 0 && !loading"
+        styleClass="rounded-md"
+        label="تحميل"
+        (onClick)="downloadAsExcel(1)"
+      />
+
+      <table class="w-full border border-gray-900 border-collapse text-center">
+        <thead>
+        <tr>
+          <th class="border border-gray-900 w-8">م</th>
+          <th class="border border-gray-900">الاسم</th>
+          <th class="border border-gray-900">الوظيفة</th>
+          <th class="border border-gray-900">المرتب الشهري</th>
+          <th class="border border-gray-900">سعر الساعة</th>
+          <th class="border border-gray-900">عدد الساعات الإضافية</th>
+          <th class="border border-gray-900">أجر الساعات الإضافية</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr *ngFor="let result of overtimePaymentResults.factory1OvertimePayments; let i = index">
+          <td class="border border-gray-900">{{ i + 1 }}</td>
+          <td class="border border-gray-900">{{ result.employeeName }}</td>
+          <td class="border border-gray-900">{{ result.employeeTypeName }}</td>
+          <td class="border border-gray-900">{{ result.monthlyRate | number: '1.0-2' }}</td>
+          <td class="border border-gray-900">{{ result.hourlyRate | number: '1.0-2' }}</td>
+          <td class="border border-gray-900">{{ result.overtimeHours }}</td>
+          <td class="border border-gray-900">{{ result.overtimePayment | number: '1.0-2' }}</td>
+        </tr>
+        </tbody>
+      </table>
+    </div>
+  </p-card>
+
+  <p-card header="مصنع 2 - الأجر الإضافي" class="w-full" styleClass="w-full">
+    <div class="flex flex-col gap-4">
+      <p-button
+        *ngIf="overtimePaymentResults.factory2OvertimePayments.length > 0 && !loading"
+        styleClass="rounded-md"
+        label="تحميل"
+        (onClick)="downloadAsExcel(2)"
+      />
+
+      <table class="w-full border border-gray-900 border-collapse text-center">
+        <thead>
+        <tr>
+          <th class="border border-gray-900 w-8">م</th>
+          <th class="border border-gray-900">الاسم</th>
+          <th class="border border-gray-900">الوظيفة</th>
+          <th class="border border-gray-900">المرتب الشهري</th>
+          <th class="border border-gray-900">سعر الساعة</th>
+          <th class="border border-gray-900">عدد الساعات الإضافية</th>
+          <th class="border border-gray-900">أجر الساعات الإضافية</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr *ngFor="let result of overtimePaymentResults.factory2OvertimePayments; let i = index">
+          <td class="border border-gray-900">{{ i + 1 }}</td>
+          <td class="border border-gray-900">{{ result.employeeName }}</td>
+          <td class="border border-gray-900">{{ result.employeeTypeName }}</td>
+          <td class="border border-gray-900">{{ result.monthlyRate | number: '1.0-2' }}</td>
+          <td class="border border-gray-900">{{ result.hourlyRate | number: '1.0-2' }}</td>
+          <td class="border border-gray-900">{{ result.overtimeHours }}</td>
+          <td class="border border-gray-900">{{ result.overtimePayment | number: '1.0-2' }}</td>
+        </tr>
+        </tbody>
+      </table>
+    </div>
+  </p-card>
+
+  <p-card header="مصنع 3 - الأجر الإضافي" class="w-full" styleClass="w-full">
+    <div class="flex flex-col gap-4">
+      <p-button
+        *ngIf="overtimePaymentResults.factory3OvertimePayments.length > 0 && !loading"
+        styleClass="rounded-md"
+        label="تحميل"
+        (onClick)="downloadAsExcel(3)"
+      />
+
+      <table class="w-full border border-gray-900 border-collapse text-center">
+        <thead>
+        <tr>
+          <th class="border border-gray-900 w-8">م</th>
+          <th class="border border-gray-900">الاسم</th>
+          <th class="border border-gray-900">الوظيفة</th>
+          <th class="border border-gray-900">المرتب الشهري</th>
+          <th class="border border-gray-900">سعر الساعة</th>
+          <th class="border border-gray-900">عدد الساعات الإضافية</th>
+          <th class="border border-gray-900">أجر الساعات الإضافية</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr *ngFor="let result of overtimePaymentResults.factory3OvertimePayments; let i = index">
+          <td class="border border-gray-900">{{ i + 1 }}</td>
+          <td class="border border-gray-900">{{ result.employeeName }}</td>
+          <td class="border border-gray-900">{{ result.employeeTypeName }}</td>
+          <td class="border border-gray-900">{{ result.monthlyRate | number: '1.0-2' }}</td>
+          <td class="border border-gray-900">{{ result.hourlyRate | number: '1.0-2' }}</td>
+          <td class="border border-gray-900">{{ result.overtimeHours }}</td>
+          <td class="border border-gray-900">{{ result.overtimePayment | number: '1.0-2' }}</td>
+        </tr>
+        </tbody>
+      </table>
+    </div>
+  </p-card>
+
+  <p-toast></p-toast>
+
+
+</div>

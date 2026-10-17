@@ -1,0 +1,463 @@
+// ==========================================
+// Project Form Component Styles
+// Theme: Smart & Pro ERP (Cyan-Blue #46bbeb, Blue #3B82F6)
+// ==========================================
+
+:host {
+  display: block;
+  padding: 0 !important;
+  margin: 0 !important;
+}
+
+.card {
+  background: #ffffff;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  border: 1px solid #e2e8f0;
+  margin: 0 !important;
+  padding: 0 !important;
+  width: 100%;
+}
+
+.card-header {
+  padding: 0.5rem 1rem !important;
+  min-height: auto !important;
+  height: auto !important;
+  border-bottom: 1px solid #e2e8f0;
+
+  h3 {
+    margin: 0;
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: #1e293b;
+  }
+}
+
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+
+  .p-button {
+    border-radius: 6px !important;
+    font-weight: 600 !important;
+    font-size: 0.8rem !important;
+    padding: 0.35rem 0.65rem !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 4px !important;
+
+    .p-button-icon-left,
+    .p-button-icon-right,
+    .pi {
+      margin-left: 4px;
+      margin-right: 4px;
+    }
+  }
+}
+
+.card-body {
+  padding: 0.5rem 1rem !important;
+}
+
+.form-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 10px !important;
+  width: 100%;
+
+  @media (max-width: 1200px) {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  @media (max-width: 768px) {
+    grid-template-columns: 1fr;
+  }
+}
+
+.form-field {
+  display: flex;
+  flex-direction: column;
+
+  label {
+    display: block;
+    margin-bottom: 0.25rem !important;
+    color: #374151;
+    font-weight: 600;
+    font-size: 0.825rem !important;
+  }
+
+  input:not([type="checkbox"]),
+  textarea,
+  ::ng-deep .p-inputtext:not(.p-dropdown-label),
+  ::ng-deep .p-dropdown,
+  ::ng-deep .p-calendar {
+    width: 100%;
+    border-radius: 6px !important;
+  }
+
+  input:not([type="checkbox"]),
+  ::ng-deep .p-inputtext:not(textarea):not(.p-dropdown-label) {
+    height: 34px !important;
+    min-height: 34px !important;
+    max-height: 34px !important;
+    padding: 0 0.65rem !important;
+    background-color: #f0f5ff !important;
+    border: 1px solid #c5d5f5 !important;
+    color: #1e293b !important;
+    font-size: 0.85rem !important;
+    font-weight: 500 !important;
+    box-sizing: border-box !important;
+    transition: all 0.2s ease;
+
+    &:enabled:hover {
+      border-color: #3b82f6 !important;
+      background-color: #e6f0ff !important;
+    }
+  }
+
+  ::ng-deep .p-dropdown {
+    height: 34px !important;
+    min-height: 34px !important;
+    max-height: 34px !important;
+    padding: 0 !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    background-color: #f0f5ff !important;
+    border: 1px solid #c5d5f5 !important;
+    border-radius: 6px !important;
+    box-sizing: border-box !important;
+
+    .p-dropdown-label,
+    .p-dropdown-label.p-inputtext {
+      border: none !important;
+      background: transparent !important;
+      box-shadow: none !important;
+      outline: none !important;
+      padding: 0 0.65rem !important;
+      height: 100% !important;
+      display: flex !important;
+      align-items: center !important;
+      font-size: 0.85rem !important;
+      color: #1e293b !important;
+      line-height: normal !important;
+      border-radius: 0 !important;
+    }
+
+    .p-dropdown-trigger {
+      width: 2rem !important;
+      height: 100% !important;
+      display: flex !important;
+      align-items: center !important;
+      justify-content: center !important;
+    }
+
+    &:enabled:hover {
+      border-color: #3b82f6 !important;
+      background-color: #e6f0ff !important;
+    }
+  }
+
+  &.full-width {
+    grid-column: span 4;
+    @media (max-width: 1200px) {
+      grid-column: span 2;
+    }
+    @media (max-width: 768px) {
+      grid-column: span 1;
+    }
+  }
+}
+
+.required::after {
+  content: " *";
+  color: #dc2626;
+  font-weight: bold;
+}
+
+.form-actions {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  margin-top: 15px;
+  padding-top: 10px;
+  border-top: 1px solid #e2e8f0;
+
+  .p-button {
+    border-radius: 6px !important;
+    font-weight: 600 !important;
+    font-size: 0.825rem !important;
+    padding: 0.35rem 0.75rem !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 4px !important;
+
+    .p-button-icon-left,
+    .p-button-icon-right,
+    .pi {
+      margin-left: 4px;
+      margin-right: 4px;
+    }
+  }
+}
+
+::ng-deep {
+  .p-field {
+    margin-bottom: 0.75rem;
+  }
+
+  .p-field label {
+    display: block;
+    margin-bottom: 0.25rem;
+    color: #374151;
+    font-weight: 600;
+    font-size: 0.825rem;
+  }
+
+  .p-invalid {
+    border-color: #dc2626 !important;
+  }
+
+  .p-error {
+    display: block;
+    margin-top: 0.15rem;
+    color: #dc2626;
+    font-size: 0.775rem;
+  }
+
+  p-checkbox,
+  .p-field-checkbox {
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+
+    .p-checkbox {
+      display: inline-flex !important;
+      align-items: center !important;
+      justify-content: center !important;
+      margin-left: 8px !important;
+    }
+
+    .p-checkbox-box {
+      width: 18px !important;
+      height: 18px !important;
+      border-radius: 4px !important;
+      border: 1px solid #94a3b8 !important;
+    }
+
+    label,
+    .p-checkbox-label {
+      margin: 0 8px 0 0 !important;
+      font-size: 0.85rem !important;
+      font-weight: 600 !important;
+      color: #1e293b !important;
+      cursor: pointer !important;
+      white-space: nowrap !important;
+      line-height: 1 !important;
+    }
+  }
+
+  .p-button.p-button-sm,
+  .p-button-outlined.p-button-sm {
+    height: 28px !important;
+    min-height: 28px !important;
+    padding: 0.2rem 0.55rem !important;
+    font-size: 0.775rem !important;
+    border-radius: 5px !important;
+    font-weight: 600 !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 4px !important;
+
+    .p-button-icon, .pi {
+      font-size: 0.75rem !important;
+    }
+  }
+
+  // Form p-calendar styling (Single input with integrated blue icon button)
+  .p-calendar {
+    display: flex !important;
+    width: 100% !important;
+    height: 34px !important;
+    position: relative !important;
+    box-sizing: border-box !important;
+
+    .p-inputtext {
+      height: 34px !important;
+      border-radius: 6px !important;
+      width: 100% !important;
+      padding-left: 2.25rem !important;
+    }
+
+    .p-datepicker-trigger {
+      height: 34px !important;
+      width: 34px !important;
+      background-color: #3b82f6 !important;
+      border: 1px solid #3b82f6 !important;
+      color: #ffffff !important;
+      position: absolute !important;
+      left: 0 !important;
+      top: 0 !important;
+      border-top-left-radius: 6px !important;
+      border-bottom-left-radius: 6px !important;
+      border-top-right-radius: 0 !important;
+      border-bottom-right-radius: 0 !important;
+      z-index: 2 !important;
+      margin: 0 !important;
+      display: flex !important;
+      align-items: center !important;
+      justify-content: center !important;
+
+      .p-button-icon, .pi {
+        color: #ffffff !important;
+        font-size: 0.8rem !important;
+      }
+
+      &:hover {
+        background-color: #2563eb !important;
+        border-color: #2563eb !important;
+      }
+    }
+  }
+
+  // p-multiSelect styling - same height as inputs
+  .p-multiselect {
+    height: 34px !important;
+    min-height: 34px !important;
+    max-height: 34px !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    width: 100% !important;
+    background-color: #f0f5ff !important;
+    border: 1px solid #c5d5f5 !important;
+    border-radius: 6px !important;
+    box-sizing: border-box !important;
+    padding: 0 !important;
+
+    .p-multiselect-label-container {
+      display: flex !important;
+      align-items: center !important;
+      height: 100% !important;
+      overflow: hidden !important;
+    }
+
+    .p-multiselect-label {
+      padding: 0 0.65rem !important;
+      font-size: 0.85rem !important;
+      color: #1e293b !important;
+      font-weight: 500 !important;
+      line-height: normal !important;
+      white-space: nowrap !important;
+      overflow: hidden !important;
+      text-overflow: ellipsis !important;
+    }
+
+    .p-multiselect-trigger {
+      width: 2rem !important;
+      height: 100% !important;
+      display: flex !important;
+      align-items: center !important;
+      justify-content: center !important;
+    }
+
+    &:hover {
+      border-color: #3b82f6 !important;
+      background-color: #e6f0ff !important;
+    }
+
+    &.p-focus {
+      border-color: #3b82f6 !important;
+      box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2) !important;
+    }
+  }
+
+  // Dynamic Checks & Milestones Table Inputs & Dropdowns Styling
+  .p-datatable {
+    border: 1px solid #dee2e6 !important;
+    border-radius: 6px !important;
+    overflow: hidden !important;
+
+    .p-datatable-thead > tr > th {
+      background-color: #46bbeb !important;
+      color: #ffffff !important;
+      border: 1px solid #38aadc !important;
+      font-weight: 600 !important;
+      white-space: nowrap !important;
+      font-size: 0.85rem !important;
+      padding: 0.45rem 0.5rem !important;
+
+      span {
+        color: #ffffff !important;
+        white-space: nowrap !important;
+      }
+    }
+
+    .p-datatable-tbody > tr {
+      transition: background-color 0.2s ease-in-out;
+      &:hover {
+        background-color: #f1f5f9 !important;
+      }
+      
+      > td {
+        border: 1px solid #dee2e6 !important;
+        padding: 0.3rem 0.4rem !important;
+        font-size: 0.85rem !important;
+        vertical-align: middle !important;
+      }
+    }
+
+    .p-inputtext:not(.p-dropdown-label),
+    .p-dropdown {
+      height: 34px !important;
+      min-height: 34px !important;
+      max-height: 34px !important;
+      border-radius: 6px !important;
+      font-size: 0.85rem !important;
+      box-sizing: border-box !important;
+    }
+
+    .p-dropdown {
+      display: inline-flex !important;
+      align-items: center !important;
+
+      .p-dropdown-label {
+        padding: 0 0.5rem !important;
+        line-height: normal !important;
+        display: flex;
+        align-items: center;
+      }
+    }
+  }
+
+  // Dropdown clear icon (X) styling - Red Color
+  .p-dropdown-clear-icon,
+  .p-inputgroup-addon .pi-times,
+  .p-dropdown .pi-times {
+    color: #ef4444 !important;
+    font-weight: bold !important;
+
+    &:hover {
+      color: #dc2626 !important;
+    }
+  }
+}
+
+.custom-status-select {
+  outline: none;
+  font-family: inherit;
+  font-size: 0.85rem !important;
+  font-weight: 500 !important;
+  text-align: right !important;
+  direction: rtl !important;
+  color: #1e293b !important;
+  background-color: #ffffff !important;
+  border: 1px solid #cbd5e1 !important;
+  border-radius: 6px !important;
+  padding: 0 10px !important;
+  
+  &:focus {
+    border-color: #3b82f6 !important;
+    box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2) !important;
+  }
+}

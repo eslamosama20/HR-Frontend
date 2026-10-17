@@ -1,0 +1,412 @@
+<div class="card">
+  <p-toast></p-toast>
+  <p-confirmDialog></p-confirmDialog>
+
+  <div class="card-header border-0 pt-6">
+    <div class="card-title">
+      <div class="d-flex align-items-center position-relative my-1">
+        <i class="ki-duotone ki-magnifier fs-1 position-absolute ms-6">
+          <span class="path1"></span>
+          <span class="path2"></span>
+        </i>
+<input
+          type="text"
+          class="form-control form-control-solid w-250px ps-14"
+          [placeholder]="'DATA.SEARCH' | translate"
+          #searchInput
+          (input)="onSearchChange($event, dt)"
+          (keyup.enter)="onSearchChange($event, dt)"
+        />
+        <button
+          *ngIf="searchInput.value"
+          type="button"
+          class="btn btn-sm btn-light position-absolute end-0 top-50 translate-middle-y me-2"
+          style="z-index: 10;"
+          (click)="clearSearch(dt); searchInput.value = ''"
+          pTooltip="{{ 'DATA.CLEAR_FILTERS' | translate }}"
+        >
+          <i class="ki-duotone ki-cross fs-2"></i>
+        </button>
+      </div>
+    </div>
+
+    <div class="card-toolbar">
+      <button
+        pButton
+        pRipple
+        [label]="'DATA.ADD_NEW' | translate"
+        icon="pi pi-plus"
+        class="p-button-success"
+        (click)="openNew()"
+      ></button>
+    </div>
+  </div>
+
+  <div class="card-body pt-0">
+    <p-table
+      #dt
+      [value]="hotels"
+      [rows]="10"
+      [paginator]="true"
+      [loading]="loading"
+      [rowsPerPageOptions]="[10, 25, 50]"
+      [globalFilterFields]="['name', 'nameAr', 'city', 'country']"
+      styleClass="p-datatable-gridlines"
+      [tableStyle]="{ 'min-width': '50rem' }"
+    >
+      <ng-template pTemplate="header">
+        <tr>
+          <th style="width: 80px">{{ 'DATA.IMAGE' | translate }}</th>
+          <th>{{ 'DATA.NAME' | translate }}</th>
+          <th>{{ 'DATA.CITY' | translate }}</th>
+          <th>{{ 'DATA.STARS' | translate }}</th>
+          <th>{{ 'DATA.ACTIVE' | translate }}</th>
+          <th>{{ 'DATA.FEATURED' | translate }}</th>
+          <th>{{ 'DATA.ROOMS' | translate }}</th>
+          <th style="width: 150px">{{ 'DATA.ACTIONS' | translate }}</th>
+        </tr>
+      </ng-template>
+
+      <ng-template pTemplate="body" let-hotel>
+        <tr>
+          <td>
+            <img
+              *ngIf="hotel.mainImageUrl"
+              [src]="hotel.mainImageUrl"
+              [alt]="hotel.name"
+              style="width: 60px; height: 60px; object-fit: cover; border-radius: 4px"
+            />
+            <i *ngIf="!hotel.mainImageUrl" class="pi pi-image" style="font-size: 2rem"></i>
+          </td>
+          <td>
+            <strong>{{ hotel.name }}</strong>
+            <br />
+            <small class="text-muted" *ngIf="hotel.nameAr">{{ hotel.nameAr }}</small>
+          </td>
+          <td>{{ hotel.city || '-' }}</td>
+          <td>
+            <i
+              *ngFor="let star of getStarsArray(hotel.stars)"
+              class="pi pi-star-fill"
+              style="color: #ffc107"
+            ></i>
+          </td>
+          <td>
+            <p-tag
+              [value]="hotel.isActive ? ('DATA.ACTIVE' | translate) : ('DATA.INACTIVE' | translate)"
+              [severity]="hotel.isActive ? 'success' : 'danger'"
+            ></p-tag>
+          </td>
+          <td>
+            <i
+              *ngIf="hotel.isFeatured"
+              class="pi pi-star-fill"
+              style="color: #ffc107; font-size: 1.2rem"
+            ></i>
+          </td>
+          <td>
+            <p-tag [value]="hotel.roomTypesCount?.toString() || '0'" severity="info"></p-tag>
+          </td>
+          <td>
+            <button
+              pButton
+              pRipple
+              icon="pi pi-pencil"
+              class="p-button-rounded p-button-text p-button-warning me-2"
+              (click)="editHotel(hotel)"
+              pTooltip="{{ 'DATA.EDIT' | translate }}"
+            ></button>
+            <button
+              pButton
+              pRipple
+              icon="pi pi-trash"
+              class="p-button-rounded p-button-text p-button-danger"
+              (click)="deleteHotel(hotel)"
+              pTooltip="{{ 'DATA.DELETE' | translate }}"
+            ></button>
+          </td>
+        </tr>
+      </ng-template>
+
+      <ng-template pTemplate="emptymessage">
+        <tr>
+          <td colspan="8" class="text-center">{{ 'DATA.NO_DATA' | translate }}</td>
+        </tr>
+      </ng-template>
+    </p-table>
+  </div>
+</div>
+
+<!-- Hotel Dialog -->
+<p-dialog
+  [(visible)]="hotelDialogVisible"
+  [header]="(hotelFormGroup.get('id')?.value ? 'DATA.EDIT' : 'DATA.ADD_NEW') | translate"
+  [modal]="true"
+  [style]="{ width: '800px' }"
+  styleClass="p-fluid"
+>
+  <ng-template pTemplate="content">
+    <form [formGroup]="hotelFormGroup">
+      <div class="row">
+<div class="col-md-6 mb-3">
+          <label>{{ 'DATA.NAME_EN' | translate }} *</label>
+          <input 
+            pInputText 
+            formControlName="name" 
+            class="form-control" 
+            [ngClass]="{ 'is-invalid': isFieldInvalid('name') }"
+          />
+          <small class="text-danger" *ngIf="isFieldInvalid('name')">
+            {{ getErrorMessage('name') }}
+          </small>
+        </div>
+
+        <div class="col-md-6 mb-3">
+          <label>{{ 'DATA.NAME_AR' | translate }}</label>
+          <input pInputText formControlName="nameAr" class="form-control" />
+        </div>
+
+        <div class="col-md-12 mb-3">
+          <label>{{ 'DATA.DESCRIPTION_EN' | translate }}</label>
+          <textarea
+            pInputTextarea
+            formControlName="description"
+            rows="3"
+            class="form-control"
+          ></textarea>
+        </div>
+
+        <div class="col-md-12 mb-3">
+          <label>{{ 'DATA.DESCRIPTION_AR' | translate }}</label>
+          <textarea
+            pInputTextarea
+            formControlName="descriptionAr"
+            rows="3"
+            class="form-control"
+          ></textarea>
+        </div>
+
+        <div class="col-md-6 mb-3">
+          <label>{{ 'DATA.ADDRESS' | translate }}</label>
+          <input pInputText formControlName="address" class="form-control" />
+        </div>
+
+<div class="col-md-6 mb-3">
+          <label>{{ 'DATA.WEBSITE' | translate }}</label>
+          <input 
+            pInputText 
+            formControlName="website" 
+            class="form-control" 
+            [ngClass]="{ 'is-invalid': isFieldInvalid('website') }"
+          />
+          <small class="text-danger" *ngIf="isFieldInvalid('website')">
+            {{ getErrorMessage('website') }}
+          </small>
+        </div>
+
+        <div class="col-md-6 mb-3">
+          <label>{{ 'DATA.COUNTRY' | translate }}</label>
+          <input pInputText formControlName="country" class="form-control" />
+        </div>
+
+<div class="col-md-6 mb-3">
+          <label>{{ 'DATA.STARS' | translate }} *</label>
+          <p-dropdown
+            formControlName="stars"
+            [options]="starsOptions"
+            placeholder="Select Stars"
+            [ngClass]="{ 'is-invalid': isFieldInvalid('stars') }"
+          ></p-dropdown>
+          <small class="text-danger" *ngIf="isFieldInvalid('stars')">
+            {{ getErrorMessage('stars') }}
+          </small>
+        </div>
+
+<div class="col-md-6 mb-3">
+          <label>{{ 'DATA.PHONE' | translate }}</label>
+          <input 
+            pInputText 
+            formControlName="phone" 
+            class="form-control" 
+            [ngClass]="{ 'is-invalid': isFieldInvalid('phone') }"
+          />
+          <small class="text-danger" *ngIf="isFieldInvalid('phone')">
+            {{ getErrorMessage('phone') }}
+          </small>
+        </div>
+
+<div class="col-md-6 mb-3">
+          <label>{{ 'DATA.EMAIL' | translate }}</label>
+          <input 
+            pInputText 
+            type="email" 
+            formControlName="email" 
+            class="form-control" 
+            [ngClass]="{ 'is-invalid': isFieldInvalid('email') }"
+          />
+          <small class="text-danger" *ngIf="isFieldInvalid('email')">
+            {{ getErrorMessage('email') }}
+          </small>
+        </div>
+
+<div class="col-md-6 mb-3">
+          <label>{{ 'DATA.CHECK_IN_TIME' | translate }}</label>
+          <input 
+            pInputText 
+            formControlName="checkInTime" 
+            class="form-control" 
+            [ngClass]="{ 'is-invalid': isFieldInvalid('checkInTime') }"
+          />
+          <small class="text-danger" *ngIf="isFieldInvalid('checkInTime')">
+            {{ getErrorMessage('checkInTime') }}
+          </small>
+        </div>
+
+        <div class="col-md-6 mb-3">
+          <label>{{ 'DATA.CHECK_OUT_TIME' | translate }}</label>
+          <input 
+            pInputText 
+            formControlName="checkOutTime" 
+            class="form-control" 
+            [ngClass]="{ 'is-invalid': isFieldInvalid('checkOutTime') }"
+          />
+          <small class="text-danger" *ngIf="isFieldInvalid('checkOutTime')">
+            {{ getErrorMessage('checkOutTime') }}
+          </small>
+        </div>
+
+<div class="col-md-6 mb-3">
+          <label>{{ 'DATA.LATITUDE' | translate }}</label>
+          <p-inputNumber 
+            formControlName="latitude" 
+            [minFractionDigits]="6"
+            [ngClass]="{ 'is-invalid': isFieldInvalid('latitude') }"
+          ></p-inputNumber>
+          <small class="text-danger" *ngIf="isFieldInvalid('latitude')">
+            {{ getErrorMessage('latitude') }}
+          </small>
+        </div>
+
+        <div class="col-md-6 mb-3">
+          <label>{{ 'DATA.LONGITUDE' | translate }}</label>
+          <p-inputNumber 
+            formControlName="longitude" 
+            [minFractionDigits]="6"
+            [ngClass]="{ 'is-invalid': isFieldInvalid('longitude') }"
+          ></p-inputNumber>
+          <small class="text-danger" *ngIf="isFieldInvalid('longitude')">
+            {{ getErrorMessage('longitude') }}
+          </small>
+        </div>
+
+        <div class="col-md-6 mb-3">
+          <div class="form-check">
+            <p-checkbox
+              formControlName="isActive"
+              [binary]="true"
+              label="{{ 'DATA.ACTIVE' | translate }}"
+            ></p-checkbox>
+          </div>
+        </div>
+
+        <div class="col-md-6 mb-3">
+          <div class="form-check">
+            <p-checkbox
+              formControlName="isFeatured"
+              [binary]="true"
+              label="{{ 'DATA.FEATURED' | translate }}"
+            ></p-checkbox>
+          </div>
+        </div>
+
+        <div class="col-md-12 mb-3">
+          <label>{{ 'DATA.MAIN_IMAGE' | translate }}</label>
+          <input 
+            pInputText 
+            formControlName="mainImage" 
+            class="form-control" 
+            placeholder="Image URL" 
+            [ngClass]="{ 'is-invalid': isFieldInvalid('mainImage') }"
+          />
+          <small class="text-danger" *ngIf="isFieldInvalid('mainImage')">
+            {{ getErrorMessage('mainImage') }}
+          </small>
+        </div>
+
+        <!-- Paid Services Section -->
+        <div class="col-md-12 mb-3">
+          <hr class="my-4">
+          <h5 class="mb-3">
+            <i class="pi pi-briefcase me-2"></i>
+            {{ 'DATA.PAID_SERVICES' | translate }}
+          </h5>
+          <small class="text-muted d-block mb-3">
+            {{ 'Selected amenities will be displayed to customers | الخدمات المحددة سيتم إطلاعها في صفحة تفاصيل الفندق' }}
+          </small>
+
+          <div *ngIf="availablePaidServices.length > 0; else noPaidServices">
+            <div class="row">
+              <div class="col-md-6 mb-3" *ngFor="let service of availablePaidServices">
+                <div class="border rounded p-3" [class.bg-light]="isServiceSelected(service.id)">
+                  <div class="d-flex align-items-start">
+                    <p-checkbox
+                      [binary]="true"
+                      [ngModel]="isServiceSelected(service.id)"
+                      (ngModelChange)="togglePaidService(service.id, { checked: $event })"
+                      [inputId]="'service-' + service.id"
+                    ></p-checkbox>
+                    <div class="flex-grow-1 ms-3">
+                      <label [for]="'service-' + service.id" class="fw-bold mb-1 cursor-pointer">
+                        {{ activeLanguage === 'ar' ? service.nameAr : service.nameEn }}
+                      </label>
+                      <p class="text-muted small mb-2">
+                        {{ activeLanguage === 'ar' ? service.descriptionAr : service.descriptionEn }}
+                      </p>
+                      <div *ngIf="isServiceSelected(service.id)" class="mt-2">
+                        <label class="small mb-1">{{ 'DATA.PRICE' | translate }} (SAR)</label>
+                        <p-inputNumber
+                          [ngModel]="getServicePrice(service.id)"
+                          (ngModelChange)="updateServicePrice(service.id, $event)"
+                          mode="currency"
+                          currency="SAR"
+                          locale="ar-SA"
+                          [minFractionDigits]="2"
+                          [maxFractionDigits]="2"
+                          styleClass="w-100"
+                        ></p-inputNumber>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <ng-template #noPaidServices>
+            <div class="alert alert-info">
+              <i class="pi pi-info-circle me-2"></i>
+              {{ 'No paid services available | لا توجد خدمات مدفوعة متاحة' }}
+            </div>
+          </ng-template>
+        </div>
+      </div>
+    </form>
+  </ng-template>  <ng-template pTemplate="footer">
+    <button
+      pButton
+      pRipple
+      [label]="'DATA.CANCEL' | translate"
+      icon="pi pi-times"
+      class="p-button-text"
+      (click)="hideDialog()"
+    ></button>
+    <button
+      pButton
+      pRipple
+      [label]="'DATA.SAVE' | translate"
+      icon="pi pi-check"
+      class="p-button-text"
+      (click)="saveHotel()"
+    ></button>
+  </ng-template>
+</p-dialog>

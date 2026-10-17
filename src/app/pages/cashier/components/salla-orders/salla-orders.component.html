@@ -1,0 +1,345 @@
+<div class="salla-container">
+  <p-toast></p-toast>
+  <p-confirmDialog></p-confirmDialog>
+
+  <!-- Back Navigation -->
+  <div class="back-nav">
+    <p-button
+      icon="pi pi-arrow-left"
+      [label]="'CASHIER_POS.SALLA_BACK_TO_POS' | translate"
+      styleClass="p-button-text p-button-sm"
+      routerLink="/cashier/pos">
+    </p-button>
+  </div>
+
+  <!-- Header / Summary Section -->
+  <div class="header-banner">
+    <div class="title-area">
+      <h1>{{ 'CASHIER_POS.SALLA_ORDERS_TITLE' | translate }}</h1>
+      <p>{{ 'CASHIER_POS.SALLA_ORDERS_SUBTITLE' | translate }}</p>
+    </div>
+
+    <!-- Stats: Loading Skeleton -->
+    <div class="stats-area" *ngIf="settingsLoading()">
+      <div class="stat-box skeleton-box">
+        <p-skeleton width="60px" height="14px"></p-skeleton>
+        <p-skeleton width="40px" height="24px"></p-skeleton>
+      </div>
+      <div class="stat-box skeleton-box">
+        <p-skeleton width="60px" height="14px"></p-skeleton>
+        <p-skeleton width="40px" height="24px"></p-skeleton>
+      </div>
+      <div class="stat-box skeleton-box">
+        <p-skeleton width="60px" height="14px"></p-skeleton>
+        <p-skeleton width="40px" height="24px"></p-skeleton>
+      </div>
+    </div>
+
+    <!-- Stats: Error -->
+    <div class="stats-area" *ngIf="!settingsLoading() && settingsError()">
+      <div class="stat-box error-box">
+        <i class="pi pi-exclamation-circle"></i>
+        <span>{{ 'CASHIER_POS.SALLA_SETTINGS_LOAD_FAIL' | translate }}</span>
+        <p-button icon="pi pi-refresh" styleClass="p-button-text p-button-sm" (click)="loadSettings()"></p-button>
+      </div>
+    </div>
+
+    <!-- Stats: Data Loaded -->
+    <div class="stats-area" *ngIf="!settingsLoading() && !settingsError() && settings() as currentSettings">
+      <div class="stat-box" [class.highlight-pending]="currentSettings.pendingSyncOrders > 0">
+        <span>{{ 'CASHIER_POS.SALLA_ORDERS_STATS_PENDING' | translate }}</span>
+        <strong>{{ currentSettings.pendingSyncOrders }}</strong>
+      </div>
+      <div class="stat-box">
+        <span>{{ 'CASHIER_POS.SALLA_ORDERS_STATS_MAPPED' | translate }}</span>
+        <strong>{{ currentSettings.mappedProducts }}</strong>
+      </div>
+      <div class="stat-box" [class.has-unmapped]="currentSettings.unmappedProducts > 0">
+        <span>{{ 'CASHIER_POS.SALLA_ORDERS_STATS_UNMAPPED' | translate }}</span>
+        <strong>{{ currentSettings.unmappedProducts }}</strong>
+      </div>
+    </div>
+  </div>
+
+  <!-- Filters Section -->
+  <div class="filters-card">
+    <div class="filter-group">
+      <label>{{ 'CASHIER_POS.SALLA_ORDERS_FILTERS_STATUS' | translate }}</label>
+      <p-dropdown
+        [options]="statusOptions"
+        [ngModel]="filterStatus()"
+        (ngModelChange)="filterStatus.set($event); onFilterChange()"
+        styleClass="w-100">
+      </p-dropdown>
+    </div>
+
+    <div class="filter-group">
+      <label>{{ 'CASHIER_POS.SALLA_ORDERS_FILTERS_SYNC' | translate }}</label>
+      <p-dropdown
+        [options]="syncStatusOptions"
+        [ngModel]="filterSyncStatus()"
+        (ngModelChange)="filterSyncStatus.set($event); onFilterChange()"
+        styleClass="w-100">
+      </p-dropdown>
+    </div>
+
+    <div class="filter-group actions">
+      <p-button
+        icon="pi pi-refresh"
+        [label]="'CASHIER_POS.SALLA_REFRESH' | translate"
+        styleClass="p-button-outlined p-button-sm"
+        (click)="onFilterChange()"
+        [loading]="loading()">
+      </p-button>
+    </div>
+  </div>
+
+  <!-- Error State -->
+  <div class="error-state" *ngIf="hasError() && !loading()">
+    <div class="error-card">
+      <i class="pi pi-cloud-download"></i>
+      <h3>{{ 'CASHIER_POS.SALLA_ERROR_TITLE' | translate }}</h3>
+      <p>{{ 'CASHIER_POS.SALLA_ERROR_DESC' | translate }}</p>
+      <p-button
+        icon="pi pi-refresh"
+        [label]="'CASHIER_POS.SALLA_RETRY' | translate"
+        (click)="retryLoad()">
+      </p-button>
+    </div>
+  </div>
+
+  <!-- Orders Table -->
+  <div class="table-card" *ngIf="!hasError()">
+    <p-table
+      [value]="orders()"
+      [loading]="loading()"
+      [paginator]="true"
+      [rows]="pageSize"
+      [totalRecords]="totalOrders()"
+      [lazy]="true"
+      (onLazyLoad)="onPageChange($event)"
+      responsiveLayout="scroll"
+      styleClass="p-datatable-sm p-datatable-striped">
+
+      <ng-template pTemplate="header">
+        <tr>
+          <th>{{ 'CASHIER_POS.SALLA_ORDERS_TABLE_REF' | translate }}</th>
+          <th>{{ 'CASHIER_POS.SALLA_ORDERS_TABLE_CUSTOMER' | translate }}</th>
+          <th>{{ 'CASHIER_POS.SALLA_ORDERS_TABLE_AMOUNT' | translate }}</th>
+          <th>{{ 'CASHIER_POS.SALLA_ORDERS_TABLE_STATUS' | translate }}</th>
+          <th>{{ 'CASHIER_POS.SALLA_ORDERS_TABLE_PAYMENT' | translate }}</th>
+          <th>{{ 'CASHIER_POS.SALLA_ORDERS_TABLE_SYNC' | translate }}</th>
+          <th style="width: 120px">{{ 'CASHIER_POS.SALLA_ORDERS_TABLE_ACTIONS' | translate }}</th>
+        </tr>
+      </ng-template>
+
+      <ng-template pTemplate="body" let-order>
+        <tr>
+          <td><strong>{{ order.referenceNumber }}</strong></td>
+          <td>
+            <div class="customer-info">
+              <span>{{ order.customerName }}</span>
+              <small>{{ order.customerPhone }}</small>
+            </div>
+          </td>
+          <td>{{ order.totalAmount | number:'1.2-2' }} {{ order.currency }}</td>
+          <td>
+            <p-tag [severity]="getOrderStatusSeverity(order.status)" [value]="getOrderStatusLabel(order.status)"></p-tag>
+          </td>
+          <td>
+            <p-tag [severity]="getPaymentSeverity(order.paymentStatus)"
+                   [value]="order.paymentStatus === SallaPaymentStatus.Paid ? 'Paid' : 'Unpaid'">
+            </p-tag>
+          </td>
+          <td>
+             <p-tag [severity]="getSyncSeverity(order.syncStatus)" [value]="getSyncLabel(order.syncStatus)"></p-tag>
+          </td>
+          <td>
+            <p-button
+              icon="pi pi-eye"
+              [pTooltip]="'CASHIER_POS.SALLA_ORDERS_VIEW_DETAILS' | translate"
+              styleClass="p-button-sm p-button-outlined"
+              (click)="viewOrderDetails(order)">
+            </p-button>
+          </td>
+        </tr>
+      </ng-template>
+
+      <!-- Empty State -->
+      <ng-template pTemplate="emptymessage">
+        <tr>
+          <td colspan="7">
+            <div class="empty-state">
+              <i class="pi pi-inbox"></i>
+              <h3>{{ 'CASHIER_POS.SALLA_EMPTY_TITLE' | translate }}</h3>
+              <p>{{ 'CASHIER_POS.SALLA_EMPTY_DESC' | translate }}</p>
+            </div>
+          </td>
+        </tr>
+      </ng-template>
+    </p-table>
+  </div>
+</div>
+
+<!-- Order Details Dialog -->
+<p-dialog
+  [(visible)]="showDetailsDialog"
+  [modal]="true"
+  [style]="{width: '70vw', maxWidth: '800px'}"
+  [draggable]="false"
+  [resizable]="false"
+  [header]="'CASHIER_POS.SALLA_ORDERS_DETAILS_TITLE' | translate">
+
+  <!-- Loading state inside dialog -->
+  <div class="dialog-loading" *ngIf="loadingDetails()">
+    <div class="skeleton-row"><p-skeleton width="100%" height="20px"></p-skeleton></div>
+    <div class="skeleton-row"><p-skeleton width="60%" height="16px"></p-skeleton></div>
+    <div class="skeleton-grid">
+      <p-skeleton width="100%" height="120px"></p-skeleton>
+      <p-skeleton width="100%" height="120px"></p-skeleton>
+    </div>
+    <div class="skeleton-row"><p-skeleton width="100%" height="150px"></p-skeleton></div>
+  </div>
+
+  <!-- Order Details Content -->
+  <div class="order-details-content" *ngIf="!loadingDetails() && selectedOrder() as order">
+
+    <div class="status-ribbon">
+      <h3>#{{ order.referenceNumber }}</h3>
+      <div class="tags">
+         <p-tag [severity]="getOrderStatusSeverity(order.status)" [value]="getOrderStatusLabel(order.status)"></p-tag>
+         <p-tag [severity]="getSyncSeverity(order.syncStatus)" [value]="getSyncLabel(order.syncStatus)"></p-tag>
+      </div>
+    </div>
+
+    <!-- Already synced banner -->
+    <div class="success-alert" *ngIf="order.syncStatus === SallaSyncStatus.Synced">
+      <i class="pi pi-check-circle"></i>
+      <span>{{ 'CASHIER_POS.SALLA_ALREADY_SYNCED' | translate }}</span>
+    </div>
+
+    <!-- Sync error banner -->
+    <div class="error-alert" *ngIf="order.syncStatus === SallaSyncStatus.Failed && order.syncError">
+      <i class="pi pi-times-circle"></i>
+      <span>{{ order.syncError }}</span>
+    </div>
+
+    <div class="info-grid">
+      <div class="info-card">
+        <h4>{{ 'CASHIER_POS.SALLA_ORDERS_DETAILS_CUSTOMER_INFO' | translate }}</h4>
+        <p><strong>{{ 'CASHIER_POS.SALLA_DETAIL_NAME' | translate }}:</strong> {{ order.customerName }}</p>
+        <p><strong>{{ 'CASHIER_POS.SALLA_DETAIL_PHONE' | translate }}:</strong> {{ order.customerPhone }}</p>
+        <p><strong>{{ 'CASHIER_POS.SALLA_DETAIL_EMAIL' | translate }}:</strong> {{ order.customerEmail || '-' }}</p>
+      </div>
+
+      <div class="info-card">
+        <h4>{{ 'CASHIER_POS.SALLA_ORDERS_DETAILS_SHIPPING' | translate }}</h4>
+        <p><strong>{{ 'CASHIER_POS.SALLA_DETAIL_CITY' | translate }}:</strong> {{ order.shippingCity || '-' }}</p>
+        <p><strong>{{ 'CASHIER_POS.SALLA_DETAIL_DISTRICT' | translate }}:</strong> {{ order.shippingDistrict || '-' }}</p>
+        <p><strong>{{ 'CASHIER_POS.SALLA_DETAIL_STREET' | translate }}:</strong> {{ order.shippingStreet || '-' }}</p>
+      </div>
+    </div>
+
+    <div class="items-section">
+      <h4>{{ 'CASHIER_POS.SALLA_ORDERS_DETAILS_ITEMS' | translate }}</h4>
+
+      <div *ngIf="!areAllItemsMapped()" class="warning-alert">
+        <i class="pi pi-exclamation-triangle"></i>
+        <span>{{ 'CASHIER_POS.SALLA_ORDERS_DETAILS_UNMAPPED_WARNING' | translate }}</span>
+      </div>
+
+      <p-table [value]="order.items || []" styleClass="p-datatable-sm">
+        <ng-template pTemplate="header">
+          <tr>
+            <th>{{ 'CASHIER_POS.SALLA_ITEM_PRODUCT' | translate }}</th>
+            <th>{{ 'CASHIER_POS.SALLA_ITEM_QTY' | translate }}</th>
+            <th>{{ 'CASHIER_POS.SALLA_ITEM_PRICE' | translate }}</th>
+            <th>{{ 'CASHIER_POS.SALLA_ITEM_TOTAL' | translate }}</th>
+            <th>{{ 'CASHIER_POS.SALLA_ITEM_MAPPING' | translate }}</th>
+          </tr>
+        </ng-template>
+        <ng-template pTemplate="body" let-item>
+          <tr>
+            <td>
+              {{ item.productName }}
+              <div *ngIf="item.optionsSummary" class="options-text">{{ item.optionsSummary }}</div>
+            </td>
+            <td>{{ item.quantity }}</td>
+            <td>{{ item.unitPrice | number:'1.2-2' }}</td>
+            <td>{{ item.totalPrice | number:'1.2-2' }}</td>
+            <td>
+              <p-tag *ngIf="item.isMapped" severity="success" [value]="'✓ ' + item.productUnitName"></p-tag>
+              <p-tag *ngIf="!item.isMapped" severity="danger" value="Unmapped ⚠"></p-tag>
+            </td>
+          </tr>
+        </ng-template>
+      </p-table>
+    </div>
+
+    <!-- Totals Summary -->
+    <div class="totals-card" *ngIf="order.subTotal !== undefined">
+      <div class="total-row">
+        <span>{{ 'CASHIER_POS.SALLA_SUBTOTAL' | translate }}</span>
+        <strong>{{ order.subTotal | number:'1.2-2' }} {{ order.currency }}</strong>
+      </div>
+      <div class="total-row" *ngIf="order.shippingAmount">
+        <span>{{ 'CASHIER_POS.SALLA_SHIPPING' | translate }}</span>
+        <strong>{{ order.shippingAmount | number:'1.2-2' }} {{ order.currency }}</strong>
+      </div>
+      <div class="total-row" *ngIf="order.taxAmount">
+        <span>{{ 'CASHIER_POS.SALLA_TAX' | translate }}</span>
+        <strong>{{ order.taxAmount | number:'1.2-2' }} {{ order.currency }}</strong>
+      </div>
+      <div class="total-row" *ngIf="order.discountAmount">
+        <span>{{ 'CASHIER_POS.SALLA_DISCOUNT' | translate }}</span>
+        <strong class="discount">-{{ order.discountAmount | number:'1.2-2' }} {{ order.currency }}</strong>
+      </div>
+      <div class="total-row grand-total">
+        <span>{{ 'CASHIER_POS.SALLA_GRAND_TOTAL' | translate }}</span>
+        <strong>{{ order.totalAmount | number:'1.2-2' }} {{ order.currency }}</strong>
+      </div>
+    </div>
+
+  </div>
+
+  <ng-template pTemplate="footer">
+    <div class="dialog-footer" *ngIf="!loadingDetails() && selectedOrder() as order">
+
+      <!-- Sync to Invoice: Only if pending & all mapped -->
+      <p-button
+        *ngIf="order.syncStatus === SallaSyncStatus.Pending && areAllItemsMapped()"
+        [label]="'CASHIER_POS.SALLA_ORDERS_SYNC_TO_INVOICE' | translate"
+        icon="pi pi-file"
+        severity="success"
+        [loading]="syncing()"
+        (onClick)="confirmSyncToInvoice()">
+      </p-button>
+
+      <!-- Sync disabled tooltip when unmapped -->
+      <p-button
+        *ngIf="order.syncStatus === SallaSyncStatus.Pending && !areAllItemsMapped()"
+        [label]="'CASHIER_POS.SALLA_ORDERS_SYNC_TO_INVOICE' | translate"
+        icon="pi pi-file"
+        severity="secondary"
+        [disabled]="true"
+        [pTooltip]="'CASHIER_POS.SALLA_ORDERS_DETAILS_UNMAPPED_WARNING' | translate">
+      </p-button>
+
+      <!-- Update status to In Progress -->
+      <p-button
+        *ngIf="order.status === SallaOrderStatus.New"
+        [label]="'CASHIER_POS.SALLA_ORDERS_UPDATE_STATUS' | translate"
+        icon="pi pi-check"
+        severity="info"
+        [loading]="syncing()"
+        (onClick)="confirmUpdateStatus(SallaOrderStatus.InProgress)">
+      </p-button>
+
+      <p-button
+        [label]="'CASHIER_POS.SALLA_CLOSE' | translate"
+        styleClass="p-button-text"
+        (click)="showDetailsDialog = false">
+      </p-button>
+    </div>
+  </ng-template>
+</p-dialog>

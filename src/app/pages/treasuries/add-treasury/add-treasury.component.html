@@ -1,0 +1,52 @@
+<div class="card p-4">
+    <div class="card-header border-0 pt-5">
+        <h3 class="card-title align-items-start flex-column">
+            <span class="card-label fw-bolder fs-3 mb-1">
+                {{ "MENU.ADD_TREASURY" | translate }}
+            </span>
+        </h3>
+    </div>
+    <div class="card-body py-3">
+        <form [formGroup]="treasuryFormGroup" (ngSubmit)="saveTreasury()" class="grid grid-cols-2 gap-4 p-2 py-4"
+            novalidate>
+            <div class="field">
+                <label for="name" class="block fw-bold mb-2">
+                    {{ "FINANCE.NAME" | translate }} <span class="text-red-500">*</span>
+                </label>
+                <input pInputText type="text" id="name" formControlName="name" class="input w-full"
+                    [placeholder]="'FINANCE.NAME' | translate" />
+                <small class="text-red-500 p-error block" *ngIf="
+            treasuryFormGroup.controls.name.invalid &&
+            treasuryFormGroup.controls.name.touched
+          ">
+                    {{ "FINANCE.NAME_REQUIRED" | translate }}
+                </small>
+            </div>
+
+            <div class="field">
+                <label for="mainAccountId" class="block fw-bold mb-2">
+                    {{ "FINANCE.MAIN_ACCOUNT" | translate }} <span class="text-red-500">*</span>
+                </label>
+                <p-dropdown [options]="mainAccountOptions" [filter]="true" formControlName="mainAccountId"
+                    id="mainAccountId" styleClass="w-full" variant="filled"
+                    [placeholder]="'FINANCE.CHOOSEACCOUNT' | translate"></p-dropdown>
+                <small class="text-red-500 p-error block" *ngIf="
+            treasuryFormGroup.controls.mainAccountId.invalid &&
+            treasuryFormGroup.controls.mainAccountId.touched
+          ">
+                    {{ "FINANCE.MAIN_ACCOUNT_REQUIRED" | translate }}
+                </small>
+            </div>
+        </form>
+
+        <div class="separator separator-dashed my-5"></div>
+
+        <div class="flex justify-end gap-3 px-2">
+            <p-button styleClass="rounded-md" [label]="'FINANCE.SAVE' | translate" (onClick)="saveTreasury()"
+                [disabled]="treasuryFormGroup.invalid || loading" [loading]="loading" />
+            <p-button styleClass="rounded-md" [label]="'FINANCE.CANCEL' | translate" severity="secondary"
+                (onClick)="cancel()" />
+        </div>
+    </div>
+</div>
+<p-toast></p-toast>

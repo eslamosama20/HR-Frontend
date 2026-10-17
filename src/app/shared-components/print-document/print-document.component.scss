@@ -1,0 +1,367 @@
+.print-document {
+  font-family: Arial, sans-serif;
+  color: #333;
+  width: 804px;
+  /* Adjusted width to account for browser print margins */
+  min-height: auto;
+  max-height: none;
+  margin: 0 auto;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+  background: #fff;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  page-break-after: always;
+  padding: 10px;
+  /* Added padding to ensure content doesn't touch the edge */
+}
+
+.page {
+  max-height: none;
+  min-height: auto;
+  display: flex;
+  flex-direction: column;
+  flex: 1 0 auto;
+}
+
+.body {
+  flex-grow: 1;
+}
+
+.data-table {
+  width: 100%;
+}
+
+
+
+/* Table Styles */
+table {
+  width: 100%;
+  border-collapse: collapse;
+  border: 1px solid #ddd;
+  table-layout: fixed;
+}
+
+
+thead th {
+  border: 1px solid #000;
+  padding: 2px 8px;
+  font-size: 12px;
+  line-height: 1.2;
+  background-color: #fff5cc !important;
+  /* bg-yellow equivalent */
+  white-space: normal;
+}
+
+.small-header {
+  font-size: 10px !important;
+  line-height: 1.1;
+}
+
+tbody td {
+  padding: 2px 8px;
+  border: 1px solid #ddd;
+  line-height: 1.3;
+  font-size: 12px;
+}
+
+.number-cell {
+  text-align: center !important;
+}
+
+/* Center alignment class */
+.text-center {
+  text-align: center !important;
+}
+
+/* Center alignment for specific columns (backup) */
+#tableElement th:first-child,
+#tableElement td:first-child {
+  text-align: center !important;
+}
+
+
+#tableElement th:nth-child(4),
+#tableElement td:nth-child(4) {
+  text-align: center !important;
+}
+
+#tableElement th:nth-child(5),
+#tableElement td:nth-child(5) {
+  text-align: center !important;
+}
+
+.small-text {
+  font-size: 10px !important;
+  line-height: 1.2 !important;
+  padding: 2px 8px !important;
+}
+
+/* Footer always at the bottom */
+.footer {
+  margin-bottom: 0;
+  margin-top: auto;
+  page-break-inside: avoid !important;
+  break-inside: avoid !important;
+}
+
+/* Small, gray text for pagination */
+.page-indicator {
+  text-align: center;
+  color: #888;
+}
+
+/* Page break simulation for print */
+.page-break {
+  display: block;
+  height: 4px;
+  background-color: #f0f0f0;
+  border-top: 1px dashed #ddd;
+}
+
+/* Separator between sections */
+.section-separator {
+  width: 100%;
+  height: 2px;
+  background-color: #ccc;
+}
+
+.qr-section {
+  text-align: center;
+  align-self: stretch;
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+  min-height: 120px;
+  margin-top: -9px;
+  /* lift QR slightly upward */
+  margin-right: 0;
+  margin-left: 0;
+  margin-inline-end: 30px;
+  /* مسافة بينه وبين الجدول */
+  // transform: translateX(-106px);
+}
+
+.qr-section img {
+  max-width: 150px;
+  height: auto;
+}
+
+.under-table {
+  margin-top: 4px;
+  align-items: center;
+  gap: 32px !important;
+  /* force a larger space between QR and summary */
+  page-break-inside: avoid !important;
+  break-inside: avoid !important;
+}
+
+@media print and (orientation: landscape) {
+  .under-table {
+    flex-direction: row;
+    gap: 12px;
+    margin-top: 4px;
+    align-items: center;
+  }
+
+  .summary-section {
+    width: 45%;
+    max-width: 60%;
+  }
+
+  .summary-section table {
+    width: 100%;
+  }
+}
+
+/* Print-specific styles */
+@media print {
+  .body {
+    margin: 0;
+    padding: 0;
+    width: 100%;
+    height: auto !important;
+  }
+
+  .print-document {
+    box-shadow: none;
+    margin: 0;
+    padding: 0;
+    width: 100%;
+    /* استغل عرض الصفحة بالكامل */
+    height: auto !important;
+    /* مهم جداً */
+    max-height: none !important;
+    min-height: 0 !important;
+    display: block !important;
+    /* إلغاء flex وقت الطباعة */
+    justify-content: flex-start !important;
+  }
+
+  table {
+    page-break-inside: auto;
+  }
+
+  /* Center alignment for specific columns in print mode */
+  #tableElement th:first-child,
+  #tableElement td:first-child {
+    text-align: center !important;
+  }
+
+
+  #tableElement th:nth-child(4),
+  #tableElement td:nth-child(4) {
+    text-align: center !important;
+  }
+
+  #tableElement th:nth-child(5),
+  #tableElement td:nth-child(5) {
+    text-align: center !important;
+  }
+
+  /* Landscape orientation - table extends to full width */
+  @media (orientation: landscape) {
+    #tableElement {
+      width: 100% !important;
+      table-layout: fixed;
+    }
+
+    #tableElement th,
+    #tableElement td {
+      overflow: visible !important;
+      word-wrap: break-word;
+    }
+
+    /* Allow header text to wrap */
+    #tableElement thead th {
+      white-space: normal !important;
+      overflow: visible !important;
+    }
+
+    /* Make sure cells can show full content */
+    #tableElement tbody td {
+      white-space: normal !important;
+      overflow: visible !important;
+    }
+
+    /* Reduce width of No. column (first column) */
+    #tableElement th:first-child,
+    #tableElement td:first-child {
+      width: 3% !important;
+      max-width: 3% !important;
+      min-width: 30px !important;
+    }
+
+    /* اسم الصنف column - keep large in landscape */
+    #tableElement th:nth-child(3),
+    #tableElement td:nth-child(3) {
+      width: 20% !important;
+      min-width: 220px !important;
+    }
+
+    /* المخزن column - keep small in landscape */
+    #tableElement th:nth-child(4),
+    #tableElement td:nth-child(4) {
+      width: 6% !important;
+      min-width: 80px !important;
+      max-width: 100px !important;
+    }
+
+    /* اجمالي قبل الضريبة column - keep small in landscape */
+    #tableElement th:nth-child(8),
+    #tableElement td:nth-child(8) {
+      width: 8% !important;
+      min-width: 90px !important;
+      max-width: 110px !important;
+    }
+  }
+
+  .page-break {
+    page-break-after: always;
+    border: none;
+    display: block;
+    height: 1px;
+    background-color: transparent;
+    margin: 0 0;
+  }
+
+  .page {
+    width: 100%;
+    position: relative !important;
+    min-height: 980px !important; /* Strict A4 page height for printing */
+    max-height: 980px !important;
+    box-sizing: border-box !important;
+    padding-bottom: 85px !important; /* Prevents overlap with stuck footer */
+    page-break-after: always !important;
+    break-after: always !important;
+  }
+
+  .address-footer {
+    position: absolute !important;
+    bottom: 10px !important;
+    left: 10px !important;
+    right: 10px !important;
+    width: auto !important;
+    background-color: #fff !important;
+    z-index: 9999;
+  }
+
+  /* Header styles for print - ensure row layout */
+  .header .flex.justify-between,
+  .header [class*="flex"][class*="justify-between"] {
+    display: flex !important;
+    flex-direction: row !important;
+    flex-wrap: nowrap !important;
+  }
+
+  .header .flex.justify-between>.w-full,
+  .header [class*="flex"][class*="justify-between"]>[class*="w-full"] {
+    flex: 1 1 0% !important;
+    width: auto !important;
+    max-width: none !important;
+    min-width: 0 !important;
+  }
+
+  .header .flex.justify-between>.flex.w-full,
+  .header [class*="flex"][class*="justify-between"]>[class*="flex"][class*="w-full"] {
+    flex: 0 0 auto !important;
+    width: auto !important;
+  }
+
+}
+
+.summary-section {
+  align-self: stretch;
+  justify-content: flex-start;
+  display: flex;
+  flex-direction: column;
+  min-height: 120px;
+  flex-shrink: 0;
+  width: 100% !important;
+  max-width: none !important;
+}
+
+.summary-section table {
+  width: 100%;
+}
+
+.qr-code-fixed-container {
+  width: 100px;
+  height: 100px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #fff;
+  padding: 5px;
+  box-sizing: border-box;
+  overflow: hidden;
+}
+
+.qr-code-fixed-container ::ng-deep img {
+  max-width: 100% !important;
+  max-height: 100% !important;
+  width: auto !important;
+  height: auto !important;
+  display: block;
+}

@@ -1,0 +1,515 @@
+<p-table #dt1 appStickyHorizontalScroll [value]="users" [columns]="columns" [resizableColumns]="true" columnResizeMode="expand" dataKey="id"
+  [exportFilename]="exportFileName"
+  [rows]="10" [sortField]="'createdAt'" [sortOrder]="-1" styleClass="p-datatable-gridlines custom-paginator-table"
+  [rowsPerPageOptions]="[10, 25, 50]" [loading]="loading" [paginator]="true"
+  [paginatorLocale]="activeLanguage === 'en' ? 'en-US' : 'ar-SA'" [showCurrentPageReport]="true"
+  currentPageReportTemplate="اجمالي {{ users?.length ? (users.length) : '' }}"
+  paginatorTemplate="CurrentPageReport PrevPageLink PageLinks NextPageLink RowsPerPageDropdown">
+  <ng-template pTemplate="caption">
+    <div class="flex rtl:flex-row-reverse justify-between gap-2">
+      <div class="flex gap-2">
+        <p-button styleClass="rounded-md w-auto" icon="pi pi-external-link" [label]="translate.instant('AUTH.EXPORT')"
+          (onClick)="dt1.exportCSV()" />
+        <p-button styleClass="rounded-md w-auto text-nowrap" [label]="translate.instant('AUTH.CLEAR_FILTERS')"
+          [outlined]="true" icon="pi pi-filter-slash" (onClick)="clear(dt1)" />
+        <a *ngIf="hasPermission('UserManagement.Create')"
+          [routerLink]="isFrontal ? '/frontal-user-management/add-user' : '/user-management/add-user'">
+          <p-button styleClass="rounded-md w-auto text-nowrap" [label]="translate.instant('AUTH.ADD_USER')"
+            [outlined]="true" icon="pi pi-plus" />
+        </a>
+
+      </div>
+
+      <ng-container *ngIf="users.length === 0 && !loading">
+        <div class="flex justify-center items-center w-full">
+          <p class="text-center font-semibold text-xl w-full">
+            {{ "AUTH.NO_USERS" | translate }}
+          </p>
+        </div>
+      </ng-container>
+      <span class="p-input-icon-left ml-auto">
+        <i class="pi pi-search"></i>
+        <input pInputText type="text" [(ngModel)]="searchValue" (input)="filter(dt1, $event)"
+          [placeholder]="translate.instant('AUTH.SEARCH')" />
+      </span>
+    </div>
+  </ng-template>
+  <ng-template pTemplate="header" let-columns>
+    <tr>
+      <th style="width: 4rem">
+        <div class="flex align-items-center text-base">
+          #
+        </div>
+      </th>
+      <th style="min-width: fit-content" *ngFor="let column of columns" pResizableColumn
+        [pSortableColumn]="column.field">
+        <div class="flex align-items-center">
+          {{ column.header }}
+          <p-sortIcon [field]="column.field" class="mx-1 "></p-sortIcon>
+          <p-columnFilter *ngIf="column.filter" [type]="column.filterType" [field]="column.field" display="menu"
+            [maxFractionDigits]="column.filterType === 'numeric' ? 3 : 0"
+            [locale]="activeLanguage === 'en' ? 'en-US' : 'ar-SA'" />
+        </div>
+      </th>
+      <th style="min-width: fit-content">
+        <div class="flex align-items-center text-base">
+          {{ "AUTH.ACTIONS" | translate }}
+        </div>
+      </th>
+    </tr>
+  </ng-template>
+  <ng-template pTemplate="body" let-Entry let-rowIndex="rowIndex">
+    <tr *ngIf="users.length > 0" (click)="showUserDialog(Entry)" (contextmenu)="showUserOverlay($event, Entry)"
+      class="hover:bg-gray-200 cursor-pointer transition-colors duration-200">
+      <td class="text-lg rtl:text-right">
+        {{ rowIndex + 1 }}
+      </td>
+      <td class="text-lg text-center">
+        <i class="pi" [ngClass]="{
+            'text-green-500 pi-check-circle': Entry.isActive,
+            'text-red-500 pi-times-circle': !Entry.isActive
+          }"></i>
+      </td>
+      <td class="text-lg rtl:text-right">{{ Entry.workId }}</td>
+      <td class="text-lg rtl:text-right">{{ Entry.userName }}</td>
+      <td class="text-lg rtl:text-right">
+        {{ Entry.firstName }}
+      </td>
+      <td class="text-lg rtl:text-right">
+        {{ Entry.middleName }}
+      </td>
+      <td class="text-lg rtl:text-right">
+        {{ Entry.lastName }}
+      </td>
+      <td class="text-lg rtl:text-right">{{ Entry.phoneNumber }}</td>
+      <td class="text-lg rtl:text-right">{{ Entry.email }}</td>
+      <td class="text-lg rtl:text-right">
+        <i class="pi" [ngClass]="{
+            'text-green-500 pi-check-circle': Entry.emailVerified,
+            'text-red-500 pi-times-circle': !Entry.emailVerified
+          }"></i>
+      </td>
+      <td class="text-lg rtl:text-right">
+        <i class="pi" [ngClass]="{
+            'text-green-500 pi-check-circle': Entry.twoFactorEnabled,
+            'text-red-500 pi-times-circle': !Entry.twoFactorEnabled
+          }"></i>
+      </td>
+      <td class="text-lg text-center" *ngIf="!isFrontal">
+        <i class="pi" [ngClass]="{
+            'text-green-500 pi-check-circle': Entry.isFrontal,
+            'text-red-500 pi-times-circle': !Entry.isFrontal
+          }"></i>
+      </td>
+      <td class="text-lg rtl:text-right">
+        {{
+        Entry.createdAt ? (Entry.createdAt | customDate : "yyyy/MM/dd" : "": "ar-SA"): '-'
+        }}
+      </td>
+      <td class="text-lg rtl:text-right flex gap-2" (click)="$event.stopPropagation()">
+        <ng-container>
+
+          <p-button styleClass="p-button-outlined rounded-xl gear-button" [text]="true"
+            (onClick)="showUserOverlay($event, Entry)" severity="secondary">
+            <ng-template pTemplate="icon">
+              <i class="pi pi-cog text-xl"></i>
+            </ng-template>
+          </p-button>
+        </ng-container>
+      </td>
+    </tr>
+  </ng-template>
+</p-table>
+<p-overlayPanel #opUserPanel [autoZIndex]="false" [baseZIndex]="1000" [appendTo]="'body'">
+  <div class="flex flex-column gap-2 w-auto p-1.5 action-menu-panel">
+    <button type="button" class="action-panel-btn btn-edit"
+      (click)="opUserPanel.hide(); showUserDialog(selectedUser); $event.stopPropagation()">
+      <i class="pi pi-pencil"></i>
+      <span>{{ translate.instant('FINANCE.EDIT') }}</span>
+    </button>
+    <button type="button" class="action-panel-btn btn-password"
+      (click)="opUserPanel.hide(); openResetPasswordDialog(selectedUser); $event.stopPropagation()">
+      <i class="pi pi-key"></i>
+      <span>{{ activeLanguage === 'ar' ? 'تغيير كلمة المرور' : 'Change Password' }}</span>
+    </button>
+    <button type="button" class="action-panel-btn btn-copy"
+      (click)="opUserPanel.hide(); copyUser(selectedUser); $event.stopPropagation()">
+      <i class="pi pi-copy"></i>
+      <span>{{ activeLanguage === 'ar' ? 'نسخ المستخدم' : 'Copy User' }}</span>
+    </button>
+    <button *ngIf="!isFrontal && !selectedUser?.isFrontal" type="button" class="action-panel-btn btn-frontal"
+      (click)="opUserPanel.hide(); makeFrontal(selectedUser); $event.stopPropagation()">
+      <i class="pi pi-send"></i>
+      <span>{{ activeLanguage === 'ar' ? 'تحويل لفرونتال' : 'Make Frontal' }}</span>
+    </button>
+    <button *ngIf="hasPermission('UserManagement.Delete')" type="button" class="action-panel-btn btn-delete"
+      [disabled]="!selectedUser?.isActive"
+      (click)="opUserPanel.hide(); confirmUserDeletion($event, selectedUser); $event.stopPropagation()">
+      <i class="pi pi-trash"></i>
+      <span>{{ translate.instant('FINANCE.DELETE') }}</span>
+    </button>
+  </div>
+</p-overlayPanel>
+
+<p-dialog [(visible)]="userDialogVisible" [modal]="true" [draggable]="false" [resizable]="false"
+  [style]="{ width: '70vw', maxWidth: '980px' }"
+  [breakpoints]="{ '1199px': '85vw', '768px': '95vw', '576px': '98vw' }"
+  (onHide)="closeUserDialog()">
+
+  <!-- Dialog Header -->
+  <ng-template pTemplate="header">
+    <div class="flex items-center justify-between w-full pe-6 gap-3 flex-wrap">
+      <!-- Start: Edit User Title & Info -->
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-xl bg-primary/10 text-primary flex items-center justify-center font-bold text-lg shadow-sm">
+          <i class="pi pi-user-edit text-xl"></i>
+        </div>
+        <div>
+          <h3 class="text-xl font-bold text-gray-900 m-0 leading-tight">
+            {{ 'AUTH.EDIT_USER' | translate }}
+          </h3>
+          <span *ngIf="selectedUser" class="text-xs text-gray-500 font-medium">
+            {{ selectedUser.userName }} ({{ selectedUser.firstName }} {{ selectedUser.lastName }})
+          </span>
+        </div>
+      </div>
+
+      <!-- Center: كبسولة حالة الحساب التفاعلية الفخمة بنبض ضوئي -->
+      <div [formGroup]="userForm"
+        class="header-active-toggle mx-auto"
+        [ngClass]="userForm.get('isActive')?.value ? 'is-active' : 'is-inactive'"
+        (click)="userForm.get('isActive')?.setValue(!userForm.get('isActive')?.value)"
+        [pTooltip]="userForm.get('isActive')?.value ? (activeLanguage === 'ar' ? 'انقر لتعطيل الحساب' : 'Click to deactivate') : (activeLanguage === 'ar' ? 'انقر لتفعيل الحساب' : 'Click to activate')"
+        tooltipPosition="bottom">
+        <span class="status-dot"></span>
+        <span class="status-text">
+          {{ userForm.get('isActive')?.value ? (activeLanguage === 'ar' ? 'حساب نشط' : 'Active Account') : (activeLanguage === 'ar' ? 'حساب غير نشط' : 'Inactive Account') }}
+        </span>
+        <div class="switch-wrapper" (click)="$event.stopPropagation()">
+          <p-inputSwitch formControlName="isActive"></p-inputSwitch>
+        </div>
+      </div>
+
+      <!-- End: زر تغيير كلمة المرور في الهيدر بتصميم أنيق وثابت اللون -->
+      <button type="button" class="change-password-header-btn" (click)="openResetPasswordDialog(selectedUser)">
+        <i class="pi pi-key"></i>
+        <span>{{ activeLanguage === 'ar' ? 'تغيير كلمة المرور' : 'Change Password' }}</span>
+      </button>
+    </div>
+  </ng-template>
+
+  <div class="py-2">
+    <!-- ✅ 1. بيانات المستخدم الأساسية -->
+    <div class="flex items-center justify-between mb-3">
+      <h5 class="text-base font-bold text-gray-800 m-0 flex items-center gap-2">
+        <i class="pi pi-id-card text-primary"></i>
+        <span>{{ 'AUTH.USER_DETAILS' | translate }}</span>
+      </h5>
+    </div>
+
+    <div [formGroup]="userForm" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3.5 mb-4">
+      <!-- First Name -->
+      <div class="flex flex-col">
+        <label class="font-bold text-sm text-gray-700 mb-1.5">
+          {{ 'AUTH.FIRST_NAME' | translate }} <span class="text-danger text-red-500 font-bold">*</span>
+        </label>
+        <input pInputText formControlName="firstName" type="text" class="w-full dialog-input" />
+      </div>
+
+      <!-- Middle Name -->
+      <div class="flex flex-col">
+        <label class="font-bold text-sm text-gray-700 mb-1.5">
+          {{ 'AUTH.MIDDLE_NAME' | translate }}
+        </label>
+        <input pInputText formControlName="middleName" type="text" class="w-full dialog-input" />
+      </div>
+
+      <!-- Last Name -->
+      <div class="flex flex-col">
+        <label class="font-bold text-sm text-gray-700 mb-1.5">
+          {{ 'AUTH.LAST_NAME' | translate }} <span class="text-danger text-red-500 font-bold">*</span>
+        </label>
+        <input pInputText formControlName="lastName" type="text" class="w-full dialog-input" />
+      </div>
+
+      <!-- User Name -->
+      <div class="flex flex-col">
+        <label class="font-bold text-sm text-gray-700 mb-1.5">
+          {{ 'AUTH.USER_NAME' | translate }} <span class="text-danger text-red-500 font-bold">*</span>
+        </label>
+        <input pInputText formControlName="userName" type="text" class="w-full dialog-input" />
+      </div>
+
+      <!-- Email -->
+      <div class="flex flex-col">
+        <label class="font-bold text-sm text-gray-700 mb-1.5">
+          {{ 'AUTH.EMAIL' | translate }} <span class="text-danger text-red-500 font-bold">*</span>
+        </label>
+        <input pInputText formControlName="email" type="email" class="w-full dialog-input" />
+      </div>
+
+      <!-- Phone Number -->
+      <div class="flex flex-col">
+        <label class="font-bold text-sm text-gray-700 mb-1.5">
+          {{ 'AUTH.PHONE_NUMBER' | translate }}
+        </label>
+        <input pInputText formControlName="phoneNumber" type="text" class="w-full dialog-input" />
+      </div>
+
+      <!-- Work Id -->
+      <div class="flex flex-col">
+        <label class="font-bold text-sm text-gray-700 mb-1.5">
+          {{ 'AUTH.WORK_ID' | translate }}
+        </label>
+        <input pInputText formControlName="workId" type="text" class="w-full dialog-input" />
+      </div>
+
+      <!-- Date Of Birth (اختياري) -->
+      <div class="flex flex-col">
+        <label class="font-bold text-sm text-gray-700 mb-1.5">
+          {{ 'AUTH.DATE_OF_BIRTH' | translate }}
+        </label>
+        <input formControlName="dateOfBirth" type="date" class="w-full p-inputtext p-component dialog-input" />
+      </div>
+    </div>
+
+    <hr class="my-4 border-gray-200" />
+
+    <!-- ✅ 2. إدارة الأدوار المخصصة للمستخدم (عرض الشارات المدمجة) -->
+    <div class="p-3 rounded-xl border border-gray-200 bg-gray-50/50">
+      <div class="flex items-center justify-between mb-2.5">
+        <div class="flex items-center gap-2">
+          <i class="pi pi-shield text-primary"></i>
+          <h5 class="text-base font-bold text-gray-800 m-0">
+            {{ translate.instant("AUTH.USER_ROLES") }}
+          </h5>
+          <span class="text-sm font-bold text-gray-700">({{ userRoles?.length || 0 }} {{ activeLanguage === 'ar' ? 'أدوار مسندة' : 'roles' }})</span>
+        </div>
+      </div>
+
+      <!-- شريط إضافة أدوار (MultiSelect يأخذ العرض بالكامل مع زر تم/إسناد داخل القائمة) -->
+      <div class="w-full mb-3">
+        <p-multiSelect #msRole appendTo="body" [options]="filteredRolesOptions" [(ngModel)]="selectedUserRoles"
+          [ngModelOptions]="{ standalone: true }" optionLabel="name" [filter]="true" filterBy="name" [showClear]="false"
+          [placeholder]="activeLanguage === 'ar' ? 'اختر دوراً أو أكثر لإضافتهم للمستخدم...' : 'Select one or more roles to assign...'"
+          [selectedItemsLabel]="activeLanguage === 'ar' ? '{0} أدوار محددة' : '{0} roles selected'"
+          [maxSelectedLabels]="3" styleClass="w-full">
+          <ng-template let-role pTemplate="item">
+            <div class="flex items-center gap-2">
+              <i class="pi pi-shield text-primary"></i>
+              <span>{{ role.name }}</span>
+            </div>
+          </ng-template>
+          <ng-template pTemplate="footer">
+            <div class="flex items-center justify-between p-2.5 border-t border-gray-200 bg-gray-50">
+              <span class="text-xs font-semibold text-gray-600">
+                {{ selectedUserRoles?.length || 0 }} {{ activeLanguage === 'ar' ? 'أدوار محددة' : 'roles selected' }}
+              </span>
+              <div class="flex items-center gap-2">
+                <button *ngIf="selectedUserRoles && selectedUserRoles.length > 0" type="button"
+                  class="px-3.5 py-1.5 bg-primary text-white text-xs font-bold rounded-md hover:opacity-90 transition-opacity border-0 cursor-pointer flex items-center gap-1.5 shadow-sm"
+                  (click)="msRole.hide(); addSelectedUserRoles()">
+                  <i class="pi pi-check text-xs"></i>
+                  <span>{{ activeLanguage === 'ar' ? ('إسناد (' + selectedUserRoles.length + ') والإنهاء') : ('Assign (' + selectedUserRoles.length + ')') }}</span>
+                </button>
+                <button *ngIf="!selectedUserRoles || selectedUserRoles.length === 0" type="button"
+                  class="px-3 py-1.5 bg-gray-200 text-gray-700 text-xs font-semibold rounded-md hover:bg-gray-300 transition-colors border-0 cursor-pointer flex items-center gap-1"
+                  (click)="msRole.hide()">
+                  <span>{{ activeLanguage === 'ar' ? 'إغلاق' : 'Close' }}</span>
+                </button>
+              </div>
+            </div>
+          </ng-template>
+        </p-multiSelect>
+      </div>
+
+      <!-- عرض الأدوار المسندة كبطاقات وشارات عصرية بدلاً من الجدول الضخم -->
+      <div *ngIf="userRoles && userRoles.length > 0" class="flex flex-wrap items-center gap-2 pt-1">
+        <div *ngFor="let userRole of userRoles" class="role-badge-chip">
+          <div class="role-chip-icon">
+            <i class="pi pi-shield"></i>
+          </div>
+          <span class="role-chip-name">
+            {{ userRole.role?.name || getRoleName(userRole.roleId) }}
+          </span>
+          <button type="button" class="role-chip-remove-btn"
+            [pTooltip]="activeLanguage === 'ar' ? 'إلغاء إسناد هذا الدور' : 'Remove role'"
+            tooltipPosition="top"
+            (click)="confirmUserRoleUnAssignment($event, userRole)">
+            <i class="pi pi-times text-xs"></i>
+          </button>
+        </div>
+      </div>
+
+      <!-- في حالة عدم وجود أدوار -->
+      <div *ngIf="!userRoles || userRoles.length === 0" class="py-3 text-center text-gray-400 text-xs flex items-center justify-center gap-2">
+        <i class="pi pi-info-circle"></i>
+        <span>{{ activeLanguage === 'ar' ? 'لا توجد أدوار مسندة لهذا المستخدم حالياً' : 'No roles assigned to this user' }}</span>
+      </div>
+    </div>
+  </div>
+
+  <p-footer>
+    <div class="flex justify-end items-center w-full pt-2 gap-2">
+      <!-- أزرار الحفظ والإلغاء بتصميم ثابت الألوان ممتلئ -->
+      <button type="button"
+        class="dialog-footer-btn-save"
+        [disabled]="userForm.invalid"
+        (click)="saveUser()">
+        <i class="pi pi-check"></i>
+        <span>{{ translate.instant('AUTH.SAVE') }}</span>
+      </button>
+
+      <button type="button"
+        class="dialog-footer-btn-cancel"
+        (click)="closeUserDialog()">
+        <i class="pi pi-times"></i>
+        <span>{{ translate.instant('AUTH.CANCEL') }}</span>
+      </button>
+    </div>
+  </p-footer>
+</p-dialog>
+
+<!-- 🔐 Reset Password Dialog (نافذة تغيير كلمة المرور بواسطة الأدمن) -->
+<p-dialog [(visible)]="resetPasswordDialogVisible" [modal]="true" [draggable]="false" [resizable]="false"
+  [style]="{ width: '480px', maxWidth: '95vw' }" (onHide)="onResetPasswordDialogHide()">
+  <ng-template pTemplate="header">
+    <div class="flex items-center gap-2">
+      <div class="w-8 h-8 rounded-lg bg-amber-100 text-amber-600 flex items-center justify-center font-bold">
+        <i class="pi pi-key text-base"></i>
+      </div>
+      <h4 class="text-base font-bold text-gray-800 m-0">
+        {{ activeLanguage === 'ar' ? 'تغيير كلمة المرور' : 'Change Password' }}
+      </h4>
+    </div>
+  </ng-template>
+
+  <div class="py-2" [formGroup]="resetPasswordForm">
+    <div *ngIf="userToResetPassword" class="p-3 mb-3 bg-slate-50 border border-slate-200 rounded-lg flex items-center gap-3 text-xs text-gray-700">
+      <div class="w-8 h-8 rounded-full bg-primary/10 text-primary flex items-center justify-center font-bold">
+        <i class="pi pi-user"></i>
+      </div>
+      <div class="flex flex-col">
+        <span class="font-bold text-sm text-gray-800">{{ userToResetPassword.userName }}</span>
+        <span class="text-gray-500">{{ userToResetPassword.firstName }} {{ userToResetPassword.lastName }}</span>
+      </div>
+    </div>
+
+    <!-- New Password -->
+    <div class="flex flex-col mb-3">
+      <label class="font-semibold text-xs text-gray-700 mb-1 flex items-center gap-1">
+        {{ activeLanguage === 'ar' ? 'كلمة المرور الجديدة' : 'New Password' }} <span class="text-danger text-red-500 font-bold">*</span>
+      </label>
+      <div class="password-input-wrapper">
+        <i class="password-lead-icon pi pi-lock"></i>
+        <p-password formControlName="newPassword" [toggleMask]="true" [feedback]="false"
+          [placeholder]="activeLanguage === 'ar' ? 'أدخل كلمة المرور الجديدة' : 'Enter new password'"
+          styleClass="w-full"
+          [style]="{ width: '100%' }"
+          [inputStyle]="{ width: '100%' }"
+          [ngClass]="{
+            'is-invalid': resetPasswordForm.controls['newPassword'].invalid && (resetPasswordForm.controls['newPassword'].dirty || resetPasswordForm.controls['newPassword'].touched),
+            'is-valid': resetPasswordForm.controls['newPassword'].valid && (resetPasswordForm.controls['newPassword'].dirty || resetPasswordForm.controls['newPassword'].touched)
+          }"></p-password>
+      </div>
+
+      <!-- Real-time Complex Password Requirements Checklist (Always Visible) -->
+      <div class="password-requirements-box mt-2 p-2.5 rounded-3">
+        <div class="text-xs fw-bold text-gray-700 mb-1.5 flex items-center gap-1">
+          <i class="pi pi-shield text-primary"></i>
+          <span>{{ activeLanguage === 'ar' ? 'شروط كلمة المرور المعقدة:' : 'Complex Password Requirements:' }}</span>
+        </div>
+        <div class="row g-1.5">
+          <div class="col-6">
+            <div class="d-flex align-items-center gap-1.5 text-xs" [ngClass]="resetHasMinLength ? 'text-success fw-bold' : 'text-muted'">
+              <i class="pi" [ngClass]="resetHasMinLength ? 'pi-check-circle text-success' : 'pi-circle text-muted'"></i>
+              <span>{{ activeLanguage === 'ar' ? '٨ أحرف على الأقل' : 'Min 8 characters' }}</span>
+            </div>
+          </div>
+          <div class="col-6">
+            <div class="d-flex align-items-center gap-1.5 text-xs" [ngClass]="resetHasUpperCase ? 'text-success fw-bold' : 'text-muted'">
+              <i class="pi" [ngClass]="resetHasUpperCase ? 'pi-check-circle text-success' : 'pi-circle text-muted'"></i>
+              <span>{{ activeLanguage === 'ar' ? 'حرف كبير (A-Z)' : 'Uppercase (A-Z)' }}</span>
+            </div>
+          </div>
+          <div class="col-6">
+            <div class="d-flex align-items-center gap-1.5 text-xs" [ngClass]="resetHasLowerCase ? 'text-success fw-bold' : 'text-muted'">
+              <i class="pi" [ngClass]="resetHasLowerCase ? 'pi-check-circle text-success' : 'pi-circle text-muted'"></i>
+              <span>{{ activeLanguage === 'ar' ? 'حرف صغير (a-z)' : 'Lowercase (a-z)' }}</span>
+            </div>
+          </div>
+          <div class="col-6">
+            <div class="d-flex align-items-center gap-1.5 text-xs" [ngClass]="resetHasNumeric ? 'text-success fw-bold' : 'text-muted'">
+              <i class="pi" [ngClass]="resetHasNumeric ? 'pi-check-circle text-success' : 'pi-circle text-muted'"></i>
+              <span>{{ activeLanguage === 'ar' ? 'رقم واحد على الأقل (0-9)' : 'Number (0-9)' }}</span>
+            </div>
+          </div>
+          <div class="col-12">
+            <div class="d-flex align-items-center gap-1.5 text-xs" [ngClass]="resetHasSpecialChar ? 'text-success fw-bold' : 'text-muted'">
+              <i class="pi" [ngClass]="resetHasSpecialChar ? 'pi-check-circle text-success' : 'pi-circle text-muted'"></i>
+              <span>{{ activeLanguage === 'ar' ? 'رمز خاص (!@#$%...)' : 'Special character (!@#$%...)' }}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <small class="text-red-500 text-xs mt-1" *ngIf="(resetPasswordForm.get('newPassword')?.dirty || resetPasswordForm.get('newPassword')?.touched) && resetPasswordForm.get('newPassword')?.errors?.['required']">
+        {{ activeLanguage === 'ar' ? 'كلمة المرور مطلوبة' : 'Password is required' }}
+      </small>
+      <small class="text-red-500 text-xs mt-1" *ngIf="(resetPasswordForm.get('newPassword')?.dirty || resetPasswordForm.get('newPassword')?.touched) && resetPasswordForm.get('newPassword')?.errors?.['complexPassword']">
+        {{ activeLanguage === 'ar' ? 'يجب استيفاء جميع شروط كلمة المرور المعقدة أعلاه' : 'All complex password requirements above must be met' }}
+      </small>
+      <small class="text-red-500 text-xs mt-1" *ngIf="(resetPasswordForm.get('newPassword')?.dirty || resetPasswordForm.get('newPassword')?.touched) && resetPasswordForm.get('newPassword')?.errors?.['maxlength']">
+        {{ activeLanguage === 'ar' ? 'كلمة المرور يجب ألا تتجاوز 100 رمز' : 'Password should have maximum 100 symbols' }}
+      </small>
+    </div>
+
+    <!-- Confirm Password -->
+    <div class="flex flex-col mb-2">
+      <label class="font-semibold text-xs text-gray-700 mb-1 flex items-center gap-1">
+        {{ activeLanguage === 'ar' ? 'تأكيد كلمة المرور' : 'Confirm Password' }} <span class="text-danger text-red-500 font-bold">*</span>
+      </label>
+      <div class="password-input-wrapper">
+        <i class="password-lead-icon pi pi-lock"></i>
+        <p-password formControlName="confirmPassword" [toggleMask]="true" [feedback]="false"
+          [placeholder]="activeLanguage === 'ar' ? 'أعد إدخال كلمة المرور للتأكيد' : 'Confirm new password'"
+          styleClass="w-full"
+          [style]="{ width: '100%' }"
+          [inputStyle]="{ width: '100%' }"
+          [ngClass]="{
+            'is-invalid': (resetPasswordForm.controls['confirmPassword'].invalid || resetPasswordForm.errors?.['mismatch']) && (resetPasswordForm.controls['confirmPassword'].dirty || resetPasswordForm.controls['confirmPassword'].touched),
+            'is-valid': resetPasswordForm.controls['confirmPassword'].valid && !resetPasswordForm.errors?.['mismatch'] && (resetPasswordForm.controls['confirmPassword'].dirty || resetPasswordForm.controls['confirmPassword'].touched)
+          }"></p-password>
+      </div>
+      <small class="text-red-500 text-xs mt-1" *ngIf="(resetPasswordForm.get('confirmPassword')?.dirty || resetPasswordForm.get('confirmPassword')?.touched) && resetPasswordForm.get('confirmPassword')?.errors?.['required']">
+        {{ activeLanguage === 'ar' ? 'تأكيد كلمة المرور مطلوب' : 'Confirm password is required' }}
+      </small>
+      <small class="text-red-500 text-xs mt-1" *ngIf="(resetPasswordForm.get('confirmPassword')?.dirty || resetPasswordForm.get('confirmPassword')?.touched) && resetPasswordForm.errors?.['mismatch'] && !resetPasswordForm.get('confirmPassword')?.errors?.['required']">
+        {{ activeLanguage === 'ar' ? 'كلمتا المرور غير متطابقتين' : 'Passwords do not match' }}
+      </small>
+    </div>
+  </div>
+
+  <p-footer>
+    <div class="flex justify-end items-center gap-2 pt-2">
+      <button type="button"
+        class="dialog-footer-btn-save"
+        [disabled]="resetPasswordForm.invalid || resetPasswordSaving()"
+        (click)="saveResetPassword()">
+        <i class="pi" [ngClass]="resetPasswordSaving() ? 'pi-spin pi-spinner' : 'pi-check'"></i>
+        <span>{{ activeLanguage === 'ar' ? 'حفظ كلمة المرور' : 'Save Password' }}</span>
+      </button>
+
+      <button type="button"
+        class="dialog-footer-btn-cancel"
+        [disabled]="resetPasswordSaving()"
+        (click)="closeResetPasswordDialog()">
+        <i class="pi pi-times"></i>
+        <span>{{ translate.instant('AUTH.CANCEL') }}</span>
+      </button>
+    </div>
+  </p-footer>
+</p-dialog>
+
+<p-confirmDialog> </p-confirmDialog>
+<p-toast />

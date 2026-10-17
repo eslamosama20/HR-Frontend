@@ -1,0 +1,98 @@
+<form [formGroup]="tableForm">
+  <table>
+    <thead class="bg-[#46bbeb] text-white text-lg font-bold h-12">
+    <tr class="h-12">
+      <th class="w-fit px-2 text-center text-white">#</th>
+      <th class="w-[30%] px-2 text-right rtl:text-right text-white">{{ "FINANCE.MAIN_ACCOUNT" | translate }}</th>
+      <th class="w-[20%] px-2 text-right rtl:text-right text-white">{{ "FINANCE.DEBIT" | translate }}</th>
+      <th class="w-[20%] px-2 text-right rtl:text-right text-white">{{ "FINANCE.CREDIT" | translate }}</th>
+      <th class="w-[30%] px-2 text-right rtl:text-right text-white">{{ "FINANCE.DESCRIPTION" | translate }}</th>
+      <th style="width: 10%" class="px-2"></th>
+    </tr>
+    </thead>
+    <tbody>
+    <tr *ngFor="let row of rowGroups; let rowIndex = index; trackBy: trackByFn" [formGroup]="row">
+      <td class="text-lg px-3 font-bold">
+        {{ rowIndex + 1 }}
+      </td>
+      <td *ngFor="let col of columns; let colIndex = index">
+
+        <p-dropdown
+          [readonly]="isReadOnly"
+          appendTo="body"
+          [options]="mainAccountOptions"
+          *ngIf="col.field === 'mainAccountId'"
+          [filter]="true"
+          formControlName="mainAccountId"
+          (onChange)="goNextCell(rowIndex, colIndex)"
+          [class.invalid]="isInvalid(rowIndex, colIndex)"
+          styleClass="w-full h-10 p-0 text-lg border-none rounded-md"
+          #inputCell
+        >
+        </p-dropdown>
+
+        <p-inputNumber
+          *ngIf="(col.field === 'debitAmount' || col.field === 'creditAmount')"
+          [readonly]="isReadOnly"
+          [minFractionDigits]="0"
+          [maxFractionDigits]="4"
+          min="0"
+          class="w-full h-10"
+          styleClass="h-10 w-full"
+          formControlName="{{ col.field }}"
+          (keydown)="onEnter($event, rowIndex, colIndex)"
+          (input)="formatInputNumber($event)"
+          [class.invalid]="isInvalid(rowIndex, colIndex)"
+          #inputCell
+        />
+
+        <input
+          [readonly]="isReadOnly"
+          *ngIf="col.field === 'description'"
+          type="text"
+          min="0"
+          class="w-full h-10"
+          formControlName="{{ col.field }}"
+          (keydown)="onEnter($event, rowIndex, colIndex)"
+          [class.invalid]="isInvalid(rowIndex, colIndex)"
+          #inputCell
+        />
+
+        <small *ngIf="isInvalid(rowIndex, colIndex)" class="error-text">
+          {{ 'FINANCE.MAIN_ACCOUNT_REQUIRED' | translate }}
+        </small>
+      </td>
+      <td>
+        <p-button
+          [disabled]="isReadOnly"
+          (click)="deleteRow(rowIndex)"
+          styleClass="rounded-3xl"
+          icon="pi pi-times"
+          [rounded]="true"
+          [text]="true"
+          [raised]="true"
+          severity="danger"
+        />
+      </td>
+    </tr>
+    </tbody>
+  </table>
+  <div class="actions">
+    <a  (click)="addRow()" class="text-2xl font-semibold cursor-pointer">+ {{ "FINANCE.ADD_NEW_ENTRY" | translate }}</a>
+  </div>
+</form>
+<div class="flex gap-2 w-full">
+  <div class=" w-[30%]">
+  </div>
+  <div class=" w-[20%]">
+    <p class="text-xl font-bold underline">
+      {{ this.getTransactionEntriesDebitTotal() | currency : "SAR" : "symbol-narrow" : "1.0-2" : "ar-SA" }}
+    </p>
+  </div>
+  <div class=" w-[20%]">
+    <p class="text-xl font-bold underline">
+      {{ this.getTransactionEntriesCreditTotal() | currency : "SAR" : "symbol-narrow" : "1.0-2" : "ar-SA" }}
+    </p>
+  </div>
+  <div class="w-[30%]"></div>
+</div>

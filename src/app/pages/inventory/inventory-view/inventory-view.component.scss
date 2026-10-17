@@ -1,0 +1,133 @@
+// Inventory View Styles
+
+/* Page Title & Header Bar Styling */
+.inventory-view-header {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+
+  .page-title {
+    color: #1e293b;
+    font-size: 1.25rem;
+    font-weight: 700;
+  }
+
+  .header-divider {
+    width: 1px;
+    height: 28px;
+    background-color: #e2e8f0;
+    margin: 0 0.25rem;
+  }
+
+  ::ng-deep .p-button.p-button-sm {
+    height: 36px;
+    font-size: 0.85rem;
+    padding: 0.35rem 0.75rem;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+
+    .p-button-icon {
+      font-size: 0.85rem;
+    }
+  }
+
+  ::ng-deep .p-dropdown {
+    height: 36px;
+    .p-dropdown-label {
+      padding: 0.35rem 0.75rem;
+      font-size: 0.875rem;
+      display: flex;
+      align-items: center;
+    }
+  }
+}
+
+:host {
+  --table-head-bg: var(--primary-color, #46bbeb);
+  --table-header-text: #ffffff;
+}
+
+/* Theme-aware table headers */
+::ng-deep .p-datatable .p-datatable-thead > tr > th {
+  background: var(--table-head-bg) !important;
+  color: var(--table-header-text) !important;
+  font-weight: 600;
+  padding: 1rem;
+  text-align: center;
+}
+
+::ng-deep .p-datatable .p-datatable-tbody > tr > td {
+  padding: 0.75rem 1rem;
+  text-align: center;
+}
+
+/* Theme overrides (align with other tables) */
+$green-sels: ".light-green-mode", '[data-bs-theme="light-green"]', "body.light-green";
+@each $sel in $green-sels {
+  :host-context(#{$sel}) {
+    --table-head-bg: #c6ecea;
+    --table-header-text: #2e2a40;
+  }
+}
+
+$indigo-sels: ".light-indigo-mode", '[data-bs-theme="light-indigo"]', "body.light-indigo";
+@each $sel in $indigo-sels {
+  :host-context(#{$sel}) {
+    --table-head-bg: #c9d0f5;
+    --table-header-text: #5d6679;
+  }
+}
+
+$darkblue-sels: ".light-darkblue-mode", '[data-bs-theme="light-darkblue"]', "body.light-darkblue";
+@each $sel in $darkblue-sels {
+  :host-context(#{$sel}) {
+    --table-head-bg: #dad7ff;
+    --table-header-text: #191d29;
+  }
+}
+
+::ng-deep {
+  .p-dialog {
+    .p-dialog-header {
+      background-color: #f8fafc;
+      border-bottom: 2px solid var(--primary-color, #3b82f6);
+    }
+
+    .p-dialog-content {
+      padding: 1.5rem;
+    }
+  }
+
+  .rtl-dialog {
+    direction: rtl;
+    text-align: right;
+  }
+
+  .p-paginator {
+    padding: 0.5rem !important;
+    
+    .p-paginator-current {
+      font-size: 0.9rem;
+    }
+  }
+
+  .field {
+    margin-bottom: 0.5rem !important;
+  }
+
+  .p-panel {
+    .p-panel-content {
+      padding: 0.75rem !important;
+    }
+  }
+}
+
+/* Larger table text (1.125rem) as requested */
+:host ::ng-deep .p-datatable .p-datatable-thead > tr > th,
+:host ::ng-deep .p-datatable .p-datatable-tbody > tr > td {
+  font-size: 1.125rem !important;
+}
+
+

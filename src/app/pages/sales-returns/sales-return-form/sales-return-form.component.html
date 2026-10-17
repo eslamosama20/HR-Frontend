@@ -1,0 +1,219 @@
+
+<div class="content">
+  <div class="container-fluid ">
+    <div class="row align-items-stretch justify-content-center no-gutters">
+      <div class="col-md-12">
+        <div class="fixed inset-0 bg-gray-500 bg-opacity-75 flex items-center justify-center z-50" *ngIf="loading">
+          <i class="pi pi-spin pi-spinner" style="font-size: 2rem"></i>
+        </div>
+        <div  *ngIf="!loading" class="form h-100 contact-wrap p-5">
+          <div class="mb-3">
+            <app-back-button></app-back-button>
+          </div>
+
+          <h3 class="text-center">{{"RETURN.SALES_RETURN_DETAILS"|translate}}</h3>
+          <form class="mb-5" method="post" [formGroup]="returnForm" (submit)="submitForm()">
+
+            <!-- Form Fields -->
+            <div class="flex justify-between gap-4">
+              <!-- Supplier Dropdown  -->
+               <div class="w-[40%]">
+                <label>{{ "RETURN.SELECTCUSTOMER" | translate }}</label>
+                <p-dropdown [options]="customers" formControlName="customerProfileId"
+                  placeholder="" optionLabel="label" optionValue="value" [filter]="true" styleClass="w-full">
+                </p-dropdown>
+              </div>
+
+
+              <!-- Description Field with Validation Message -->
+              <div class="w-[40%]">
+                <label for="description">{{"RETURN.DESCRIPTION"|translate}}:</label>
+                <input class="form-control" formControlName="description" name="description" id="description"
+                  [placeholder]="'RETURN.DESCRIPTION' | translate" />
+                <div
+                  *ngIf="returnForm.get('description')?.invalid && (returnForm.get('description')?.touched || returnForm.get('description')?.dirty)"
+                  class="text-danger">
+                  <small *ngIf="returnForm.get('description')?.errors?.required">{{'VALIDATION.REQUIRED' |
+                    translate}}</small>
+                </div>
+              </div>
+              <div class="col-md-6 form-group mb-3">
+                <label>{{"RETURN.ISSUE_DATE"|translate}}:</label>
+                <p-calendar
+                  [showIcon]="true"
+                  [iconDisplay]="'input'"
+                  [dateFormat]="'dd/mm/yy'"
+                  appendTo="body"
+                  styleClass="w-full"
+                  formControlName="issueDate"
+                  [showButtonBar]="true"
+                  variant="filled"
+                >
+                  <ng-template pTemplate="inputicon">
+                    <i class="pi pi-calendar "></i>
+                  </ng-template>
+                </p-calendar>
+              </div>
+              <div class="w-[40%]">
+                <label for="salesInvoiceId">الفاتورة</label>
+                <input class="form-control" formControlName="salesInvoiceId" name="salesInvoiceId" id="salesInvoiceId"
+                       />
+                <div
+                  *ngIf="returnForm.get('salesInvoiceId')?.invalid && (returnForm.get('salesInvoiceId')?.touched || returnForm.get('salesInvoiceId')?.dirty)"
+                  class="text-danger">
+                  <small *ngIf="returnForm.get('salesInvoiceId')?.errors?.required">{{'VALIDATION.REQUIRED' |
+                    translate}}</small>
+                </div>
+              </div>
+
+              <!-- Discount Field with Validation Message -->
+<!--
+              <div class="w-[20%]">
+                <label for="discount">{{"RETURN.DISCOUNT"|translate}}:</label>
+                <div class="input-group">
+                  <input class="form-control" type="number" formControlName="discount" id="discount"
+                    [placeholder]="'RETURN.ENTERDISCOUNT' | translate" (input)="updateReturnTotals()" />
+                  <div class="input-group-append">
+                    <select class="form-control" formControlName="discountType" (change)="updateReturnTotals()">
+                      <option value="percentage">%</option>
+                      <option value="amount">{{"RETURN.AMOUNT"|translate}}</option>
+                    </select>
+                  </div>
+                </div>
+                <div
+                  *ngIf="returnForm.get('discount')?.invalid && (returnForm.get('discount')?.touched || returnForm.get('discount')?.dirty)"
+                  class="text-danger">
+                  &lt;!&ndash; Only show the min validator message &ndash;&gt;
+                  <small *ngIf="returnForm.get('discount')?.errors?.min">{{'VALIDATION.MIN' | translate:{min: 0}
+                    }}</small>
+                </div>
+              </div>
+-->
+
+
+
+
+            </div>
+
+
+            <!-- Items Table -->
+            <div formArrayName="salesReturnItems">
+              <h3>{{"RETURN.ITEMSLIST"|translate}}</h3>
+              <table class="table table-bordered">
+                <thead>
+                  <tr>
+                    <th class="w-10"></th>
+                    <th class="w-52">{{"RETURN.NAME"|translate}}</th>
+                    <!-- <th>{{"RETURN.DESCRIPTION"|translate}}</th> -->
+                    <th class="w-32">{{"RETURN.UNIT"|translate}}</th>
+                    <th class="w-22">{{"RETURN.QUANTITY"|translate}}</th>
+                    <th class="w-22">{{"RETURN.PRICE"|translate}}</th>
+
+                    <!--<th class="w-22">{{"RETURN.DISCOUNT"|translate}} (%)</th>-->
+                    <th class="w-32">{{"RETURN.NETPRICE"|translate}}</th>
+                    <th class="w-32"> {{"RETURN.TOTAL"|translate}}</th>
+                    <th></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr *ngFor="let item of salesReturnItems.controls; let i = index" [formGroupName]="i">
+                    <td>
+                     {{ i + 1}}
+                    </td>
+                    <td>
+                      <p-dropdown [options]="mainSalesArray" formControlName="mainSalesClassId" (onChange)="onSalesClick($event,item)" placeholder=""
+                        optionLabel="arabicName" optionValue="id" [filter]="true" styleClass="w-full [&>*]:p-1">
+                      </p-dropdown>
+                      <div *ngIf="item.get('mainSalesClassId')?.invalid && (item.get('mainSalesClassId')?.touched || item.get('mainSalesClassId')?.dirty)"
+                        class="text-danger">
+                        <small *ngIf="item.get('mainSalesClassId')?.errors?.required">{{'VALIDATION.REQUIRED' | translate}}</small>
+                      </div>
+                    </td>
+                    <td class="font-bold text-lg">
+                      {{ item.get('unit').value }}
+                    </td>
+                    <td>
+                      <input class="form-control" [id]="'quantity' + i" type="number" formControlName="quantity">
+                      <div
+                        *ngIf="item.get('quantity')?.invalid && (item.get('quantity')?.touched || item.get('quantity')?.dirty)"
+                        class="text-danger">
+                        <small *ngIf="item.get('quantity')?.errors?.required">{{'VALIDATION.REQUIRED' |
+                          translate}}</small>
+                        <small *ngIf="item.get('quantity')?.errors?.min">{{'VALIDATION.MIN' | translate:{min: 0}
+                          }}</small>
+                        <small *ngIf="item.get('quantity')?.errors?.pattern">{{'VALIDATION.INTEGER_NUMBER' | translate}}</small>
+
+                      </div>
+                    </td>
+                    <td>
+                      <input class="form-control" [id]="'price' + i" type="number" formControlName="price" />
+                      <div
+                        *ngIf="item.get('price')?.invalid && (item.get('price')?.touched || item.get('price')?.dirty)"
+                        class="text-danger">
+                        <small *ngIf="item.get('price')?.errors?.required">{{'VALIDATION.REQUIRED' | translate}}</small>
+                        <small *ngIf="item.get('price')?.errors?.min">{{'VALIDATION.MIN' | translate:{min: 0} }}</small>
+                      </div>
+                    </td>
+
+                    <!--<td>
+                      <input class="form-control" [id]="'discount' + i" type="number" formControlName="discount">
+                      <div *ngIf="item.get('discount')?.touched || item.get('discount')?.dirty" class="text-danger">
+                        <small *ngIf="item.get('discount')?.errors?.min">{{'VALIDATION.MIN' | translate:{min: 0}
+                          }}</small>
+                      </div>
+                    </td>-->
+                    <td>
+                      <input class="form-control" [id]="'netPriceItem' + i" type="number" formControlName="netPrice"
+                        readonly>
+                    </td>
+                    <td>
+                      <input class="form-control" [id]="'totalPriceItem' + i" type="number" formControlName="totalPrice"
+                        readonly>
+                    </td>
+                    <td>
+                      <button type="button" class="btn btn-danger btn-sm remove-btn" (click)="removeItem(i)">
+                        <i class="fas fa-trash-alt"></i>
+                      </button>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+
+            </div>
+            <div class="flex justify-between gap-4 fixed bottom-0 bg-slate-100">
+              <div class="w-[20%] form-group mb-3">
+                <label for="taxAmount">{{"RETURN.TAXAMOUNT"|translate}} </label>
+                <input class="form-control" [value]="getTaxAmount()" name="taxAmount" id="taxAmount"
+                       placeholder="Tax Amount" readonly>
+              </div>
+              <div class="w-[20%] form-group mb-3">
+                <label for="netPrice">{{"RETURN.NETPRICEWITHDISCOUNT"|translate}}</label>
+                <input class="form-control" [value]="getNetPrice()" name="netPrice" id="netPrice"
+                       placeholder="Net Price" readonly>
+              </div>
+
+              <div class="w-[20%]form-group mb-3">
+                <label for="totalPrice">{{"RETURN.TOTALWITHTAX"|translate}}</label>
+                <input class="form-control" value="{{getTotalPrice()}}" name="totalPrice" id="totalPrice"
+                       placeholder="Total Price" readonly>
+              </div>
+              <div class="w-[40%] flex justify-center items-center gap-4">
+                <div class="flex w-full items-center text-center ">
+                  <button class="btn btn-success" type="button"
+                          (click)="addItem()">{{"RETURN.ADDITEM"|translate}}</button>
+                </div>
+                <div class="flex w-full items-center text-center  ">
+                  <button class="btn btn-primary" type="submit" >{{"RETURN.SAVERETURN"|translate}}</button>
+                </div>
+              </div>
+
+
+            </div>
+
+
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

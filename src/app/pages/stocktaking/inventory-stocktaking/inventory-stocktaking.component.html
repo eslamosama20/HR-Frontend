@@ -1,0 +1,415 @@
+<p-panel  [header]="isEditMode ? translate.instant('FINANCE.EDIT_STOCKTAKING') : translate.instant('FINANCE.ADD_STOCKTAKING')">
+  <div class="mb-3 no-print">
+    <app-back-button></app-back-button>
+  </div>
+
+  <!-- Navigation Controls (only in edit mode) -->
+  <app-detail-actions-menu
+    *ngIf="isEditMode && navigationControls"
+    class="no-print mb-3"
+    [showPrint]="false"
+    [showEdit]="false"
+    [showCopy]="false"
+    [showDelete]="false"
+    [navigationControls]="navigationControls">
+  </app-detail-actions-menu>
+  
+  <div class="fixed inset-0 bg-gray-500 bg-opacity-75 flex items-center justify-center z-50 no-print" *ngIf="loading">
+    <i class="pi pi-spin pi-spinner" style="font-size: 2rem"></i>
+  </div>
+  <div class="flex justify-between">
+    <div class="text-right ">
+      <p class="text-3xl font-bold" >{{
+          "FINANCE.STOCKTAKING_TITLE"| translate
+        }}</p>
+    </div>
+  <div class="text-left no-print">
+    <button *ngIf="currentInventoryStocktaking" class="btn btn-primary" (click)="printDocument()" >{{"FINANCE.PRINT_STOCKTAKING"|translate}}</button>
+  </div>
+  </div>
+
+  <form
+    *ngIf="!loading"
+    [formGroup]="inventoryStocktakingFormGroup"
+    class="flex flex-col gap-4 p-2 py-4  border-l-1 border-gray-300"
+    novalidate
+
+  >
+
+    <div class="flex justify-between gap-2 w-full">
+      <div class="flex justify-between gap-2 w-[50%]">
+        <div class="field w-full">
+          <label for="stocktakingDate" class="block">{{
+              translate.instant("FINANCE.STOCKTAKING_DATE")
+            }}</label>
+          <p-calendar
+            [readonlyInput]="isReadOnly"
+            id="stocktakingDate"
+            inputId="stocktakingDate"
+            [showButtonBar]="true"
+            variant="filled"
+            formControlName="stocktakingDate"
+            [showIcon]="true"
+            [iconDisplay]="'input'"
+            [dateFormat]="'dd/mm/yy'"
+            appendTo="body"
+            styleClass="w-full"
+          >
+            <ng-template pTemplate="inputicon">
+              <i class="pi pi-calendar "></i>
+            </ng-template>
+
+          </p-calendar>
+          <small
+            class="text-red-500 p-error block"
+            *ngIf="
+            inventoryStocktakingFormGroup.controls.stocktakingDate.invalid &&
+            (inventoryStocktakingFormGroup.controls.stocktakingDate.touched || isSubmitted)
+          "
+          >
+            {{ translate.instant("FINANCE.STOCKTAKING_DATE_REQUIRED") }}
+          </small>
+        </div>
+      </div>
+      <div class="field w-[50%]">
+        <label for="storeDetailsId" class="block">{{
+            translate.instant("FINANCE.STORE_DETAILS")
+          }}</label>
+        <p-dropdown
+          [readonly]="isReadOnly"
+          id="storeDetailsId"
+          formControlName="storeDetailsId"
+          [options]="storeDetailsOptions"
+          [placeholder]="translate.instant('FINANCE.SELECT')"
+          [showClear]="!isReadOnly"
+          [filter]="true"
+          styleClass="w-full flex rtl:flex-row-reverse"
+          appendTo="body"
+        >
+        </p-dropdown>
+        <small
+          class="text-red-500 p-error block"
+          *ngIf="
+            inventoryStocktakingFormGroup.controls.storeDetailsId.invalid &&
+            (inventoryStocktakingFormGroup.controls.storeDetailsId.touched || isSubmitted)
+          "
+        >
+          {{ translate.instant("DATA.STORE_DETAILS_REQUIRED") }}
+        </small>
+      </div>
+
+
+    </div>
+
+
+    <div class="field w-full">
+      <label for="description" class="block">{{
+          translate.instant("FINANCE.DESCRIPTION")
+        }}</label>
+      <textarea
+        [disabled]="isEditMode"
+        [maxlength]="descriptionMaxLength"
+        rows="4"
+        cols="20"
+        pInputTextarea
+        id="description"
+        class="w-full"
+        styleClass="w-full"
+        formControlName="description"
+        (input)="descriptionLength = $any($event.target).value.length"
+      >
+      </textarea>
+      <div class="flex justify-between items-center mt-1">
+        <small
+          *ngIf="descriptionLength > descriptionMaxLength"
+          class="text-red-500 p-error block"
+        >
+          {{ translate.instant("FINANCE.DESCRIPTION_EXCEEDS_LIMIT") }}
+        </small>
+        <small
+          [ngClass]="{
+            'text-red-500': descriptionLength > descriptionMaxLength,
+            'text-orange-500': descriptionLength > descriptionMaxLength * 0.9 && descriptionLength <= descriptionMaxLength,
+            'text-gray-500': descriptionLength <= descriptionMaxLength * 0.9
+          }"
+          class="ml-auto"
+        >
+          {{ descriptionLength }} / {{ descriptionMaxLength }}
+        </small>
+      </div>
+    </div>
+
+
+
+  </form>
+</p-panel>
+
+<p-panel *ngIf="!loading" [header]="translate.instant('FINANCE.STOCKTAKING_ENTRIES')">
+  <ng-container *ngIf="selectedInventoryStock">
+
+  <table>
+    <thead class="text-lg font-semibold h-20">
+    <tr>
+      <th class="w-fit"></th>
+      <th class="w-[40%]">{{ "DATA.CLASS" | translate }}</th>
+      <th class="w-[20%]">{{ "DATA.REPORTED_QUANTITY" | translate }}</th>
+      <th class="w-[20%]">{{ "DATA.ACTUAL_QUANTITY" | translate }}</th>
+      <th class="w-[20%]">{{ "DATA.DIFFERENCE" | translate }}</th>
+    </tr>
+    </thead>
+    <tbody>
+      <tr  *ngFor="let item of storedItems; let rowIndex = index">
+        <td class="text-lg px-3 font-bold">
+          {{ rowIndex + 1 }}
+        </td>
+        <td>{{ activeLanguage === 'en' ? item.mainPurchaseClassEnglishName : item.mainPurchaseClassArabicName }} {{'| ' + (item.mainPurchaseClassReferenceCode ? item.mainPurchaseClassReferenceCode : item.mainPurchaseClass.referenceCode)}}</td>
+        <td>{{ item.quantity | number : "1.0-2" }}</td>
+        <td>
+          <p-inputNumber
+            [readonly]="isReadOnly"
+            [(ngModel)]="item.actualQuantity"
+            min="0"
+            class="w-full h-10"
+            styleClass="h-10 w-full"
+            minFractionDigits="0"
+            maxFractionDigits="2"
+          ></p-inputNumber>
+            <!--(input)="formatInputNumber($event)"-->
+        </td>
+        <td
+          [class]="(item.quantity - item.actualQuantity) == 0 ? 'text-green-500' : 'text-red-500'">
+          {{ item.actualQuantity !==0 && (item.quantity - item.actualQuantity != 0) ?( item.quantity > item.actualQuantity ? '-' : '+' ):'' }}
+          {{ item.actualQuantity !==0 ?
+            ((item.quantity - item.actualQuantity | absoluteValue) | number : "1.0-2")
+            : ''
+          }}
+        </td>
+
+      </tr>
+
+    </tbody>
+  </table>
+  </ng-container>
+  <ng-container *ngIf="!selectedInventoryStock">
+    <p class="text-xl font-bold underline">
+      {{ "FINANCE.PLEASE_SELECT_A_STORE" | translate}}
+    </p>
+  </ng-container>
+
+  <!--<small
+    class="text-red-500 p-error block text-base"
+    *ngIf="inventoryStocktakingFormGroup.controls.stocktakingEntries.invalid && isSubmitted"
+  >
+    <ng-container *ngIf="inventoryStocktakingFormGroup.controls.stocktakingEntries.errors">
+      <div *ngIf="inventoryStocktakingFormGroup.controls.stocktakingEntries.errors.minLength">
+        {{ translate.instant("FINANCE.STOCKTAKING_ENTRIES_REQUIRED") }}
+      </div>
+
+    </ng-container>
+  </small>-->
+
+  <div class="flex justify-content-end gap-2 no-print">
+    <p-button
+      styleClass="rounded-md"
+      [label]="translate.instant('FINANCE.CANCEL')"
+      severity="secondary"
+      (onClick)="navigateToInventoryStocktakingsPage()"
+    />
+    <p-button
+      styleClass="rounded-md"
+      [label]="translate.instant('FINANCE.SAVE')"
+      (onClick)="saveInventoryStocktaking(false)"
+    />
+    <p-button
+      *ngIf="!isEditMode"
+      styleClass="rounded-md"
+      [label]="translate.instant('DATA.SANE_AND_CONTINUE')"
+      severity="success"
+      (onClick)="saveInventoryStocktaking(true)">
+      <ng-template pTemplate="icon">
+        <i class="pi pi-save me-2"></i>
+      </ng-template>
+    </p-button>
+  </div>
+</p-panel>
+
+<ng-container *ngIf="isEditMode && companyDetails">
+  <div class="absolute top-0 left-[-100%]" *ngIf="docData && docColumns.length > 0">
+    <app-print-document
+      #printComponent
+      [headerTemplate]="headerTemplate"
+      [footerTemplate]="footerTemplate"
+      [bodyTemplate]="bodyTemplate"
+      [data]="docData"
+      [columns]="docColumns">
+    </app-print-document>
+
+    <!-- Header Template -->
+    <ng-template #headerTemplate>
+      <div class="w-full flex flex-col  rounded-lg p-8">
+
+      @if (companyDetails) {
+        <ng-container class="container m-0 p-0">
+          <div class="py-1 px-1 flex justify-between ">
+            <div class="w-full ltr:text-left text-right">
+              <p class="font-semibold text-lg m-0 p-0">
+                {{companyDetails.arabicName}}
+              </p>
+              <p class="font-semibold text-lg m-0 p-0"  *ngIf="companyDetails.city">
+                {{companyDetails.city}}
+              </p>
+              <p class="font-semibold text-lg m-0 p-0">
+                {{companyDetails.phone}}
+              </p>
+              <p class="font-semibold text-lg m-0 p-0">
+                {{ "INVOICE.TAXNUMBER"| translate}}: {{companyDetails.taxNumber}}
+              </p>
+            </div>
+            <div
+              class="flex w-full justify-center items-center"
+            >
+              <img
+                [src]="companyDetails?.logoUrl || ''"
+                alt="company-logo"
+                width="100"
+                height="100"
+              >
+            </div>
+            <div class="w-full ltr:text-right text-left">
+              <p class="font-semibold text-lg m-0 p-0">
+                {{companyDetails.englishName}}
+              </p>
+              <p class="font-semibold text-lg m-0 p-0" *ngIf="companyDetails.city">
+                {{companyDetails.city}}
+              </p>
+              <p class="font-semibold text-lg m-0 p-0">
+                {{companyDetails.phone}}
+              </p>
+              <p class="font-semibold text-lg m-0 p-0">
+                TAX No: {{companyDetails.taxNumber}}
+              </p>
+            </div>
+          </div>
+
+        </ng-container>
+      }
+
+      </div>
+      <div class="flex-1 w-full text-center">
+        <h2 class="text-4xl font-bold">{{ "FINANCE.STOCKTAKING" | translate}} ({{currentInventoryStocktaking.referenceNumber}})</h2>
+      </div>
+    </ng-template>
+
+    <!-- Body Template -->
+    <ng-template #bodyTemplate>
+      <div class="flex justify-between w-full gap-4">
+        <p class="w-1/3 text-center font-semibold text-lg m-0">{{"FINANCE.STOCKTAKING_DATE"| translate}}: {{currentInventoryStocktaking.stocktakingDate | customDate}}</p>
+      </div>
+      <div class="flex justify-between w-full gap-4">
+        <p class=" w-1/3 text-center font-semibold text-lg m-0">{{"FINANCE.STORE"| translate}}: {{activeLanguage=='en'?currentInventoryStocktaking.storeDetails.englishName:currentInventoryStocktaking.storeDetails.arabicName}}</p>
+        <p *ngIf="currentInventoryStocktaking.description" class="w-1/3 text-center font-semibold text-lg m-0">{{"FINANCE.DESCRIPTION"| translate}}: {{currentInventoryStocktaking.description}}</p>
+      </div>
+    </ng-template>
+
+    <!-- Footer Template -->
+    <ng-template #footerTemplate>
+      <div class="w-full border border-slate-900 rounded-2xl flex justify-between">
+        <div class="h-auto w-[100%] text-center flex-row-reverse font-semibold text-lg">
+          <p class="m-0 p-0">
+            {{activeLanguage=='en'?companyDetails.englishName:companyDetails.arabicName}}
+          </p>
+          <p class="m-0 p-0 w-full text-end ltr:text-start">
+            {{ "INVOICE.EXPENSES_MANAGER_SIGNATURE" | translate}}: <span class="text-sm font-light">..................................</span>
+          </p>
+          <p class="m-0 p-0 w-full text-end ltr:text-start">
+            {{ "INVOICE.SECTION_MANAGER_SIGNATURE" | translate}}: <span class="text-sm font-light">..................................</span>
+          </p>
+          <p class="m-0 p-0 w-full text-end ltr:text-start">
+            {{ "INVOICE.TREASURY_KEEPER_SIGNATURE" | translate}}: <span class="text-sm font-light">..................................</span>
+          </p>
+          <p class="m-0 p-0 w-full text-end ltr:text-start">
+            {{ "INVOICE.RECIPIENT_EMPLOYEE_SIGNATURE" | translate}}: <span class="text-sm font-light">..................................</span>
+          </p>
+        </div>
+
+      </div>
+      <div class="w-full border-t border-slate-900 rounded-2xl flex justify-center border absolute" style="bottom: 0;">
+        {{companyDetails?.getFullAddress()}}
+      </div>
+    </ng-template>
+
+  </div>
+</ng-container>
+
+<div class="p-5 mt-5" *ngIf="isEditMode">
+  <!-- File Upload -->
+  <div class="mb-4">
+    <p-fileUpload
+      name="file"
+      id="file"
+      mode="basic"
+      chooseIcon="pi pi-upload"
+      accept="application/pdf"
+      (uploadHandler)="onFileSelected($event)"
+      customUpload="true"
+      [auto]="true"
+      chooseLabel="ارفع ملف جديد"/>
+  </div>
+
+  <!-- List of PDFs -->
+  <div>
+    <table class="min-w-full bg-white shadow-md rounded border border-gray-200">
+      <thead>
+      <tr class="bg-gray-100">
+        <th class="text-center p-3">اسم الملف</th>
+        <th class="text-center p-3">العمليات</th>
+      </tr>
+      </thead>
+      <tbody>
+      <tr *ngFor="let pdf of attachments" class="border-t">
+        <td class="p-3">{{ pdf.fileName }}</td>
+        <td class="p-3 flex justify-center">
+          <button
+            pButton
+            label="عرض"
+            icon="pi pi-eye"
+            class="p-button-text text-blue-500 mr-2"
+            (click)="onView(pdf)"
+          ></button>
+          <p-fileUpload
+            mode="basic"
+            chooseIcon="pi pi-upload"
+            accept="application/pdf"
+            (uploadHandler)="onUpdate($event,pdf)"
+            customUpload="true"
+            [auto]="true"
+            chooseLabel="تعديل"/>
+          <button
+            pButton
+            label="مسح"
+            icon="pi pi-trash"
+            class="p-button-text text-red-500"
+            (click)="onDelete(pdf)"
+          ></button>
+        </td>
+      </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- View PDF Dialog -->
+<p-dialog
+  [(visible)]="viewDialog"
+  [header]="'View PDF'"
+  [style]="{ width: '70vw' , height: '70vh' }"
+>
+  <ng-container *ngIf="currentPdfUrl">
+    <a [href]="currentPdfUrl" target="_blank">
+      <button pButton type="button"  icon="pi pi-download">افتح الملف في نافذة جديدة</button>
+    </a>
+    <embed  [src]="currentPdfUrl" type="application/pdf" width="100%" height="500px" />
+  </ng-container>
+</p-dialog>
+
+<p-toast></p-toast>

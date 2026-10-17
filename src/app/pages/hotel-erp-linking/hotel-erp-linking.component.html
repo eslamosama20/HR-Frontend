@@ -1,0 +1,235 @@
+<div class="p-6 min-h-screen bg-gray-50">
+  <!-- Header -->
+  <div class="mb-6">
+    <h1 class="text-3xl font-bold text-gray-800 mb-2">ربط الفنادق مع نظام ERP</h1>
+    <p class="text-gray-600">ربط فنادق الموقع العام مع فنادق نظام ERP لمزامنة البيانات</p>
+  </div>
+
+  <!-- Tabs -->
+  <div class="mb-6 border-b border-gray-200">
+    <div class="flex space-x-4 space-x-reverse">
+      <button 
+        (click)="activeTab = 'hotels'"
+        [class]="activeTab === 'hotels' ? 'border-b-2 border-blue-600 text-blue-600' : 'text-gray-600'"
+        class="px-4 py-2 font-semibold">
+        ربط الفنادق
+      </button>
+      <button 
+        (click)="activeTab = 'roomTypes'; loadRoomTypes()"
+        [class]="activeTab === 'roomTypes' ? 'border-b-2 border-blue-600 text-blue-600' : 'text-gray-600'"
+        class="px-4 py-2 font-semibold">
+        ربط أنواع الغرف
+      </button>
+    </div>
+  </div>
+
+  <!-- Hotels Tab -->
+  <div *ngIf="activeTab === 'hotels'">
+    <!-- Link New Hotel -->
+    <div class="bg-white rounded-lg shadow-md p-6 mb-6">
+      <h2 class="text-xl font-semibold mb-4">ربط فندق جديد</h2>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-2">فندق الموقع العام</label>
+          <select [(ngModel)]="selectedPublicHotel" class="w-full px-4 py-2 border border-gray-300 rounded-lg">
+            <option [ngValue]="null">-- اختر فندق --</option>
+            <option *ngFor="let hotel of publicHotels" [ngValue]="hotel">
+              {{ hotel.name }} ({{ hotel.city }})
+            </option>
+          </select>
+        </div>
+
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-2">فندق ERP</label>
+          <select [(ngModel)]="selectedErpHotel" class="w-full px-4 py-2 border border-gray-300 rounded-lg">
+            <option [ngValue]="null">-- اختر فندق --</option>
+            <option *ngFor="let hotel of erpHotels" [ngValue]="hotel">
+              {{ hotel.arabicName || hotel.englishName }}
+            </option>
+          </select>
+        </div>
+      </div>
+
+      <div class="mt-4">
+        <button 
+          (click)="linkHotel()"
+          [disabled]="loading || !selectedPublicHotel || !selectedErpHotel"
+          class="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-gray-400">
+          <span *ngIf="!loading">ربط الفندق</span>
+          <span *ngIf="loading">جاري الربط...</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Linked Hotels Table -->
+    <div class="bg-white rounded-lg shadow-md overflow-hidden">
+      <div class="p-6 border-b border-gray-200">
+        <h2 class="text-xl font-semibold">الفنادق المرتبطة</h2>
+      </div>
+      <div class="overflow-x-auto">
+        <table class="min-w-full divide-y divide-gray-200">
+          <thead class="bg-gray-50">
+            <tr>
+              <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">الفندق العام</th>
+              <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">المدينة</th>
+              <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">فندق ERP المرتبط</th>
+              <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">الحالة</th>
+              <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">الإجراءات</th>
+            </tr>
+          </thead>
+          <tbody class="bg-white divide-y divide-gray-200">
+            <tr *ngIf="loading">
+              <td colspan="5" class="px-6 py-4 text-center">
+                <div class="flex justify-center items-center">
+                  <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+                  <span class="mr-3">جاري التحميل...</span>
+                </div>
+              </td>
+            </tr>
+
+            <tr *ngIf="!loading && publicHotels.length === 0">
+              <td colspan="5" class="px-6 py-4 text-center text-gray-500">
+                لا توجد فنادق
+              </td>
+            </tr>
+
+            <tr *ngFor="let hotel of publicHotels" class="hover:bg-gray-50">
+              <td class="px-6 py-4">
+                <div class="text-sm font-medium text-gray-900">{{ hotel.name }}</div>
+              </td>
+              <td class="px-6 py-4">
+                <div class="text-sm text-gray-700">{{ hotel.city }}</div>
+              </td>
+              <td class="px-6 py-4">
+                <div class="text-sm text-gray-900">{{ getErpHotelName(hotel.erpHotelId) }}</div>
+              </td>
+              <td class="px-6 py-4">
+                <span *ngIf="hotel.erpHotelId" class="px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
+                  مرتبط
+                </span>
+                <span *ngIf="!hotel.erpHotelId" class="px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-gray-100 text-gray-800">
+                  غير مرتبط
+                </span>
+              </td>
+              <td class="px-6 py-4">
+                <button 
+                  *ngIf="hotel.erpHotelId"
+                  (click)="unlinkHotel(hotel.id)"
+                  class="text-red-600 hover:text-red-900 text-sm font-medium">
+                  فك الربط
+                </button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- Room Types Tab -->
+  <div *ngIf="activeTab === 'roomTypes'">
+    <!-- Select Hotel First -->
+    <div class="bg-white rounded-lg shadow-md p-6 mb-6">
+      <label class="block text-sm font-medium text-gray-700 mb-2">اختر الفندق</label>
+      <select [(ngModel)]="selectedPublicHotel" (ngModelChange)="loadRoomTypes($event?.id)" class="w-full px-4 py-2 border border-gray-300 rounded-lg">
+        <option [ngValue]="null">-- اختر فندق --</option>
+        <option *ngFor="let hotel of publicHotels" [ngValue]="hotel">
+          {{ hotel.name }}
+        </option>
+      </select>
+    </div>
+
+    <div *ngIf="selectedPublicHotel">
+      <!-- Link New Room Type -->
+      <div class="bg-white rounded-lg shadow-md p-6 mb-6">
+        <h2 class="text-xl font-semibold mb-4">ربط نوع غرفة جديد</h2>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">نوع الغرفة (موقع عام)</label>
+            <select [(ngModel)]="selectedPublicRoomType" class="w-full px-4 py-2 border border-gray-300 rounded-lg">
+              <option [ngValue]="null">-- اختر نوع غرفة --</option>
+              <option *ngFor="let roomType of publicRoomTypes" [ngValue]="roomType">
+                {{ roomType.name }} - {{ roomType.basePrice }} ريال
+              </option>
+            </select>
+          </div>
+
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">نوع الغرفة (ERP)</label>
+            <select [(ngModel)]="selectedErpRoomType" class="w-full px-4 py-2 border border-gray-300 rounded-lg">
+              <option [ngValue]="null">-- اختر نوع غرفة --</option>
+              <option *ngFor="let roomType of erpRoomTypes" [ngValue]="roomType">
+                {{ roomType.arabicName || roomType.englishName }}
+              </option>
+            </select>
+          </div>
+        </div>
+
+        <div class="mt-4">
+          <button 
+            (click)="linkRoomType()"
+            [disabled]="loading || !selectedPublicRoomType || !selectedErpRoomType"
+            class="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-gray-400">
+            <span *ngIf="!loading">ربط نوع الغرفة</span>
+            <span *ngIf="loading">جاري الربط...</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Linked Room Types Table -->
+      <div class="bg-white rounded-lg shadow-md overflow-hidden">
+        <div class="p-6 border-b border-gray-200">
+          <h2 class="text-xl font-semibold">أنواع الغرف المرتبطة</h2>
+        </div>
+        <div class="overflow-x-auto">
+          <table class="min-w-full divide-y divide-gray-200">
+            <thead class="bg-gray-50">
+              <tr>
+                <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">نوع الغرفة</th>
+                <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">السعر</th>
+                <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">نوع غرفة ERP</th>
+                <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">الحالة</th>
+                <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">الإجراءات</th>
+              </tr>
+            </thead>
+            <tbody class="bg-white divide-y divide-gray-200">
+              <tr *ngIf="publicRoomTypes.length === 0">
+                <td colspan="5" class="px-6 py-4 text-center text-gray-500">
+                  لا توجد أنواع غرف لهذا الفندق
+                </td>
+              </tr>
+
+              <tr *ngFor="let roomType of publicRoomTypes" class="hover:bg-gray-50">
+                <td class="px-6 py-4">
+                  <div class="text-sm font-medium text-gray-900">{{ roomType.name }}</div>
+                </td>
+                <td class="px-6 py-4">
+                  <div class="text-sm text-gray-700">{{ roomType.basePrice }} ريال</div>
+                </td>
+                <td class="px-6 py-4">
+                  <div class="text-sm text-gray-900">{{ getErpRoomTypeName(roomType.erpRoomTypeId) }}</div>
+                </td>
+                <td class="px-6 py-4">
+                  <span *ngIf="roomType.erpRoomTypeId" class="px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
+                    مرتبط
+                  </span>
+                  <span *ngIf="!roomType.erpRoomTypeId" class="px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-gray-100 text-gray-800">
+                    غير مرتبط
+                  </span>
+                </td>
+                <td class="px-6 py-4">
+                  <button 
+                    *ngIf="roomType.erpRoomTypeId"
+                    (click)="unlinkRoomType(roomType.id)"
+                    class="text-red-600 hover:text-red-900 text-sm font-medium">
+                    فك الربط
+                  </button>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

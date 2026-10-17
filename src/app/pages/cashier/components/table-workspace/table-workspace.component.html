@@ -1,0 +1,723 @@
+﻿<div class="workspace-shell" *ngIf="table() as currentTable; else noTableState">
+  <p-toast position="top-left"></p-toast>
+
+  <div class="workspace-unified-card">
+    <!-- Workspace Header -->
+    <header class="workspace-header">
+      <!-- Top Row: Table Title & Navigation -->
+      <div class="workspace-header-top">
+        <div class="brand">
+          <span class="brand-icon">
+            <i class="pi pi-table"></i>
+          </span>
+          <div class="brand-text">
+            <div class="brand-title-row">
+              <h1>إدارة الطاولة {{ currentTable.tableNumber }}</h1>
+              <span class="table-status-pill" [ngClass]="currentTable.status">
+                <i [class]="getTableStatusIcon(currentTable.status)"></i>
+                <span>{{ getTableStatusLabel(currentTable.status) }}</span>
+              </span>
+            </div>
+            <p>
+              <i class="pi pi-building"></i> {{ currentTable.areaName }}
+              <span class="dot-sep">•</span>
+              <i class="pi pi-users"></i> {{ currentTable.seats }} مقاعد
+            </p>
+          </div>
+        </div>
+
+        <div class="header-actions">
+          <button pButton type="button" icon="pi pi-arrow-right" label="مخطط الصالة" class="action-btn soft-btn" routerLink="/cashier/floor"></button>
+          <button pButton type="button" icon="pi pi-desktop" label="شاشة الكاشير (POS)" class="action-btn soft-btn" routerLink="/cashier/pos"></button>
+          <button pButton type="button" icon="pi pi-bell" label="الطلبات المباشرة" class="action-btn soft-btn" routerLink="/cashier/live-orders"></button>
+          <button pButton type="button" icon="pi pi-file" label="سجل الفواتير" class="action-btn soft-btn" routerLink="/cashier/invoice-control"></button>
+        </div>
+      </div>
+
+      <!-- Bottom Row: Table Quick Actions Banner -->
+      <div class="workspace-header-bottom">
+        <!-- Status Switcher Strip -->
+        <div class="status-switcher-group">
+          <span class="group-label">حالة الطاولة:</span>
+          <div class="status-pills-strip">
+            <button
+              type="button"
+              class="quick-pill available"
+              [class.active]="currentTable.status === tableStatus.Available"
+              (click)="setTableStatus(tableStatus.Available)"
+              pTooltip="تعيين الطاولة كمتاحة">
+              <i class="pi pi-check-circle"></i>
+              <span>متاحة</span>
+            </button>
+            <button
+              type="button"
+              class="quick-pill occupied"
+              [class.active]="currentTable.status === tableStatus.Occupied"
+              (click)="setTableStatus(tableStatus.Occupied)"
+              pTooltip="تعيين الطاولة كمشغولة">
+              <i class="pi pi-users"></i>
+              <span>مشغولة</span>
+            </button>
+            <button
+              type="button"
+              class="quick-pill ready-to-pay"
+              [class.active]="currentTable.status === tableStatus.ReadyToPay"
+              (click)="setTableStatus(tableStatus.ReadyToPay)"
+              pTooltip="تعيين الطاولة كجاهزة للحساب">
+              <i class="pi pi-wallet"></i>
+              <span>جاهزة للحساب</span>
+            </button>
+            <button
+              type="button"
+              class="quick-pill cleaning"
+              [class.active]="currentTable.status === tableStatus.Cleaning"
+              (click)="setTableStatus(tableStatus.Cleaning)"
+              pTooltip="تعيين الطاولة قيد التنظيف">
+              <i class="pi pi-sparkles"></i>
+              <span>تنظيف</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Quick Operations -->
+        <div class="ops-actions-group">
+          <button
+            type="button"
+            class="action-chip add-menu-btn"
+            (click)="activeTab = 'menu'"
+            pTooltip="إضافة أصناف جديدة للطلب">
+            <i class="pi pi-plus"></i>
+            <span>إضافة أصناف للطلب</span>
+          </button>
+
+          <a
+            class="action-chip customer-btn"
+            [routerLink]="['/self-order', currentTable.token || currentTable.id]"
+            target="_blank"
+            pTooltip="فتح صفحة العميل للطلب الذاتي في نافذة جديدة">
+            <i class="pi pi-tablet"></i>
+            <span>شاشة العميل</span>
+          </a>
+
+          <button
+            *ngIf="currentTable.status !== tableStatus.Available"
+            type="button"
+            class="action-chip vacate-btn"
+            (click)="vacateTable()"
+            pTooltip="إخلاء الطاولة وتصفير حالتها">
+            <i class="pi pi-check"></i>
+            <span>إخلاء الطاولة</span>
+          </button>
+
+          <button
+            pButton
+            type="button"
+            icon="pi pi-wallet"
+            label="تحصيل الحساب"
+            class="pay-cta-btn"
+            [disabled]="!hasOpenBill"
+            (click)="openPayment()">
+          </button>
+        </div>
+      </div>
+    </header>
+
+    <!-- Summary KPI Row -->
+    <section class="summary-row">
+      <article class="summary-card orders">
+        <div class="stat-icon-wrap">
+          <i class="pi pi-receipt"></i>
+        </div>
+        <div class="stat-content">
+          <span>عدد الطلبات المفتوحة</span>
+          <strong>{{ ordersCount }}</strong>
+        </div>
+      </article>
+
+      <article class="summary-card items">
+        <div class="stat-icon-wrap">
+          <i class="pi pi-box"></i>
+        </div>
+        <div class="stat-content">
+          <span>إجمالي عدد الأصناف</span>
+          <strong>{{ itemsCount }}</strong>
+        </div>
+      </article>
+
+      <article class="summary-card tax">
+        <div class="stat-icon-wrap">
+          <i class="pi pi-percentage"></i>
+        </div>
+        <div class="stat-content">
+          <span>مبلغ الضريبة (15%)</span>
+          <strong>{{ taxAmount | number:'1.2-2' }} <small>ر.س</small></strong>
+        </div>
+      </article>
+
+      <article class="summary-card total">
+        <div class="stat-icon-wrap">
+          <i class="pi pi-wallet"></i>
+        </div>
+        <div class="stat-content">
+          <span>إجمالي الحساب المطلوب</span>
+          <strong>{{ totalAmount | number:'1.2-2' }} <small>ر.س</small></strong>
+        </div>
+      </article>
+    </section>
+
+    <!-- Workspace Main: Two Column Layout -->
+    <main class="workspace-main">
+      <!-- Left Column: Interactive Orders & Menu Tabs -->
+      <section class="orders-panel">
+        <!-- Tab Bar Header -->
+        <div class="workspace-tabs-bar">
+          <div class="tab-buttons">
+            <button
+              type="button"
+              class="tab-btn"
+              [class.active]="activeTab === 'orders'"
+              (click)="activeTab = 'orders'">
+              <i class="pi pi-list"></i>
+              <span>سجل وتذاكر المطبخ</span>
+              <span class="tab-badge" *ngIf="orderTimeline().length > 0">{{ orderTimeline().length }}</span>
+            </button>
+            <button
+              type="button"
+              class="tab-btn"
+              [class.active]="activeTab === 'menu'"
+              (click)="activeTab = 'menu'">
+              <i class="pi pi-plus-circle"></i>
+              <span>قائمة الأصناف والإضافة المباشرة</span>
+              <span class="tab-badge cart-badge" *ngIf="cartCount > 0">{{ cartCount }}</span>
+            </button>
+          </div>
+
+          <div class="tab-tools">
+            <button
+              pButton
+              type="button"
+              icon="pi pi-refresh"
+              class="p-button-text p-button-sm icon-only-btn"
+              pTooltip="تحديث البيانات"
+              (click)="ngOnInit()">
+            </button>
+          </div>
+        </div>
+
+        <!-- TAB 1: Orders Timeline Tickets -->
+        <div class="orders-timeline-view" *ngIf="activeTab === 'orders'">
+          <div class="orders-list" *ngIf="orderTimeline().length > 0; else emptyOrdersStarter">
+            <article
+              class="order-ticket-card"
+              [ngClass]="order.status"
+              *ngFor="let order of orderTimeline()">
+
+              <!-- Order Ticket Top -->
+              <div class="order-ticket-head">
+                <div class="order-info">
+                  <div class="order-no-row">
+                    <span class="ticket-icon"><i class="pi pi-ticket"></i></span>
+                    <h3 class="order-no">{{ order.orderNo }}</h3>
+                  </div>
+                  <div class="order-meta-info">
+                    <span class="order-time"><i class="pi pi-clock"></i> {{ order.createdAt | customDate: 'shortTime' }}</span>
+                    <span class="order-date">{{ order.createdAt | customDate: 'mediumDate' }}</span>
+                  </div>
+                </div>
+
+                <div class="order-status-badge" [ngClass]="order.status">
+                  <span>{{ getOrderStatusLabel(order.status) }}</span>
+                </div>
+              </div>
+
+              <!-- Items List -->
+              <div class="order-items-box">
+                <div class="item-row" *ngFor="let item of order.items">
+                  <div class="item-details">
+                    <span class="item-qty-badge">{{ item.quantity }}x</span>
+                    <span class="item-name">{{ item.itemName }}</span>
+                  </div>
+                  <div class="item-pricing">
+                    <span class="unit-price">{{ item.unitPrice | number:'1.2-2' }}</span>
+                    <strong class="line-total">{{ (item.quantity * item.unitPrice) | number:'1.2-2' }} <small>ر.س</small></strong>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Preparation Status & Timer -->
+              <div class="prep-status-bar" *ngIf="order.status !== orderStatus.Paid && order.status !== orderStatus.Cancelled">
+                <div class="prep-indicator" [ngClass]="order.status">
+                  <i class="pi pi-stopwatch"></i>
+                  <span>{{ getPreparationStatus(order) }}</span>
+                </div>
+
+                <!-- Quick Time Preset Pills -->
+                <div class="prep-preset-pills" *ngIf="order.status === orderStatus.New || order.status === orderStatus.Preparing">
+                  <span class="preset-label">وقت التحضير:</span>
+                  <button
+                    type="button"
+                    *ngFor="let mins of prepPresets"
+                    class="preset-pill"
+                    [class.active]="getPreparationMinutes(order) === mins"
+                    (click)="setPrepMinutesPreset(order, mins)">
+                    {{ mins }}د
+                  </button>
+                </div>
+              </div>
+
+              <!-- Order Workflow Actions -->
+              <div class="order-actions-bar" *ngIf="order.status !== orderStatus.Paid && order.status !== orderStatus.Cancelled">
+                <button
+                  pButton
+                  type="button"
+                  icon="pi pi-play"
+                  label="بدء التحضير"
+                  class="action-btn prep-btn"
+                  *ngIf="order.status === orderStatus.New"
+                  (click)="setOrderPreparing(order)">
+                </button>
+                <button
+                  pButton
+                  type="button"
+                  icon="pi pi-check-circle"
+                  label="جاهز للتقديم"
+                  class="action-btn ready-btn"
+                  *ngIf="order.status === orderStatus.Preparing"
+                  (click)="setOrderReady(order)">
+                </button>
+                <button
+                  pButton
+                  type="button"
+                  icon="pi pi-send"
+                  label="تم التقديم للعميل"
+                  class="action-btn served-btn"
+                  *ngIf="order.status === orderStatus.Ready"
+                  (click)="setOrderServed(order)">
+                </button>
+              </div>
+            </article>
+          </div>
+        </div>
+
+        <!-- TAB 2: Direct Menu Catalog & Quick Add -->
+        <div class="menu-catalog-view" *ngIf="activeTab === 'menu'">
+          <!-- Menu Search & Category Filters -->
+          <div class="menu-filters-bar">
+            <div class="search-box">
+              <i class="pi pi-search search-icon"></i>
+              <input
+                pInputText
+                type="text"
+                [(ngModel)]="menuSearchTerm"
+                placeholder="ابحث باسم الصنف..."
+                class="menu-search-input" />
+            </div>
+
+            <div class="category-chips">
+              <button
+                type="button"
+                class="cat-chip"
+                [class.active]="selectedCategory === 'all'"
+                (click)="selectedCategory = 'all'">
+                الكل
+              </button>
+              <button
+                type="button"
+                *ngFor="let cat of categories"
+                class="cat-chip"
+                [class.active]="selectedCategory === cat"
+                (click)="selectedCategory = cat">
+                {{ cat }}
+              </button>
+            </div>
+          </div>
+
+          <!-- Menu Items Grid -->
+          <div class="menu-products-grid">
+            <article class="menu-product-card" *ngFor="let product of filteredMenuProducts">
+              <div class="product-media">
+                <img *ngIf="product.image" [src]="product.image" [alt]="product.nameAr || product.nameEn" class="product-img" />
+                <div *ngIf="!product.image" class="product-placeholder-icon">
+                  <i class="pi pi-box"></i>
+                </div>
+              </div>
+              <div class="product-info">
+                <h4 class="product-name">{{ product.nameAr || product.nameEn }}</h4>
+                <div class="product-meta">
+                  <span class="product-cat">{{ product.categoryNameAr || product.categoryNameEn || 'صنف' }}</span>
+                  <strong class="product-price">{{ product.sellingPrice | number:'1.2-2' }} <small>ر.س</small></strong>
+                </div>
+              </div>
+              <button
+                type="button"
+                class="add-product-btn"
+                (click)="addToCart(product)">
+                <i class="pi pi-plus"></i>
+                <span>إضافة</span>
+              </button>
+            </article>
+          </div>
+
+          <!-- Sticky Cart Bar -->
+          <div class="floating-cart-bar" *ngIf="cartItems().length > 0">
+            <div class="cart-info">
+              <span class="cart-count-pill">{{ cartCount }} أصناف</span>
+              <div class="cart-math">
+                <span class="cart-label">إجمالي الطلب الجديد:</span>
+                <strong class="cart-amount">{{ cartTotal | number:'1.2-2' }} ر.س</strong>
+              </div>
+            </div>
+
+            <div class="cart-actions">
+              <button
+                type="button"
+                class="clear-cart-btn"
+                (click)="clearCart()">
+                مسح
+              </button>
+              <button
+                pButton
+                type="button"
+                icon="pi pi-send"
+                label="إرسال الطلب إلى المطبخ"
+                class="submit-cart-btn"
+                [loading]="isSubmittingOrder"
+                (click)="submitCartOrder()">
+              </button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Right Column: Consolidated Bill / Receipt Summary -->
+      <aside class="bill-panel">
+        <div class="receipt-card">
+          <!-- Receipt Header -->
+          <div class="receipt-head">
+            <div class="receipt-brand">
+              <i class="pi pi-receipt receipt-icon"></i>
+              <div>
+                <h3>فاتورة الطاولة المجمعة</h3>
+                <p>طاولة {{ currentTable.tableNumber }} • {{ currentTable.areaName }}</p>
+              </div>
+            </div>
+            <button
+              pButton
+              type="button"
+              icon="pi pi-print"
+              class="p-button-text p-button-sm print-btn"
+              pTooltip="طباعة الفاتورة"
+              [disabled]="!hasOpenBill"
+              (click)="printBill()">
+            </button>
+          </div>
+
+          <!-- Receipt Items List (Live: Confirmed + Draft Cart Items) -->
+          <div class="receipt-items-container">
+            <!-- Unsubmitted Draft Cart Items (Added directly from menu) -->
+            <div class="cart-draft-items-group" *ngIf="cartItems().length > 0">
+              <div class="group-title-badge">
+                <span>أصناف جديدة قيد الإضافة (المسودة)</span>
+                <span class="draft-count">{{ cartCount }}</span>
+              </div>
+
+              <div class="receipt-item-row draft" *ngFor="let item of cartItems()">
+                <div class="receipt-item-info">
+                  <strong class="item-title">{{ item.product.nameAr || item.product.nameEn }}</strong>
+                  <span class="item-math">{{ item.product.sellingPrice | number:'1.2-2' }} ر.س للقطعة</span>
+                </div>
+
+                <div class="draft-item-actions">
+                  <div class="mini-stepper">
+                    <button type="button" class="mini-step-btn" (click)="updateCartQty(item.product.id, -1)">-</button>
+                    <span class="mini-step-qty">{{ item.quantity }}</span>
+                    <button type="button" class="mini-step-btn" (click)="updateCartQty(item.product.id, 1)">+</button>
+                  </div>
+                  <strong class="draft-total-val">{{ (item.product.sellingPrice * item.quantity) | number:'1.2-2' }} <small>ر.س</small></strong>
+                  <button type="button" class="mini-delete-btn" (click)="removeFromCart(item.product.id)" pTooltip="حذف">
+                    <i class="pi pi-trash"></i>
+                  </button>
+                </div>
+              </div>
+
+              <button
+                pButton
+                type="button"
+                icon="pi pi-send"
+                label="إرسال الأصناف إلى المطبخ"
+                class="send-draft-btn"
+                [loading]="isSubmittingOrder"
+                (click)="submitCartOrder()">
+              </button>
+            </div>
+
+            <!-- Confirmed Kitchen Orders Items -->
+            <div class="confirmed-items-group" *ngIf="snapshot()?.items && (snapshot()?.items)!.length > 0">
+              <div class="group-title-badge confirmed" *ngIf="cartItems().length > 0">
+                <span>طلبات المطبخ المؤكدة</span>
+                <span class="confirmed-count">{{ confirmedItemsCount }}</span>
+              </div>
+
+              <div class="receipt-item-row" *ngFor="let item of (snapshot()?.items || [])">
+                <div class="receipt-item-info">
+                  <strong class="item-title">{{ item.itemName }}</strong>
+                  <span class="item-math">{{ item.quantity }} × {{ item.unitPrice | number:'1.2-2' }}</span>
+                </div>
+                <span class="item-amount">{{ item.totalAmount | number:'1.2-2' }} <small>ر.س</small></span>
+              </div>
+            </div>
+
+            <!-- Empty Placeholder if both are empty -->
+            <div class="empty-bill-placeholder" *ngIf="cartItems().length === 0 && (!snapshot()?.items || (snapshot()?.items)!.length === 0)">
+              <i class="pi pi-receipt"></i>
+              <p>لا توجد أصناف في الفاتورة بعد</p>
+            </div>
+          </div>
+
+          <!-- Perforated Divider Line -->
+          <div class="receipt-divider"></div>
+
+          <!-- Receipt Totals Calculation -->
+          <div class="receipt-totals-box">
+            <div class="calc-row">
+              <span>المجموع الفرعي (قبل الضريبة)</span>
+              <strong>{{ subtotal | number:'1.2-2' }} <small>ر.س</small></strong>
+            </div>
+            <div class="calc-row">
+              <span>ضريبة القيمة المضافة (15%)</span>
+              <strong>{{ taxAmount | number:'1.2-2' }} <small>ر.س</small></strong>
+            </div>
+            <div class="calc-row grand-total">
+              <span>الإجمالي النهائي المستحق</span>
+              <strong class="grand-value">{{ totalAmount | number:'1.2-2' }} <small>ر.س</small></strong>
+            </div>
+          </div>
+
+          <!-- Bottom Sticky Checkout Action -->
+          <div class="receipt-checkout-actions">
+            <button
+              pButton
+              type="button"
+              icon="pi pi-wallet"
+              label="تحصيل الحساب وإغلاق الطاولة"
+              class="checkout-submit-btn"
+              [disabled]="!hasOpenBill"
+              (click)="openPayment()">
+            </button>
+          </div>
+        </div>
+      </aside>
+    </main>
+  </div>
+</div>
+
+<!-- Interactive Empty Orders Starter Template -->
+<ng-template #emptyOrdersStarter>
+  <div class="empty-starter-card">
+    <div class="starter-hero">
+      <div class="starter-icon-ring">
+        <i class="pi pi-check-circle"></i>
+      </div>
+      <h3>الطاولة متاحة وجاهزة للطلب</h3>
+      <p>لا توجد طلبات جارية لهذه الطاولة حالياً. يمكنك إضافة أصناف مباشرة أو مشاركة رمز QR مع العميل للطلب الذاتي.</p>
+
+      <div class="starter-quick-actions">
+        <button
+          type="button"
+          class="starter-btn primary"
+          (click)="activeTab = 'menu'">
+          <i class="pi pi-plus"></i>
+          <span>إضافة أصناف جديدة للطلب</span>
+        </button>
+        <a
+          class="starter-btn soft"
+          [routerLink]="['/self-order', table()?.token || tableId]"
+          target="_blank">
+          <i class="pi pi-tablet"></i>
+          <span>فتح شاشة العميل (Self-Order)</span>
+        </a>
+      </div>
+    </div>
+
+    <!-- Quick Featured Menu Items Grid -->
+    <div class="featured-menu-section" *ngIf="filteredMenuProducts.length > 0">
+      <div class="section-title-row">
+        <i class="pi pi-star"></i>
+        <h4>أصناف مميزة للإضافة السريعة</h4>
+      </div>
+      <div class="featured-grid">
+        <div class="featured-card" *ngFor="let prod of filteredMenuProducts.slice(0, 4)">
+          <div class="featured-info">
+            <strong class="name">{{ prod.nameAr || prod.nameEn }}</strong>
+            <span class="price">{{ prod.sellingPrice | number:'1.2-2' }} ر.س</span>
+          </div>
+          <button
+            type="button"
+            class="quick-add-btn"
+            (click)="addToCart(prod); activeTab = 'menu'">
+            <i class="pi pi-plus"></i>
+            <span>إضافة</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</ng-template>
+
+<!-- Empty Bill Placeholder Template -->
+<ng-template #emptyBillPlaceholder>
+  <div class="empty-bill-placeholder">
+    <i class="pi pi-inbox"></i>
+    <p>لا توجد أصناف في الفاتورة بعد</p>
+  </div>
+</ng-template>
+
+<!-- Not Found State Template -->
+<ng-template #noTableState>
+  <div class="not-found-card">
+    <div class="not-found-icon">
+      <i class="pi pi-exclamation-circle"></i>
+    </div>
+    <h2>تعذر العثور على الطاولة المطلوبة</h2>
+    <p>قد يكون رقم الطاولة غير موجود أو تم حذفه من النظام</p>
+    <button pButton type="button" icon="pi pi-arrow-right" label="العودة لمخطط الصالة" class="back-btn" routerLink="/cashier/floor"></button>
+  </div>
+</ng-template>
+
+<!-- Payment Checkout Dialog -->
+<p-dialog
+  [(visible)]="showPaymentDialog"
+  [modal]="true"
+  [draggable]="false"
+  [resizable]="false"
+  [style]="{width: '540px', maxWidth: '95vw'}"
+  styleClass="payment-dialog"
+  [contentStyle]="{overflow: 'visible'}"
+  header="تحصيل حساب الطاولة">
+  <div class="payment-dialog-body">
+    <!-- Amount Banner -->
+    <div class="payment-amount-banner">
+      <span class="banner-label">إجمالي الحساب المطلوب سداده</span>
+      <div class="banner-amount">
+        <strong>{{ totalAmount | number:'1.2-2' }}</strong>
+        <span class="currency">ريال سعودي</span>
+      </div>
+    </div>
+
+    <!-- Payment Methods Selector -->
+    <div class="pay-method-section">
+      <span class="section-title">طريقة الدفع</span>
+      <div class="pay-methods-tiles">
+        <button
+          type="button"
+          *ngFor="let method of paymentMethods"
+          class="pay-method-tile"
+          [class.active]="paymentMethod === method.value"
+          (click)="setPaymentMethod(method.value)">
+          <i [class]="method.icon"></i>
+          <span>{{ method.label }}</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Cash Mode -->
+    <div class="pay-detail-container" *ngIf="paymentMethod === PaymentMethod.Cash">
+      <label class="field-label">
+        المبلغ المدفوع نقدياً
+        <p-inputNumber
+          [(ngModel)]="paidAmount"
+          [minFractionDigits]="2"
+          [maxFractionDigits]="2"
+          mode="decimal"
+          (ngModelChange)="calculateChange()"
+          styleClass="w-full cash-input">
+        </p-inputNumber>
+      </label>
+
+      <!-- Quick Cash Suggestion Chips -->
+      <div class="quick-cash-chips" *ngIf="cashSuggestions.length > 0">
+        <span class="chips-label">مبالغ سريعة:</span>
+        <button
+          type="button"
+          *ngFor="let amount of cashSuggestions"
+          class="cash-chip"
+          [class.active]="paidAmount === amount"
+          (click)="quickSetCash(amount)">
+          {{ amount | number:'1.0-2' }} ر.س
+        </button>
+      </div>
+
+      <!-- Change Box -->
+      <div class="change-display-box" *ngIf="changeAmount > 0">
+        <div class="change-label-wrap">
+          <i class="pi pi-check-circle"></i>
+          <span>المتبقي للعميل (الباقي):</span>
+        </div>
+        <strong class="change-amount-val">{{ changeAmount | number:'1.2-2' }} ريال</strong>
+      </div>
+    </div>
+
+    <!-- Mixed Mode -->
+    <div class="pay-detail-container mixed-mode" *ngIf="paymentMethod === PaymentMethod.Mixed">
+      <div class="mixed-fields-grid">
+        <label class="field-label">
+          المبلغ النقدي 💵
+          <p-inputNumber
+            [(ngModel)]="cashAmount"
+            [minFractionDigits]="2"
+            [maxFractionDigits]="2"
+            mode="decimal"
+            (ngModelChange)="onCashAmountChange($event)"
+            styleClass="w-full">
+          </p-inputNumber>
+        </label>
+
+        <label class="field-label">
+          المبلغ عبر البطاقة / مدى 💳
+          <p-inputNumber
+            [(ngModel)]="cardAmount"
+            [minFractionDigits]="2"
+            [maxFractionDigits]="2"
+            mode="decimal"
+            [disabled]="true"
+            styleClass="w-full">
+          </p-inputNumber>
+        </label>
+      </div>
+
+      <div class="split-summary-badge">
+        <span>نقدي: <strong>{{ cashAmount | number:'1.2-2' }}</strong> ر.س</span>
+        <span class="plus-sign">+</span>
+        <span>شبكة: <strong>{{ cardAmount | number:'1.2-2' }}</strong> ر.س</span>
+        <span class="eq-sign">=</span>
+        <strong class="total-split-val">{{ (cashAmount + cardAmount) | number:'1.2-2' }} ر.س</strong>
+      </div>
+    </div>
+
+    <!-- Card / Transfer Notice -->
+    <div class="pay-notice-box" *ngIf="paymentMethod === PaymentMethod.Card || paymentMethod === PaymentMethod.BankTransfer">
+      <i class="pi pi-credit-card"></i>
+      <span>سيتم سداد كامل المبلغ <strong>{{ totalAmount | number:'1.2-2' }} ريال</strong> عبر جهاز نقاط البيع الإلكتروني (مدى / فيزا).</span>
+    </div>
+  </div>
+
+  <ng-template pTemplate="footer">
+    <div class="payment-dialog-footer">
+      <button
+        pButton
+        type="button"
+        label="إلغاء"
+        class="dialog-cancel-btn"
+        (click)="showPaymentDialog = false">
+      </button>
+      <button
+        pButton
+        type="button"
+        icon="pi pi-check"
+        label="تأكيد التحصيل وإغلاق الطاولة"
+        class="dialog-confirm-btn"
+        (click)="closeTable()">
+      </button>
+    </div>
+  </ng-template>
+</p-dialog>

@@ -1,0 +1,104 @@
+<span [dir]="activeLanguage === 'ar' ? 'rtl' : 'ltr'">
+  <router-outlet></router-outlet>
+</span>
+
+<!-- ✅ Global toast component - persists across all page navigations -->
+<p-toast></p-toast>
+
+<!-- ✅ Session Idle Timeout Warning Dialog -->
+<p-dialog
+  [visible]="idleTimeoutService.isWarningOpen()"
+  [modal]="true"
+  [closable]="false"
+  [draggable]="false"
+  [resizable]="false"
+  [showHeader]="false"
+  [style]="{ width: '540px', maxWidth: '95vw' }"
+  styleClass="idle-timeout-dialog"
+  [dir]="activeLanguage === 'ar' ? 'rtl' : 'ltr'"
+>
+  <div
+    (click)="idleTimeoutService.stayLoggedIn()"
+    class="idle-timeout-card"
+  >
+    <!-- Top Decorative Gradient Aura & Icon -->
+    <div class="idle-icon-wrapper">
+      <div class="idle-icon-aura"></div>
+      <div class="idle-icon-circle">
+        <i class="pi pi-clock idle-clock-icon"></i>
+      </div>
+    </div>
+
+    <!-- Title & Badge -->
+    <div class="idle-header-title">
+      <span class="idle-security-badge">
+        <i class="pi pi-shield"></i>
+        {{ 'DATA.SESSION_TIMEOUT_WARNING_TITLE' | translate }}
+      </span>
+      <h3 class="idle-warning-text">
+        {{ 'DATA.SESSION_TIMEOUT_WARNING_MSG' | translate }}
+      </h3>
+    </div>
+
+    <!-- Timer Countdown Badge -->
+    <div class="idle-countdown-box">
+      <div class="idle-countdown-digits" dir="ltr">
+        {{ idleTimeoutService.formattedCountdown }}
+      </div>
+    </div>
+
+    <!-- Interactive Hint Banner -->
+    <div class="idle-action-banner">
+      <div class="idle-pulse-dot"></div>
+      <span class="idle-action-text">
+        {{ 'DATA.SESSION_TIMEOUT_DISMISS_HINT' | translate }}
+      </span>
+    </div>
+  </div>
+</p-dialog>
+
+<!-- ✅ Session Inactivity Auto-Logout Popup Dialog -->
+<p-dialog
+  [visible]="idleTimeoutService.isExpiredDialogOpen()"
+  [modal]="true"
+  [closable]="true"
+  [draggable]="false"
+  [resizable]="false"
+  [showHeader]="false"
+  [style]="{ width: '480px', maxWidth: '95vw' }"
+  styleClass="idle-expired-dialog"
+  [dir]="activeLanguage === 'ar' ? 'rtl' : 'ltr'"
+  (onHide)="idleTimeoutService.dismissExpiredDialog()"
+>
+  <div class="idle-expired-card">
+    <!-- Icon with pulse -->
+    <div class="idle-expired-icon-wrapper">
+      <div class="idle-expired-aura"></div>
+      <div class="idle-expired-circle">
+        <i class="pi pi-lock idle-expired-icon"></i>
+      </div>
+    </div>
+
+    <!-- Title -->
+    <h3 class="idle-expired-title">
+      {{ 'DATA.SESSION_EXPIRED_TITLE' | translate }}
+    </h3>
+
+    <!-- Message -->
+    <p class="idle-expired-message">
+      {{ ('DATA.SESSION_EXPIRED_MSG' | translate).replace('{0}', idleTimeoutService.expiredTimeoutMinutes().toString()) }}
+    </p>
+
+    <!-- Action Button -->
+    <button
+      type="button"
+      class="btn btn-primary idle-expired-btn w-100"
+      (click)="idleTimeoutService.dismissExpiredDialog()"
+    >
+      <i class="pi pi-sign-in me-2 ms-2"></i>
+      {{ 'DATA.SESSION_EXPIRED_LOGIN_BTN' | translate }}
+    </button>
+  </div>
+</p-dialog>
+
+

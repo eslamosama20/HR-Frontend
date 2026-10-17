@@ -1,0 +1,151 @@
+﻿<div class="min-h-screen bg-gray-50 py-8" *ngIf="!showConfirmation">
+  <div class="container mx-auto px-4">
+    <div class="max-w-4xl mx-auto">
+      <h1 class="text-3xl font-bold mb-6 text-center">إتمام الحجز</h1>
+
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <!-- Guest Information Form -->
+        <div class="lg:col-span-2">
+          <div class="bg-white rounded-lg shadow-md p-6">
+            <h2 class="text-2xl font-bold mb-6">معلومات الضيف</h2>
+
+            <form [formGroup]="bookingForm" (ngSubmit)="submitBooking()">
+              <!-- Name -->
+              <div class="mb-4">
+                <label class="block text-sm font-medium text-gray-700 mb-2">الاسم الكامل *</label>
+                <input type="text" formControlName="guestName" 
+                       class="w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500"
+                       [class.border-red-500]="isFieldInvalid('guestName')"
+                       placeholder="أدخل اسمك الكامل">
+                <p *ngIf="isFieldInvalid('guestName')" class="text-red-500 text-sm mt-1">
+                  {{ getErrorMessage('guestName') }}
+                </p>
+              </div>
+
+              <!-- Email -->
+              <div class="mb-4">
+                <label class="block text-sm font-medium text-gray-700 mb-2">البريد الإلكتروني *</label>
+                <input type="email" formControlName="guestEmail" 
+                       class="w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500"
+                       [class.border-red-500]="isFieldInvalid('guestEmail')"
+                       placeholder="example@email.com">
+                <p *ngIf="isFieldInvalid('guestEmail')" class="text-red-500 text-sm mt-1">
+                  {{ getErrorMessage('guestEmail') }}
+                </p>
+              </div>
+
+              <!-- Phone -->
+              <div class="mb-4">
+                <label class="block text-sm font-medium text-gray-700 mb-2">رقم الهاتف *</label>
+                <div class="flex gap-2">
+                  <select formControlName="countryCode" class="px-3 py-3 border rounded-lg w-32">
+                    <option *ngFor="let c of countryCodes" [value]="c.code">{{ c.code }}</option>
+                  </select>
+                  <input type="tel" formControlName="guestPhone" 
+                         class="flex-1 px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500"
+                         [class.border-red-500]="isFieldInvalid('guestPhone')"
+                         placeholder="5xxxxxxxx">
+                </div>
+                <p *ngIf="isFieldInvalid('guestPhone')" class="text-red-500 text-sm mt-1">
+                  {{ getErrorMessage('guestPhone') }}
+                </p>
+              </div>
+
+              <!-- Nationality -->
+              <div class="mb-4">
+                <label class="block text-sm font-medium text-gray-700 mb-2">الجنسية</label>
+                <input type="text" formControlName="guestNationality" 
+                       class="w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500"
+                       placeholder="اختياري">
+              </div>
+
+              <!-- Number of Guests -->
+              <div class="grid grid-cols-2 gap-4 mb-4">
+                <div>
+                  <label class="block text-sm font-medium text-gray-700 mb-2">عدد البالغين *</label>
+                  <input type="number" min="1" formControlName="numberOfAdults" 
+                         class="w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500">
+                </div>
+                <div>
+                  <label class="block text-sm font-medium text-gray-700 mb-2">عدد الأطفال</label>
+                  <input type="number" min="0" formControlName="numberOfChildren" 
+                         class="w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500">
+                </div>
+              </div>
+
+              <!-- Special Requests -->
+              <div class="mb-6">
+                <label class="block text-sm font-medium text-gray-700 mb-2">طلبات خاصة</label>
+                <textarea formControlName="specialRequests" rows="3"
+                          class="w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500"
+                          placeholder="أي طلبات خاصة؟ (اختياري)"></textarea>
+              </div>
+
+              <!-- Submit Button -->
+              <button type="submit" 
+                      [disabled]="submitting"
+                      class="w-full py-3 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed">
+                <span *ngIf="!submitting">تأكيد الحجز</span>
+                <span *ngIf="submitting">جاري الحجز...</span>
+              </button>
+            </form>
+          </div>
+        </div>
+
+        <!-- Booking Summary -->
+        <div class="lg:col-span-1">
+          <div class="bg-white rounded-lg shadow-md p-6 sticky top-4">
+            <h3 class="text-xl font-bold mb-4">ملخص الحجز</h3>
+
+            <div class="space-y-3 text-sm mb-4">
+              <div class="flex justify-between">
+                <span class="text-gray-600">الوصول:</span>
+                <span class="font-semibold">{{ bookingData?.checkInDate | customDate: 'dd/MM/yyyy' }}</span>
+              </div>
+              <div class="flex justify-between">
+                <span class="text-gray-600">المغادرة:</span>
+                <span class="font-semibold">{{ bookingData?.checkOutDate | customDate: 'dd/MM/yyyy' }}</span>
+              </div>
+              <div class="flex justify-between">
+                <span class="text-gray-600">عدد الليالي:</span>
+                <span class="font-semibold">{{ getNumberOfNights() }}</span>
+              </div>
+              <div class="flex justify-between">
+                <span class="text-gray-600">عدد الغرف:</span>
+                <span class="font-semibold">{{ bookingData?.selectedRooms?.length }}</span>
+              </div>
+            </div>
+
+            <div class="border-t pt-4">
+              <div class="flex justify-between items-center">
+                <span class="text-lg font-semibold">الإجمالي:</span>
+                <span class="text-2xl font-bold text-blue-600">{{ bookingData?.totalAmount }} ريال</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Confirmation Screen -->
+<div class="min-h-screen bg-gray-50 flex items-center justify-center" *ngIf="showConfirmation">
+  <div class="bg-white rounded-lg shadow-xl p-8 max-w-md mx-4 text-center">
+    <div class="mb-6">
+      <svg class="mx-auto h-20 w-20 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+      </svg>
+    </div>
+    <h2 class="text-3xl font-bold text-gray-900 mb-4">تم الحجز بنجاح!</h2>
+    <p class="text-gray-600 mb-6">رقم الحجز الخاص بك هو:</p>
+    <div class="bg-blue-50 border-2 border-blue-200 rounded-lg p-4 mb-6">
+      <p class="text-2xl font-bold text-blue-600">{{ bookingReference }}</p>
+    </div>
+    <p class="text-gray-600 mb-6">سيتم إرسال تفاصيل الحجز إلى بريدك الإلكتروني</p>
+    <button (click)="router.navigate(['/hotels'])" 
+            class="w-full py-3 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700">
+      العودة للرئيسية
+    </button>
+  </div>
+</div>

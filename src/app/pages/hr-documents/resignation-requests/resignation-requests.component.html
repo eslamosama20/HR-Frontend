@@ -1,0 +1,63 @@
+<p-toast></p-toast>
+<p-confirmDialog></p-confirmDialog>
+<div class="card">
+  <div class="card-header border-0 pt-6">
+    <div class="card-title">
+      <div class="d-flex align-items-center position-relative my-1">
+        <span class="svg-icon svg-icon-1 position-absolute ms-6"><i class="pi pi-search"></i></span>
+        <input type="text" class="form-control form-control-solid w-250px ps-15" placeholder="بحث..." [(ngModel)]="searchValue" (input)="onGlobalFilter(dt, $event)"/>
+      </div>
+    </div>
+    <div class="card-toolbar">
+      <ng-container *ngFor="let template of templates">
+        <button pButton [label]="template.name" icon="pi pi-download" class="p-button-info me-2" (click)="downloadTemplate(template)" [pTooltip]="template.description" tooltipPosition="bottom"></button>
+      </ng-container>
+      <button pButton label="إضافة جديد" icon="pi pi-plus" class="p-button-success" (click)="openNew()"></button>
+    </div>
+  </div>
+  <div class="card-body pt-0">
+    <p-table #dt [value]="items" [loading]="loading" [paginator]="true" [rows]="10" [globalFilterFields]="['referenceNumber','employeeName']" [rowHover]="true" dataKey="id" [showCurrentPageReport]="true" currentPageReportTemplate="عرض {first} إلى {last} من {totalRecords} سجل">
+      <ng-template pTemplate="header">
+        <tr>
+          <th pSortableColumn="referenceNumber">رقم المرجع <p-sortIcon field="referenceNumber"></p-sortIcon></th>
+          <th pSortableColumn="employeeName">الموظف <p-sortIcon field="employeeName"></p-sortIcon></th>
+          <th pSortableColumn="requestDate">تاريخ الطلب <p-sortIcon field="requestDate"></p-sortIcon></th>
+          <th pSortableColumn="lastWorkingDay">آخر يوم عمل <p-sortIcon field="lastWorkingDay"></p-sortIcon></th>
+          <th pSortableColumn="status">حالة الموافقة <p-sortIcon field="status"></p-sortIcon></th>
+          <th>الإجراءات</th>
+        </tr>
+      </ng-template>
+      <ng-template pTemplate="body" let-item>
+        <tr>
+          <td>{{item.referenceNumber}}</td>
+          <td>{{item.employeeName}}</td>
+          <td>{{item.requestDate | date:'yyyy-MM-dd'}}</td>
+          <td>{{item.lastWorkingDay | date:'yyyy-MM-dd'}}</td>
+          <td>
+            <span class="badge" [ngClass]="{'badge-light-warning': item.status===0,'badge-light-success': item.status===2,'badge-light-danger': item.status===3||item.status===5,'badge-light-info': item.status===1}">
+              {{item.status===0?'مسودة':item.status===2?'موافق عليه':item.status===3?'مرفوض':item.status===1?'معلق':'ملغي'}}
+            </span>
+          </td>
+          <td>
+            <button pButton icon="pi pi-pencil" class="p-button-rounded p-button-text p-button-warning" (click)="edit(item)"></button>
+            <button pButton icon="pi pi-trash" class="p-button-rounded p-button-text p-button-danger" (click)="delete(item)"></button>
+          </td>
+        </tr>
+      </ng-template>
+      <ng-template pTemplate="emptymessage"><tr><td colspan="6" class="text-center">لا توجد بيانات</td></tr></ng-template>
+    </p-table>
+  </div>
+</div>
+<p-dialog [(visible)]="dialogVisible" [header]="formGroup.value.id ? 'تعديل' : 'إضافة جديد'" [modal]="true" [style]="{width:'600px'}">
+  <form [formGroup]="formGroup">
+    <div class="row g-3">
+      <div class="col-md-6"><label class="form-label">الموظف *</label><p-dropdown appendTo="body" formControlName="employeeId" [options]="employees" [filter]="true" placeholder="اختر..." styleClass="w-100" appendTo="body"></p-dropdown></div>
+      <div class="col-md-6"><label class="form-label">الحالة</label><p-dropdown appendTo="body" formControlName="status" [options]="statusOptions" styleClass="w-100" appendTo="body"></p-dropdown></div>
+      <div class="col-md-6"><label class="form-label">تاريخ الطلب *</label><p-calendar appendTo="body" formControlName="requestDate" dateFormat="yy-mm-dd" styleClass="w-100"></p-calendar></div>
+      <div class="col-md-6"><label class="form-label">آخر يوم عمل *</label><p-calendar appendTo="body" formControlName="lastWorkingDay" dateFormat="yy-mm-dd" styleClass="w-100"></p-calendar></div>
+      <div class="col-12"><label class="form-label">السبب *</label><textarea pInputTextarea formControlName="reason" class="w-100" rows="3"></textarea></div>
+      <div class="col-12"><label class="form-label">ملاحظات</label><textarea pInputTextarea formControlName="notes" class="w-100" rows="2"></textarea></div>
+    </div>
+  </form>
+  <ng-template pTemplate="footer"><button pButton label="إلغاء" icon="pi pi-times" class="p-button-text" (click)="dialogVisible=false"></button><button pButton label="حفظ" icon="pi pi-check" class="p-button-success" (click)="save()"></button></ng-template>
+</p-dialog>

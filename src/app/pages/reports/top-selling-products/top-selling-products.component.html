@@ -1,0 +1,273 @@
+﻿<div class="container-fluid">
+  <p-toast></p-toast>
+  
+  <!-- Header: Title on Right, Tools on Left -->
+  <div class="top-selling-products-header d-flex flex-wrap justify-content-between align-items-center gap-3 mb-3 p-3 bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700">
+    <h2 class="page-title m-0 text-xl font-bold text-gray-800 dark:text-gray-100">المنتجات الأكثر مبيعاً</h2>
+    
+    <!-- Tools -->
+    <div class="d-flex align-items-center gap-2 flex-wrap">
+      <div class="btn-group-wrapper d-flex align-items-center gap-2">
+        <p-button 
+          styleClass="rounded-md p-button-sm shadow-sm"
+          severity="success" 
+          icon="pi pi-file-excel" 
+          label="تصدير Excel" 
+          pTooltip="تصدير إلى Excel"
+          tooltipPosition="bottom"
+          (onClick)="exportExcel()"
+          [loading]="excelLoading"
+          [disabled]="!products() || products().length === 0">
+        </p-button>
+
+        <p-button 
+          styleClass="rounded-md p-button-sm shadow-sm"
+          severity="danger" 
+          icon="pi pi-file-pdf" 
+          label="تنزيل PDF" 
+          pTooltip="تنزيل PDF"
+          tooltipPosition="bottom"
+          (onClick)="downloadPdf()"
+          [loading]="pdfLoading"
+          [disabled]="!products() || products().length === 0">
+        </p-button>
+
+        <p-button 
+          styleClass="rounded-md p-button-sm shadow-sm"
+          severity="info" 
+          icon="pi pi-share-alt" 
+          label="مشاركة" 
+          pTooltip="مشاركة التقرير"
+          tooltipPosition="bottom"
+          (onClick)="openShareDialog()"
+          [disabled]="!products() || products().length === 0">
+        </p-button>
+
+        <p-button 
+          styleClass="rounded-md p-button-sm shadow-sm"
+          severity="warning" 
+          icon="pi pi-print" 
+          label="طباعة" 
+          pTooltip="طباعة التقرير"
+          tooltipPosition="bottom"
+          (onClick)="printPdf()"
+          [disabled]="!products() || products().length === 0">
+        </p-button>
+
+        <p-button 
+          styleClass="rounded-md p-button-sm shadow-sm"
+          severity="secondary" 
+          icon="pi pi-refresh" 
+          label="تحديث" 
+          pTooltip="تحديث البيانات"
+          tooltipPosition="bottom"
+          (onClick)="refresh()"
+          [loading]="loading">
+        </p-button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Filters Row -->
+  <div class="filters-header-bar d-flex align-items-center gap-2 flex-wrap mb-4 p-3 bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700">
+    <span class="p-input-icon-left header-search-box">
+      <i class="pi pi-search"></i>
+      <input 
+        type="text" 
+        pInputText 
+        [(ngModel)]="searchTerm"
+        placeholder="ابحث عن منتج..."
+        class="p-inputtext-sm rounded-lg"
+        style="min-width: 180px;"
+        (keyup.enter)="applyFilters()">
+    </span>
+
+    <p-calendar 
+      [(ngModel)]="fromDate"
+      [showButtonBar]="true"
+      [showIcon]="true"
+      iconDisplay="input"
+      dateFormat="dd/mm/yy"
+      placeholder="من تاريخ"
+      appendTo="body"
+      styleClass="p-inputtext-sm"
+      [style]="{width: '145px'}">
+      <ng-template pTemplate="inputicon">
+        <i class="pi pi-calendar"></i>
+      </ng-template>
+    </p-calendar>
+
+    <p-calendar 
+      [(ngModel)]="toDate"
+      [showButtonBar]="true"
+      [showIcon]="true"
+      iconDisplay="input"
+      dateFormat="dd/mm/yy"
+      placeholder="إلى تاريخ"
+      appendTo="body"
+      styleClass="p-inputtext-sm"
+      [style]="{width: '145px'}">
+      <ng-template pTemplate="inputicon">
+        <i class="pi pi-calendar"></i>
+      </ng-template>
+    </p-calendar>
+
+    <p-dropdown
+      [(ngModel)]="topCount"
+      [options]="topCountOptions"
+      placeholder="أعلى 100"
+      styleClass="p-inputtext-sm"
+      [style]="{width: '120px'}">
+    </p-dropdown>
+
+    <p-button 
+      styleClass="rounded-md p-button-sm shadow-sm"
+      severity="primary"
+      icon="pi pi-filter"
+      label="تطبيق"
+      pTooltip="تطبيق الفلاتر"
+      tooltipPosition="bottom"
+      (onClick)="applyFilters()">
+    </p-button>
+
+    <p-button 
+      styleClass="rounded-md p-button-sm shadow-sm"
+      [outlined]="true"
+      severity="secondary"
+      icon="pi pi-times"
+      label="مسح"
+      pTooltip="مسح الفلاتر"
+      tooltipPosition="bottom"
+      (onClick)="clearFilters()">
+    </p-button>
+  </div>
+
+  <!-- Products Table -->
+  <p-table 
+    [value]="products() || []" 
+    dataKey="productId"
+    [loading]="loading"
+    [paginator]="true" 
+    [rows]="15"
+    [showCurrentPageReport]="true"
+    currentPageReportTemplate="عرض {first} إلى {last} من {totalRecords} سجل"
+    [rowsPerPageOptions]="[15, 30, 50, 100]"
+    styleClass="p-datatable-sm p-datatable-striped"
+    [globalFilterFields]="['productNameAr', 'productCode']">
+    
+    <ng-template pTemplate="header">
+      <tr>
+        <th style="width: 60px; text-align: center;">م</th>
+        <th style="text-align: center;" pSortableColumn="productCode">الكود <p-sortIcon field="productCode"></p-sortIcon></th>
+        <th style="text-align: center;" pSortableColumn="productNameAr">اسم المنتج <p-sortIcon field="productNameAr"></p-sortIcon></th>
+        <th style="text-align: center;">الوحدة</th>
+        <th style="text-align: center;" pSortableColumn="transactionCount">عدد المبيعات <p-sortIcon field="transactionCount"></p-sortIcon></th>
+        <th style="text-align: center;" pSortableColumn="totalQuantity">إجمالي الكمية <p-sortIcon field="totalQuantity"></p-sortIcon></th>
+        <th style="text-align: center;" pSortableColumn="totalAmount">إجمالي المبلغ <p-sortIcon field="totalAmount"></p-sortIcon></th>
+        <th style="text-align: center;">متوسط السعر</th>
+        <th style="text-align: center;" pSortableColumn="lastTransactionDate">آخر بيع <p-sortIcon field="lastTransactionDate"></p-sortIcon></th>
+      </tr>
+    </ng-template>
+
+    <ng-template pTemplate="body" let-product let-i="rowIndex">
+      <tr [ngClass]="{'top-3': product.rank <= 3}">
+        <td style="text-align: center;">
+          <span class="rank-badge" [ngClass]="getRankClass(product.rank)">{{ product.rank }}</span>
+        </td>
+        <td style="text-align: center;">{{ product.productCode || '-' }}</td>
+        <td style="text-align: center;">{{ product.productNameAr }}</td>
+        <td style="text-align: center;">{{ product.unitName || '-' }}</td>
+        <td style="text-align: center;">
+          <span class="badge bg-success">{{ product.transactionCount }}</span>
+        </td>
+        <td class="text-primary fw-bold" style="text-align: center;">{{ product.totalQuantity | number: '1.2-2' }}</td>
+        <td class="text-success fw-bold" style="text-align: center;">{{ product.totalAmount | number: '1.2-2' }}</td>
+        <td style="text-align: center;">{{ product.averageUnitPrice | number: '1.2-2' }}</td>
+        <td style="text-align: center;">
+          <span *ngIf="product.lastTransactionDate">{{ product.lastTransactionDate | customDate: 'dd/MM/yyyy' }}</span>
+          <span *ngIf="!product.lastTransactionDate">-</span>
+        </td>
+      </tr>
+    </ng-template>
+
+    <ng-template pTemplate="emptymessage">
+      <tr>
+        <td colspan="9" class="text-center py-5">
+          <i class="pi pi-chart-line" style="font-size: 3rem; color: #94a3b8;"></i>
+          <p class="mt-3 text-muted">لا توجد بيانات مبيعات</p>
+        </td>
+      </tr>
+    </ng-template>
+  </p-table>
+</div>
+
+<!-- Share Dialog -->
+<p-dialog
+  [(visible)]="showShareDialog"
+  [header]="'مشاركة التقرير'"
+  [modal]="true"
+  [style]="{width: '450px'}"
+  [draggable]="false"
+  [resizable]="false">
+  <div class="d-flex flex-column gap-3">
+    <div class="field">
+      <label class="form-label">طريقة المشاركة</label>
+      <div class="d-flex gap-3">
+        <p-radioButton 
+          name="shareMethod" 
+          value="email" 
+          [(ngModel)]="shareMethod"
+          label="البريد الإلكتروني">
+        </p-radioButton>
+        <p-radioButton 
+          name="shareMethod" 
+          value="whatsapp" 
+          [(ngModel)]="shareMethod"
+          label="واتساب">
+        </p-radioButton>
+      </div>
+    </div>
+
+    <div class="field" *ngIf="shareMethod === 'email'">
+      <label for="shareEmail" class="form-label">البريد الإلكتروني <span class="text-danger">*</span></label>
+      <input 
+        type="email" 
+        pInputText 
+        id="shareEmail"
+        [(ngModel)]="shareEmail"
+        placeholder="example@email.com"
+        class="w-100">
+    </div>
+
+    <div class="field" *ngIf="shareMethod === 'whatsapp'">
+      <label for="sharePhone" class="form-label">رقم الهاتف <span class="text-danger">*</span></label>
+      <input 
+        type="tel" 
+        pInputText 
+        id="sharePhone"
+        [(ngModel)]="sharePhone"
+        placeholder="+966XXXXXXXXX"
+        class="w-100">
+    </div>
+  </div>
+
+  <ng-template pTemplate="footer">
+    <button 
+      pButton 
+      type="button" 
+      label="إلغاء" 
+      icon="pi pi-times"
+      class="p-button-text"
+      (click)="showShareDialog = false">
+    </button>
+    <button 
+      pButton 
+      type="button" 
+      label="إرسال" 
+      icon="pi pi-send"
+      [loading]="shareLoading"
+      [disabled]="(shareMethod === 'email' && !shareEmail) || (shareMethod === 'whatsapp' && !sharePhone)"
+      (click)="confirmShare()">
+    </button>
+  </ng-template>
+</p-dialog>

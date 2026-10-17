@@ -1,0 +1,40 @@
+/* ثيم جاهز لماتريال */
+@import '@angular/material/prebuilt-themes/indigo-pink.css';
+
+/* ارفع الـ overlay فوق عناصر الثيم (Metronic إلخ) */
+.cdk-overlay-container {
+  z-index: 9999 !important;
+}
+.mdc-snackbar {
+  z-index: 10000 !important;
+}
+
+/* ألوان للتوستر حسب النوع */
+.snack-info    { --sb-bg: #0ea5e9; }
+.snack-success { --sb-bg: #16a34a; }
+.snack-warn    { --sb-bg: #f59e0b; }
+.snack-error   { --sb-bg: #dc2626; }
+
+.snack-info, .snack-success, .snack-warn, .snack-error {
+  .mdc-snackbar__surface { background: var(--sb-bg) !important; color: #fff !important; }
+  .mdc-button__label { color: #fff !important; }
+}
+/* خلي الـ overlay فوق أي عناصر من Metronic */
+.cdk-overlay-container {
+    z-index: 12000 !important;
+  }
+  
+  /* من Angular Material v15+ */
+  .mat-mdc-snack-bar-container {
+    z-index: 13000 !important;
+    background: #323232; /* أو أي لون مخصص */
+    color: #fff;
+  }
+  .mat-mdc-snack-bar-label {
+    font-size: 0.95rem;
+    font-weight: 500;
+  }
+  .mat-mdc-snack-bar-action {
+    color: #ffd740; /* لون زرار الإجراء */
+  }
+  

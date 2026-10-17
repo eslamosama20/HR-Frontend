@@ -1,0 +1,185 @@
+<div class="container-fluid px-4 py-4">
+    <!-- Search Form -->
+    <div class="bg-white rounded-lg shadow-sm p-4 mb-4">
+      <form [formGroup]="searchForm" (ngSubmit)="onSearch()" class="space-y-4">
+        <!-- شبكة واحدة 6 أعمدة -->
+        <div class="border-b">
+          <div class="grid grid-cols-6 gap-3">
+            <!-- الصف 1 -->
+            <div class="flex flex-col form-field">
+              <label class="field-label">الفندق</label>
+              <p-dropdown
+                formControlName="hotelId"
+                [options]="hotelsOptions()"
+                optionLabel="label"
+                optionValue="value"
+                placeholder="اختر الفندق"
+                [showClear]="true"
+                [filter]="true"
+                filterBy="label"
+                styleClass="w-full input-like rtl:flex-row-reverse"
+                appendTo="body"
+              ></p-dropdown>
+            </div>
+  
+            <div class="flex flex-col form-field">
+              <label class="field-label">تاريخ البداية</label>
+              <p-calendar formControlName="fromDate" dateFormat="dd/mm/yy" placeholder="اختر التاريخ" [showIcon]="true" iconDisplay="input" appendTo="body" styleClass="w-full input-like"></p-calendar>
+            </div>
+  
+            <div class="flex flex-col form-field">
+              <label class="field-label">تاريخ النهاية</label>
+              <p-calendar formControlName="toDate" dateFormat="dd/mm/yy" placeholder="اختر التاريخ" [showIcon]="true" iconDisplay="input" appendTo="body" styleClass="w-full input-like"></p-calendar>
+            </div>
+
+            <div class="flex flex-col form-field">
+              <label class="field-label">نوع الغرفة</label>
+              <p-dropdown
+                formControlName="roomTypeId"
+                [options]="roomTypesOptions()"
+                optionLabel="label"
+                optionValue="value"
+                placeholder="اختر نوع الغرفة"
+                [showClear]="true"
+                [filter]="true"
+                filterBy="label"
+                styleClass="w-full input-like rtl:flex-row-reverse"
+                appendTo="body"
+              ></p-dropdown>
+            </div>
+  
+            <div class="flex flex-col form-field">
+              <label class="field-label">نوع الوجبة</label>
+              <p-dropdown
+                formControlName="reservationMealId"
+                [options]="reservationMealsOptions()"
+                optionLabel="label"
+                optionValue="value"
+                placeholder="اختر نوع الوجبة"
+                [showClear]="true"
+                [filter]="true"
+                filterBy="label"
+                styleClass="w-full input-like rtl:flex-row-reverse"
+                appendTo="body"
+              ></p-dropdown>
+            </div>
+  
+            <div class="flex flex-col form-field">
+              <label class="field-label">الإطلالة</label>
+              <p-dropdown
+                formControlName="reservationViewId"
+                [options]="reservationViewsOptions()"
+                optionLabel="label"
+                optionValue="value"
+                placeholder="اختر الإطلالة"
+                [showClear]="true"
+                [filter]="true"
+                filterBy="label"
+                styleClass="w-full input-like rtl:flex-row-reverse"
+                appendTo="body"
+              ></p-dropdown>
+            </div>
+          </div>
+        </div>
+  
+        <!-- Action Buttons -->
+        <div class="flex flex-wrap gap-3 justify-center md:justify-end">
+          <button type="submit" pButton class="p-button-primary px-8 py-3 text-base"
+            label="Get Details" icon="pi pi-search" [loading]="loading()" [disabled]="loading()"></button>
+        </div>
+      </form>
+    </div>
+  
+    <!-- Results with Tabs -->
+    <div *ngIf="showResults()" class="bg-white rounded-lg shadow-sm p-4">
+      <!-- Tabs -->
+      <div class="tabs-wrap mb-4">
+        <button
+          *ngFor="let t of tabs"
+          type="button"
+          class="tab-btn"
+          [class.active]="activeTab() === t.key"
+          (click)="setTab(t.key)"
+        >
+          {{ t.label }}
+        </button>
+      </div>
+  
+      <!-- Table (نفس الأعمدة لكل التابات) -->
+      <p-table
+        [value]="currentData()"
+        [columns]="commonColumns"
+        [resizableColumns]="true"
+        columnResizeMode="expand"
+        dataKey="sn"
+        [rows]="10"
+        styleClass="p-datatable-gridlines"
+        [rowsPerPageOptions]="[10, 25, 50]"
+        [loading]="loading()"
+        [paginator]="true"
+        [responsive]="true"
+        [scrollable]="true"
+        scrollHeight="500px"
+      >
+        <ng-template pTemplate="header" let-columns>
+          <tr>
+            <th *ngFor="let col of columns" [pSortableColumn]="col.field">
+              {{ col.header }}
+              <p-sortIcon [field]="col.field"></p-sortIcon>
+            </th>
+          </tr>
+        </ng-template>
+  
+        <ng-template pTemplate="body" let-row let-columns="columns">
+          <tr>
+            <td *ngFor="let col of columns">
+              <ng-container *ngIf="isNumericField(col.field) && row[col.field] != null">
+                {{ row[col.field] | number:'1.2-2' }}
+              </ng-container>
+              <ng-container *ngIf="!isNumericField(col.field) || row[col.field] == null">
+                {{ row[col.field] }}
+              </ng-container>
+            </td>
+          </tr>
+        </ng-template>
+  
+        <ng-template pTemplate="emptymessage">
+          <tr>
+            <td [attr.colspan]="commonColumns.length" class="text-center py-8">
+              <div class="text-gray-500">
+                <i class="pi pi-search text-4xl mb-4"></i>
+                <p class="text-lg">لا توجد بيانات</p>
+              </div>
+            </td>
+          </tr>
+        </ng-template>
+      </p-table>
+    </div>
+  </div>
+  
+  <style>
+    /* Tabs start from the LEFT even in RTL */
+    .tabs-wrap {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      direction: ltr;              /* يضمن البدء من اليسار */
+      justify-content: flex-start; /* محاذاة يسار */
+    }
+    .tab-btn {
+      background: #cfefff;
+      color: #0b3a5b;
+      border: none;
+      padding: 10px 18px;
+      border-radius: 10px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: .15s ease;
+    }
+    .tab-btn.active {
+      background: #66c6ff;
+      color: #fff;
+    }
+    .tab-btn:hover { filter: brightness(0.97); }
+  </style>
+  

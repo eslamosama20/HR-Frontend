@@ -1,0 +1,132 @@
+/* Page Title & Header Bar Styling */
+.store-transfer-header {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+
+  .page-title {
+    color: #1e293b;
+    font-size: 1.25rem;
+    font-weight: 700;
+  }
+
+  .header-search-box {
+    input {
+      height: 36px;
+      font-size: 0.875rem;
+      border-radius: 6px;
+      border-color: #cbd5e1;
+      min-width: 200px;
+
+      &:focus {
+        border-color: #0284c7;
+        box-shadow: 0 0 0 2px rgba(2, 132, 199, 0.15);
+      }
+    }
+  }
+
+  .header-divider {
+    width: 1px;
+    height: 28px;
+    background-color: #e2e8f0;
+    margin: 0 0.25rem;
+  }
+
+  ::ng-deep .p-button.p-button-sm {
+    height: 36px;
+    font-size: 0.85rem;
+    padding: 0.35rem 0.75rem;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+
+    .p-button-icon {
+      font-size: 0.85rem;
+    }
+  }
+}
+
+.card {
+  border: none;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  border-radius: 8px;
+  background: white;
+  
+  .card-header {
+    padding: 1.5rem;
+    border-bottom: 1px solid #e9ecef;
+    background: white;
+    border-radius: 8px 8px 0 0;
+    
+    h3, h5 {
+      color: var(--primary-color, #3b82f6);
+      font-weight: 600;
+    }
+  }
+  
+  .card-body {
+    padding: 1.5rem;
+  }
+}
+
+:host {
+  --table-head-bg: var(--primary-color, #46bbeb);
+  --table-header-text: #ffffff;
+}
+
+:host ::ng-deep {
+  .p-datatable {
+    .p-datatable-thead > tr > th {
+      background: var(--table-head-bg) !important;
+      color: var(--table-header-text) !important;
+      font-weight: 600;
+      padding: 1rem;
+      text-align: center;
+    }
+    
+    .p-datatable-tbody > tr {
+      &:hover {
+        background-color: #f8fafc;
+      }
+      
+      > td {
+        padding: 0.75rem 1rem;
+        text-align: center;
+      }
+    }
+  }
+}
+
+/* Theme overrides (align with other tables) */
+$green-sels: ".light-green-mode", '[data-bs-theme="light-green"]', "body.light-green";
+@each $sel in $green-sels {
+  :host-context(#{$sel}) {
+    --table-head-bg: #c6ecea;
+    --table-header-text: #2e2a40;
+  }
+}
+
+$indigo-sels: ".light-indigo-mode", '[data-bs-theme="light-indigo"]', "body.light-indigo";
+@each $sel in $indigo-sels {
+  :host-context(#{$sel}) {
+    --table-head-bg: #c9d0f5;
+    --table-header-text: #5d6679;
+  }
+}
+
+$darkblue-sels: ".light-darkblue-mode", '[data-bs-theme="light-darkblue"]', "body.light-darkblue";
+@each $sel in $darkblue-sels {
+  :host-context(#{$sel}) {
+    --table-head-bg: #dad7ff;
+    --table-header-text: #191d29;
+  }
+}
+
+/* Larger table text (1.125rem) as requested */
+:host ::ng-deep .p-datatable .p-datatable-thead > tr > th,
+:host ::ng-deep .p-datatable .p-datatable-tbody > tr > td {
+  font-size: 1.125rem !important;
+}
+
+

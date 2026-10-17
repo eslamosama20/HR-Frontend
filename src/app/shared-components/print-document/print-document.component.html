@@ -1,0 +1,100 @@
+<div #printSection id="printSection" class="print-document">
+  <!-- Header Section -->
+
+  <!-- Table Section with Pagination Handling -->
+  <div class="w-full" #tableContainer>
+    <ng-container *ngFor="let page of paginatedData; let pageIndex = index">
+      <div class="flex  flex-col justify-start page relative">
+        <div class=" flex-none">
+          <div class="header" *ngIf="headerTemplate">
+            <ng-container *ngTemplateOutlet="headerTemplate"></ng-container>
+          </div>
+          <div class="section-separator" *ngIf="headerTemplate"></div>
+
+          <div class="body" *ngIf="bodyTemplate && pageIndex === 0">
+            <ng-container *ngTemplateOutlet="bodyTemplate"></ng-container>
+          </div>
+          <div class="section-separator" *ngIf="bodyTemplate && pageIndex === 0"></div>
+        </div>
+
+        <div class="w-full  flex items-start" *ngIf="data.length > 0">
+
+          <table #tableElement id="tableElement">
+            <thead>
+              <tr *ngIf="preTableHeaderTemplate">
+                <ng-container *ngTemplateOutlet="preTableHeaderTemplate"></ng-container>
+              </tr>
+              <tr>
+                <th *ngFor="let column of columns" class="text-center" [style.width]="column.width || 'auto'"
+                  [ngClass]="column.headerClass">
+                  {{ currentLanguage === 'ar' ? (column.header || column.label) : (column.headerEn || column.label) }}
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let row of page; let rowIndex = index">
+                <td *ngFor="let column of columns" [ngClass]="[
+                    currentLanguage === 'ar' ? 'text-right' : 'text-left',
+                    column.pipe === 'number' ? 'text-center number-cell' : '',
+                    column.cellClass || ''
+                  ]" [style.width]="column.width || 'auto'"><ng-container [ngSwitch]="column.pipe">
+                    <!-- Default case (no pipe) -->
+                    <ng-container *ngSwitchDefault>
+                      {{ row[column.field] }}
+                    </ng-container>
+
+                    <!-- Date Pipe -->
+                    <ng-container *ngSwitchCase="'date'">
+                      {{ row[column.field] | customDate: 'shortDate' }}
+                    </ng-container>
+
+                    <!-- Number Pipe -->
+                    <ng-container *ngSwitchCase="'number'">
+                      {{ applyFormatDecimal ? (row[column.field] | formatDecimal) : row[column.field] }}
+                    </ng-container>
+
+                    <!-- Add more cases for other custom pipes as needed -->
+                  </ng-container></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+          <div class="under-table w-full"
+            *ngIf="pageIndex === paginatedData.length - 1"
+            style="display: block; clear: both; width: 100% !important;">
+            
+            <!-- Summary Section: Takes full width 100% first -->
+            <div class="summary-section w-full" *ngIf="summaryTemplate" style="display: block; width: 100% !important; clear: both; margin-bottom: 10px;">
+              <ng-container *ngTemplateOutlet="summaryTemplate"></ng-container>
+            </div>
+
+            <!-- QR Section: Floats at the bottom next to the summary if needed, or simply block-level -->
+            <div class="qr-section" *ngIf="qrImageUrl" 
+                 [style.float]="currentLanguage === 'ar' ? 'right' : 'left'"
+                 style="display: block; width: 90px; height: 90px; margin-top: 5px; clear: both;">
+              <div class="qr-code-fixed-container" style="width: 80px; height: 80px; padding: 2px;">
+                <qrcode [cssClass]="'m-0'" [qrdata]="qrImageUrl" elementType="img" [width]="76"
+                  [errorCorrectionLevel]="'L'"></qrcode>
+              </div>
+            </div>
+            
+            <!-- Clear floats -->
+            <div style="clear: both; display: block; height: 1px;"></div>
+          </div>
+
+        <div class="flex-1">
+          <div class="footer  h-full" *ngIf="footerTemplate">
+            <ng-container *ngTemplateOutlet="footerTemplate"></ng-container>
+          </div>
+          <!-- <div class="page-indicator w-full text-center mt-4 mb-2">
+            <small>{{ 'DATA.PAGINATION_NAVIGATION_NO' | translate : {current:pageIndex + 1, total:paginatedData.length}
+              }}</small>
+          </div> -->
+          <!-- Page Separator (To simulate page break) — only between pages, never after the last one -->
+          <div class="page-break" *ngIf="pageIndex < paginatedData.length - 1"></div>
+        </div>
+      </div>
+    </ng-container>
+  </div>
+</div>

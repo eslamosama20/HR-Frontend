@@ -1,0 +1,216 @@
+<p-toast position="top-center"></p-toast>
+<p-confirmDialog></p-confirmDialog>
+
+<div class="profile-page">
+  <!-- Hero Header -->
+  <section class="hero">
+    <div class="hero-bg"></div>
+    <div class="hero-inner">
+      <div class="hero-avatar">
+        <p-avatar
+        [image]="avatarPreviewSignal() || (user?.profilePicture ? 'data:image/jpeg;base64,' + user.profilePicture : 'assets/media/avatars/blank.png')"
+        size="xlarge"
+        shape="circle"
+        styleClass="shadow-4"
+      ></p-avatar>
+
+
+
+        <label class="edit-avatar p-ripple">
+          <i class="pi pi-camera"></i>
+          <input type="file" accept="image/*" (change)="onAvatarSelected($event)" hidden />
+        </label>
+      </div>
+
+      <div class="hero-info">
+        <h1 class="name">{{ fullName || 'المستخدم' }}</h1>
+        <p class="hint">قم بتحديث بياناتك وصورتك الشخصية من هنا</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Content -->
+  <section class="content">
+    <!-- Vertical Tabs (responsive) -->
+    <aside class="tabs">
+      <button
+        class="tab-btn"
+        [class.active]="activeTab === 'profile'"
+        (click)="setTab('profile')"
+      >
+        <i class="pi pi-user-edit"></i>
+        <span>الملف الشخصي</span>
+      </button>
+
+      <button
+        class="tab-btn"
+        [class.active]="activeTab === 'password'"
+        (click)="setTab('password')"
+      >
+        <i class="pi pi-key"></i>
+        <span>تغيير كلمة المرور</span>
+      </button>
+    </aside>
+
+    <!-- Panels -->
+    <div class="panel">
+      <!-- PROFILE TAB -->
+      <div *ngIf="activeTab === 'profile'" class="panel-inner">
+        <h2 class="panel-title">
+          <i class="pi pi-user-edit mr-2"></i> تعديل البيانات الشخصية
+        </h2>
+
+        <div class="profile-grid">
+          <!-- Avatar big preview (secondary) -->
+          <div class="avatar-card">
+            <div class="avatar-large">
+              <p-avatar
+              [image]="avatarPreviewSignal() || (user?.profilePicture ? 'data:image/jpeg;base64,' + user.profilePicture : 'assets/media/avatars/blank.png')"
+              size="xlarge"
+              shape="circle"
+              styleClass="shadow-3"
+            ></p-avatar>
+
+              <label class="upload-inline p-ripple">
+                <i class="pi pi-upload"></i>
+                <span>تغيير الصورة</span>
+                <input type="file" accept="image/*" (change)="onAvatarSelected($event)" hidden />
+              </label>
+              <small class="muted">PNG / JPG / WEBP حتى 2MB</small>
+            </div>
+          </div>
+
+          <!-- Form -->
+          <form [formGroup]="profileForm" (ngSubmit)="saveProfile()" class="form-grid">
+            <!-- firstName -->
+            <div class="field">
+              <label>الاسم الأول</label>
+              <input pInputText formControlName="firstName" placeholder="الاسم الأول" />
+              <small class="p-error" *ngIf="fpf.firstName.touched && fpf.firstName.invalid">
+                الاسم الأول مطلوب
+              </small>
+            </div>
+
+            <!-- middleName -->
+            <div class="field">
+              <label>الاسم الأوسط</label>
+              <input pInputText formControlName="middleName" placeholder="الاسم الأوسط" />
+            </div>
+
+            <!-- lastName -->
+            <div class="field">
+              <label>الاسم الأخير</label>
+              <input pInputText formControlName="lastName" placeholder="الاسم الأخير" />
+              <small class="p-error" *ngIf="fpf.lastName.touched && fpf.lastName.invalid">
+                الاسم الأخير مطلوب
+              </small>
+            </div>
+
+            <!-- phoneNumber (جديد) -->
+            <div class="field">
+              <label>رقم الهاتف</label>
+              <input
+                pInputText
+                formControlName="phoneNumber"
+                placeholder="مثال: 05xxxxxxxx"
+                inputmode="tel"
+                autocomplete="tel"
+              />
+              <small class="p-error" *ngIf="fpf.phoneNumber?.touched && fpf.phoneNumber?.invalid">
+                رقم الهاتف غير صالح
+              </small>
+            </div>
+
+            <!-- dateOfBirth (جديد) -->
+            <div class="field">
+              <label>تاريخ الميلاد</label>
+              <input
+                pInputText
+                type="date"
+                formControlName="dateOfBirth"
+                placeholder="dd/mm/yyyy"
+                min="1900-01-01"
+                [max]="today"
+              />
+              <small class="muted">سيتم تحويل التاريخ تلقائيًا إلى صيغة ISO عند الإرسال</small>
+            </div>
+
+            <!-- profilePicture كقيمة سترسل مع PATCH (اختياري يظهر للشفافية) -->
+            <!-- في العادة هنملأه من الصورة المختارة (Base64) داخل TS، لذلك نخليه hidden -->
+            <input type="hidden" formControlName="profilePicture" />
+
+            <div class="actions">
+              <button
+                pButton
+                type="submit"
+                label="حفظ التغييرات"
+                [loading]="savingProfile"
+                class="btn-primary-lg"
+              ></button>
+            </div>
+          </form>
+        </div>
+      </div>
+
+      <!-- PASSWORD TAB -->
+   <!-- PASSWORD TAB -->
+<div *ngIf="activeTab === 'password'" class="panel-inner">
+  <h2 class="panel-title">
+    <i class="pi pi-key mr-2"></i> تغيير كلمة المرور
+  </h2>
+
+  <form [formGroup]="passwordForm" (ngSubmit)="confirmChangePassword()" class="form-grid slim">
+    <div class="field">
+      <label>كلمة المرور الحالية</label>
+      <input pInputText type="password" formControlName="currentPassword" placeholder="********" [disabled]="isAdminEmail" />
+      <small class="p-error" *ngIf="pwf.currentPassword.touched && pwf.currentPassword.invalid">
+        كلمة المرور الحالية مطلوبة
+      </small>
+    </div>
+
+    <div class="field">
+      <label>كلمة المرور الجديدة</label>
+      <p-password
+        formControlName="newPassword"
+        [toggleMask]="true"
+        [feedback]="true"
+        placeholder="********"
+        styleClass="w-full"
+        [style]="{ width: '100%' }"
+        [inputStyle]="{ width: '100%' }"
+        promptLabel="أدخل كلمة مرور"
+        weakLabel="ضعيفة"
+        mediumLabel="متوسطة"
+        strongLabel="قوية"
+        [disabled]="isAdminEmail"
+      ></p-password>
+      <small class="muted">٨ أحرف على الأقل</small>
+      <small class="p-error" *ngIf="pwf.newPassword.touched && pwf.newPassword.invalid">
+        كلمة المرور الجديدة غير صالحة
+      </small>
+    </div>
+
+    <div class="field">
+      <label>تأكيد كلمة المرور</label>
+      <input pInputText type="password" formControlName="confirmPassword" placeholder="********" [disabled]="isAdminEmail" />
+      <small class="p-error" *ngIf="pwf.confirmPassword.touched && pwf.confirmPassword.errors?.['mismatch']">
+        تأكيد كلمة المرور غير مطابق
+      </small>
+    </div>
+
+    <div class="actions">
+      <button
+        pButton
+        type="submit"
+        label="تغيير كلمة المرور"
+        [loading]="changingPassword"
+        class="btn-danger-lg"
+        [disabled]="isAdminEmail"
+      ></button>
+    </div>
+  </form>
+</div>
+
+    </div>
+  </section>
+</div>

@@ -1,0 +1,310 @@
+<div class="fixed inset-0 bg-gray-500 bg-opacity-75 flex items-center justify-center z-50" *ngIf="loading">
+  <i class="pi pi-spin pi-spinner" style="font-size: 2rem"></i>
+</div>
+<div class="w-full" dir="rtl" *ngIf="invoice && !loading" id="invoiceSection">
+  <div class="w-full">
+    <div class="card border-0">
+      <!-- Back Button and Action Menu Row -->
+      <div class="no-print d-flex align-items-center justify-content-between px-1 py-1 gap-1">
+        <app-detail-actions-menu
+          class="flex-grow-1"
+          [showPrint]="true"
+          [showEdit]="true"
+          [showCopy]="false"
+          [showDelete]="true"
+          [showCreateEntry]="false"
+          [navigationControls]="navigationControls"
+          [customButtons]="customButtons"
+          [documentTitle]="'INVOICE.QUOTATION' | translate"
+          (onPrint)="onPrintClick()"
+          (onEdit)="onEditClick()"
+          (onDelete)="onDeleteClick()">
+        </app-detail-actions-menu>
+        <app-back-button></app-back-button>
+      </div>
+
+
+
+      <div class="card-header p-2">
+        <h4 class="pt-1 d-inline-block" data-abc="true">
+          {{ ("INVOICE.QUOTATION"|translate) }}
+        </h4>
+        <div class="float-right">
+          <h4 class="mb-0">{{"INVOICE.QUOTATION"|translate}} {{invoice.invoiceNo}}</h4>
+        </div>
+      </div>
+
+      <div class="card-body p-2">
+        <div class="row mb-2">
+          <div class="col-sm-6">
+            <div class="text-dark mb-1">{{"INVOICE.QUOTATION_NO"|translate}} :{{invoice.invoiceNo}}</div>
+            <div class="text-dark mb-1">{{"INVOICE.QUOTATION" |translate}}</div>
+            <div class="text-dark mb-1">{{"INVOICE.CLIENTNAME"|translate}} : {{activeLanguage=="en"?invoice.customerProfile.englishName:invoice.customerProfile.arabicName}}</div>
+            <div class="text-dark mb-1" *ngIf="invoice.customerDepartmentId">
+              {{ activeLanguage == 'ar' ? 'الإدارة' : 'Department' }} : {{ getDepartmentName() }}
+            </div>
+            <div class="text-dark mb-1">{{"INVOICE.DATE"|translate}} : {{invoice.issueDate | customDate:'yyyy-MM-dd'}}</div>
+          </div>
+          <div class="col-sm-6">
+            <div class="text-dark mb-1" *ngIf="invoice.customerProfile.taxNumber">{{"INVOICE.TAXNUMBER"|translate}} : {{invoice.customerProfile.taxNumber}}</div>
+            <div class="text-dark mb-1" *ngIf="invoice.customerProfile.contactNumber">{{"INVOICE.PHONENO"|translate}} : {{invoice.customerProfile.contactNumber}}</div>
+          </div>
+        </div>
+        
+        <div class="table-responsive-sm">
+          <table class="table table-bordered mb-2">
+            <thead class="sales-header-bg text-white">
+              <tr>
+                <th class="w-16"></th>
+                <th class="text-center">{{"INVOICE.ITEMNO"|translate}}</th>
+                <th class="text-center">{{"INVOICE.ITEMNAME"|translate}}</th>
+                <th class="text-center">{{"INVOICE.UNIT"|translate}}</th>
+                <th class="text-center">{{"INVOICE.QUANTITY"|translate}}</th>
+                <th class="text-center">{{"INVOICE.PRICE"|translate}}</th>
+                <th class="text-center">{{"INVOICE.TOTAL_PRE_TAX"|translate}}</th>
+                <th class="text-center">{{"INVOICE.TAX"|translate}}</th>
+                <th class="text-center">{{"INVOICE.TOTAL"|translate}}</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let item of invoice.saleItems; let i = index">
+                <td class="center text-center">{{i + 1}}</td>
+                <td class="center text-center">{{item.mainSalesClass.referenceCode}}</td>
+                <td class="center text-center">{{item.mainSalesClass.referenceCode}} - {{activeLanguage=="en"?item.mainSalesClass.englishName:item.mainSalesClass.arabicName}}</td>
+                <td class="center text-center">{{activeLanguage=="en"?item.mainSalesClass.measurementUnit.englishSymbol:item.mainSalesClass.measurementUnit.arabicSymbol}}</td>
+                <td class="text-center">{{item.quantity}}</td>
+                <td class="text-center">{{item.price}}</td>
+                <td class="text-center">{{ (item.quantity * item.price) }}</td>
+                <td class="right">{{item.taxAmount}}</td>
+                <td class="text-center">{{item.totalPrice}}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        
+        <div class="row">
+          <div class="col-lg-4 col-sm-5"></div>
+          <div class="col-lg-4 col-sm-5 ml-auto">
+            <table class="table table-clear mb-1">
+              <tbody>
+                <tr>
+                  <td class="left">
+                    <strong class="text-dark">{{"INVOICE.TOTAL"|translate}} : </strong>
+                  </td>
+                  <td class="right">{{invoice.netPrice}}</td>
+                </tr>
+                <tr>
+                  <td class="left">
+                    <strong class="text-dark">{{"INVOICE.ADDEDTAX"|translate}} :</strong>
+                  </td>
+                  <td class="right">{{invoice.taxAmount}}</td>
+                </tr>
+                <tr>
+                  <td class="left">
+                    <strong class="text-dark">{{"INVOICE.TOTALWITHTAX"|translate}} :</strong>
+                  </td>
+                  <td class="right">
+                    <strong class="text-dark">{{invoice.totalPrice}}</strong>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+      <div class="card-footer p-1"></div>
+    </div>
+  </div>
+</div>
+
+<!-- Confirmation Dialog -->
+<p-confirmDialog></p-confirmDialog>
+
+<!-- Toast Messages -->
+<p-toast></p-toast>
+
+<ng-container *ngIf="!loading">
+  <div class="absolute top-0 left-[-100%]" *ngIf="docData && docColumns.length > 0">
+    <app-print-document
+      #printComponent
+      [headerTemplate]="headerTemplate"
+      [footerTemplate]="footerTemplate"
+      [summaryTemplate]="summaryTemplate"
+      [data]="docData"
+      [columns]="docColumns"
+      [showStamp]="showStamp">
+    </app-print-document>
+
+    <!-- Header Template -->
+    <ng-template #headerTemplate>
+      <div class="w-full flex flex-col">
+        <ng-container class="container m-0 p-0" *ngIf="companyDetails">
+          <div class="py-1 px-1 flex justify-between">
+            <div class="w-full ltr:text-left text-right">
+              <p class="font-semibold text-lg m-0 p-0">
+                {{companyDetails?.arabicName}}
+              </p>
+              <p class="font-semibold text-lg m-0 p-0" *ngIf="companyDetails?.city">
+                {{companyDetails?.city}}
+              </p>
+              <p class="font-semibold text-lg m-0 p-0" *ngIf="companyDetails?.phone">
+                {{companyDetails?.phone}}
+              </p>
+              <p class="font-semibold text-lg m-0 p-0">
+                الرقم الضريبي: {{companyDetails?.taxNumber}}
+              </p>
+            </div>
+            <div class="w-full flex justify-center items-center">
+              <img [src]="companyDetails?.logoUrl || ''" alt="logo" width="100" height="100">
+            </div>
+            <div class="w-full text-left ltr:text-right">
+              <p class="font-semibold text-lg m-0 p-0">
+                {{companyDetails?.englishName}}
+              </p>
+              <p class="font-semibold text-lg m-0 p-0" *ngIf="companyDetails?.city">
+                {{companyDetails?.city}}
+              </p>
+              <p class="font-semibold text-lg m-0 p-0" *ngIf="companyDetails?.phone">
+                {{companyDetails?.phone}}
+              </p>
+              <p class="font-semibold text-lg m-0 p-0">
+                TAX No: {{companyDetails?.taxNumber}}
+              </p>
+            </div>
+          </div>
+        </ng-container>
+        
+        <div class="flex justify-between items-center w-full text-center border border-slate-900">
+          <div class="w-full text-end ltr:text-start">
+            <p class="font-semibold text-lg m-0">{{"INVOICE.DATE"| translate}}: {{invoice.issueDate | customDate:'yyyy-MM-dd'}}</p>
+          </div>
+          <div class="w-full flex justify-center">
+            <h2 class="text-2xl font-bold">{{ ("INVOICE.QUOTATION"|translate) }}</h2>
+          </div>
+          <div class="w-full">
+            <p class="font-semibold text-lg m-0 text-start ltr:text-end">
+              {{"INVOICE.QUOTATION_NO"|translate}}: {{invoice.invoiceNo}}
+            </p>
+          </div>
+        </div>
+
+        <div class="flex justify-between py-4 items-center">
+          <p class="m-0 p-0">{{"INVOICE.CLIENTNAME"|translate}}: {{activeLanguage=="en"?invoice.customerProfile.englishName:invoice.customerProfile.arabicName}}</p>
+          <p *ngIf="invoice.customerProfile.taxNumber" class="m-0 p-0"> {{ "INVOICE.TAXNUMBER"| translate}}: {{invoice.customerProfile.taxNumber}}</p>
+        </div>
+      </div>
+    </ng-template>
+
+    <!-- Summary Template -->
+    <ng-template #summaryTemplate>
+      <div class="w-full flex justify-between items-start gap-4" style="page-break-inside: avoid; break-inside: avoid; margin-top: 15px;">
+        <!-- Left Section: Company Terms & Conditions and Bank Accounts -->
+        <div class="flex-grow text-sm" *ngIf="anyPolicyChecked || anyBankChecked"
+             [style.text-align]="activeLanguage === 'ar' ? 'right' : 'left'"
+             style="font-size: 0.88rem; line-height: 1.4; color: #000 !important;">
+             
+          <!-- Terms and Conditions Block -->
+          <div *ngIf="anyPolicyChecked" class="mb-3">
+            <strong class="text-dark mb-1 d-block font-bold" style="text-align: inherit; color: #000 !important; font-size: 0.92rem;">
+              {{ activeLanguage === 'ar' ? 'الشروط والأحكام:' : 'Terms & Conditions:' }}
+            </strong>
+            <ul class="m-0 p-0 w-full" 
+                [style.direction]="activeLanguage === 'ar' ? 'rtl' : 'ltr'"
+                [style.text-align]="activeLanguage === 'ar' ? 'right' : 'left'"
+                style="list-style: none; color: #000 !important; font-weight: 500; display: block !important;">
+              <ng-container *ngFor="let policy of selectedPolicies">
+                <li *ngIf="policy.checked" class="mb-1" style="text-align: inherit; color: #000 !important; display: block !important; width: 100% !important; clear: both !important; white-space: pre-line !important;">
+                  {{ activeLanguage === 'ar' ? policy.name : policy.nameEn }}
+                </li>
+              </ng-container>
+            </ul>
+          </div>
+
+          <!-- Bank Accounts Block -->
+          <div *ngIf="anyBankChecked">
+            <strong class="text-dark mb-1 d-block font-bold" style="text-align: inherit; color: #000 !important; font-size: 0.92rem;">
+              {{ activeLanguage === 'ar' ? 'الحسابات البنكية:' : 'Bank Accounts:' }}
+            </strong>
+            <ul class="m-0 p-0 w-full"
+                [style.direction]="activeLanguage === 'ar' ? 'rtl' : 'ltr'"
+                [style.text-align]="activeLanguage === 'ar' ? 'right' : 'left'"
+                style="list-style: none; color: #000 !important; font-weight: 500; display: block !important;">
+              <ng-container *ngFor="let bank of selectedBanks">
+                <li *ngIf="bank.checked" class="mb-1" style="text-align: inherit; color: #000 !important; display: block !important; width: 100% !important; clear: both !important;">
+                  <div style="display: flex; flex-wrap: wrap; gap: 4px 8px; align-items: center; width: 100%;">
+                    <span>{{ activeLanguage === 'ar' ? 'اسم الحساب: ' : 'Account Name: ' }}<span class="font-bold" style="color: #000 !important;">{{ bank.accountName }}</span></span>
+                    <span>-</span>
+                    <span>{{ activeLanguage === 'ar' ? bank.bankName : bank.bankNameEn }} : <span class="font-bold" style="color: #000 !important;">{{ bank.accountNumber }}</span></span>
+                    <span style="white-space: nowrap;">(IBAN: <span class="font-bold" style="color: #000 !important;">{{ bank.iban }}</span>)</span>
+                    <span *ngIf="bank.swiftCode" style="white-space: nowrap;">(SWIFT: <span class="font-bold" style="color: #000 !important;">{{ bank.swiftCode }}</span>)</span>
+                  </div>
+                </li>
+              </ng-container>
+            </ul>
+          </div>
+        </div>
+
+        <!-- Spacer block shown only when NEITHER policies NOR bank accounts are checked -->
+        <div class="flex-grow animate-fade-in" *ngIf="!anyPolicyChecked && !anyBankChecked"></div>
+
+        <!-- Right Section: Original Totals Table -->
+        <div style="width: 280px; flex-shrink: 0;">
+          <table class="w-full border border-gray-900">
+            <tbody>
+              <tr>
+                <td class="p-2 border border-gray-900">
+                  <strong class="text-dark">{{"INVOICE.TOTAL"|translate}}</strong>
+                </td>
+                <td class="p-2 text-center border border-gray-900">{{invoice.netPrice}}</td>
+              </tr>
+              <tr>
+                <td class="p-2 border border-gray-900">
+                  <strong class="text-dark"> {{"INVOICE.ADDEDTAX"|translate}}</strong>
+                </td>
+                <td class="p-2 text-center border border-gray-900">{{invoice.taxAmount}}</td>
+              </tr>
+              <tr>
+                <td class="p-2 border border-gray-900">
+                  <strong class="text-dark"> {{"INVOICE.TOTALWITHTAX"|translate}}</strong>
+                </td>
+                <td class="p-2 text-center border border-gray-900">
+                  <strong class="text-dark">{{invoice.totalPrice}}</strong>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </ng-template>
+
+    <!-- Footer Template -->
+    <ng-template #footerTemplate>
+      <div class="w-full flex flex-col gap-4">
+        <div *ngIf="showCompanySignature || showCustomerSignature" class="w-full border border-slate-900 rounded-2xl flex justify-between p-2">
+          <div *ngIf="showCompanySignature" [style.width]="showCustomerSignature ? '45%' : '100%'" class="h-24 text-center font-semibold text-sm">
+            <p class="m-0 p-0 text-slate-800" style="font-size: 0.95rem;">
+              {{activeLanguage=='en'?companyDetails?.englishName:companyDetails?.arabicName}}
+            </p>
+            <p class="m-0 p-0 w-full ltr:text-left rtl:text-right text-xs" style="font-size: 0.9rem;">
+              {{ "INVOICE.SIGNATURE" | translate }}: <span class="text-xs font-light">...................................................................................................</span>
+            </p>
+            <div *ngIf="showStamp && companyDetails?.stampUrl" class="mt-1 flex justify-center">
+              <img [src]="companyDetails?.stampUrl || ''" alt="company-stamp" width="90" height="90">
+            </div>
+          </div>
+          <div *ngIf="showCustomerSignature" [style.width]="showCompanySignature ? '45%' : '100%'" class="h-24 text-center font-semibold text-sm">
+            <p class="m-0 p-0 text-slate-800" style="font-size: 0.95rem;">
+              {{activeLanguage=='en'?invoice?.customerProfile?.englishName:invoice?.customerProfile?.arabicName}}
+            </p>
+            <p class="m-0 p-0 w-full ltr:text-left rtl:text-right text-xs" style="font-size: 0.9rem;">
+              {{ "INVOICE.SIGNATURE" | translate }}: <span class="text-xs font-light">...................................................................................................</span>
+            </p>
+          </div>
+        </div>
+        <div class="address-footer absolute left-0 right-0 border border-slate-900 rounded-2xl flex justify-center py-2 text-center text-sm font-medium" style="bottom: 0;">
+          {{activeLanguage=='ar'?companyDetails?.getFullArabicAddress():companyDetails?.getFullAddress()}}
+        </div>
+      </div>
+    </ng-template>
+  </div>
+</ng-container>

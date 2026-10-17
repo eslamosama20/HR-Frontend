@@ -1,0 +1,29 @@
+<ng-container *ngIf="companyDetails">
+  <div [ngClass]="{'bg-slate-100': theme === 'light', 'bg-slate-800': theme === 'dark'}"
+       class="container w-full h-full rounded=xl shadow-lg my-6 p-4"
+  >
+    <div class="flex flex-col items-center justify-center h-full w-full">
+      <div class="w-full h-full flex  items-center justify-center relative">
+        <button (click)="goBack()" class="absolute top-0 right-0 btn btn-primary btn-sm">{{ 'DATA.BACK_BUTTON' | translate }}</button>
+        <h1 class="text-2xl font-bold text-gray-800 mb-4 mx-auto">{{ 'DATA.COMPANY_DETAILS' | translate }}</h1>
+      </div>
+      <div class="w-full h-full flex  justify-center items-center ">
+        <div class="ml-18 p-4 border-2 rounded-lg mx-auto">
+          <div class="flex flex-col items-center justify-center">
+            <p class="text-xl font-bold text-gray-800">{{ activeLanguage === 'en' ? companyDetails.englishName : companyDetails.arabicName }} </p>
+            <span class="text-gray-600">{{ 'DATA.NUMBER_OF_BRANCHES' | translate }}
+              : {{ companyDetails.branchDetails.length ?? 0 }}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+  <app-branch-details [companyDetails]="companyDetails"
+                      [loadCompanyDetails]="loadCompanyDetails.bind(this)"></app-branch-details>
+</ng-container>
+<div *ngIf="notFound">
+  <h3>{{ 'DATA.COMPANY_NOT_FOUND' | translate }}</h3>
+  <p>{{ 'DATA.COMPANY_NOT_FOUND_MESSAGE' | translate }}</p>
+  <button (click)="goBack()" class="btn btn-primary btn-sm">{{ 'DATA.BACK_BUTTON' | translate }}</button>
+</div>

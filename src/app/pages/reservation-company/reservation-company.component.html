@@ -1,0 +1,315 @@
+<p-table #dt1 [value]="reservationCompanies" [columns]="columns" [resizableColumns]="true" columnResizeMode="expand"
+  dataKey="id" [rows]="pageSize" styleClass="p-datatable-gridlines scroller custom-paginator-table"
+  [rowsPerPageOptions]="[10, 25, 50]" [loading]="loading" [paginator]="true"
+  [paginatorLocale]="activeLanguage === 'en' ? 'en-US' : 'ar-SA'" [sortField]="'createdAt'" [sortOrder]="-1"
+  [showCurrentPageReport]="true"
+  [totalRecords]="totalRecords"
+  [lazy]="true"
+  (onLazyLoad)="loadReservationCompanyLazy($event)"
+  currentPageReportTemplate="اجمالي {{ totalRecords ? totalRecords : '' }}"
+  paginatorTemplate="CurrentPageReport PrevPageLink PageLinks NextPageLink RowsPerPageDropdown">
+  <ng-template pTemplate="caption">
+    <div class="flex rtl:flex-row-reverse justify-between gap-2">
+      <div class="flex gap-2">
+        <p-button styleClass="rounded-md w-auto text-nowrap" icon="pi pi-external-link"
+          [label]="translate.instant('FINANCE.EXPORT')" (onClick)="exportExcel()" />
+        <p-button *ngIf="hasPermission('System.DevOnly.SyncLegacyReservationCompanies')" styleClass="rounded-md w-auto text-nowrap p-button-warning" icon="pi pi-sync"
+          [label]="'FINANCE.SYNC_LEGACY_RESERVATION_COMPANIES' | translate" [loading]="isSyncingLegacyCompanies"
+          (onClick)="syncLegacyCompanies()" />
+        <p-button styleClass="rounded-md w-auto text-nowrap	" [label]="translate.instant('FINANCE.CLEAR_FILTERS')"
+          [outlined]="true" icon="pi pi-filter-slash" [iconPos]="activeLanguage === 'ar' ? 'right' : 'left'"
+          (onClick)="clear(dt1)" />
+        <p-button *ngIf="hasPermission(PERMISSIONS.ReservationCompany.Create)" styleClass="rounded-md w-auto text-nowrap	"
+          [label]="translate.instant('FINANCE.ADD_RESERVATION_COMPANY')" [outlined]="true" icon="pi pi-plus"
+          (onClick)="showAddReservationCompanyDialog()" />
+      </div>
+
+      <ng-container *ngIf="reservationCompanies.length === 0 && !loading">
+        <div class="flex justify-center items-center w-full">
+          <p class="text-center font-semibold text-xl w-full flex justify-center">
+            {{ "FINANCE.NO_ROOM_TYPE" | translate }}
+          </p>
+        </div>
+      </ng-container>
+      <span class="p-input-icon-left ml-auto">
+        <i class="pi pi-search"></i>
+        <input pInputText type="text" [(ngModel)]="searchValue" (input)="filter(dt1, $event)"
+          [placeholder]="translate.instant('FINANCE.SEARCH')" />
+      </span>
+    </div>
+  </ng-template>
+  <ng-template pTemplate="header" let-columns>
+    <tr>
+      <th style="width: 3rem" class="text-center">
+        #
+      </th>
+      <th style="min-width: fit-content" *ngFor="let column of columns" pResizableColumn
+        [pSortableColumn]="column.field">
+        <div class="flex align-items-center">
+          {{ column.header }}
+          <p-sortIcon [field]="column.field" class="mx-1 "></p-sortIcon>
+          <p-columnFilter *ngIf="column.filter" [type]="column.filterType" [field]="column.field" display="menu" />
+        </div>
+      </th>
+      <th style="min-width: fit-content">
+        <div class="flex align-items-center text-base">
+          {{ "FINANCE.ACTIONS" | translate }}
+        </div>
+      </th>
+    </tr>
+  </ng-template>
+  <ng-template pTemplate="body" let-Entry let-rowIndex="rowIndex">
+    <tr *ngIf="reservationCompanies.length > 0" class="hover:bg-gray-200 cursor-pointer transition-colors duration-200"
+      (click)="showAddReservationCompanyDialog(Entry)" (contextmenu)="openCompanyPanel($event, opCompanyPanel, Entry)">
+      <td class="text-sm text-center">
+        {{ (dt1?.first || 0) + rowIndex + 1 }}
+      </td>
+      <td class="text-lg rtl:text-right">
+        {{ Entry.arabicName }}
+      </td>
+      <td class="text-lg rtl:text-right">
+        {{ Entry.englishName }}
+      </td>
+      <td class="text-lg text-center">
+        <i class="pi" [ngClass]="{
+            'text-green-500 pi-check-circle': Entry.isConnected,
+            'text-red-500 pi-times-circle': !Entry.isConnected
+          }"></i>
+      </td>
+      <td class="text-lg rtl:text-right">
+        {{
+        Entry.createdAt ? (Entry.createdAt | customDate : "yyyy/MM/dd" : "": "ar-SA"): '-'
+        }}
+      </td>
+      <td class="text-lg rtl:text-right flex gap-2">
+        <ng-container *ngIf="hasPermission(PERMISSIONS.ReservationCompany.Update) || hasPermission(PERMISSIONS.ReservationCompany.Delete)">
+
+          <p-button [text]="true" (onClick)="openCompanyPanel($event, opCompanyPanel, Entry); $event.stopPropagation()"
+            severity="secondary" styleClass="p-button-outlined rounded-xl">
+            <ng-template pTemplate="icon">
+              <i class="pi pi-cog text-xl"></i>
+            </ng-template>
+          </p-button>
+        </ng-container>
+      </td>
+    </tr>
+  </ng-template>
+</p-table>
+<p-overlayPanel #opCompanyPanel appendTo="body" [dismissable]="true">
+  <div class="flex flex-column gap-3 w-auto p-1">
+    <p-button *ngIf="hasPermission(PERMISSIONS.ReservationCompany.Update)" icon="pi pi-pencil" class="p-button-secondary" [label]="translate.instant('FINANCE.EDIT')"
+      styleClass="rounded-lg p-button-secondary w-full"
+      (onClick)="showAddReservationCompanyDialog(selectedReservationCompany); opCompanyPanel.hide()"></p-button>
+
+    <p-button *ngIf="!isFrontal && !selectedReservationCompany?.isFrontal" icon="pi pi-send" class="p-button-info"
+      label="إرسال للواجهة" styleClass="rounded-lg p-button-info w-full"
+      (onClick)="sendToFrontal(selectedReservationCompany); opCompanyPanel.hide()"></p-button>
+
+    <p-button *ngIf="hasPermission(PERMISSIONS.ReservationCompany.Delete)" icon="pi pi-trash" class="p-button-danger" [label]="translate.instant('FINANCE.DELETE')"
+      styleClass="rounded-lg p-button-danger w-full"
+      (onClick)="confirmReservationCompanyDeletion($event, selectedReservationCompany); opCompanyPanel.hide()"></p-button>
+  </div>
+</p-overlayPanel>
+<p-dialog [header]="
+    reservationCompanyFormGroup.controls.id.value
+      ? translate.instant('FINANCE.RESERVATION_COMPANIES')
+      : translate.instant('FINANCE.ADD_RESERVATION_COMPANY')
+  " [(visible)]="reservationCompaniesVisibleDialogVisible"
+  [style]="{ width: '75vw', maxWidth: '1200px', maxHeight: '95vh' }"
+  [contentStyle]="{ maxHeight: 'calc(95vh - 110px)' }"
+  [breakpoints]="{ '960px': '85vw', '640px': '95vw' }"
+  [modal]="true" [dismissableMask]="true" [closeOnEscape]="true" [maximizable]="true"
+  styleClass="reservation-company-dialog"
+  (onHide)="closeReservationCompanyDialog()">
+  <form [formGroup]="reservationCompanyFormGroup" (ngSubmit)="saveExpesnseCenter()"
+    class="grid grid-cols-1 md:grid-cols-3 gap-x-4 gap-y-2.5 p-1 py-1" novalidate>
+    <!-- الاسم بالعربية -->
+    <div class="field">
+      <label for="arabicName" class="block text-sm font-semibold mb-1">
+        {{ translate.instant("FINANCE.ARABIC_NAME") }} <span class="text-red-500">*</span>
+      </label>
+      <input pInputText type="text" id="arabicName" formControlName="arabicName" class="input w-full" />
+      <small class="text-red-500 p-error block text-xs"
+        *ngIf="reservationCompanyFormGroup.controls.arabicName.invalid && reservationCompanyFormGroup.controls.arabicName.touched">
+        {{ translate.instant("FINANCE.ARABIC_NAME_REQUIRED") }}
+      </small>
+    </div>
+
+    <!-- الاسم بالإنجليزية -->
+    <div class="field">
+      <label for="englishName" class="block text-sm font-semibold mb-1">
+        {{ translate.instant("FINANCE.ENGLISH_NAME") }} <span class="text-red-500">*</span>
+      </label>
+      <input pInputText type="text" id="englishName" formControlName="englishName" class="input w-full" />
+      <small class="text-red-500 p-error block text-xs"
+        *ngIf="reservationCompanyFormGroup.controls.englishName.invalid && reservationCompanyFormGroup.controls.englishName.touched">
+        {{ translate.instant("FINANCE.ENGLISH_NAME_REQUIRED") }}
+      </small>
+    </div>
+
+    <!-- رقم التواصل -->
+    <div class="field">
+      <label for="contactNumber" class="block text-sm font-semibold mb-1">{{ translate.instant("FINANCE.CONTACT_NUMBER") }}</label>
+      <input pInputText type="text" id="contactNumber" formControlName="contactNumber" class="input w-full" />
+    </div>
+
+    <!-- البريد الإلكتروني -->
+    <div class="field">
+      <label for="email" class="block text-sm font-semibold mb-1">{{ translate.instant("FINANCE.EMAIL") }}</label>
+      <input pInputText type="email" id="email" formControlName="email" class="input w-full" />
+      <small class="text-red-500 p-error block text-xs"
+        *ngIf="reservationCompanyFormGroup.controls.email.invalid && reservationCompanyFormGroup.controls.email.touched">
+        البريد الإلكتروني غير صالح
+      </small>
+    </div>
+
+
+    <!-- اسم البنك -->
+    <div class="field">
+      <label for="bankName" class="block text-sm font-semibold mb-1">{{ translate.instant("FINANCE.BANK_NAME") }}</label>
+      <input pInputText type="text" id="bankName" formControlName="bankName" class="input w-full" />
+    </div>
+
+    <!-- رقم الحساب البنكي -->
+    <div class="field">
+      <label for="bankAccountNumber" class="block text-sm font-semibold mb-1">{{ translate.instant("FINANCE.BANK_ACCOUNT_NUMBER") }}</label>
+      <input pInputText type="text" id="bankAccountNumber" formControlName="bankAccountNumber" class="input w-full" />
+    </div>
+
+    <!-- رقم الآيبان -->
+    <div class="field">
+      <label for="iban" class="block text-sm font-semibold mb-1">{{ translate.instant("FINANCE.IBAN") }}</label>
+      <input pInputText type="text" id="iban" formControlName="iban" class="input w-full" />
+    </div>
+
+    <!-- الرقم الضريبي -->
+    <div class="field">
+      <label for="taxNumber" class="block text-sm font-semibold mb-1">{{ translate.instant("FINANCE.TAX_NUMBER") }}</label>
+      <input pInputText type="text" id="taxNumber" formControlName="taxNumber" class="input w-full" />
+    </div>
+
+    <!-- الشارع -->
+    <div class="field">
+      <label for="street" class="block text-sm font-semibold mb-1">{{ translate.instant("DATA.STREET") }}</label>
+      <input pInputText type="text" id="street" formControlName="street" class="input w-full" />
+    </div>
+
+    <!-- الحي -->
+    <div class="field">
+      <label for="district" class="block text-sm font-semibold mb-1">{{ translate.instant("FINANCE.DISTRICT") }}</label>
+      <input pInputText type="text" id="district" formControlName="district" class="input w-full" />
+    </div>
+
+    <!-- المدينة -->
+    <div class="field">
+      <label for="city" class="block text-sm font-semibold mb-1">{{ translate.instant("DATA.CITY") }}</label>
+      <input pInputText type="text" id="city" formControlName="city" class="input w-full" />
+    </div>
+
+    <!-- الدولة -->
+    <div class="field">
+      <label for="country" class="block text-sm font-semibold mb-1">{{ translate.instant("DATA.COUNTRY") }}</label>
+      <input pInputText type="text" id="country" formControlName="country" class="input w-full" />
+    </div>
+
+    <!-- العنوان المختصر -->
+    <div class="field">
+      <label for="shortAddress" class="block text-sm font-semibold mb-1">{{ translate.instant("FINANCE.SHORT_ADDRESS") }}</label>
+      <input pInputText type="text" id="shortAddress" formControlName="shortAddress" class="input w-full" />
+    </div>
+
+    <!-- رقم المبنى -->
+    <div class="field">
+      <label for="buildingNumber" class="block text-sm font-semibold mb-1">{{ translate.instant("FINANCE.BUILDING_NUMBER") }}</label>
+      <input pInputText type="text" id="buildingNumber" formControlName="buildingNumber" class="input w-full" />
+    </div>
+
+    <!-- رقم التواصل الإضافي (الرقم الفرعي) -->
+    <div class="field">
+      <label for="additionalContactNumber" class="block text-sm font-semibold mb-1">{{ translate.instant("FINANCE.ADDITIONAL_CONTACT_NUMBER") }}</label>
+      <input pInputText type="text" id="additionalContactNumber" formControlName="additionalContactNumber"
+        class="input w-full" />
+    </div>
+
+    <!-- الرمز البريدي -->
+    <div class="field">
+      <label for="postalCode" class="block text-sm font-semibold mb-1">{{ translate.instant("FINANCE.POSTAL_CODE") }}</label>
+      <input pInputText type="text" id="postalCode" formControlName="postalCode" class="input w-full" />
+    </div>
+
+    <!-- الفاكس -->
+    <div class="field">
+      <label for="fax" class="block text-sm font-semibold mb-1">{{ translate.instant("FINANCE.FAX") }}</label>
+      <input pInputText type="text" id="fax" formControlName="fax" class="input w-full" />
+    </div>
+
+    <!-- الموقع الإلكتروني -->
+    <div class="field">
+      <label for="website" class="block text-sm font-semibold mb-1">{{ translate.instant("FINANCE.WEBSITE") }}</label>
+      <input pInputText type="text" id="website" formControlName="website" class="input w-full" />
+    </div>
+
+    <!-- التعليمات -->
+    <div class="field">
+      <label for="instructions" class="block text-sm font-semibold mb-1">{{ translate.instant("FINANCE.INSTRUCTIONS") }}</label>
+      <input pInputText type="text" id="instructions" formControlName="instructions" class="input w-full" />
+    </div>
+
+    <!-- الرقم الضريبي للزكاة -->
+    <div class="field">
+      <label for="gaztNumber" class="block text-sm font-semibold mb-1">{{ translate.instant("FINANCE.GAZT_NUMBER") }}</label>
+      <input pInputText type="text" id="gaztNumber" formControlName="gaztNumber" class="input w-full" />
+    </div>
+
+    <!-- معرف آخر -->
+    <div class="field">
+      <label for="otherId" class="block text-sm font-semibold mb-1">{{ translate.instant("FINANCE.OTHER_ID") }}</label>
+      <input pInputText type="text" id="otherId" formControlName="otherId" class="input w-full" />
+    </div>
+
+    <!-- الحساب الفرعي (فلتر) -->
+    <div class="field">
+      <label for="detailAccount" class="block text-sm font-semibold mb-1">
+        {{ translate.instant("FINANCE.CHOOSE_RESERVATION_COMPANY_PARENT_DETAIL_ACCOUNT") }}
+      </label>
+      <p-dropdown [options]="detailAccountOptions" [filter]="true" [(ngModel)]="selectedDetailAccountId"
+        [ngModelOptions]="{standalone: true}" id="detailAccount" styleClass="w-full" appendTo="body" variant="filled"
+        [showClear]="true">
+      </p-dropdown>
+    </div>
+
+    <!-- الحساب الرئيسي -->
+    <div class="field" *ngIf="selectedDetailAccountId !== null">
+      <label for="mainAccountId" class="block text-sm font-semibold mb-1">
+        {{ translate.instant('FINANCE.MAIN_ACCOUNT') }}
+      </label>
+      <p-dropdown id="mainAccountId" formControlName="mainAccountId" [options]="mainAccountOptionsFromDetail"
+        [filter]="true" [showClear]="true" styleClass="w-full" appendTo="body" variant="filled">
+      </p-dropdown>
+    </div>
+
+    <!-- مؤشر عدم الربط بحساب -->
+    <div class="field col-span-1 md:col-span-3" *ngIf="selectedDetailAccountId === null">
+      <small class="text-gray-500 block text-xs">
+        <i class="pi pi-info-circle"></i>
+        {{ activeLanguage === 'ar' ? 'سيتم إنشاء حساب رئيسي تلقائياً عند الحفظ' : 'A main account will be created automatically on save' }}
+      </small>
+    </div>
+
+  </form>
+
+  <hr class="mt-2 mb-1" />
+
+  <p-footer>
+    <div class="flex justify-content-end gap-2">
+      <p-button styleClass="rounded-md" [label]="translate.instant('FINANCE.CANCEL')" severity="secondary"
+        (onClick)="closeReservationCompanyDialog()" />
+      <p-button styleClass="rounded-md" [label]="translate.instant('FINANCE.SAVE')" (onClick)="saveExpesnseCenter()"
+        [disabled]="reservationCompanyFormGroup.invalid" />
+    </div>
+  </p-footer>
+</p-dialog>
+
+<p-confirmDialog> </p-confirmDialog>
+
+<p-toast />

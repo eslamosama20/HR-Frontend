@@ -1,0 +1,101 @@
+﻿<app-zid-shell
+  activeTab="settings"
+  titleKey="CASHIER_ZID.SETTINGS_TITLE"
+  subtitleKey="CASHIER_ZID.SETTINGS_SUBTITLE"
+  [statusLabelKey]="settings()?.isConnected ? 'CASHIER_ZID.CONNECTED' : 'CASHIER_ZID.NOT_CONNECTED'"
+  [statusSeverity]="settings()?.isConnected ? 'success' : 'danger'">
+  <p-toast></p-toast>
+
+  <div zid-actions class="zid-actions">
+    <button
+      pButton
+      type="button"
+      icon="pi pi-refresh"
+      [label]="'CASHIER_ZID.REFRESH_SETTINGS' | translate"
+      class="p-button-outlined"
+      [loading]="loading()"
+      (click)="loadSettings()">
+    </button>
+  </div>
+
+  <div zid-kpis class="zid-summary" *ngIf="settings() as current">
+    <div class="zid-metric"><span>{{ 'CASHIER_ZID.TOTAL_ORDERS' | translate }}</span><strong>{{ current.totalOrders }}</strong></div>
+    <div class="zid-metric"><span>{{ 'CASHIER_ZID.PENDING_ORDERS' | translate }}</span><strong>{{ current.pendingOrders }}</strong></div>
+    <div class="zid-metric"><span>{{ 'CASHIER_ZID.SYNCED_ORDERS' | translate }}</span><strong>{{ current.syncedOrders }}</strong></div>
+    <div class="zid-metric"><span>{{ 'CASHIER_ZID.FAILED_ORDERS' | translate }}</span><strong>{{ current.failedOrders }}</strong></div>
+    <div class="zid-metric"><span>{{ 'CASHIER_ZID.TOTAL_PRODUCTS' | translate }}</span><strong>{{ current.totalProducts }}</strong></div>
+    <div class="zid-metric"><span>{{ 'CASHIER_ZID.MAPPED_PRODUCTS' | translate }}</span><strong>{{ current.mappedProducts }}</strong></div>
+    <div class="zid-metric">
+      <span>{{ 'CASHIER_ZID.TOKEN_EXPIRES' | translate }}</span>
+      <strong>{{ current.tokenExpiresAt ? (current.tokenExpiresAt | customDate: 'short') : '-' }}</strong>
+    </div>
+    <div class="zid-metric">
+      <span>{{ 'CASHIER_ZID.LAST_SYNC' | translate }}</span>
+      <strong>{{ current.lastSyncAt ? (current.lastSyncAt | customDate: 'short') : '-' }}</strong>
+    </div>
+  </div>
+
+  <div class="zid-table-panel" *ngIf="loading()">
+    <app-zid-skeleton [rows]="4"></app-zid-skeleton>
+  </div>
+
+  <div class="zid-info" *ngIf="!loading() && settings() && !settings()?.isConnected">
+    <i class="pi pi-info-circle"></i>
+    <span>{{ 'CASHIER_ZID.OAUTH_DESCRIPTION' | translate }}</span>
+  </div>
+
+  <div class="zid-error" *ngIf="error() && !loading()">
+    <i class="pi pi-exclamation-triangle"></i>
+    <span>{{ error() }}</span>
+    <button pButton type="button" icon="pi pi-refresh" class="p-button-text p-button-sm" (click)="loadSettings()"></button>
+  </div>
+
+  <div class="zid-panel">
+    <div class="zid-panel-header">
+      <div>
+        <h2>{{ 'CASHIER_ZID.OAUTH_CONNECTION' | translate }}</h2>
+        <p>{{ 'CASHIER_ZID.OAUTH_DESCRIPTION' | translate }}</p>
+      </div>
+    </div>
+    <div class="zid-grid">
+      <div class="zid-field">
+        <label>{{ 'CASHIER_ZID.AUTHORIZATION_CODE' | translate }}</label>
+        <input pInputText [(ngModel)]="authorizationCode" [placeholder]="'CASHIER_ZID.AUTHORIZATION_CODE_PLACEHOLDER' | translate" />
+      </div>
+      <div class="zid-actions">
+        <button pButton type="button" icon="pi pi-link" [label]="'CASHIER_ZID.GET_OAUTH_URL' | translate" class="p-button-outlined" [loading]="isBusy('oauth')" (click)="getOAuthUrl()"></button>
+        <button pButton type="button" icon="pi pi-check" [label]="'CASHIER_ZID.CONNECT' | translate" [loading]="isBusy('connect')" (click)="connect()"></button>
+      </div>
+    </div>
+    <div class="zid-success" *ngIf="oauthUrl()">
+      <i class="pi pi-external-link"></i>
+      <a [href]="oauthUrl()" target="_blank" rel="noopener">{{ oauthUrl() }}</a>
+    </div>
+  </div>
+
+  <div class="zid-panel" *ngIf="showDevTokenSection">
+    <div class="zid-panel-header">
+      <div>
+        <h2>{{ 'CASHIER_ZID.MANUAL_TOKEN_TITLE' | translate }}</h2>
+        <p>{{ 'CASHIER_ZID.MANUAL_TOKEN_DESCRIPTION' | translate }}</p>
+      </div>
+    </div>
+    <div class="zid-grid">
+      <div class="zid-field">
+        <label>{{ 'CASHIER_ZID.ACCESS_TOKEN' | translate }}</label>
+        <textarea pInputTextarea [(ngModel)]="manualAccessToken" rows="3" [placeholder]="'CASHIER_ZID.ACCESS_TOKEN_PLACEHOLDER' | translate"></textarea>
+      </div>
+      <div class="zid-field">
+        <label>{{ 'CASHIER_ZID.REFRESH_TOKEN' | translate }}</label>
+        <input pInputText [(ngModel)]="manualRefreshToken" [placeholder]="'CASHIER_ZID.REFRESH_TOKEN_PLACEHOLDER' | translate" />
+      </div>
+      <div class="zid-field">
+        <label>{{ 'CASHIER_ZID.EXPIRES_AT' | translate }}</label>
+        <input pInputText [(ngModel)]="manualExpiresAt" [placeholder]="'CASHIER_ZID.EXPIRES_AT_PLACEHOLDER' | translate" />
+      </div>
+    </div>
+    <div class="zid-actions">
+      <button pButton type="button" icon="pi pi-save" [label]="'CASHIER_ZID.SAVE_TOKEN' | translate" [loading]="isBusy('token')" (click)="setToken()"></button>
+    </div>
+  </div>
+</app-zid-shell>

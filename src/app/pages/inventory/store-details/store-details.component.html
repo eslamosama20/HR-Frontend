@@ -1,0 +1,327 @@
+﻿<div class="container-fluid">
+  <p-toast></p-toast>
+  <p-confirmDialog></p-confirmDialog>
+
+  <!-- Header: Title on Right, Tools on Left -->
+  <div class="store-details-header d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4 p-3 bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700">
+    <div class="d-flex flex-wrap align-items-center gap-3">
+      <h2 class="page-title m-0 text-xl font-bold text-gray-800 dark:text-gray-100">{{ 'DATA.STORE_DETAILS' | translate }}</h2>
+
+      <span class="p-input-icon-left header-search-box">
+        <i class="pi pi-search"></i>
+        <input
+          pInputText
+          type="text"
+          [(ngModel)]="searchValue"
+          (input)="onSearch($event)"
+          placeholder="بحث في المخازن..."
+          class="p-inputtext-sm rounded-lg"
+        />
+      </span>
+    </div>
+
+    <div class="d-flex flex-wrap align-items-center gap-2">
+      <!-- Export & Report Tools Group -->
+      <div class="btn-group-wrapper d-flex align-items-center gap-2">
+        <p-button 
+          styleClass="rounded-md p-button-sm shadow-sm"
+          severity="success" 
+          icon="pi pi-file-excel" 
+          label="تصدير Excel"
+          pTooltip="تصدير إلى Excel"
+          tooltipPosition="bottom"
+          (onClick)="exportToExcel()"
+          [disabled]="!data || data.length === 0">
+        </p-button>
+
+        <p-button 
+          styleClass="rounded-md p-button-sm shadow-sm"
+          severity="danger" 
+          icon="pi pi-file-pdf" 
+          label="تنزيل PDF"
+          pTooltip="تنزيل PDF"
+          tooltipPosition="bottom"
+          (onClick)="downloadPDF()"
+          [loading]="loadingPdf"
+          [disabled]="!data || data.length === 0">
+        </p-button>
+
+        <p-button 
+          styleClass="rounded-md p-button-sm shadow-sm"
+          severity="info" 
+          icon="pi pi-share-alt" 
+          label="مشاركة"
+          pTooltip="مشاركة التقرير"
+          tooltipPosition="bottom"
+          (onClick)="openShareDialog()"
+          [disabled]="!data || data.length === 0">
+        </p-button>
+
+        <p-button 
+          styleClass="rounded-md p-button-sm shadow-sm"
+          severity="warning" 
+          icon="pi pi-print" 
+          label="طباعة"
+          pTooltip="طباعة التقرير"
+          tooltipPosition="bottom"
+          (onClick)="printReport()"
+          [disabled]="!data || data.length === 0">
+        </p-button>
+
+        <p-button 
+          styleClass="rounded-md p-button-sm shadow-sm"
+          severity="secondary" 
+          icon="pi pi-refresh" 
+          label="تحديث"
+          pTooltip="تحديث البيانات"
+          tooltipPosition="bottom"
+          (onClick)="loadStoreDetails()"
+          [loading]="loading">
+        </p-button>
+      </div>
+
+      <!-- Divider between tool groups -->
+      <div class="header-divider d-none d-md-block"></div>
+
+      <!-- Main Creation Actions -->
+      <div class="d-flex align-items-center gap-2">
+        <p-button 
+          *ngIf="hasPermission(PERMISSIONS.StoreDetails.Create)"
+          styleClass="rounded-md p-button-sm font-bold shadow-sm"
+          severity="success"
+          icon="pi pi-plus" 
+          label="إضافة مخزن"
+          (onClick)="openAddDialog()">
+        </p-button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Stores Table -->
+  <p-table 
+    #dt
+    [value]="data" 
+    dataKey="id"
+    [loading]="loading"
+    [paginator]="true" 
+    [rows]="15"
+    [showCurrentPageReport]="true"
+    currentPageReportTemplate="عرض {first} إلى {last} من {totalRecords} سجل"
+    [rowsPerPageOptions]="[15, 30, 50]"
+    [globalFilterFields]="['arabicName', 'englishName', 'storeCategory', 'storeType']"
+    [sortField]="'createdAt'"
+    [sortOrder]="-1"
+    styleClass="p-datatable-sm p-datatable-striped"
+    responsiveLayout="scroll">
+    
+    <ng-template pTemplate="header">
+      <tr>
+        <th style="width: 60px; text-align: center;">م</th>
+        <th pSortableColumn="arabicName" style="text-align: center;">
+          الاسم بالعربية
+          <p-sortIcon field="arabicName"></p-sortIcon>
+        </th>
+        <th pSortableColumn="englishName" style="text-align: center;">
+          الاسم بالإنجليزية
+          <p-sortIcon field="englishName"></p-sortIcon>
+        </th>
+        <th style="text-align: center;">نوع المخزن</th>
+        <th style="text-align: center;">حالة المخزن</th>
+        <th style="text-align: center;">له حساب رئيسي</th>
+        <th pSortableColumn="createdAt" style="text-align: center;">
+          تاريخ الإنشاء
+          <p-sortIcon field="createdAt"></p-sortIcon>
+        </th>
+        <th style="width: 120px; text-align: center;">الإجراءات</th>
+      </tr>
+    </ng-template>
+    
+    <ng-template pTemplate="body" let-store let-rowIndex="rowIndex">
+      <tr>
+        <td style="text-align: center;">{{ (dt?.first || 0) + rowIndex + 1 }}</td>
+        <td style="text-align: center;">{{ store.arabicName || '-' }}</td>
+        <td style="text-align: center;">{{ store.englishName || '-' }}</td>
+        <td style="text-align: center;">
+          <span
+            [ngClass]="getStoreCategoryBadgeClass(store.storeCategory ?? store.storeType)"
+            [textContent]="getStoreCategoryLabel(store.storeCategory ?? store.storeType)">
+            {{ store.storeType === 'Store' ? 'متجر' : 'مستودع' }}
+          </span>
+        </td>
+        <td style="text-align: center;">
+          {{ activeLanguage === 'ar' ? store.storeStatus?.arabicName : store.storeStatus?.englishName || '-' }}
+        </td>
+        <td style="text-align: center;">
+          <i [ngClass]="store.mainAccountId ? 'pi pi-check text-success' : 'pi pi-times text-danger'"></i>
+        </td>
+        <td style="text-align: center;">{{ store.createdAt | customDate: 'dd-MM-yyyy' }}</td>
+        <td style="text-align: center;">
+          <button 
+            *ngIf="hasPermission(PERMISSIONS.StoreDetails.Update)"
+            pButton 
+            type="button" 
+            icon="pi pi-pencil" 
+            class="p-button-primary p-button-sm p-button-text"
+            pTooltip="تعديل"
+            tooltipPosition="top"
+            (click)="openEditDialog(store)">
+          </button>
+          <button 
+            *ngIf="hasPermission(PERMISSIONS.StoreDetails.Delete)"
+            pButton 
+            type="button" 
+            icon="pi pi-trash" 
+            class="p-button-danger p-button-sm p-button-text"
+            pTooltip="حذف"
+            tooltipPosition="top"
+            (click)="confirmDelete(store)">
+          </button>
+        </td>
+      </tr>
+    </ng-template>
+    
+    <ng-template pTemplate="emptymessage">
+      <tr>
+        <td colspan="8" class="text-center py-5">
+          <i class="pi pi-inbox" style="font-size: 3rem; color: var(--surface-400);"></i>
+          <p class="mt-3 text-muted">لا توجد مخازن</p>
+        </td>
+      </tr>
+    </ng-template>
+  </p-table>
+
+  <!-- Add/Edit Dialog -->
+  <p-dialog 
+    [(visible)]="showDialog" 
+    [header]="editMode ? 'تعديل مخزن' : 'إضافة مخزن جديد'"
+    [modal]="true" 
+    [style]="{width: '520px'}"
+    [contentStyle]="{'overflow': 'visible'}"
+    [closable]="true">
+    
+    <div class="p-fluid">
+      <div class="field mb-3">
+        <label for="arabicName">الاسم بالعربية *</label>
+        <input id="arabicName" type="text" pInputText [(ngModel)]="formData.arabicName" />
+      </div>
+      
+      <div class="field mb-3">
+        <label for="englishName">الاسم بالإنجليزية *</label>
+        <input id="englishName" type="text" pInputText [(ngModel)]="formData.englishName" />
+      </div>
+      
+      <div class="field mb-3">
+        <label for="storeType">نوع المخزن *</label>
+        <p-dropdown 
+          id="storeType"
+          [options]="storeTypeOptions" 
+          [(ngModel)]="formData.storeCategory" 
+          optionLabel="label"
+          optionValue="value"
+          placeholder="اختر نوع المخزن"
+          appendTo="body"
+          [style]="{width: '100%'}">
+        </p-dropdown>
+      </div>
+      
+      <div class="field mb-3">
+        <label for="storeStatus">حالة المخزن</label>
+        <p-dropdown 
+          id="storeStatus"
+          [options]="storeStatusOptions" 
+          [(ngModel)]="formData.storeStatusId" 
+          placeholder="اختر الحالة"
+          appendTo="body"
+          [style]="{width: '100%'}"
+          [showClear]="true">
+        </p-dropdown>
+      </div>
+      
+      <div class="field mb-3">
+        <label for="mainAccount">الحساب الرئيسي</label>
+        <p-dropdown 
+          id="mainAccount"
+          [options]="mainAccountOptions" 
+          [(ngModel)]="formData.mainAccountId" 
+          placeholder="اختر الحساب"
+          appendTo="body"
+          [style]="{width: '100%'}"
+          [showClear]="true"
+          [filter]="true"
+          filterBy="label"
+          scrollHeight="240px">
+        </p-dropdown>
+      </div>
+    </div>
+    
+    <ng-template pTemplate="footer">
+      <button pButton label="إلغاء" icon="pi pi-times" class="p-button-text" (click)="closeDialog()"></button>
+      <button pButton label="حفظ" icon="pi pi-check" (click)="saveStore()" [loading]="saving"></button>
+    </ng-template>
+  </p-dialog>
+
+  <!-- Share Dialog -->
+  <p-dialog 
+    [(visible)]="shareDialogVisible" 
+    header="مشاركة التقرير"
+    [modal]="true" 
+    [style]="{width: '450px'}"
+    [contentStyle]="{'overflow': 'visible'}">
+    
+    <div class="p-fluid">
+      <div class="field mb-3">
+        <label for="shareMethod">طريقة المشاركة</label>
+        <p-dropdown 
+          id="shareMethod"
+          [options]="shareMethodOptions"
+          [(ngModel)]="selectedShareMethod"
+          placeholder="اختر طريقة المشاركة"
+          appendTo="body"
+          optionLabel="label"
+          optionValue="value">
+        </p-dropdown>
+      </div>
+      
+      <div class="field mb-3" *ngIf="selectedShareMethod === 'email'">
+        <label for="shareEmail">البريد الإلكتروني</label>
+        <input 
+          id="shareEmail" 
+          type="email" 
+          pInputText 
+          [(ngModel)]="shareEmail"
+          placeholder="example@email.com" />
+      </div>
+      
+      <div class="field mb-3" *ngIf="selectedShareMethod === 'whatsapp'">
+        <label for="sharePhone">رقم الواتساب</label>
+        <input 
+          id="sharePhone" 
+          type="tel" 
+          pInputText 
+          [(ngModel)]="sharePhone"
+          placeholder="966xxxxxxxxx" />
+      </div>
+    </div>
+    
+    <ng-template pTemplate="footer">
+      <button 
+        pButton 
+        label="إلغاء" 
+        icon="pi pi-times" 
+        class="p-button-text" 
+        (click)="shareDialogVisible = false">
+      </button>
+      <button 
+        pButton 
+        label="مشاركة" 
+        icon="pi pi-share-alt" 
+        (click)="shareReport()" 
+        [disabled]="!canShare()" 
+        [loading]="loadingShare">
+      </button>
+    </ng-template>
+  </p-dialog>
+
+  <!-- Confirm Delete Dialog -->
+  <p-confirmDialog></p-confirmDialog>
+</div>

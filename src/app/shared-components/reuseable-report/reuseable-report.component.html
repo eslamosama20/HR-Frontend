@@ -1,0 +1,109 @@
+<div class="mt-6 text-right">
+	<button (click)="printReport()"
+		class="px-4 py-2 mx-1 bg-sky-400 rounded-lg text-white border-none">
+		Print Report
+	</button>
+	<button (click)="exportExcelData()"
+		class="px-4 py-2 mx-1 rounded-lg text-white border-none bg-success">
+		Excel
+	</button>
+</div>
+<div class="report-container w-full h-full">
+  	<!-- Loop over each page of paginated data -->
+	<div #reportPage
+		*ngFor="let pageData of paginatedData; let pageIndex = index"
+		class="w-full h-full  page bg-white shadow-md rounded-lg mx-auto p-2"
+   [style]="{ width: pageDimensions[pageType]?.width + ' !important', height: pageDimensions[pageType]?.height + ' !important' }"
+
+  >
+		<div class="border border-gray-600 p-2 h-full flex flex-col justify-between">
+			<!-- Header (can be customized via ng-template) -->
+			<ng-container *ngIf="headerTemplate; else defaultHeaderTemplate">
+				<div class="w-full">
+					<ng-container *ngTemplateOutlet="headerTemplate"></ng-container>
+				</div>
+			</ng-container>
+			<!-- Default Header Template -->
+			<ng-template #defaultHeaderTemplate>
+				<div class=" w-full">
+					<h2 class="text-2xl font-bold text-center">Report</h2>
+				</div>
+			</ng-template>
+			<!-- Report Body -->
+			<ng-container *ngIf="bodyTemplate; else defaultBodyTemplate">
+				<ng-container *ngTemplateOutlet="bodyTemplate"></ng-container>
+			</ng-container>
+			<!-- Default Body Template -->
+			<ng-template #defaultBodyTemplate></ng-template>
+			<div class="my-4 border border-gray-600 rounded-lg h-full">
+				<!-- Table Report -->
+				<ng-container>
+					<!-- <table class="min-w-full divide-y divide-gray-200">
+						<thead>
+							<tr>
+								<ng-container *ngIf="columns">
+									<th *ngFor="let col of columns"
+										class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+										{{ col.label }}
+									</th>
+								</ng-container>
+							</tr>
+						</thead>
+						<tbody>
+							<tr *ngFor="let row of pageData">
+								<ng-container *ngIf="columns">
+									<td *ngFor="let col of columns"
+										class="px-4 py-2 whitespace-nowrap">
+										{{ row[col.field] }}
+									</td>
+								</ng-container>
+							</tr>
+						</tbody>
+					</table> -->
+
+					<p-table [value]="pageData" styleClass="p-datatable-striped" class="min-w-full" sortMode="multiple">
+						<ng-template pTemplate="header">
+							<tr>
+								<th [pSortableColumn]="col.field" *ngFor="let col of columns"
+									class="bg-primary px-4 py-2 text-left text-xs font-medium text-white uppercase tracking-wider">
+									{{ col.label }}  <p-sortIcon *ngIf="isSortedIconShow" [field]="col.field" />
+								</th>
+							</tr>
+						</ng-template>
+						<ng-template pTemplate="body" let-product>
+							<tr>
+								<ng-container *ngIf="columns">
+									<td *ngFor="let col of columns"
+										class="px-4 py-2 whitespace-nowrap">
+										{{ product[col.field] }}
+									</td>
+								</ng-container>
+							</tr>
+						</ng-template>
+					</p-table>
+				</ng-container>
+			</div>
+			<!-- Footer with Page Number -->
+			<div class="page-footer">
+				<ng-container *ngIf="footerTemplate; else defaultFooterTemplate">
+					<div class=" w-full">
+						<ng-container *ngTemplateOutlet="footerTemplate"></ng-container>
+					</div>
+				</ng-container>
+				<ng-template #defaultFooterTemplate>
+					<div class="w-full">
+						<p class="text-sm text-center text-gray-500">
+							Generated on SmartAndPro ERP
+						</p>
+					</div>
+				</ng-template>
+				<ng-container *ngIf="totalPages > 1">
+					<p class="text-sm text-center text-gray-500">
+						Page {{ pageIndex + 1 }} of {{ totalPages }}
+					</p>
+				</ng-container>
+			</div>
+		</div>
+	</div>
+</div>
+<!-- Print Button -->

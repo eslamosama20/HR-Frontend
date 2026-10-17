@@ -1,0 +1,168 @@
+<div class="w-full">
+  <div class="flex justify-center items-start gap-4 flex-col w-full px-10">
+    <div class="fixed inset-0 bg-gray-500 bg-opacity-75 flex items-center justify-center z-50" *ngIf="loading">
+      <i class="pi pi-spin pi-spinner" style="font-size: 2rem"></i>
+    </div>
+
+    <p-panel class="w-full" [header]="'تقرير صافي القيمة المضافة للمشتريات'">
+      <div class="flex flex-col w-full gap-4">
+        <div class="flex justify-start items-end gap-2 w-full">
+          <div class="field" style="min-width: 280px; max-width: 350px;">
+            <label for="dateRange" class="block">الفترة الزمنية</label>
+            <p-calendar
+              id="dateRange"
+              [(ngModel)]="dateRange"
+              selectionMode="range"
+              [showButtonBar]="true"
+              variant="filled"
+              [showIcon]="true"
+              [iconDisplay]="'input'"
+              [dateFormat]="'dd/mm/yy'"
+              appendTo="body"
+              styleClass="w-full"
+            >
+              <ng-template pTemplate="inputicon">
+                <i class="pi pi-calendar"></i>
+              </ng-template>
+            </p-calendar>
+          </div>
+          <p-button styleClass="rounded-md"
+            label="بحث" (onClick)="handleSubmit()" />
+          <p-button
+            styleClass="rounded-md"
+            [disabled]="!hasData"
+            icon="pi pi-share-alt"
+            [label]="'مشاركة'"
+            (onClick)="openShareDialog()"
+            severity="info"
+          />
+          <p-button
+            styleClass="rounded-md"
+            [disabled]="!hasData"
+            icon="pi pi-print"
+            [label]="'طباعة PDF'"
+            (onClick)="printPDF()"
+            severity="warning"
+          />
+          <p-button
+            styleClass="rounded-md"
+            [disabled]="!hasData"
+            icon="pi pi-file-pdf"
+            [label]="'تنزيل PDF'"
+            (onClick)="downloadPDF()"
+            severity="danger"
+          />
+          <p-button 
+            styleClass="rounded-md p-button-success" 
+            [disabled]="!hasData"
+            label="تصدير Excel" 
+            icon="pi pi-file-excel" 
+            (onClick)="exportToExcel()" />
+        </div>
+      </div>
+      <div class="flex justify-center p-5 my-4 border border-gray-300 rounded-lg text-xl w-full text-center font-bold"
+        *ngIf="!hasData">
+        No Data
+      </div>
+      <div class="flex flex-col my-4 border border-gray-300 rounded-lg" *ngIf="hasData">
+        <table class="w-full border-collapse">
+          <thead>
+            <tr>
+              <th class="text-center p-4 border border-gray-400 purchase-header-bg font-semibold text-white">
+                إجمالي القيمة المضافة للمشتريات
+              </th>
+              <th class="text-center p-4 border border-gray-400 purchase-header-bg font-semibold text-white">
+                إجمالي القيمة المضافة لمرتجعات المشتريات
+              </th>
+              <th class="text-center p-4 border border-gray-400 purchase-header-bg font-semibold text-white">
+                صافي القيمة المضافة للمشتريات
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td class="text-center p-4 border border-gray-400">
+                {{totalPurchasesVAT | number:'1.2-2'}}
+              </td>
+              <td class="text-center p-4 border border-gray-400">
+                {{totalReturnsVAT | number:'1.2-2'}}
+              </td>
+              <td class="text-center p-4 border border-gray-400">
+                {{netVAT | number:'1.2-2'}}
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </p-panel>
+  </div>
+</div>
+
+<!-- Share Dialog -->
+<p-dialog 
+  [(visible)]="shareDialogVisible" 
+  [header]="'GENERAL.SHARE_REPORT' | translate" 
+  [modal]="true"
+  [style]="{width: '450px'}"
+  [draggable]="false"
+  [resizable]="false"
+  [closable]="!shareBusy">
+  
+  <p-tabView [(activeIndex)]="shareActiveTabIndex">
+    <!-- Email Tab -->
+    <p-tabPanel [header]="'GENERAL.EMAIL' | translate">
+      <form [formGroup]="shareForm" class="flex flex-col gap-3 mt-3">
+        <div class="flex flex-col gap-2">
+          <label for="email">{{ 'GENERAL.EMAIL' | translate }}</label>
+          <input 
+            pInputText 
+            id="email" 
+            formControlName="email"
+            [placeholder]="'GENERAL.EMAIL_PLACEHOLDER' | translate"
+            type="email"
+            [disabled]="shareBusy" />
+          <small 
+            class="p-error" 
+            *ngIf="shareForm.get('email')?.invalid && shareForm.get('email')?.touched">
+            {{ 'GENERAL.PLEASE_ENTER_VALID_EMAIL' | translate }}
+          </small>
+        </div>
+        
+        <p-button 
+          [label]="shareBusy ? ('GENERAL.SENDING' | translate) : ('GENERAL.SEND' | translate)"
+          (onClick)="submitShareEmail()" 
+          [disabled]="shareBusy || shareForm.get('email')?.invalid"
+          [loading]="shareBusy"
+          styleClass="w-full" />
+      </form>
+    </p-tabPanel>
+
+    <!-- WhatsApp Tab -->
+    <p-tabPanel [header]="'GENERAL.WHATSAPP' | translate">
+      <form [formGroup]="shareForm" class="flex flex-col gap-3 mt-3">
+        <div class="flex flex-col gap-2">
+          <label for="whatsapp">{{ 'GENERAL.PHONE_NUMBER' | translate }}</label>
+          <input 
+            pInputText 
+            id="whatsapp" 
+            formControlName="whatsappNumber"
+            [placeholder]="'GENERAL.PHONE_PLACEHOLDER' | translate"
+            type="tel"
+            [disabled]="shareBusy" />
+          <small 
+            class="p-error" 
+            *ngIf="shareForm.get('whatsappNumber')?.invalid && shareForm.get('whatsappNumber')?.touched">
+            {{ 'GENERAL.PLEASE_ENTER_VALID_PHONE' | translate }}
+          </small>
+        </div>
+        
+        <p-button 
+          [label]="shareBusy ? ('GENERAL.SENDING' | translate) : ('GENERAL.SEND' | translate)"
+          (onClick)="submitShareWhatsApp()" 
+          [disabled]="shareBusy || shareForm.get('whatsappNumber')?.invalid"
+          [loading]="shareBusy"
+          styleClass="w-full" />
+      </form>
+    </p-tabPanel>
+  </p-tabView>
+</p-dialog>

@@ -1,0 +1,130 @@
+table, th, td {
+  border: 1px solid black;
+  border-collapse: collapse;
+}
+th, td {
+  border-color: #494949;
+  padding: 5px;
+}
+
+/* Share Dialog Styles */
+.share-dialog .p-dialog-content {
+  padding-top: 0 !important;
+}
+
+.share-tab {
+  display: grid;
+  gap: 1rem;
+}
+
+.share-tab .media {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem;
+  background: #f9fafb;
+  border-radius: 8px;
+  border: 1px solid #e5e7eb;
+}
+
+.share-tab .chip {
+  width: 42px;
+  height: 42px;
+  border-radius: 14px;
+  display: grid;
+  place-items: center;
+  font-size: 1.2rem;
+  border: 1px solid transparent;
+  flex-shrink: 0;
+}
+
+.share-tab .chip-email {
+  background: #e6f4ff;
+  color: #245f8c;
+  border-color: #cfe8ff;
+}
+
+.share-tab .chip-whatsapp {
+  background: #e7f8ed;
+  color: #16a34a;
+  border-color: #b9f0c8;
+}
+
+.share-tab .media-body .media-title {
+  font-weight: 700;
+  font-size: 0.95rem;
+  color: #1f2937;
+}
+
+.share-tab .media-body .media-sub {
+  color: #6b7280;
+  font-size: 0.85rem;
+  margin-top: 2px;
+}
+
+.share-tab .form-row {
+  display: grid;
+  gap: 0.5rem;
+}
+
+.share-tab .form-row label {
+  font-weight: 600;
+  color: #374151;
+  font-size: 0.9rem;
+}
+
+.share-tab .form-row .err {
+  color: #dc2626;
+  font-size: 0.85rem;
+}
+
+.share-tab .actions {
+  display: flex;
+  gap: 0.75rem;
+  justify-content: flex-end;
+  margin-top: 0.5rem;
+  padding-top: 1rem;
+  border-top: 1px solid #e5e7eb;
+}
+
+.share-tab .actions .p-button {
+  min-width: 120px;
+  font-weight: 600;
+  padding: 0.65rem 1.25rem;
+}
+
+.share-tab .actions .p-button.flex-1 {
+  flex: 1;
+}
+
+.share-header {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.share-header .icon-chip {
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  background: #eaf5ff;
+  color: #2b6cb0;
+  display: grid;
+  place-items: center;
+  font-size: 1.1rem;
+  border: 1px solid #cfe8ff;
+  flex-shrink: 0;
+}
+
+.share-header .title .title-main {
+  font-weight: 700;
+  font-size: 1.05rem;
+  color: #1f2937;
+}
+
+/* Larger table text (1.125rem) as requested */
+table th,
+table td {
+  font-size: 1.125rem !important;
+}
+

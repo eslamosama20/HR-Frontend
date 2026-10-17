@@ -1,0 +1,414 @@
+<div class="quick-sale-shell">
+  <p-toast></p-toast>
+  
+  <div *ngIf="loading()" class="loading-overlay">
+    <div class="loading-card">
+      <i class="pi pi-spin pi-spinner"></i>
+      <span>{{ 'CASHIER_QUICK_SALE.LOADING' | translate }}</span>
+    </div>
+  </div>
+
+  <header class="quick-header">
+    <!-- Top Row: Page Brand on Right | Navigation Buttons on Left -->
+    <div class="quick-header-top">
+      <div class="header-brand">
+        <span class="brand-icon"><i class="pi pi-bolt"></i></span>
+        <div>
+          <h1>{{ 'CASHIER_QUICK_SALE.PAGE_TITLE' | translate }}</h1>
+          <p>{{ 'CASHIER_QUICK_SALE.PAGE_SUBTITLE' | translate }}</p>
+        </div>
+      </div>
+
+      <div class="header-actions">
+        <button pButton type="button" icon="pi pi-desktop" [label]="'CASHIER_QUICK_SALE.POS_SCREEN' | translate" class="action-btn soft-btn" routerLink="/cashier/pos"></button>
+        <button pButton type="button" icon="pi pi-file" label="سجل الفواتير" class="action-btn soft-btn" routerLink="/cashier/invoice-control"></button>
+        <button pButton type="button" icon="pi pi-file-edit" label="تقرير الإغلاق (Z-Report)" class="action-btn soft-btn" routerLink="/cashier/z-report"></button>
+        <button pButton type="button" icon="pi pi-clock" [label]="'CASHIER_QUICK_SALE.SESSIONS' | translate" class="action-btn soft-btn" routerLink="/cashier/session"></button>
+        <button pButton type="button" icon="pi pi-chart-line" [label]="'CASHIER_REPORTS.PAGE_TITLE' | translate" class="action-btn soft-btn" routerLink="/cashier/reports"></button>
+        <button pButton type="button" icon="pi pi-map" [label]="'CASHIER_POS.TABLES_MAP' | translate" class="action-btn soft-btn" routerLink="/cashier/floor"></button>
+      </div>
+    </div>
+
+    <!-- Bottom Row: Session Status & Refresh & Pharmacy Mode Toggle -->
+    <div class="quick-header-bottom">
+      <div class="header-session" [class.open]="currentSession()">
+        <i class="pi" [ngClass]="currentSession() ? 'pi-check-circle' : 'pi-exclamation-triangle'"></i>
+        <div>
+          <strong>{{ currentSession() ? ('CASHIER_QUICK_SALE.ACTIVE_SESSION' | translate) : ('CASHIER_QUICK_SALE.NO_SESSION' | translate) }}</strong>
+          <span>{{ currentSession()?.sessionNumber || ('CASHIER_QUICK_SALE.OPEN_SESSION_MSG' | translate) }}</span>
+        </div>
+      </div>
+
+      <div class="quick-header-ops">
+        <button pButton type="button" icon="pi pi-refresh" [label]="'CASHIER_QUICK_SALE.REFRESH_PRODUCTS' | translate" class="action-btn soft-btn" (click)="loadProducts()"></button>
+        <!-- Pharmacy Mode Toggle -->
+        <button
+          pButton
+          type="button"
+          [icon]="isPharmacyMode ? 'pi pi-shield' : 'pi pi-shopping-cart'"
+          [label]="isPharmacyMode ? 'وضع الصيدلية' : 'وضع البيع العادي'"
+          [class]="isPharmacyMode ? 'header-btn pharmacy-mode-btn active' : 'header-btn pharmacy-mode-btn'"
+          (click)="togglePharmacyMode()"
+          pTooltip="تبديل بين البيع العادي وبيع الصيدلية">
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <section *ngIf="!currentSession()" class="session-warning">
+    <i class="pi pi-info-circle"></i>
+    <span>{{ 'CASHIER_QUICK_SALE.SESSION_WARNING' | translate }}</span>
+    <button pButton type="button" icon="pi pi-external-link" [label]="'CASHIER_QUICK_SALE.OPEN_SESSIONS_BTN' | translate" class="p-button-sm p-button-outlined" routerLink="/cashier/session"></button>
+  </section>
+
+  <!-- Pharmacy Mode Indicator Bar -->
+  <div *ngIf="isPharmacyMode" class="pharmacy-mode-bar">
+    <i class="pi pi-shield"></i>
+    <span>وضع الصيدلية مفعّل — الكمية تزيد عبر مسح الباركود فقط. الأدوية تُصرف مع تسجيل الباتش وتاريخ الصلاحية.</span>
+  </div>
+
+  <div class="quick-layout">
+    <section class="catalog-panel">
+      <div class="panel-head">
+        <h2>{{ 'CASHIER_QUICK_SALE.ADD_QUICK_TITLE' | translate }}</h2>
+        <p>{{ 'CASHIER_QUICK_SALE.ADD_QUICK_SUB' | translate }}</p>
+      </div>
+
+      <div class="search-tools">
+        <div class="tool">
+          <label>{{ 'CASHIER_QUICK_SALE.SEARCH' | translate }}</label>
+          <div class="tool-input">
+            <i class="pi pi-search"></i>
+            <input
+              pInputText
+              type="text"
+              [(ngModel)]="searchTerm"
+              (keyup.enter)="onSearch()"
+              [placeholder]="'CASHIER_QUICK_SALE.SEARCH_PLACEHOLDER' | translate"
+            />
+          </div>
+        </div>
+
+        <div class="tool">
+          <label>{{ 'CASHIER_QUICK_SALE.BARCODE' | translate }}</label>
+          <div class="tool-input">
+            <i class="pi pi-barcode"></i>
+            <input
+              pInputText
+              type="text"
+              [(ngModel)]="barcodeTerm"
+              (keyup.enter)="addByBarcode()"
+              [placeholder]="'CASHIER_QUICK_SALE.BARCODE_PLACEHOLDER' | translate"
+            />
+          </div>
+        </div>
+
+        <div class="tool-actions">
+          <button pButton type="button" icon="pi pi-search" [label]="'CASHIER_QUICK_SALE.SEARCH' | translate" class="action-btn search-btn" (click)="onSearch()"></button>
+          <button pButton type="button" icon="pi pi-plus" [label]="'CASHIER_QUICK_SALE.ADD_BARCODE_BTN' | translate" class="action-btn barcode-btn" (click)="addByBarcode()"></button>
+        </div>
+      </div>
+
+      <div class="quick-buttons">
+        <div class="section-title">
+          <h3>{{ 'CASHIER_QUICK_SALE.QUICK_SALE_BTNS' | translate }}</h3>
+          <span>{{ quickProducts.length }} {{ 'CASHIER_QUICK_SALE.ELEMENTS' | translate }}</span>
+        </div>
+
+        <div class="quick-grid">
+          <button
+            type="button"
+            class="quick-item"
+            *ngFor="let product of quickProducts"
+            [class.out]="product.availableQuantity <= 0"
+            [class.low]="product.availableQuantity <= (currentSession()?.stockAlertLimit ?? 10) && product.availableQuantity > 0"
+            (click)="addToCart(product)">
+            <span class="item-name">
+              {{ product.nameAr || product.nameEn }}
+              <small *ngIf="product.availableQuantity <= (currentSession()?.stockAlertLimit ?? 10) && product.availableQuantity > 0" style="color: #ea580c; font-weight: bold; font-size: 0.75rem; display: block;">
+                (مخزون منخفض!)
+              </small>
+            </span>
+            <span class="item-code">{{ product.code }}</span>
+            <div class="item-bottom">
+              <strong>{{ product.sellingPrice | number:'1.2-2' }}</strong>
+              <small [style.color]="product.availableQuantity <= (currentSession()?.stockAlertLimit ?? 10) ? '#ea580c' : null">{{ 'CASHIER_QUICK_SALE.AVAILABLE' | translate }}: {{ product.availableQuantity }}</small>
+            </div>
+          </button>
+        </div>
+
+        <div *ngIf="quickProducts.length === 0" class="empty-state">
+          {{ 'CASHIER_QUICK_SALE.EMPTY_QUICK' | translate }}
+        </div>
+      </div>
+
+      <div class="all-products">
+        <div class="section-title">
+          <h3>{{ 'CASHIER_QUICK_SALE.ALL_PRODUCTS' | translate }}</h3>
+          <span>{{ products().length }} {{ 'CASHIER_QUICK_SALE.PRODUCT_LABEL' | translate }}</span>
+        </div>
+
+        <div class="product-list">
+          <button
+            type="button"
+            class="product-chip"
+            *ngFor="let product of products()"
+            [class.out]="product.availableQuantity <= 0"
+            [class.low]="product.availableQuantity <= (currentSession()?.stockAlertLimit ?? 10) && product.availableQuantity > 0"
+            (click)="addToCart(product)">
+            <span>
+              {{ product.nameAr || product.nameEn }}
+              <small *ngIf="product.availableQuantity <= (currentSession()?.stockAlertLimit ?? 10) && product.availableQuantity > 0" style="color: #ea580c; font-weight: bold; font-size: 0.75rem; display: block;">
+                (المتبقي: {{ product.availableQuantity }})
+              </small>
+            </span>
+            <strong>{{ product.sellingPrice | number:'1.2-2' }}</strong>
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <aside class="cart-panel">
+      <div class="cart-head">
+        <h2><i class="pi pi-shopping-bag"></i> {{ 'CASHIER_QUICK_SALE.CART_TITLE' | translate }}</h2>
+        <span>{{ itemsCount }} {{ 'CASHIER_QUICK_SALE.ELEMENTS' | translate }}</span>
+      </div>
+
+      <label class="customer-field">
+        {{ 'CASHIER_QUICK_SALE.CUSTOMER_NAME' | translate }}
+        <input pInputText type="text" [(ngModel)]="customerName" [placeholder]="'CASHIER_QUICK_SALE.CUSTOMER_PLACEHOLDER' | translate" />
+      </label>
+      <label class="customer-field">
+        <span>هاتف العميل</span>
+        <input pInputText type="text" [(ngModel)]="customerPhone" placeholder="+966xxxxxxxxx" />
+      </label>
+
+      <div class="cart-items">
+        <article class="cart-item" *ngFor="let item of cart()">
+          <div class="item-top">
+            <div>
+              <h3>{{ item.itemName }}</h3>
+              <p>{{ item.unitPrice | number:'1.2-2' }} × {{ item.quantity }}</p>
+              <!-- Pharmacy Mode: Show Batch and Expiry under item name -->
+              <small *ngIf="isPharmacyMode && item.itemBarcode" class="pharmacy-item-meta">
+                <i class="pi pi-tag"></i> باتش: {{ item.itemBarcode }}
+              </small>
+            </div>
+            <button pButton type="button" icon="pi pi-trash" class="p-button-text p-button-danger p-button-sm" (click)="removeItem(item)"></button>
+          </div>
+
+          <!-- Normal Mode: show +/- quantity controls as usual -->
+          <div class="item-controls" *ngIf="!isPharmacyMode">
+            <button type="button" class="qty-btn" (click)="decreaseItem(item)">-</button>
+            <span class="qty-value">{{ item.quantity }}</span>
+            <button type="button" class="qty-btn" (click)="increaseItem(item)">+</button>
+            <strong>{{ item.totalAmount | number:'1.2-2' }}</strong>
+          </div>
+
+          <!-- Pharmacy Mode: show quantity as read-only with scan hint -->
+          <div class="item-controls pharmacy-qty" *ngIf="isPharmacyMode">
+            <span class="scan-hint"><i class="pi pi-barcode"></i> × {{ item.quantity }}</span>
+            <strong>{{ item.totalAmount | number:'1.2-2' }}</strong>
+          </div>
+        </article>
+
+        <div *ngIf="cart().length === 0" class="empty-cart">
+          <i class="pi pi-shopping-cart"></i>
+          <p>{{ 'CASHIER_QUICK_SALE.EMPTY_CART' | translate }}</p>
+        </div>
+      </div>
+
+      <div class="totals-box">
+        <div class="row"><span>{{ 'CASHIER_QUICK_SALE.SUBTOTAL' | translate }}</span><strong>{{ subtotal | number:'1.2-2' }}</strong></div>
+        <div class="row"><span>{{ 'CASHIER_QUICK_SALE.DISCOUNT' | translate }}</span><strong>- {{ discountTotal | number:'1.2-2' }}</strong></div>
+        <div class="row"><span>{{ 'CASHIER_QUICK_SALE.TAX' | translate }}</span><strong>{{ taxTotal | number:'1.2-2' }}</strong></div>
+        <div class="row grand"><span>{{ 'CASHIER_QUICK_SALE.GRAND_TOTAL' | translate }}</span><strong>{{ grandTotal | number:'1.2-2' }}</strong></div>
+      </div>
+
+      <div class="cart-actions">
+        <button pButton type="button" icon="pi pi-times" [label]="'CASHIER_QUICK_SALE.CANCEL_ALL' | translate" class="p-button-outlined p-button-danger" (click)="clearSale()" [disabled]="cart().length === 0"></button>
+        <button pButton type="button" icon="pi pi-credit-card" [label]="'CASHIER_QUICK_SALE.COMPLETE_SALE' | translate" class="p-button-success" (click)="openCheckout()" [disabled]="cart().length === 0"></button>
+      </div>
+    </aside>
+  </div>
+</div>
+
+<p-dialog
+  [(visible)]="showCheckoutDialog"
+  [modal]="true"
+  [draggable]="false"
+  [resizable]="false"
+  [style]="{width: '520px', maxWidth: '95vw'}"
+  styleClass="quick-sale-dialog"
+  [header]="'CASHIER_QUICK_SALE.CHECKOUT_TITLE' | translate">
+  <div class="checkout-dialog">
+    <div class="total-highlight">
+      <span>{{ 'CASHIER_QUICK_SALE.FINAL_TOTAL' | translate }}</span>
+      <strong>{{ grandTotal | number:'1.2-2' }} {{ 'CASHIER_QUICK_SALE.CURRENCY' | translate }}</strong>
+    </div>
+
+    <!-- طرق الدفع المتاحة -->
+    <div class="methods-label">طرق الدفع</div>
+
+    <!-- Loading Spinner while fetching methods -->
+    <div *ngIf="loadingPaymentMethods" class="methods-loading">
+      <i class="pi pi-spin pi-spinner"></i>
+      <span>جاري تحميل طرق الدفع...</span>
+    </div>
+
+    <!-- Dynamic Payment Method Grid -->
+    <div *ngIf="!loadingPaymentMethods" class="methods">
+      <button
+        *ngFor="let opt of checkoutPaymentOptions"
+        type="button"
+        class="method-btn"
+        [class.active]="selectedPaymentKey === opt.key"
+        [class.electronic]="opt.isElectronic"
+        (click)="selectPaymentOption(opt)">
+        <i class="pi" [ngClass]="opt.icon"></i>
+        <span>{{ opt.label }}</span>
+        <small *ngIf="opt.isElectronic" class="electronic-badge">إلكتروني</small>
+      </button>
+    </div>
+
+    <!-- Cash: paid amount input -->
+    <div *ngIf="selectedPaymentKey === 'cash'" class="paid-input">
+      <label>{{ 'CASHIER_QUICK_SALE.PAID_AMOUNT' | translate }}</label>
+      <p-inputNumber
+        [(ngModel)]="paidAmount"
+        (ngModelChange)="calculateChange()"
+        [minFractionDigits]="2"
+        [maxFractionDigits]="2"
+        mode="decimal"
+        class="w-full"
+        inputStyleClass="w-full">
+      </p-inputNumber>
+    </div>
+
+    <div *ngIf="selectedPaymentKey === 'cash' && changeAmount > 0" class="change-box">
+      <span>{{ 'CASHIER_QUICK_SALE.CHANGE' | translate }}</span>
+      <strong>{{ changeAmount | number:'1.2-2' }} {{ 'CASHIER_QUICK_SALE.CURRENCY' | translate }}</strong>
+    </div>
+
+    <!-- Electronic Method Notice -->
+    <div *ngIf="isElectronicMethodSelected" class="electronic-notice">
+      <i class="pi pi-info-circle"></i>
+      <span>سيتم إنشاء رابط دفع إلكتروني وفتحه في نافذة جديدة لإتمام العملية.</span>
+    </div>
+  </div>
+
+  <ng-template pTemplate="footer">
+    <button pButton type="button" [label]="'CASHIER_QUICK_SALE.CANCEL' | translate" icon="pi pi-times" class="p-button-text" (click)="showCheckoutDialog = false" [disabled]="loading() || creatingPaymentLink"></button>
+    <button pButton type="button" [label]="'CASHIER_QUICK_SALE.CONFIRM_SALE' | translate" icon="pi pi-check" class="p-button-success" (click)="confirmQuickSale()" [loading]="loading() || creatingPaymentLink" [disabled]="loading() || creatingPaymentLink"></button>
+  </ng-template>
+</p-dialog>
+
+<!-- ═══════════════════════════════════════════════════════════════ -->
+<!-- Payment Pending Modal — يظهر عند الدفع الإلكتروني (المرحلة الأولى)    -->
+<!-- ═══════════════════════════════════════════════════════════════ -->
+<p-dialog
+  [(visible)]="showPaymentPendingDialog"
+  [modal]="true"
+  [draggable]="false"
+  [resizable]="false"
+  [closable]="false"
+  [style]="{width: '540px', maxWidth: '96vw'}"
+  styleClass="payment-pending-dialog">
+
+  <ng-template pTemplate="header">
+    <div class="pending-dialog-header">
+      <span class="pending-icon"><i class="pi pi-clock"></i></span>
+      <div>
+        <h3>في انتظار إتمام الدفع</h3>
+        <p>يرجى إتمام الدفع عبر الصفحة التي تم فتحها</p>
+      </div>
+    </div>
+  </ng-template>
+
+  <div *ngIf="pendingPayment" class="payment-pending-body">
+
+    <!-- Payment Info Summary -->
+    <div class="pending-summary">
+      <div class="pending-row">
+        <span>طريقة الدفع</span>
+        <strong>{{ pendingPayment.methodLabel }}</strong>
+      </div>
+      <div class="pending-row">
+        <span>المبلغ</span>
+        <strong class="pending-amount">{{ pendingPayment.amount | number:'1.2-2' }} ر.س</strong>
+      </div>
+      <div class="pending-row">
+        <span>رقم المرجع</span>
+        <code>{{ pendingPayment.orderReference }}</code>
+      </div>
+      <div class="pending-row">
+        <span>مزود الخدمة</span>
+        <strong>{{ pendingPayment.provider }}</strong>
+      </div>
+    </div>
+
+    <!-- Status Banner -->
+    <div class="pending-status-banner">
+      <i class="pi pi-spin pi-spinner"></i>
+      <span>تم إنشاء رابط الدفع — في انتظار تأكيد العميل</span>
+    </div>
+
+    <!-- Popup Blocked Warning -->
+    <div *ngIf="popupBlocked" class="popup-blocked-warning">
+      <i class="pi pi-exclamation-triangle"></i>
+      <span>تم حظر النافذة الجديدة — انسخ الرابط وأرسله للعميل.</span>
+    </div>
+
+    <!-- Action Buttons -->
+    <div class="pending-actions">
+      <button
+        pButton
+        type="button"
+        icon="pi pi-external-link"
+        label="فتح صفحة الدفع"
+        class="p-button-outlined p-button-primary action-full-btn"
+        (click)="openPaymentUrl()">
+      </button>
+
+      <button
+        pButton
+        type="button"
+        icon="pi pi-copy"
+        label="نسخ رابط الدفع"
+        class="p-button-outlined action-full-btn"
+        (click)="copyPaymentUrl()">
+      </button>
+    </div>
+
+    <!-- Manual Confirmation (Phase 1) -->
+    <div class="manual-confirm-section">
+      <div class="manual-confirm-note">
+        <i class="pi pi-info-circle"></i>
+        <span>بعد تأكد الكاشير من اكتمال الدفع عبر الجهاز أو الإشعار، اضغط على زر التأكيد لإتمام الفاتورة.</span>
+      </div>
+      <button
+        pButton
+        type="button"
+        icon="pi pi-check-circle"
+        label="تأكيد اكتمال الدفع يدوياً"
+        class="p-button-success manual-confirm-btn"
+        [loading]="confirmingPayment"
+        (click)="confirmPaymentManually()">
+      </button>
+    </div>
+
+  </div>
+
+  <ng-template pTemplate="footer">
+    <button
+      pButton
+      type="button"
+      icon="pi pi-times"
+      label="إلغاء عملية الدفع"
+      class="p-button-text p-button-danger"
+      [disabled]="confirmingPayment"
+      (click)="cancelPendingPayment()">
+    </button>
+  </ng-template>
+
+</p-dialog>

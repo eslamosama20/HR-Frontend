@@ -1,0 +1,66 @@
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <h3 class="text-center">Company Profile</h3>
+
+            <div *ngIf="companyData; else noData">
+                <div class="card">
+                    <div class="card-body">
+                        <h4 class="card-title text-center mb-4">{{ companyData.englishName }}</h4>
+                        <table class="table table-striped table-bordered">
+                            <tbody>
+                                <tr>
+                                    <th scope="row">Arabic Name</th>
+                                    <td>{{ companyData.arabicName }}</td>
+                                </tr>
+                                <tr>
+                                    <th scope="row">Mobile</th>
+                                    <td>{{ companyData.mobile }}</td>
+                                </tr>
+                                <tr>
+                                    <th scope="row">Email</th>
+                                    <td>{{ companyData.email }}</td>
+                                </tr>
+                                <tr>
+                                    <th scope="row">Address</th>
+                                    <td>{{ companyData.address }}</td>
+                                </tr>
+                                <tr>
+                                    <th scope="row">City</th>
+                                    <td>{{ companyData.city }}</td>
+                                </tr>
+                                <tr>
+                                    <th scope="row">Nationality</th>
+                                    <td>{{ companyData.nationalty }}</td> <!-- Retained 'nationalty' -->
+                                </tr>
+                                <tr>
+                                    <th scope="row">Currency</th>
+                                    <td>{{ companyData.currency }}</td>
+                                </tr>
+                                <tr>
+                                    <th scope="row">VAT Number</th>
+                                    <td>{{ companyData.vatNumber }}</td>
+                                </tr>
+                                <tr>
+                                    <th scope="row">Logo URL</th>
+                                    <td>
+                                        <a [href]="companyData.logo" target="_blank">{{ companyData.logo }}</a>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                        <div class="text-center mt-4">
+                            <a [routerLink]="['/company-data/edit', id]" class="btn btn-primary">Edit Profile</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <ng-template #noData>
+                <div class="alert alert-warning text-center" role="alert">
+                    Company profile not found.
+                </div>
+            </ng-template>
+        </div>
+    </div>
+</div>

@@ -1,0 +1,492 @@
+<div class="content-container">
+  <!-- ✅ Header Action Bar -->
+  <div class="header-actions-bar" *ngIf="!loading">
+    <div class="header-title-section">
+      <h1>
+        {{ "INVOICE.PURCHASEINVOICEDETAILS" | translate }}
+        <span class="ms-3 text-secondary" style="font-size: 1.1rem;" *ngIf="invoiceForm.get('invoiceNo')?.value">
+          # {{ invoiceForm.get('invoiceNo')?.value }}
+        </span>
+      </h1>
+    </div>
+
+    <div class="actions-buttons-group">
+      <!-- Save and Continue -->
+      <button
+        *ngIf="!isEditMode"
+        type="button"
+        class="btn-success-action"
+        (click)="submitForm($event, true)"
+        [attr.aria-label]="'DATA.SAVE_AND_CONTINUE' | translate"
+      >
+        <i class="pi pi-check-circle"></i>
+        <span>{{ "DATA.SAVE_AND_CONTINUE" | translate }}</span>
+      </button>
+
+      <!-- Save -->
+      <button
+        type="submit"
+        class="btn-primary-action"
+        (click)="submitForm($event, false)"
+        [attr.aria-label]="'DATA.SAVE' | translate"
+      >
+        <i class="pi pi-save"></i>
+        <span>{{ "DATA.SAVE" | translate }}</span>
+      </button>
+
+      <!-- Cancel -->
+      <button
+        type="button"
+        class="btn-danger-action"
+        (click)="cancel()"
+        [attr.aria-label]="'DATA.CANCEL' | translate"
+      >
+        <i class="pi pi-times"></i>
+        <span>{{ "DATA.CANCEL" | translate }}</span>
+      </button>
+
+      <app-back-button [modernStyle]="false"></app-back-button>
+    </div>
+  </div>
+
+  <!-- ✅ Spinner Loading Overlay -->
+  <div
+    class="fixed inset-0 bg-gray-500 bg-opacity-75 flex items-center justify-center z-50"
+    *ngIf="loading"
+    role="status"
+    aria-label="Loading invoice data"
+  >
+    <i class="pi pi-spin pi-spinner text-white" style="font-size: 3rem" aria-hidden="true"></i>
+    <span class="sr-only">Loading...</span>
+  </div>
+
+  <p-toast></p-toast>
+  <p-confirmDialog></p-confirmDialog>
+
+  <!-- ✅ Form Body -->
+  <form [formGroup]="invoiceForm" *ngIf="!loading">
+    <!-- Card 1: General Info -->
+    <div class="modern-card">
+      <div class="modern-card-header">
+        <div class="modern-card-title">
+          <i class="pi pi-file"></i>
+          <span>{{ "INVOICE.PURCHASEINVOICEDETAILS" | translate }}</span>
+        </div>
+      </div>
+      <div class="modern-card-body card-form-grid-12">
+        <!-- Supplier Dropdown -->
+        <div class="form-field-group span-3">
+          <label class="form-label">{{ "REPORT.SELECTSUPPLIER" | translate }}</label>
+
+          <!-- Existing Supplier Dropdown -->
+          <ng-container *ngIf="!isNewSupplier">
+            <div class="flex gap-1 items-center">
+              <div class="flex-1">
+                <p-dropdown
+                  [options]="suppliers"
+                  formControlName="supplierDetailsId"
+                  placeholder=""
+                  optionLabel="label"
+                  optionValue="value"
+                  [filter]="true"
+                  styleClass="w-full input-like"
+                  [panelStyleClass]="activeLanguage === 'ar' ? 'rtl-panel' : 'ltr-panel'"
+                  appendTo="body"
+                >
+                  <ng-template pTemplate="selectedItem" let-selectedOption>
+                    <div [ngClass]="{'text-right': activeLanguage === 'ar', 'text-left': activeLanguage !== 'ar'}">
+                      {{ selectedOption.label }}
+                    </div>
+                  </ng-template>
+                  <ng-template pTemplate="item" let-option>
+                    <div [ngClass]="{'text-right': activeLanguage === 'ar', 'text-left': activeLanguage !== 'ar'}">
+                      {{ option.label }}
+                    </div>
+                  </ng-template>
+                </p-dropdown>
+              </div>
+              <button
+                type="button"
+                class="btn-add-customer"
+                (click)="toggleNewSupplier()"
+                [title]="'INVOICE.ADD_NEW_SUPPLIER' | translate"
+              >
+                <i class="pi pi-plus" style="font-size:10px;"></i>
+                <span>{{ "INVOICE.NEW_SUPPLIER" | translate }}</span>
+              </button>
+            </div>
+            <small
+              class="text-red-500 text-xs mt-1 block"
+              *ngIf="invoiceForm.get('supplierDetailsId')?.invalid && (invoiceForm.get('supplierDetailsId')?.touched || invoiceForm.get('supplierDetailsId')?.dirty)"
+            >
+              {{ 'VALIDATION.REQUIRED' | translate:{ name: ('INVOICE.SUPPLIERNAME' | translate) } }}
+            </small>
+          </ng-container>
+
+          <!-- New Supplier Quick-Add Form -->
+          <ng-container *ngIf="isNewSupplier">
+            <div class="new-customer-box">
+              <div class="new-customer-header">
+                <span class="new-customer-title">{{ "INVOICE.NEW_SUPPLIER" | translate }}</span>
+                <button type="button" class="btn-cancel-customer" (click)="cancelNewSupplier()">
+                  <i class="pi pi-times"></i>
+                  <span>{{ "DATA.CANCEL" | translate }}</span>
+                </button>
+              </div>
+              <input
+                type="text"
+                class="input-like w-full"
+                [(ngModel)]="newSupplierName"
+                [ngModelOptions]="{standalone: true}"
+                [placeholder]="'INVOICE.NEW_SUPPLIER_NAME_PLACEHOLDER' | translate"
+                required
+              />
+              <input
+                type="text"
+                class="input-like w-full"
+                [(ngModel)]="newSupplierTaxNumber"
+                [ngModelOptions]="{standalone: true}"
+                [placeholder]="'INVOICE.SUPPLIER_TAX_NUMBER_OPTIONAL' | translate"
+              />
+              <small class="new-customer-hint">{{ "INVOICE.NEW_SUPPLIER_HINT" | translate }}</small>
+            </div>
+          </ng-container>
+        </div>
+
+        <!-- Description Field -->
+        <div class="form-field-group span-3">
+          <label class="form-label">{{ "INVOICE.DESCRIPTION" | translate }}:</label>
+          <input
+            class="input-like w-full"
+            formControlName="description"
+            name="description"
+            id="description"
+            [placeholder]="'INVOICE.DESCRIPTION' | translate"
+          />
+          <small
+            class="text-red-500 text-xs mt-1 block"
+            *ngIf="invoiceForm.get('description')?.invalid && (invoiceForm.get('description')?.touched || invoiceForm.get('description')?.dirty)"
+          >
+            {{ 'VALIDATION.REQUIRED' | translate:{ name: ('INVOICE.DESCRIPTION' | translate) } }}
+          </small>
+        </div>
+
+        <!-- Store Dropdown -->
+        <div class="form-field-group span-3">
+          <label class="form-label">{{ "INVOICE.STORE_DETAILS" | translate }}:</label>
+          <p-dropdown
+            [options]="stores"
+            placeholder="Select a Store"
+            optionLabel="label"
+            optionValue="value"
+            [filter]="true"
+            styleClass="w-full input-like"
+            [panelStyleClass]="activeLanguage === 'ar' ? 'rtl-panel' : 'ltr-panel'"
+            (onChange)="loadDefaultStoreDetails($event)"
+            appendTo="body"
+          >
+            <ng-template pTemplate="selectedItem" let-selectedOption>
+              <div [ngClass]="{'text-right': activeLanguage === 'ar', 'text-left': activeLanguage !== 'ar'}">
+                {{ selectedOption.label }}
+              </div>
+            </ng-template>
+            <ng-template pTemplate="item" let-option>
+              <div [ngClass]="{'text-right': activeLanguage === 'ar', 'text-left': activeLanguage !== 'ar'}">
+                {{ option.label }}
+              </div>
+            </ng-template>
+          </p-dropdown>
+        </div>
+
+        <!-- Issue Date -->
+        <div class="form-field-group span-3">
+          <label class="form-label">{{ "INVOICE.ISSUE_DATE" | translate }}:</label>
+          <p-calendar
+            [showIcon]="false"
+            [dateFormat]="'dd/mm/yy'"
+            appendTo="body"
+            styleClass="w-full"
+            inputStyleClass="w-full input-like"
+            formControlName="issueDate"
+            [showButtonBar]="true"
+            placeholder="dd/mm/yyyy"
+          ></p-calendar>
+        </div>
+
+        <!-- Barcode Scanner -->
+        <div class="form-field-group span-12" #barcodeInputHost>
+          <label class="form-label">{{ "INVOICE.BARCODE_LABEL" | translate }}</label>
+          <app-barcode-input
+            [placeholder]="'INVOICE.BARCODE_PLACEHOLDER' | translate"
+            [errorText]="'INVOICE.BARCODE_NOT_FOUND' | translate"
+            [scanHandler]="purchaseBarcodeScanHandler"
+            (barcodeResolved)="onPurchaseBarcodeResolved($event)"
+            (barcodeFailed)="onPurchaseBarcodeFailed($event)"
+          ></app-barcode-input>
+        </div>
+      </div>
+    </div>
+
+    <!-- ✅ Items Table -->
+    <div formArrayName="purchaseItems" class="mt-3">
+      <div class="table-section-header">
+        <h3 class="table-section-title">{{ "INVOICE.PURCHASEINVOICEDETAILS" | translate }}</h3>
+        <button
+          type="button"
+          class="btn-add-entry"
+          (click)="addItem()"
+          [title]="'INVOICE.ADDITEM' | translate"
+        >
+          <i class="pi pi-plus"></i>
+          <span>{{ "INVOICE.ADDITEM" | translate }}</span>
+        </button>
+      </div>
+
+      <div class="table-container">
+        <table class="premium-table">
+          <thead>
+            <tr>
+              <th style="width: 40px;">#</th>
+              <th>{{ "INVOICE.NAME" | translate }}</th>
+              <th>{{ "REPORT.SELECTSTORE" | translate }}</th>
+              <th style="width: 80px;">{{ "INVOICE.UNIT" | translate }}</th>
+              <th style="width: 90px;">{{ "INVOICE.QUANTITY" | translate }}</th>
+              <th style="width: 100px;">{{ "INVOICE.PRICE" | translate }}</th>
+              <th style="width: 100px;">{{ "INVOICE.RETAIL_PRICE" | translate }}</th>
+              <th style="width: 100px;">{{ "INVOICE.WHOLESALE_PRICE" | translate }}</th>
+              <th style="width: 100px;">{{ "INVOICE.BULK_PRICE" | translate }}</th>
+              <th style="width: 110px;">{{ "INVOICE.NETPRICE" | translate }}</th>
+              <th style="width: 110px;">{{ "INVOICE.TOTAL" | translate }}</th>
+              <th style="width: 50px;"></th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr
+              *ngFor="let item of purchaseItems.controls; let i = index"
+              [formGroupName]="i"
+            >
+              <td>{{ i + 1 }}</td>
+              <td>
+                <p-dropdown
+                  [options]="getFilteredProducts(item.get('storeDetailsId')?.value)"
+                  formControlName="mainPurchaseClassId"
+                  placeholder="{{ 'INVOICE.SELECT_ITEM' | translate }}"
+                  optionLabel="arabicName"
+                  optionValue="id"
+                  [filter]="true"
+                  styleClass="w-full input-like"
+                  appendTo="body"
+                  [panelStyleClass]="activeLanguage === 'ar' ? 'rtl-panel' : 'ltr-panel'"
+                  (onChange)="onPurchaseClick($event, item)"
+                >
+                  <ng-template pTemplate="selectedItem" let-selectedOption>
+                    <div [ngClass]="{'text-right': activeLanguage === 'ar', 'text-left': activeLanguage !== 'ar'}">
+                      {{ selectedOption.arabicName }}
+                    </div>
+                  </ng-template>
+                  <ng-template pTemplate="item" let-option>
+                    <div [ngClass]="{'text-right': activeLanguage === 'ar', 'text-left': activeLanguage !== 'ar'}">
+                      {{ option.arabicName }}
+                    </div>
+                  </ng-template>
+                </p-dropdown>
+                <small
+                  class="text-red-500 block text-xs mt-1"
+                  *ngIf="item.get('mainPurchaseClassId')?.invalid && (item.get('mainPurchaseClassId')?.touched || item.get('mainPurchaseClassId')?.dirty)"
+                >
+                  {{ 'VALIDATION.REQUIRED' | translate:{ name: ('INVOICE.NAME' | translate) } }}
+                </small>
+              </td>
+              <td>
+                <p-dropdown
+                  [options]="stores"
+                  formControlName="storeDetailsId"
+                  placeholder="Select a Store"
+                  optionLabel="label"
+                  optionValue="value"
+                  [filter]="true"
+                  styleClass="w-full input-like"
+                  appendTo="body"
+                  [panelStyleClass]="activeLanguage === 'ar' ? 'rtl-panel' : 'ltr-panel'"
+                >
+                  <ng-template pTemplate="selectedItem" let-selectedOption>
+                    <div [ngClass]="{'text-right': activeLanguage === 'ar', 'text-left': activeLanguage !== 'ar'}">
+                      {{ selectedOption.label }}
+                    </div>
+                  </ng-template>
+                  <ng-template pTemplate="item" let-option>
+                    <div [ngClass]="{'text-right': activeLanguage === 'ar', 'text-left': activeLanguage !== 'ar'}">
+                      {{ option.label }}
+                    </div>
+                  </ng-template>
+                </p-dropdown>
+                <small
+                  class="text-red-500 block text-xs mt-1"
+                  *ngIf="item.get('storeDetailsId')?.invalid && (item.get('storeDetailsId')?.touched || item.get('storeDetailsId')?.dirty)"
+                >
+                  {{ 'VALIDATION.REQUIRED' | translate:{ name: ('INVOICE.STORE_DETAILS' | translate) } }}
+                </small>
+              </td>
+              <td class="font-semibold text-gray-700 bg-gray-50">
+                {{ item.get("unit").value }}
+              </td>
+              <td>
+                <input
+                  class="input-like w-full text-center"
+                  type="number"
+                  step="1"
+                  (blur)="normalizeControlDecimals(item, 'quantity', 3)"
+                  formControlName="quantity"
+                />
+                <div
+                  *ngIf="item.get('quantity')?.invalid && (item.get('quantity')?.touched || item.get('quantity')?.dirty)"
+                  class="text-red-500 text-xs mt-1"
+                >
+                  <small *ngIf="item.get('quantity')?.errors?.['required']">
+                    {{ 'VALIDATION.REQUIRED' | translate:{ name: ('INVOICE.QUANTITY' | translate) } }}
+                  </small>
+                  <small *ngIf="item.get('quantity')?.errors?.['min']">
+                    {{ 'VALIDATION.INVALID_VALUE' | translate }}
+                  </small>
+                </div>
+              </td>
+              <td>
+                <input
+                  class="input-like w-full text-center"
+                  type="number"
+                  step="1"
+                  (blur)="normalizeControlDecimals(item, 'price', 2)"
+                  formControlName="price"
+                />
+                <div
+                  *ngIf="item.get('price')?.invalid && (item.get('price')?.touched || item.get('price')?.dirty)"
+                  class="text-red-500 text-xs mt-1"
+                >
+                  <small *ngIf="item.get('price')?.errors?.['required']">
+                    {{ 'VALIDATION.REQUIRED' | translate:{ name: ('INVOICE.PRICE' | translate) } }}
+                  </small>
+                  <small *ngIf="item.get('price')?.errors?.['min']">
+                    {{ 'VALIDATION.INVALID_VALUE' | translate }}
+                  </small>
+                </div>
+              </td>
+              <td>
+                <input
+                  class="input-like w-full text-center"
+                  type="number"
+                  formControlName="retailPrice"
+                />
+              </td>
+              <td>
+                <input
+                  class="input-like w-full text-center"
+                  type="number"
+                  formControlName="wholesalePrice"
+                />
+              </td>
+              <td>
+                <input
+                  class="input-like w-full text-center"
+                  type="number"
+                  formControlName="bulkPrice"
+                />
+              </td>
+              <td class="font-semibold text-gray-700 bg-gray-50">
+                <input
+                  class="input-like w-full text-center"
+                  type="number"
+                  step="0.01"
+                  formControlName="netPrice"
+                  readonly
+                  tabindex="-1"
+                />
+              </td>
+              <td class="font-semibold text-gray-700 bg-gray-50">
+                <input
+                  class="input-like w-full text-center"
+                  type="number"
+                  step="0.01"
+                  formControlName="totalPrice"
+                  readonly
+                  tabindex="-1"
+                />
+              </td>
+              <td>
+                <button
+                  type="button"
+                  class="btn-delete-row"
+                  (click)="removeItem(i)"
+                  [attr.aria-label]="'Remove item ' + (i + 1)"
+                >
+                  <i class="pi pi-trash" aria-hidden="true"></i>
+                </button>
+              </td>
+            </tr>
+
+            <!-- Grand Total Row -->
+            <tr style="background-color: var(--primary-light);">
+              <td colspan="9" class="font-bold text-gray-700 text-sm" style="text-align: end !important; padding-right: 15px !important; padding-left: 15px !important;">
+                {{ "FINANCE.TOTALS" | translate }}
+              </td>
+              <td class="text-center font-bold text-gray-800 text-sm py-1">
+                <span>{{ getNetPrice() }}</span>
+              </td>
+              <td class="text-center font-bold text-success text-sm py-1">
+                <span>{{ getTotalPrice() }}</span>
+              </td>
+              <td></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ✅ Totals Dashboard Card -->
+    <div class="totals-dashboard">
+      <div class="totals-dashboard-header">
+        <div class="totals-dashboard-title">
+          <i class="pi pi-chart-bar"></i>
+          <span>{{ "RESERVATION.TOTALS_SUMMARY_ANALYSIS" | translate }}</span>
+        </div>
+      </div>
+
+      <div class="totals-grid">
+        <!-- Apply Tax Toggle -->
+        <div class="total-item-box">
+          <div class="total-item-label">{{ "INVOICE.APPLY_TAX" | translate }}</div>
+          <div class="total-item-value flex justify-center items-center py-1">
+            <p-inputSwitch
+              [ngModelOptions]="{ standalone: true }"
+              (onChange)="toggleApplyTax($event)"
+              [(ngModel)]="taxApplied"
+            ></p-inputSwitch>
+          </div>
+        </div>
+
+        <!-- Tax Amount -->
+        <div class="total-item-box">
+          <div class="total-item-label">{{ "RETURN.TAXAMOUNT" | translate }}</div>
+          <div class="total-item-value">
+            {{ getTaxAmount() }}
+          </div>
+        </div>
+
+        <!-- Net Price -->
+        <div class="total-item-box">
+          <div class="total-item-label">{{ "RETURN.NETPRICEWITHDISCOUNT" | translate }}</div>
+          <div class="total-item-value">
+            {{ getNetPrice() }}
+          </div>
+        </div>
+
+        <!-- Total with Tax -->
+        <div class="total-item-box">
+          <div class="total-item-label">{{ "RETURN.TOTALWITHTAX" | translate }}</div>
+          <div class="total-item-value success">
+            {{ getTotalPrice() }}
+          </div>
+        </div>
+      </div>
+    </div>
+  </form>
+</div>

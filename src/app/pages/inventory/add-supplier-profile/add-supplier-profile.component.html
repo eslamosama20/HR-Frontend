@@ -1,0 +1,391 @@
+<p-panel>
+  <ng-template pTemplate="header">
+    <div class="flex justify-between items-center w-full">
+      <span class="font-semibold text-xl text-gray-800 dark:text-gray-100">
+        {{ translate.instant('FINANCE.ADD_SUPPLIER_PROFILE') }}
+      </span>
+      <div class="no-print">
+        <app-back-button [customRoute]="'/inventory/supplier-details'" [modernStyle]="false"></app-back-button>
+      </div>
+    </div>
+  </ng-template>
+
+  <form
+    [formGroup]="supplierProfileFormGroup"
+    (ngSubmit)="saveSupplierProfile()"
+    class="grid grid-cols-1 md:grid-cols-3 gap-x-4 gap-y-1.5 p-0"
+    novalidate
+  >
+    <div class="field">
+      <label for="arabicName" class="block text-sm font-semibold mb-1">
+        {{ translate.instant("FINANCE.ARABIC_NAME") }} <span class="text-red-500">*</span>
+      </label>
+      <input
+        pInputText
+        type="text"
+        id="arabicName"
+        formControlName="arabicName"
+        class="input w-full"
+      />
+      <small
+        class="text-red-500 p-error block text-xs"
+        *ngIf="
+          supplierProfileFormGroup.controls.arabicName.invalid &&
+          supplierProfileFormGroup.controls.arabicName.touched
+        "
+      >
+        {{ translate.instant("FINANCE.ARABIC_NAME_REQUIRED") }}
+      </small>
+    </div>
+
+    <div class="field">
+      <label for="englishName" class="block text-sm font-semibold mb-1">
+        {{ translate.instant("FINANCE.ENGLISH_NAME") }}
+      </label>
+      <input
+        pInputText
+        type="text"
+        id="englishName"
+        formControlName="englishName"
+        class="input w-full"
+      />
+    </div>
+
+    <div class="field">
+      <label for="contactNumber" class="block text-sm font-semibold mb-1">
+        {{ translate.instant("FINANCE.CONTACT_NUMBER") }}
+      </label>
+      <input
+        pInputText
+        type="text"
+        id="contactNumber"
+        formControlName="contactNumber"
+        class="input w-full"
+      />
+    </div>
+
+    <div class="field">
+      <label for="email" class="block text-sm font-semibold mb-1">
+        {{ translate.instant("FINANCE.EMAIL") }}
+      </label>
+      <input
+        pInputText
+        type="email"
+        id="email"
+        formControlName="email"
+        class="input w-full"
+      />
+    </div>
+
+    <div class="field">
+      <label for="bankName" class="block text-sm font-semibold mb-1">
+        {{ translate.instant("FINANCE.BANK_NAME") }}
+      </label>
+      <input
+        pInputText
+        type="text"
+        id="bankName"
+        formControlName="bankName"
+        class="input w-full"
+      />
+    </div>
+
+    <div class="field">
+      <label for="bankAccountNumber" class="block text-sm font-semibold mb-1">
+        {{ translate.instant("FINANCE.BANK_ACCOUNT_NUMBER") }}
+      </label>
+      <input
+        pInputText
+        type="text"
+        id="bankAccountNumber"
+        formControlName="bankAccountNumber"
+        class="input w-full"
+      />
+    </div>
+
+    <div class="field">
+      <label for="iban" class="block text-sm font-semibold mb-1">
+        {{ translate.instant("FINANCE.IBAN") }}
+      </label>
+      <input
+        pInputText
+        type="text"
+        id="iban"
+        formControlName="iban"
+        class="input w-full"
+      />
+    </div>
+
+    <div class="field">
+      <label for="taxNumber" class="block text-sm font-semibold mb-1">
+        {{ translate.instant("FINANCE.TAX_NUMBER") }}
+      </label>
+      <input
+        pInputText
+        type="text"
+        id="taxNumber"
+        formControlName="taxNumber"
+        class="input w-full"
+      />
+    </div>
+
+    <div class="field">
+      <label for="street" class="block text-sm font-semibold mb-1">
+        {{ translate.instant("DATA.STREET") }}
+      </label>
+      <input
+        pInputText
+        type="text"
+        id="street"
+        formControlName="street"
+        class="input w-full"
+      />
+    </div>
+
+    <div class="field">
+      <label for="district" class="block text-sm font-semibold mb-1">
+        {{ translate.instant("FINANCE.DISTRICT") }}
+      </label>
+      <input
+        pInputText
+        type="text"
+        id="district"
+        formControlName="district"
+        class="input w-full"
+      />
+    </div>
+
+    <div class="field">
+      <label for="city" class="block text-sm font-semibold mb-1">
+        {{ translate.instant("DATA.CITY") }}
+      </label>
+      <input
+        pInputText
+        type="text"
+        id="city"
+        formControlName="city"
+        class="input w-full"
+      />
+    </div>
+
+    <div class="field">
+      <label for="country" class="block text-sm font-semibold mb-1">
+        {{ translate.instant("DATA.COUNTRY") }} / دول العمل
+      </label>
+      <p-multiSelect
+        [options]="countryOptions"
+        optionLabel="label"
+        optionValue="value"
+        [filter]="true"
+        [showToggleAll]="true"
+        formControlName="countriesList"
+        id="country"
+        styleClass="w-full"
+        appendTo="body"
+        placeholder="اختر الدول"
+        selectedItemsLabel="{0} دول مختارة">
+      </p-multiSelect>
+    </div>
+
+    <div class="field">
+      <label for="shortAddress" class="block text-sm font-semibold mb-1">
+        {{ translate.instant("FINANCE.SHORT_ADDRESS") }}
+      </label>
+      <input
+        pInputText
+        type="text"
+        id="shortAddress"
+        formControlName="shortAddress"
+        class="input w-full"
+      />
+    </div>
+
+    <div class="field">
+      <label for="buildingNumber" class="block text-sm font-semibold mb-1">
+        {{ translate.instant("FINANCE.BUILDING_NUMBER") }}
+      </label>
+      <input
+        pInputText
+        type="text"
+        id="buildingNumber"
+        formControlName="buildingNumber"
+        class="input w-full"
+      />
+    </div>
+
+    <div class="field">
+      <label for="additionalContactNumber" class="block text-sm font-semibold mb-1">
+        {{ translate.instant("FINANCE.ADDITIONAL_CONTACT_NUMBER") }}
+      </label>
+      <input
+        pInputText
+        type="text"
+        id="additionalContactNumber"
+        formControlName="additionalContactNumber"
+        class="input w-full"
+      />
+    </div>
+
+    <div class="field">
+      <label for="zipCode" class="block text-sm font-semibold mb-1">
+        {{ translate.instant("DATA.ZIP_CODE") }}
+      </label>
+      <input
+        pInputText
+        type="text"
+        id="zipCode"
+        formControlName="zipCode"
+        class="input w-full"
+      />
+    </div>
+
+    <div class="field">
+      <label for="fax" class="block text-sm font-semibold mb-1">
+        {{ translate.instant("FINANCE.FAX") }}
+      </label>
+      <input
+        pInputText
+        type="text"
+        id="fax"
+        formControlName="fax"
+        class="input w-full"
+      />
+    </div>
+
+    <div class="field">
+      <label for="website" class="block text-sm font-semibold mb-1">
+        {{ translate.instant("FINANCE.WEBSITE") }}
+      </label>
+      <input
+        pInputText
+        type="text"
+        id="website"
+        formControlName="website"
+        class="input w-full"
+      />
+    </div>
+
+    <div class="field">
+      <label for="instructions" class="block text-sm font-semibold mb-1">
+        {{ translate.instant("FINANCE.INSTRUCTIONS") }}
+      </label>
+      <input
+        pInputText
+        type="text"
+        id="instructions"
+        formControlName="instructions"
+        class="input w-full"
+      />
+    </div>
+
+    <div class="field">
+      <label for="gaztNumber" class="block text-sm font-semibold mb-1">
+        {{ translate.instant("FINANCE.GAZT_NUMBER") }}
+      </label>
+      <input
+        pInputText
+        type="text"
+        id="gaztNumber"
+        formControlName="gaztNumber"
+        class="input w-full"
+      />
+    </div>
+
+    <div class="field">
+      <label for="otherId" class="block text-sm font-semibold mb-1">
+        {{ translate.instant("FINANCE.OTHER_ID") }}
+      </label>
+      <input
+        pInputText
+        type="text"
+        id="otherId"
+        formControlName="otherId"
+        class="input w-full"
+      />
+    </div>
+
+    <!-- ملخص الحساب للموردين الموجودين بدون حساب مرتبط (legacy) -->
+    <div class="field" *ngIf="supplierProfileFormGroup.controls.id.value && !supplierProfileFormGroup.controls.mainAccountId.value">
+      <p class="font-bold text-lg">
+        {{ "FINANCE.CONNECTED_TO_ACCOUNT" | translate }}{{ "FINANCE.NOT_LINKED" | translate }}
+      </p>
+    </div>
+
+    <!-- الحساب الفرعي (المجموعة الأب) -->
+    <div class="field">
+      <label for="detailAccount" class="block text-sm font-semibold mb-1">
+        {{ translate.instant("FINANCE.CHOOSE_SUPPLIER_PARENT_DETAIL_ACCOUNT") }}
+      </label>
+      <p-dropdown
+        [options]="detailAccountOptions"
+        [filter]="true"
+        [(ngModel)]="selectedDetailAccountId"
+        [ngModelOptions]="{standalone: true}"
+        id="detailAccount"
+        styleClass="w-full"
+        appendTo="body"
+        variant="filled"
+        [showClear]="true">
+      </p-dropdown>
+    </div>
+
+    <!-- الحساب الرئيسي -->
+    <div class="field" *ngIf="selectedDetailAccountId !== null">
+      <label for="mainAccount" class="block text-sm font-semibold mb-1">
+        {{ translate.instant("FINANCE.MAIN_ACCOUNT") }}
+      </label>
+      <p-dropdown
+        [options]="mainAccountOptions"
+        [filter]="true"
+        formControlName="mainAccountId"
+        id="mainAccount"
+        styleClass="w-full"
+        appendTo="body"
+        variant="filled">
+      </p-dropdown>
+    </div>
+
+    <!-- مؤشر عدم الربط بحساب (للمورد الجديد فقط — الحفظ ينشئ الحساب تلقائياً) -->
+    <div class="field col-span-1 md:col-span-3" *ngIf="!supplierProfileFormGroup.controls.mainAccountId.value && !supplierProfileFormGroup.controls.id.value">
+      <small class="text-gray-500 block text-xs">
+        <i class="pi pi-info-circle"></i>
+        {{ activeLanguage === 'ar' ? 'سيتم إنشاء حساب رئيسي تلقائياً عند الحفظ' : 'A main account will be created automatically on save' }}
+      </small>
+    </div>
+
+    <div class="field">
+      <label for="supplierStatus" class="block text-sm font-semibold mb-1">
+        {{ translate.instant("DATA.SUPPLIER_STATUS") }}
+      </label>
+      <p-dropdown
+        [options]="supplierStatusOptions"
+        [filter]="true"
+        formControlName="supplierStatusId"
+        id="supplierStatus"
+        styleClass="w-full"
+        appendTo="body"
+        variant="filled">
+      </p-dropdown>
+    </div>
+  </form>
+
+  <hr class="mt-2 mb-1" />
+
+  <div class="flex justify-content-end gap-2 no-print">
+    <p-button
+      styleClass="rounded-md"
+      [label]="translate.instant('FINANCE.CANCEL')"
+      severity="secondary"
+      (onClick)="cancel()"
+    />
+    <p-button
+      *ngIf="supplierId ? hasPermission(PERMISSIONS.SupplierDetails.Update) : hasPermission(PERMISSIONS.SupplierDetails.Create)"
+      styleClass="rounded-md"
+      [label]="translate.instant('FINANCE.SAVE')"
+      (onClick)="saveSupplierProfile()"
+      [disabled]="supplierProfileFormGroup.invalid"
+    />
+  </div>
+</p-panel>
+
+<p-toast />

@@ -1,0 +1,493 @@
+<div class="reports-shell">
+  <p-toast></p-toast>
+  
+  <div *ngIf="loading()" class="loading-overlay">
+    <div class="loading-card">
+      <i class="pi pi-spin pi-spinner"></i>
+      <span>{{ 'CASHIER_REPORTS.LOADING_REPORTS' | translate }}</span>
+    </div>
+  </div>
+
+  <div class="reports-unified-card">
+    <header class="reports-header">
+      <!-- Top Row: Brand on Right | Navigation Buttons on Left -->
+      <div class="reports-header-top">
+        <div class="header-brand">
+          <span class="brand-icon">
+            <i class="pi pi-chart-line"></i>
+          </span>
+          <div>
+            <h1>{{ 'CASHIER_REPORTS.PAGE_TITLE' | translate }}</h1>
+            <p>{{ 'CASHIER_REPORTS.PAGE_SUBTITLE' | translate }}</p>
+          </div>
+        </div>
+
+        <div class="header-actions">
+          <button pButton type="button" icon="pi pi-desktop" label="شاشة الكاشير (POS)" class="action-btn soft-btn" routerLink="/cashier/pos"></button>
+          <button pButton type="button" icon="pi pi-file" label="سجل الفواتير" class="action-btn soft-btn" routerLink="/cashier/invoice-control"></button>
+          <button pButton type="button" icon="pi pi-file-edit" label="تقرير الإغلاق (Z-Report)" class="action-btn soft-btn" routerLink="/cashier/z-report"></button>
+          <button pButton type="button" icon="pi pi-clock" [label]="'CASHIER_REPORTS.SESSIONS' | translate" class="action-btn soft-btn" routerLink="/cashier/session"></button>
+          <button pButton type="button" icon="pi pi-map" [label]="'CASHIER_POS.TABLES_MAP' | translate" class="action-btn soft-btn" routerLink="/cashier/floor"></button>
+        </div>
+      </div>
+
+      <!-- Bottom Row: Filter Controls & Refresh -->
+      <div class="reports-header-bottom">
+        <div class="header-controls">
+          <label class="control-field">
+            <span>{{ 'CASHIER_REPORTS.REPORT_DATE' | translate }}</span>
+            <input type="date" [(ngModel)]="dailyDate" (change)="onDailyDateChange()" />
+          </label>
+
+          <label class="control-field">
+            <span>{{ 'CASHIER_REPORTS.STORE_FILTER' | translate }}</span>
+            <p-dropdown
+              [options]="storeOptions()"
+              [(ngModel)]="selectedStoreId"
+              optionLabel="label"
+              optionValue="value"
+              [placeholder]="'CASHIER_REPORTS.ALL_STORES' | translate"
+              (onChange)="onStoreFilterChange()">
+            </p-dropdown>
+          </label>
+        </div>
+
+        <div class="header-refresh-action">
+          <button pButton type="button" icon="pi pi-refresh" [label]="'CASHIER_REPORTS.REFRESH' | translate" class="action-btn soft-btn" (click)="refreshAllData()"></button>
+        </div>
+      </div>
+    </header>
+
+  <section class="kpi-grid">
+    <article class="kpi-card sales">
+      <span>{{ 'CASHIER_REPORTS.TOTAL_SALES_TODAY' | translate }}</span>
+      <strong>{{ dailySnapshot().totalSales | number:'1.2-2' }}</strong>
+      <small *ngIf="loadingDaily()">{{ 'CASHIER_REPORTS.LIVE_UPDATE' | translate }}</small>
+      <small *ngIf="!loadingDaily()">{{ 'CASHIER_REPORTS.BASED_ON_DATE' | translate: { date: dailyDate } }}</small>
+    </article>
+
+    <article class="kpi-card avg">
+      <span>{{ 'CASHIER_REPORTS.AVG_TICKET' | translate }}</span>
+      <strong>{{ dailySnapshot().averageTicket | number:'1.2-2' }}</strong>
+      <small>{{ 'CASHIER_REPORTS.AVG_TICKET_SUB' | translate }}</small>
+    </article>
+
+    <article class="kpi-card tx">
+      <span>{{ 'CASHIER_REPORTS.TRANSACTIONS_COUNT' | translate }}</span>
+      <strong>{{ dailySnapshot().totalTransactions | number:'1.0-0' }}</strong>
+      <small>{{ 'CASHIER_REPORTS.MATCHING_SESSIONS' | translate }}</small>
+    </article>
+
+    <article class="kpi-card sessions">
+      <span>{{ 'CASHIER_REPORTS.OPEN_SESSIONS' | translate }}</span>
+      <strong>{{ openSessionsCount() }}</strong>
+      <small>{{ 'CASHIER_REPORTS.CLOSED' | translate }}: {{ closedSessionsCount() }} | {{ 'CASHIER_REPORTS.SUSPENDED' | translate }}: {{ suspendedSessionsCount() }}</small>
+    </article>
+
+    <article class="kpi-card stores">
+      <span>{{ 'CASHIER_REPORTS.MONITORED_STORES' | translate }}</span>
+      <strong>{{ inventoryInsight().storesCount }}</strong>
+      <small>{{ 'CASHIER_REPORTS.PRODUCTS_COUNT' | translate }}: {{ inventoryInsight().productsCount }}</small>
+    </article>
+
+    <article class="kpi-card stock">
+      <span>{{ 'CASHIER_REPORTS.STOCK_ALERTS' | translate }}</span>
+      <strong>{{ inventoryInsight().lowStockCount + inventoryInsight().outOfStockCount }}</strong>
+      <small>{{ 'CASHIER_REPORTS.LOW_STOCK' | translate }}: {{ inventoryInsight().lowStockCount }} | {{ 'CASHIER_REPORTS.OUT_OF_STOCK' | translate }}: {{ inventoryInsight().outOfStockCount }}</small>
+    </article>
+  </section>
+
+  <section class="main-grid">
+    <article class="panel sales-panel">
+      <div class="panel-head">
+        <div>
+          <h2>{{ 'CASHIER_REPORTS.SALES_DISTRIBUTION' | translate }}</h2>
+          <p>{{ 'CASHIER_REPORTS.SALES_DISTRIBUTION_SUB' | translate }}</p>
+        </div>
+      </div>
+
+      <div class="mix-grid">
+        <div class="mix-card cash">
+          <span>{{ 'CASHIER_REPORTS.CASH' | translate }}</span>
+          <strong>{{ dailySnapshot().cashAmount | number:'1.2-2' }}</strong>
+          <div class="mix-bar"><span [style.width.%]="getMixPercent(dailySnapshot().cashAmount)"></span></div>
+        </div>
+
+        <div class="mix-card card">
+          <span>{{ 'CASHIER_REPORTS.CARD' | translate }}</span>
+          <strong>{{ dailySnapshot().cardAmount | number:'1.2-2' }}</strong>
+          <div class="mix-bar"><span [style.width.%]="getMixPercent(dailySnapshot().cardAmount)"></span></div>
+        </div>
+
+        <div class="mix-card credit">
+          <span>{{ 'CASHIER_REPORTS.CREDIT' | translate }}</span>
+          <strong>{{ dailySnapshot().creditAmount | number:'1.2-2' }}</strong>
+          <div class="mix-bar"><span [style.width.%]="getMixPercent(dailySnapshot().creditAmount)"></span></div>
+        </div>
+
+        <div class="mix-card refund">
+          <span>{{ 'CASHIER_REPORTS.REFUNDS' | translate }}</span>
+          <strong>{{ dailySnapshot().refundsAmount | number:'1.2-2' }}</strong>
+          <div class="mix-bar"><span [style.width.%]="getMixPercent(dailySnapshot().refundsAmount)"></span></div>
+        </div>
+      </div>
+
+      <div class="performance-block">
+        <h3>{{ 'CASHIER_REPORTS.TOP_CASHIER_PERF' | translate }}</h3>
+
+        <div *ngFor="let cashier of cashierPerformance()" class="performance-row">
+          <div class="row-main">
+            <strong>{{ cashier.cashierName }}</strong>
+            <span>{{ cashier.sessionsCount }} {{ 'CASHIER_REPORTS.SESSIONS_LABEL' | translate }}</span>
+          </div>
+          <div class="row-main">
+            <span>{{ 'CASHIER_REPORTS.CASH' | translate }}: {{ cashier.totalCash | number:'1.2-2' }}</span>
+            <span>{{ 'CASHIER_REPORTS.CARD' | translate }}: {{ cashier.totalCard | number:'1.2-2' }}</span>
+          </div>
+          <div class="row-main">
+            <span class="sales-value">{{ cashier.totalSales | number:'1.2-2' }}</span>
+          </div>
+          <div class="perf-bar"><span [style.width.%]="cashier.sharePercent"></span></div>
+        </div>
+
+        <div *ngIf="cashierPerformance().length === 0" class="empty-mini">{{ 'CASHIER_REPORTS.EMPTY_PERF' | translate }}</div>
+      </div>
+    </article>
+
+    <article class="panel inventory-panel">
+      <div class="panel-head">
+        <div>
+          <h2>{{ 'CASHIER_REPORTS.INVENTORY_SUMMARY' | translate }}</h2>
+          <p>{{ 'CASHIER_REPORTS.INVENTORY_SUMMARY_SUB' | translate }}</p>
+        </div>
+      </div>
+
+      <div class="inventory-kpis">
+        <article>
+          <span>{{ 'CASHIER_REPORTS.TOTAL_QTY' | translate }}</span>
+          <strong>{{ inventoryInsight().totalQuantity | number:'1.2-2' }}</strong>
+        </article>
+        <article>
+          <span>{{ 'CASHIER_REPORTS.ESTIMATED_VALUE' | translate }}</span>
+          <strong>{{ inventoryInsight().estimatedValue | number:'1.2-2' }}</strong>
+        </article>
+        <article>
+          <span>{{ 'CASHIER_REPORTS.LOW_STOCK_ITEMS_COUNT' | translate }}</span>
+          <strong>{{ inventoryInsight().lowStockCount }}</strong>
+        </article>
+        <article>
+          <span>{{ 'CASHIER_REPORTS.OUT_OF_STOCK_ITEMS_COUNT' | translate }}</span>
+          <strong>{{ inventoryInsight().outOfStockCount }}</strong>
+        </article>
+      </div>
+
+      <div class="top-value-block">
+        <h3>{{ 'CASHIER_REPORTS.TOP_VALUE_ITEMS' | translate }}</h3>
+
+        <div *ngFor="let item of topValueItems()" class="value-row">
+          <div class="value-meta">
+            <strong>{{ item.itemName }}</strong>
+            <span>{{ item.storeName }}</span>
+          </div>
+          <div class="value-price">{{ item.estimatedValue | number:'1.2-2' }}</div>
+          <div class="value-bar"><span [style.width.%]="item.valuePercent"></span></div>
+        </div>
+
+        <div *ngIf="topValueItems().length === 0" class="empty-mini">{{ 'CASHIER_REPORTS.EMPTY_INVENTORY' | translate }}</div>
+      </div>
+
+      <div class="store-breakdown">
+        <h3>{{ 'CASHIER_REPORTS.STORE_BREAKDOWN' | translate }}</h3>
+
+        <div *ngFor="let store of storeBreakdown()" class="store-row">
+          <div>
+            <strong>{{ store.storeName }}</strong>
+            <span>{{ store.productsCount }} {{ 'CASHIER_REPORTS.ITEMS_LABEL' | translate }}</span>
+          </div>
+          <div>
+            <strong>{{ store.totalQuantity | number:'1.2-2' }}</strong>
+            <span>{{ store.estimatedValue | number:'1.2-2' }}</span>
+          </div>
+        </div>
+
+        <div *ngIf="storeBreakdown().length === 0" class="empty-mini">{{ 'CASHIER_REPORTS.EMPTY_STORES' | translate }}</div>
+      </div>
+    </article>
+  </section>
+
+  <section class="panel table-panel">
+    <div class="panel-head">
+      <div>
+        <h2>{{ 'CASHIER_REPORTS.STOCK_ALERTS_TITLE' | translate }}</h2>
+        <p>{{ 'CASHIER_REPORTS.STOCK_ALERTS_SUB' | translate }}</p>
+      </div>
+      <span class="count-pill">{{ lowStockItems().length }} {{ 'CASHIER_REPORTS.ITEMS_LABEL' | translate }}</span>
+    </div>
+
+    <p-table
+      #dtStockAlerts
+      [value]="lowStockItems()"
+      [columns]="stockAlertsColumns"
+      [paginator]="true"
+      [rows]="10"
+      [rowsPerPageOptions]="[10, 20, 50]"
+      [globalFilterFields]="['storeName', 'itemCode', 'itemName']"
+      [showCurrentPageReport]="true"
+      currentPageReportTemplate="{{ activeLanguage === 'ar' ? 'إجمالي' : 'Total' }} {totalRecords}"
+      paginatorTemplate="CurrentPageReport PrevPageLink PageLinks NextPageLink RowsPerPageDropdown"
+      styleClass="reports-table stock-alerts-table p-datatable-gridlines"
+      [tableStyle]="{'min-width': '78rem'}">
+
+      <ng-template pTemplate="caption">
+        <div class="table-caption-container">
+          <!-- Side 1: Search Box (Right side in RTL) -->
+          <span class="p-input-icon-left">
+            <i class="pi pi-search"></i>
+            <input
+              pInputText
+              type="text"
+              [(ngModel)]="stockAlertsSearchValue"
+              (input)="filterStockAlertsTable(dtStockAlerts, $event)"
+              (blur)="trimStockAlertsSearchValue()"
+              [placeholder]="'FINANCE.SEARCH' | translate"
+              class="session-search-input"
+            />
+          </span>
+
+          <!-- Side 2: Stock Status Filter & Clear Filters Button (Left side in RTL) -->
+          <div class="caption-actions-group">
+            <!-- Status Filter Radio Buttons -->
+            <div class="status-radio-group">
+              <div class="flex items-center gap-2">
+                <p-radioButton
+                  name="stockAlertsStatusFilter"
+                  value="all"
+                  [(ngModel)]="stockAlertsStatusFilter"
+                  (ngModelChange)="onStockAlertsStatusFilterChange(dtStockAlerts)"
+                  inputId="rep_stock_status_all"
+                />
+                <label for="rep_stock_status_all" class="cursor-pointer text-sm font-semibold mb-0">
+                  {{ activeLanguage === 'ar' ? 'الكل' : 'All' }}
+                </label>
+              </div>
+
+              <div class="flex items-center gap-2">
+                <p-radioButton
+                  name="stockAlertsStatusFilter"
+                  value="low"
+                  [(ngModel)]="stockAlertsStatusFilter"
+                  (ngModelChange)="onStockAlertsStatusFilterChange(dtStockAlerts)"
+                  inputId="rep_stock_status_low"
+                />
+                <label for="rep_stock_status_low" class="cursor-pointer text-sm font-semibold mb-0">
+                  {{ activeLanguage === 'ar' ? 'منخفض' : 'Low Stock' }}
+                </label>
+              </div>
+
+              <div class="flex items-center gap-2">
+                <p-radioButton
+                  name="stockAlertsStatusFilter"
+                  value="out"
+                  [(ngModel)]="stockAlertsStatusFilter"
+                  (ngModelChange)="onStockAlertsStatusFilterChange(dtStockAlerts)"
+                  inputId="rep_stock_status_out"
+                />
+                <label for="rep_stock_status_out" class="cursor-pointer text-sm font-semibold mb-0">
+                  {{ activeLanguage === 'ar' ? 'نافد' : 'Out of Stock' }}
+                </label>
+              </div>
+            </div>
+
+            <!-- Clear Filters Button -->
+            <p-button
+              styleClass="rounded-md w-auto text-nowrap"
+              [label]="'FINANCE.CLEAR_FILTERS' | translate"
+              [outlined]="true"
+              icon="pi pi-filter-slash"
+              (onClick)="clearStockAlertsTable(dtStockAlerts)"
+            />
+          </div>
+        </div>
+      </ng-template>
+
+      <ng-template pTemplate="header" let-columns>
+        <tr>
+          <th class="index-th">#</th>
+          <th *ngFor="let col of columns" [pSortableColumn]="col.field" [style.minWidth]="col.minWidth || '9rem'">
+            <div class="th-content">
+              <span class="th-label">{{ col.header }}</span>
+              <div class="th-icons">
+                <p-sortIcon [field]="col.field"></p-sortIcon>
+                <p-columnFilter *ngIf="col.filter" [type]="col.filterType" [field]="col.field" display="menu"></p-columnFilter>
+              </div>
+            </div>
+          </th>
+        </tr>
+      </ng-template>
+
+      <ng-template pTemplate="body" let-item let-rowIndex="rowIndex">
+        <tr class="table-row-hover">
+          <td class="index-cell">{{ rowIndex + 1 }}</td>
+          <td>{{ item.storeName }}</td>
+          <td><strong>{{ item.itemCode }}</strong></td>
+          <td>{{ item.itemName }}</td>
+          <td>{{ item.quantity | number:'1.2-2' }}</td>
+          <td>{{ item.lastPrice | number:'1.2-2' }}</td>
+          <td>{{ item.estimatedValue | number:'1.2-2' }}</td>
+          <td>
+            <p-tag
+              [value]="item.stockStatusLabel || (item.quantity <= 0 ? ('CASHIER_REPORTS.STATUS_OUT' | translate) : ('CASHIER_REPORTS.STATUS_LOW' | translate))"
+              [severity]="item.quantity <= 0 ? 'danger' : (item.quantity <= 5 ? 'warning' : 'info')">
+            </p-tag>
+          </td>
+        </tr>
+      </ng-template>
+
+      <ng-template pTemplate="emptymessage">
+        <tr>
+          <td colspan="8" class="empty-table">{{ 'CASHIER_REPORTS.EMPTY_ALERTS' | translate }}</td>
+        </tr>
+      </ng-template>
+    </p-table>
+  </section>
+
+  <section class="panel table-panel">
+    <div class="panel-head">
+      <div>
+        <h2>{{ 'CASHIER_REPORTS.RECENT_SESSIONS' | translate }}</h2>
+        <p>{{ 'CASHIER_REPORTS.RECENT_SESSIONS_SUB' | translate }}</p>
+      </div>
+      <span class="count-pill">{{ recentSessions().length }} {{ 'CASHIER_REPORTS.SESSIONS_LABEL' | translate }}</span>
+    </div>
+
+    <p-table
+      #dtRecentSessions
+      [value]="recentSessions()"
+      [columns]="sessionColumns"
+      [paginator]="true"
+      [rows]="10"
+      [rowsPerPageOptions]="[10, 20, 50]"
+      [globalFilterFields]="['sessionNumber', 'cashierUserName']"
+      [showCurrentPageReport]="true"
+      currentPageReportTemplate="{{ activeLanguage === 'ar' ? 'إجمالي' : 'Total' }} {totalRecords}"
+      paginatorTemplate="CurrentPageReport PrevPageLink PageLinks NextPageLink RowsPerPageDropdown"
+      styleClass="reports-table sessions-report-table p-datatable-gridlines"
+      [tableStyle]="{'min-width': '95rem'}">
+
+      <ng-template pTemplate="caption">
+        <div class="table-caption-container">
+          <!-- Side 1: Search Box (Right side in RTL) -->
+          <span class="p-input-icon-left">
+            <i class="pi pi-search"></i>
+            <input
+              pInputText
+              type="text"
+              [(ngModel)]="sessionsSearchValue"
+              (input)="filterSessionsTable(dtRecentSessions, $event)"
+              (blur)="trimSessionsSearchValue()"
+              [placeholder]="'FINANCE.SEARCH' | translate"
+              class="session-search-input"
+            />
+          </span>
+
+          <!-- Side 2: Status Filter & Clear Filters Button (Left side in RTL) -->
+          <div class="caption-actions-group">
+            <!-- Status Filter Radio Buttons -->
+            <div class="status-radio-group">
+              <div class="flex items-center gap-2">
+                <p-radioButton
+                  name="sessionStatusFilter"
+                  value="all"
+                  [(ngModel)]="sessionStatusFilter"
+                  (ngModelChange)="onSessionStatusFilterChange(dtRecentSessions)"
+                  inputId="rep_session_status_all"
+                />
+                <label for="rep_session_status_all" class="cursor-pointer text-sm font-semibold mb-0">
+                  {{ activeLanguage === 'ar' ? 'كل الورديات' : 'All Sessions' }}
+                </label>
+              </div>
+
+              <div class="flex items-center gap-2">
+                <p-radioButton
+                  name="sessionStatusFilter"
+                  value="open"
+                  [(ngModel)]="sessionStatusFilter"
+                  (ngModelChange)="onSessionStatusFilterChange(dtRecentSessions)"
+                  inputId="rep_session_status_open"
+                />
+                <label for="rep_session_status_open" class="cursor-pointer text-sm font-semibold mb-0">
+                  {{ activeLanguage === 'ar' ? 'الورديات المفتوحة' : 'Open Sessions' }}
+                </label>
+              </div>
+
+              <div class="flex items-center gap-2">
+                <p-radioButton
+                  name="sessionStatusFilter"
+                  value="closed"
+                  [(ngModel)]="sessionStatusFilter"
+                  (ngModelChange)="onSessionStatusFilterChange(dtRecentSessions)"
+                  inputId="rep_session_status_closed"
+                />
+                <label for="rep_session_status_closed" class="cursor-pointer text-sm font-semibold mb-0">
+                  {{ activeLanguage === 'ar' ? 'الورديات المغلقة' : 'Closed Sessions' }}
+                </label>
+              </div>
+            </div>
+
+            <!-- Clear Filters Button -->
+            <p-button
+              styleClass="rounded-md w-auto text-nowrap"
+              [label]="'FINANCE.CLEAR_FILTERS' | translate"
+              [outlined]="true"
+              icon="pi pi-filter-slash"
+              (onClick)="clearSessionsTable(dtRecentSessions)"
+            />
+          </div>
+        </div>
+      </ng-template>
+
+      <ng-template pTemplate="header" let-columns>
+        <tr>
+          <th class="index-th">#</th>
+          <th *ngFor="let col of columns" [pSortableColumn]="col.field" [style.minWidth]="col.minWidth || '9.5rem'">
+            <div class="th-content">
+              <span class="th-label">{{ col.header }}</span>
+              <div class="th-icons">
+                <p-sortIcon [field]="col.field"></p-sortIcon>
+                <p-columnFilter *ngIf="col.filter" [type]="col.filterType" [field]="col.field" display="menu"></p-columnFilter>
+              </div>
+            </div>
+          </th>
+        </tr>
+      </ng-template>
+
+      <ng-template pTemplate="body" let-session let-rowIndex="rowIndex">
+        <tr class="table-row-hover">
+          <td class="index-cell">{{ rowIndex + 1 }}</td>
+          <td><strong>{{ session.sessionNumber || '-' }}</strong></td>
+          <td>{{ session.cashierUserName || '-' }}</td>
+          <td>{{ session.openingDate | customDate }}</td>
+          <td>{{ session.closingDate ? (session.closingDate | customDate) : '-' }}</td>
+          <td>{{ (session.totalSales || 0) | number:'1.2-2' }}</td>
+          <td>{{ (session.totalCash || 0) | number:'1.2-2' }}</td>
+          <td>{{ (session.totalCard || 0) | number:'1.2-2' }}</td>
+          <td>
+            <span class="difference" [class.positive]="(session.difference || 0) >= 0" [class.negative]="(session.difference || 0) < 0">
+              {{ (session.difference || 0) | number:'1.2-2' }}
+            </span>
+          </td>
+          <td>
+            <p-tag [value]="getStatusLabel(session.status)" [severity]="getStatusSeverity(session.status)"></p-tag>
+          </td>
+        </tr>
+      </ng-template>
+
+      <ng-template pTemplate="emptymessage">
+        <tr>
+          <td colspan="10" class="empty-table">{{ 'CASHIER_REPORTS.EMPTY_SESSIONS' | translate }}</td>
+        </tr>
+      </ng-template>
+    </p-table>
+  </section>
+  </div>
+</div>

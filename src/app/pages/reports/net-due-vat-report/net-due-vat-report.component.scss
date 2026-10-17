@@ -1,0 +1,31 @@
+.sales-header-bg {
+  background-color: #42acff !important;
+  color: #ffffff !important;
+}
+
+@media print {
+  .sales-header-bg {
+    background-color: #42acff !important;
+    -webkit-print-color-adjust: exact;
+    color-adjust: exact;
+    print-color-adjust: exact;
+  }
+}
+
+::ng-deep {
+  .p-panel {
+    .p-panel-header {
+      background: linear-gradient(135deg, #42acff 0%, #5bc0de 100%);
+      color: white;
+      font-weight: 600;
+      border-radius: 6px 6px 0 0;
+    }
+  }
+}
+
+/* Larger table text (1.125rem) as requested */
+#net_due_vat_report th,
+#net_due_vat_report td {
+  font-size: 1.125rem !important;
+}
+

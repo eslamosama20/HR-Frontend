@@ -1,0 +1,141 @@
+<div class="container mt-5">
+  <h2 class="text-center mb-4">{{"REPORT.GENERATEINVENTORYREPORT"|translate}}</h2>
+  <form (ngSubmit)="onParametersSubmit()">
+    <div class="form-row flex justify-between gap-4">
+      <!-- Date From Input -->
+      <div class="form-group col-md-6">
+        <label for="dateFrom">{{"REPORT.DATEFROM"|translate}}</label>
+        <input [(ngModel)]="dateFrom" type="date" class="form-control" id="dateFrom" name="dateFrom" required>
+      </div>
+      <!-- Date To Input -->
+      <div class="form-group col-md-6">
+        <label for="dateTo">{{"REPORT.DATETO"|translate}}</label>
+        <input [(ngModel)]="dateTo" type="date" class="form-control" id="dateTo" name="dateTo" required>
+      </div>
+    </div>
+    <div class="form-row flex justify-between gap-4">
+      <!-- Store Dropdown -->
+      <div class="form-group col-md-6">
+        <label for="storeSelect">{{"REPORT.SELECTSTORE"|translate}}</label>
+        <p-dropdown
+        id="storeSelect"
+        [options]="stores"
+        [ngModelOptions]="{standalone: true}"
+        [(ngModel)]="selectedStoreId"
+        (onChange)="onDropdownClick($event)"
+        placeholder="Select a Store"
+        optionLabel="label"
+        optionValue="value"
+        [filter]="true"
+        appendTo="body"
+        styleClass="w-full">
+      </p-dropdown>
+      </div>
+    </div>
+    <!-- Submit Button -->
+    <div class="flex gap-4">
+    <button type="submit" class="btn btn-primary btn-block mt-3">{{"REPORT.GENERATEREPORT"|translate}}</button>
+    <button (click)="printDocument()" *ngIf="!isSubmitting && isReportLoaded"
+            class="btn btn-secondary btn-block mt-3 mb-3">
+      {{"DATA.PRINT" | translate}}
+    </button>
+    </div>
+
+  </form>
+</div>
+
+<ng-container *ngIf="!isSubmitting && !isReportLoaded">
+  <!-- No content or just show the form submission button, this is before submit -->
+</ng-container>
+<!-- 2. Case: After Submit, Before Data is Loaded (Show Loader) -->
+<ng-container *ngIf="isSubmitting && !isReportLoaded">
+  <div class="flex justify-center items-center min-h-screen">
+    <div class="loader"></div>
+  </div>
+</ng-container>
+
+<ng-container *ngIf="!isSubmitting && isReportLoaded">
+
+  <app-print-document
+    #printComponent
+    [headerTemplate]="headerTemplate"
+    [footerTemplate]="footerTemplate"
+    [data]="reportData"
+    [columns]="reportColumns"
+    [preTableHeaderTemplate]="preTableHeaderTemplate"
+    >
+  </app-print-document>
+
+  <!-- Header Template -->
+  <ng-template #headerTemplate>
+    <div class="w-full flex flex-col  rounded-lg p-8">
+
+      @if (companyDetailsModel) {
+        <ng-container class="container m-0 p-0">
+          <div class="py-1 px-1 flex justify-between ">
+            <div class="w-full ltr:text-left text-right">
+              <p class="font-semibold text-lg m-0 p-0">
+                {{companyDetailsModel.arabicName}}
+              </p>
+              <p class="font-semibold text-lg m-0 p-0"  *ngIf="companyDetailsModel.city">
+                {{companyDetailsModel.city}}
+              </p>
+              <p class="font-semibold text-lg m-0 p-0">
+                {{companyDetailsModel.phone}}
+              </p>
+              <p class="font-semibold text-lg m-0 p-0">
+                {{ "INVOICE.TAXNUMBER"| translate}}: {{companyDetailsModel.taxNumber}}
+              </p>
+            </div>
+            <div
+              class="flex w-full justify-center items-center"
+            >
+              <img
+                [src]="companyDetailsModel.logoUrl || ''"
+                alt="company-logo"
+                width="100"
+                height="100"
+              >
+            </div>
+            <div class="w-full ltr:text-right text-left">
+              <p class="font-semibold text-lg m-0 p-0">
+                {{companyDetailsModel.englishName}}
+              </p>
+              <p class="font-semibold text-lg m-0 p-0" *ngIf="companyDetailsModel.city">
+                {{companyDetailsModel.city}}
+              </p>
+              <p class="font-semibold text-lg m-0 p-0">
+                {{companyDetailsModel.phone}}
+              </p>
+              <p class="font-semibold text-lg m-0 p-0">
+                TAX No: {{companyDetailsModel.taxNumber}}
+              </p>
+            </div>
+          </div>
+
+        </ng-container>
+      }
+      <div class="flex-1 w-full text-center">
+        <h2 class="text-2xl font-bold">{{ "REPORT.INVENTORY_REPORT" | translate}}</h2>
+      </div>
+      <div class="flex-1 w-full text-center">
+        <h2 class="text-sm">
+          Date From: {{ dateFrom }} | To: {{ dateTo }}
+        </h2>
+      </div>
+    </div>
+  </ng-template>
+
+  <ng-template #preTableHeaderTemplate>
+    <th colspan="3"></th>
+    <th colspan="3" class="text-center border border-black">{{"REPORT.PREVIOUS_BALANCE"|translate}}</th>
+    <th colspan="3" class="text-center border border-black">{{"REPORT.PERIOD_BALANCE"|translate}}</th>
+    <th colspan="3" class="text-center border border-black">{{"REPORT.TOTAL_BALANCE"|translate}}</th>
+  </ng-template>
+
+  <!-- Footer Template -->
+  <ng-template #footerTemplate>
+    <p class="p-0 m-0">SmartAndPro</p>
+
+  </ng-template>
+</ng-container>

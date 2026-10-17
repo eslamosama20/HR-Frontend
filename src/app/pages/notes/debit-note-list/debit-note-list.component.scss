@@ -1,0 +1,297 @@
+.p-column-resizer {
+  border-left: 3.5px solid #d9d9d9 !important;
+  opacity: 0.5 !important;
+}
+
+:dir(rtl) .p-column-resizer {
+  border-left: 3.5px solid #d9d9d9 !important;
+  opacity: 0.5 !important;
+  right : unset !important; left : 0 !important;
+}
+
+// :host {
+//   --table-head-bg: #46bbeb;
+//   --table-header-text: #ffffff;
+// }
+
+// /* اجعل المستخدم يستطيع الكتابة داخل مربع عدد الصفوف */
+// ::ng-deep .p-paginator-rpp-options .p-inputtext {
+//   pointer-events: auto !important;
+//   user-select: text !important;
+// }
+
+// /* حدود الجدول */
+// ::ng-deep .p-datatable {
+//   border: 1px solid #e5e7eb !important;
+//   border-radius: 8px !important;
+//   overflow: hidden !important;
+//   width: 100% !important;
+//   position: relative !important;
+// }
+
+// /* Theme-aware table header colors */
+// ::ng-deep .p-datatable .p-datatable-thead > tr > th {
+//   background: var(--table-head-bg) !important;
+//   color: var(--table-header-text) !important;
+// }
+
+// /* Theme overrides to match other tables */
+// $green-sels: ".light-green-mode", '[data-bs-theme="light-green"]', "body.light-green";
+// @each $sel in $green-sels {
+//   :host-context(#{$sel}) {
+//     --table-head-bg: #c6ecea;
+//     --table-header-text: #2e2a40;
+//   }
+// }
+
+// $indigo-sels: ".light-indigo-mode", '[data-bs-theme="light-indigo"]', "body.light-indigo";
+// @each $sel in $indigo-sels {
+//   :host-context(#{$sel}) {
+//     --table-head-bg: #c9d0f5;
+//     --table-header-text: #5d6679;
+//   }
+// }
+
+// $darkblue-sels: ".light-darkblue-mode", '[data-bs-theme="light-darkblue"]', "body.light-darkblue";
+// @each $sel in $darkblue-sels {
+//   :host-context(#{$sel}) {
+//     --table-head-bg: #dad7ff;
+//     --table-header-text: #191d29;
+//   }
+// }
+
+/* Scrollable table wrapper - Horizontal only */
+::ng-deep .p-datatable-wrapper {
+  overflow-x: auto !important;
+  overflow-y: hidden !important;
+  position: relative !important;
+}
+
+/* Ensure table maintains minimum width on small screens */
+::ng-deep .p-datatable.p-datatable-scrollable .p-datatable-wrapper {
+  min-width: 100% !important;
+}
+
+::ng-deep .p-datatable.p-datatable-scrollable .p-datatable-thead > tr > th,
+::ng-deep .p-datatable.p-datatable-scrollable .p-datatable-tbody > tr > td {
+  white-space: nowrap !important;
+}
+
+::ng-deep .p-datatable.p-datatable-gridlines {
+  .p-datatable-thead > tr > th {
+    border: 1px solid #e5e7eb !important;
+    border-bottom: 2px solid #d1d5db !important;
+  }
+
+  .p-datatable-tbody > tr > td {
+    border: 1px solid #e5e7eb !important;
+  }
+
+  .p-datatable-tbody > tr:last-child > td {
+    border-bottom: 1px solid #e5e7eb !important;
+  }
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .flex.rtl\\:flex-row-reverse {
+    flex-direction: column !important;
+    gap: 0.75rem !important;
+  }
+  
+  .flex.gap-2 {
+    flex-direction: column !important;
+    width: 100% !important;
+    
+    p-button {
+      width: 100% !important;
+      
+      ::ng-deep .p-button {
+        width: 100% !important;
+      }
+    }
+  }
+  
+  .p-input-icon-left {
+    width: 100% !important;
+    
+    input {
+      width: 100% !important;
+    }
+  }
+  
+  ::ng-deep .p-datatable {
+    .p-datatable-thead > tr > th,
+    .p-datatable-tbody > tr > td {
+      padding: 0.5rem 0.25rem !important;
+      font-size: 0.7rem !important;
+      min-width: 100px !important;
+      white-space: nowrap !important;
+    }
+  }
+}
+
+@media (max-width: 576px) {
+  ::ng-deep .p-datatable {
+    .p-datatable-thead > tr > th,
+    .p-datatable-tbody > tr > td {
+      padding: 0.375rem 0.125rem !important;
+      font-size: 0.65rem !important;
+      min-width: 80px !important;
+    }
+  }
+  
+  ::ng-deep .p-paginator {
+    flex-direction: row !important;
+    flex-wrap: wrap !important;
+    gap: 0.5rem !important;
+    padding: 0.5rem !important;
+    font-size: 0.75rem !important;
+    justify-content: center !important;
+    
+    .p-paginator-left-content,
+    .p-paginator-right-content {
+      width: auto !important;
+      justify-content: center !important;
+      font-size: 0.75rem !important;
+    }
+    
+    .p-paginator-pages {
+      display: flex !important;
+      flex-wrap: wrap !important;
+      justify-content: center !important;
+      gap: 0.25rem !important;
+    }
+    
+    .p-paginator-page,
+    .p-paginator-prev,
+    .p-paginator-next,
+    .p-paginator-first,
+    .p-paginator-last {
+      min-width: 2rem !important;
+      height: 2rem !important;
+      font-size: 0.75rem !important;
+    }
+    
+    .p-dropdown {
+      font-size: 0.75rem !important;
+      
+      .p-inputtext {
+        padding: 0.25rem 0.5rem !important;
+        font-size: 0.75rem !important;
+      }
+    }
+    
+    .p-paginator-rpp-options {
+      font-size: 0.75rem !important;
+    }
+  }
+}
+/* هيدر أصفر ثابت بدون أي تأثير ثيم */
+::ng-deep .p-datatable .p-datatable-thead > tr > th {
+  background-color: #fff5cc !important;
+  color: #111827 !important;
+}
+
+/* تثبيت اللون مع hover/focus (احتياط) */
+::ng-deep .p-datatable .p-datatable-thead > tr > th:hover,
+::ng-deep .p-datatable .p-datatable-thead > tr > th:focus {
+  background-color: #fff5cc !important;
+  color: #111827 !important;
+}
+
+/* =========================
+   New centered pagination (Total + pages + page/rows) all centered
+   ========================= */
+::ng-deep .custom-paginator-table .p-paginator {
+  direction: rtl;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: .5rem;
+  padding: .5rem .75rem;
+  border-top: 1px solid #e5e7eb;
+  background: #fff;
+  flex-wrap: wrap;
+}
+
+/* "Total" */
+::ng-deep .custom-paginator-table .p-paginator .p-paginator-current {
+  color: #111827;
+  font-weight: 600;
+  white-space: nowrap;
+  margin: 0;
+}
+
+/* Pages */
+::ng-deep .custom-paginator-table .p-paginator .p-paginator-pages {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: .25rem;
+  direction: ltr;
+  margin: 0;
+}
+
+/* Page button */
+::ng-deep .custom-paginator-table .p-paginator .p-paginator-page {
+  min-width: 34px;
+  height: 34px;
+  border-radius: 8px;
+  border: 1px solid transparent;
+  color: #374151;
+}
+
+/* Hover */
+::ng-deep .custom-paginator-table .p-paginator .p-paginator-page:not(.p-highlight):hover {
+  background: #f3f4f6;
+  border-color: #e5e7eb;
+}
+
+/* Active */
+::ng-deep .custom-paginator-table .p-paginator .p-paginator-page.p-highlight {
+  background: #eaf2ff;
+  border-color: #93c5fd;
+  color: #1d4ed8;
+  font-weight: 600;
+}
+
+/* Prev/Next */
+::ng-deep .custom-paginator-table .p-paginator .p-paginator-prev,
+::ng-deep .custom-paginator-table .p-paginator .p-paginator-next {
+  width: 34px;
+  height: 34px;
+  border-radius: 8px;
+}
+
+::ng-deep .custom-paginator-table .p-paginator .p-paginator-prev:hover,
+::ng-deep .custom-paginator-table .p-paginator .p-paginator-next:hover {
+  background: #f3f4f6;
+}
+
+/* Rows per page (page/ + dropdown) */
+::ng-deep .custom-paginator-table .p-paginator .p-paginator-rpp-options {
+  display: inline-flex;
+  align-items: center;
+  gap: .35rem;
+  margin: 0;
+}
+
+/* page/ label */
+::ng-deep .custom-paginator-table .p-paginator .p-paginator-rpp-options::before {
+  content: "page /";
+  color: #6b7280;
+  font-size: 14px;
+  white-space: nowrap;
+}
+
+/* Dropdown size */
+::ng-deep .custom-paginator-table .p-paginator .p-dropdown {
+  min-width: 80px;
+}
+
+/* Ellipsis */
+::ng-deep .custom-paginator-table .p-paginator .p-paginator-ellipsis {
+  color: #6b7280;
+  padding: 0 .25rem;
+}

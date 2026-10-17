@@ -1,0 +1,721 @@
+﻿<div class="session-shell">
+  <p-toast></p-toast>
+
+  <div *ngIf="loading()" class="loading-overlay">
+    <div class="loading-card">
+      <i class="pi pi-spin pi-spinner"></i>
+      <span>جاري التحميل...</span>
+    </div>
+  </div>
+
+  <div class="session-unified-card">
+    <!-- Header -->
+    <header class="session-header">
+      <div class="session-header-top">
+        <div class="header-title">
+          <div>
+            <h1>{{ 'INVOICE_CONTROL.PAGE_TITLE' | translate }}</h1>
+            <p>{{ 'INVOICE_CONTROL.PAGE_SUBTITLE' | translate }}</p>
+          </div>
+        </div>
+
+        <div class="header-actions">
+          <button pButton type="button" icon="pi pi-desktop" label="شاشة الكاشير (POS)" class="action-btn soft-btn" routerLink="/cashier/pos"></button>
+          <button pButton type="button" icon="pi pi-file" label="إدارة الفواتير" class="action-btn soft-btn active-nav" routerLink="/cashier/invoice-control"></button>
+          <button pButton type="button" icon="pi pi-file-edit" label="تقرير الإغلاق (Z-Report)" class="action-btn soft-btn" routerLink="/cashier/z-report"></button>
+          <button pButton type="button" icon="pi pi-clock" [label]="'CASHIER_POS.SESSION_MANAGEMENT' | translate" class="action-btn soft-btn" routerLink="/cashier/session"></button>
+          <button pButton type="button" icon="pi pi-chart-line" [label]="'CASHIER_REPORTS.PAGE_TITLE' | translate" class="action-btn soft-btn" routerLink="/cashier/reports"></button>
+          <button pButton type="button" icon="pi pi-map" [label]="'CASHIER_POS.TABLES_MAP' | translate" class="action-btn soft-btn" routerLink="/cashier/floor"></button>
+          <button pButton type="button" icon="pi pi-palette" [label]="'INVOICE_CONTROL.TEMPLATE_MANAGER' | translate" class="action-btn soft-btn" (click)="openTemplateManager()"></button>
+        </div>
+      </div>
+    </header>
+
+    <!-- Summary Stats Grid (Matching Cashier Session Cards) -->
+    <section class="stats-section">
+      <div class="summary-grid">
+        <article class="summary-card tx">
+          <div class="summary-card-head">
+            <i class="pi pi-receipt"></i>
+            <span>{{ hasShiftCounterPermission ? 'عداد فواتير الوردية' : 'فواتير اليوم' }}</span>
+          </div>
+          <strong class="summary-val">{{ (hasShiftCounterPermission && currentShiftInvoicesCount > 0 ? currentShiftInvoicesCount : invoicesTodayCount) | number }} <small>فاتورة</small></strong>
+        </article>
+
+        <article class="summary-card sales">
+          <div class="summary-card-head">
+            <i class="pi pi-chart-line"></i>
+            <span>إجمالي المبيعات (مفلتر)</span>
+          </div>
+          <strong class="summary-val">{{ totalSalesAmount | number:'1.2-2' }} <small>ر.س.</small></strong>
+        </article>
+
+        <article class="summary-card cash">
+          <div class="summary-card-head">
+            <i class="pi pi-box"></i>
+            <span>الأصناف المباعة</span>
+          </div>
+          <strong class="summary-val">{{ totalItemsSold | number:'1.2-2' }} <small>صنف</small></strong>
+        </article>
+
+        <article class="summary-card expected">
+          <div class="summary-card-head">
+            <i class="pi pi-ban"></i>
+            <span>قيمة الملغي / Void</span>
+          </div>
+          <strong class="summary-val">{{ totalVoidedAmount | number:'1.2-2' }} <small>ر.س.</small></strong>
+        </article>
+
+        <article class="summary-card credit">
+          <div class="summary-card-head">
+            <i class="pi pi-clock"></i>
+            <span>عمليات تحتاج اعتماد</span>
+          </div>
+          <strong class="summary-val">{{ pendingManagerActions | number }} <small>عملية</small></strong>
+        </article>
+      </div>
+    </section>
+
+    <!-- Filter Bar -->
+    <section class="filters-panel">
+      <div class="filters-grid">
+        <div class="filter-col search-col">
+          <label class="filter-label"><i class="pi pi-search"></i> بحث سريع</label>
+          <div class="search-wrap">
+            <i class="pi pi-search search-icon"></i>
+            <input
+              type="text"
+              class="search-input"
+              [(ngModel)]="searchTerm"
+              (keyup.enter)="reloadInvoices()"
+              [placeholder]="'INVOICE_CONTROL.SEARCH_PLACEHOLDER' | translate" />
+            <button
+              *ngIf="searchTerm"
+              type="button"
+              class="search-clear-btn"
+              (click)="searchTerm = ''; reloadInvoices()"
+              title="مسح البحث">
+              <i class="pi pi-times"></i>
+            </button>
+          </div>
+        </div>
+
+        <div class="filter-col">
+          <label class="filter-label"><i class="pi pi-tag"></i> حالة الفاتورة</label>
+          <p-dropdown
+            [options]="statusOptions"
+            optionLabel="label"
+            optionValue="value"
+            [(ngModel)]="selectedStatus"
+            (onChange)="reloadInvoices()"
+            styleClass="w-full custom-filter-dropdown"
+            [placeholder]="'INVOICE_CONTROL.STATUS_PLACEHOLDER' | translate">
+          </p-dropdown>
+        </div>
+
+        <div class="filter-col">
+          <label class="filter-label"><i class="pi pi-wallet"></i> طريقة الدفع</label>
+          <p-dropdown
+            [options]="paymentOptions"
+            optionLabel="label"
+            optionValue="value"
+            [(ngModel)]="selectedPayment"
+            (onChange)="reloadInvoices()"
+            styleClass="w-full custom-filter-dropdown"
+            [placeholder]="'INVOICE_CONTROL.PAYMENT_PLACEHOLDER' | translate">
+          </p-dropdown>
+        </div>
+
+        <div class="filter-col" *ngIf="isAdmin">
+          <label class="filter-label"><i class="pi pi-clock"></i> الوردية</label>
+          <p-dropdown
+            [options]="sessionOptions"
+            optionLabel="label"
+            optionValue="value"
+            [(ngModel)]="selectedSessionId"
+            (onChange)="reloadInvoices()"
+            styleClass="w-full custom-filter-dropdown"
+            placeholder="اختر الوردية">
+          </p-dropdown>
+        </div>
+
+        <div class="filter-col date-col">
+          <label class="filter-label"><i class="pi pi-calendar"></i> {{ 'INVOICE_CONTROL.FROM_DATE' | translate }}</label>
+          <input type="date" class="date-input" [(ngModel)]="fromDate" (change)="reloadInvoices()" />
+        </div>
+
+        <div class="filter-col date-col">
+          <label class="filter-label"><i class="pi pi-calendar"></i> {{ 'INVOICE_CONTROL.TO_DATE' | translate }}</label>
+          <input type="date" class="date-input" [(ngModel)]="toDate" (change)="reloadInvoices()" />
+        </div>
+
+        <div class="filter-col reset-col">
+          <label class="filter-label">&nbsp;</label>
+          <button pButton type="button" icon="pi pi-filter-slash" [label]="'INVOICE_CONTROL.RESET_FILTERS' | translate" class="p-button-outlined p-button-secondary reset-btn" (click)="resetFilters()"></button>
+        </div>
+      </div>
+    </section>
+
+    <!-- Invoices Table Section -->
+    <section class="history-panel">
+      <div class="panel-head">
+        <div class="panel-title-group">
+          <h2>
+            <i class="pi pi-list"></i>
+            <span>{{ 'INVOICE_CONTROL.INVOICE_LIST' | translate }}</span>
+          </h2>
+          <p>قائمة ومراجعة كافة الفواتير المصدرة والعمليات المرتبطة بها</p>
+        </div>
+        <span class="count-pill">{{ filteredInvoices.length }} {{ 'INVOICE_CONTROL.INVOICE_COUNT' | translate }}</span>
+      </div>
+
+      <p-table
+        #dt
+        [value]="filteredInvoices"
+        [paginator]="true"
+        [rows]="10"
+        [rowsPerPageOptions]="[10, 20, 50]"
+        [loading]="loading()"
+        [globalFilterFields]="['invoiceNo', 'customerName', 'cashierName', 'stationName', 'paymentType', 'status']"
+        styleClass="sessions-table invoice-table"
+        [tableStyle]="{'min-width':'76rem'}">
+
+        <ng-template pTemplate="caption">
+          <div class="table-caption-container">
+            <span class="p-input-icon-left">
+              <i class="pi pi-search"></i>
+              <input
+                pInputText
+                type="text"
+                [(ngModel)]="tableSearchValue"
+                (input)="filterTable(dt, $event)"
+                (blur)="trimTableSearchValue()"
+                [placeholder]="'FINANCE.SEARCH' | translate"
+                class="session-search-input"
+              />
+            </span>
+          </div>
+        </ng-template>
+
+        <ng-template pTemplate="header">
+          <tr>
+            <th class="index-th" style="width: 4rem; min-width: 4rem; text-align: center;">
+              <span *ngIf="hasShiftCounterPermission" title="تسلسل الفاتورة بالوردية"># الوردية</span>
+              <span *ngIf="!hasShiftCounterPermission">#</span>
+            </th>
+            <th pSortableColumn="invoiceNo" style="min-width: 140px;">
+              <div class="flex align-items-center gap-1">
+                <span>{{ 'INVOICE_CONTROL.COL_INVOICE_NO' | translate }}</span>
+                <p-sortIcon field="invoiceNo" class="mx-1"></p-sortIcon>
+                <p-columnFilter type="text" field="invoiceNo" display="menu" [placeholder]="'INVOICE_CONTROL.COL_INVOICE_NO' | translate"></p-columnFilter>
+              </div>
+            </th>
+            <th pSortableColumn="invoiceDate" style="min-width: 140px;">
+              <div class="flex align-items-center gap-1">
+                <span>{{ 'INVOICE_CONTROL.COL_DATE' | translate }}</span>
+                <p-sortIcon field="invoiceDate" class="mx-1"></p-sortIcon>
+                <p-columnFilter type="date" field="invoiceDate" display="menu"></p-columnFilter>
+              </div>
+            </th>
+            <th pSortableColumn="customerName" style="min-width: 150px;">
+              <div class="flex align-items-center gap-1">
+                <span>{{ 'INVOICE_CONTROL.COL_CUSTOMER' | translate }}</span>
+                <p-sortIcon field="customerName" class="mx-1"></p-sortIcon>
+                <p-columnFilter type="text" field="customerName" display="menu" [placeholder]="'INVOICE_CONTROL.COL_CUSTOMER' | translate"></p-columnFilter>
+              </div>
+            </th>
+            <th pSortableColumn="cashierName" style="min-width: 150px;">
+              <div class="flex align-items-center gap-1">
+                <span>{{ 'INVOICE_CONTROL.COL_CASHIER_STATION' | translate }}</span>
+                <p-sortIcon field="cashierName" class="mx-1"></p-sortIcon>
+                <p-columnFilter type="text" field="cashierName" display="menu" [placeholder]="'INVOICE_CONTROL.COL_CASHIER_STATION' | translate"></p-columnFilter>
+              </div>
+            </th>
+            <th pSortableColumn="paymentType" style="min-width: 130px;">
+              <div class="flex align-items-center gap-1">
+                <span>{{ 'INVOICE_CONTROL.COL_PAYMENT' | translate }}</span>
+                <p-sortIcon field="paymentType" class="mx-1"></p-sortIcon>
+                <p-columnFilter type="text" field="paymentType" display="menu" [placeholder]="'INVOICE_CONTROL.COL_PAYMENT' | translate"></p-columnFilter>
+              </div>
+            </th>
+            <th pSortableColumn="totalAmount" class="text-end" style="min-width: 130px;">
+              <div class="flex align-items-center justify-content-end gap-1">
+                <span>{{ 'INVOICE_CONTROL.COL_TOTAL' | translate }}</span>
+                <p-sortIcon field="totalAmount" class="mx-1"></p-sortIcon>
+                <p-columnFilter type="numeric" field="totalAmount" display="menu" currency="SAR"></p-columnFilter>
+              </div>
+            </th>
+            <th pSortableColumn="status" class="text-center" style="min-width: 120px;">
+              <div class="flex align-items-center justify-content-center gap-1">
+                <span>{{ 'INVOICE_CONTROL.COL_STATUS' | translate }}</span>
+                <p-sortIcon field="status" class="mx-1"></p-sortIcon>
+                <p-columnFilter type="text" field="status" display="menu" [placeholder]="'INVOICE_CONTROL.COL_STATUS' | translate"></p-columnFilter>
+              </div>
+            </th>
+            <th class="text-center" style="min-width: 140px;">
+              <div class="flex align-items-center justify-content-center">
+                <span>{{ 'INVOICE_CONTROL.COL_ACTIONS' | translate }}</span>
+              </div>
+            </th>
+          </tr>
+        </ng-template>
+
+        <ng-template pTemplate="body" let-invoice let-rowIndex="rowIndex">
+          <tr>
+            <td class="index-cell text-center" style="font-weight: 700; color: #64748b;">
+              <span *ngIf="hasShiftCounterPermission && invoice.shiftInvoiceNo" class="shift-counter-badge text-primary" style="font-weight: 800;" title="تسلسل الفاتورة داخل الوردية">
+                #{{ invoice.shiftInvoiceNo }}
+              </span>
+              <span *ngIf="!hasShiftCounterPermission || !invoice.shiftInvoiceNo">
+                {{ rowIndex + 1 }}
+              </span>
+            </td>
+            <td>
+              <div class="d-flex flex-column align-items-start gap-1">
+                <strong class="invoice-num-cell">
+                  <span *ngIf="hasShiftCounterPermission && invoice.shiftInvoiceNo" style="color: #2563eb; font-weight: 800;">
+                    فاتورة #{{ invoice.shiftInvoiceNo }}
+                  </span>
+                  <span *ngIf="!hasShiftCounterPermission || !invoice.shiftInvoiceNo">
+                    {{ invoice.invoiceNo }}
+                  </span>
+                </strong>
+                <span *ngIf="hasShiftCounterPermission && invoice.shiftInvoiceNo" class="badge bg-light-primary text-primary" style="font-size: 0.72rem; padding: 2px 6px; border-radius: 4px;">
+                  <i class="pi pi-file me-1"></i>{{ invoice.invoiceNo }} (وردية: {{ invoice.stationName || '00003' }})
+                </span>
+              </div>
+            </td>
+            <td>
+              <div class="date-cell">
+                <span>{{ invoice.invoiceDate | customDate: 'yyyy/MM/dd' }}</span>
+                <small>{{ invoice.invoiceDate | customDate: 'hh:mm a' }}</small>
+              </div>
+            </td>
+            <td>{{ invoice.customerName || ('INVOICE_CONTROL.WALK_IN_CUSTOMER' | translate) }}</td>
+            <td>
+              <div class="cashier-cell">
+                <strong>{{ invoice.cashierName }}</strong>
+                <small>{{ invoice.stationName }}</small>
+              </div>
+            </td>
+            <td>
+              <span class="payment-method-badge">
+                <i class="pi" [ngClass]="invoice.paymentType === 'cash' ? 'pi-wallet' : (invoice.paymentType === 'card' ? 'pi-credit-card' : 'pi-money-bill')"></i>
+                {{ getPaymentLabel(invoice.paymentType) }}
+              </span>
+            </td>
+            <td class="text-end amount">
+              <span class="amount-val">{{ invoice.totalAmount | number:'1.2-2' }}</span>
+              <small class="currency-tag">ر.س</small>
+            </td>
+            <td class="text-center">
+              <p-tag [value]="getStatusLabel(invoice.status)" [severity]="getStatusSeverity(invoice.status)" styleClass="status-pill"></p-tag>
+            </td>
+            <td class="text-center">
+              <div class="actions-wrap">
+                <!-- Details button -->
+                <button
+                  pButton
+                  type="button"
+                  icon="pi pi-eye"
+                  class="action-btn-styled view-btn"
+                  [pTooltip]="'INVOICE_CONTROL.DETAILS_TOOLTIP' | translate"
+                  tooltipPosition="top"
+                  (click)="openDetails(invoice)">
+                </button>
+
+                <!-- Thermal reprint button -->
+                <button
+                  pButton
+                  type="button"
+                  icon="pi pi-print"
+                  class="action-btn-styled print-btn"
+                  [pTooltip]="'INVOICE_CONTROL.REPRINT_TOOLTIP' | translate"
+                  tooltipPosition="top"
+                  (click)="openReprintDialog(invoice)">
+                </button>
+
+                <!-- Refund button -->
+                <button
+                  pButton
+                  type="button"
+                  icon="pi pi-replay"
+                  class="action-btn-styled refund-btn"
+                  [disabled]="!canRefund(invoice)"
+                  pTooltip="استرجاع الفاتورة"
+                  tooltipPosition="top"
+                  (click)="openRefundDialog(invoice)">
+                </button>
+              </div>
+            </td>
+          </tr>
+        </ng-template>
+
+        <ng-template pTemplate="emptymessage">
+          <tr>
+          <td colspan="9" class="empty-table">{{ 'INVOICE_CONTROL.EMPTY_TABLE' | translate }}</td>
+          </tr>
+        </ng-template>
+      </p-table>
+    </section>
+  </div>
+</div>
+
+<p-dialog
+  [(visible)]="showDetailsDialog"
+  [modal]="true"
+  [draggable]="false"
+  [resizable]="false"
+  [style]="{width:'840px', maxWidth:'96vw'}"
+  styleClass="invoice-dialog"
+  [header]="'INVOICE_CONTROL.DIALOG_DETAILS_TITLE' | translate">
+  <div *ngIf="selectedInvoice() as invoice" class="dialog-body">
+    <div class="details-grid">
+      <article>
+        <span>{{ 'INVOICE_CONTROL.COL_INVOICE_NO' | translate }}</span>
+        <strong>{{ invoice.invoiceNo }}</strong>
+      </article>
+      <article>
+        <span>{{ 'INVOICE_CONTROL.COL_CUSTOMER' | translate }}</span>
+        <strong>{{ invoice.customerName || ('INVOICE_CONTROL.WALK_IN_CUSTOMER' | translate) }}</strong>
+      </article>
+      <article>
+        <span>{{ 'INVOICE_CONTROL.COL_CASHIER_STATION' | translate }}</span>
+        <strong>{{ invoice.cashierName }}</strong>
+      </article>
+      <article>
+        <span>{{ 'INVOICE_CONTROL.COL_CASHIER_STATION' | translate }}</span>
+        <strong>{{ invoice.stationName }}</strong>
+      </article>
+      <article>
+        <span>{{ 'INVOICE_CONTROL.COL_PAYMENT' | translate }}</span>
+        <strong>{{ getPaymentLabel(invoice.paymentType) }}</strong>
+      </article>
+      <ng-container *ngIf="selectedInvoicePayment() as payment">
+        <article>
+          <span>Payment Ref</span>
+          <strong>{{ getPaymentReference(payment) }}</strong>
+        </article>
+        <article>
+          <span>Paid Amount</span>
+          <strong>{{ getPaymentAmount(payment, invoice) | number:'1.2-2' }}</strong>
+        </article>
+        <article>
+          <span>Provider</span>
+          <strong>{{ getPaymentProviderText(payment) }}</strong>
+        </article>
+        <article>
+          <span>Payment Status</span>
+          <strong>{{ getPaymentStatusText(payment) }}</strong>
+        </article>
+      </ng-container>
+      <article>
+        <span>{{ 'INVOICE_CONTROL.COL_STATUS' | translate }}</span>
+        <strong>{{ getStatusLabel(invoice.status) }}</strong>
+      </article>
+    </div>
+
+    <p-divider></p-divider>
+
+    <p-table [value]="invoice.items" styleClass="dialog-items-table">
+      <ng-template pTemplate="header">
+        <tr>
+          <th>{{ 'INVOICE_CONTROL.COL_ITEM' | translate }}</th>
+          <th class="text-center">{{ 'INVOICE_CONTROL.COL_QTY' | translate }}</th>
+          <th class="text-end">{{ 'INVOICE_CONTROL.COL_UNIT_PRICE' | translate }}</th>
+          <th class="text-end">{{ 'INVOICE_CONTROL.COL_TOTAL' | translate }}</th>
+        </tr>
+      </ng-template>
+      <ng-template pTemplate="body" let-item>
+        <tr>
+          <td>{{ item.name }}</td>
+          <td class="text-center">{{ (item.qty - (item.returnedQty || 0)) | number:'1.2-2' }}</td>
+          <td class="text-end">{{ item.unitPrice | number:'1.2-2' }}</td>
+          <td class="text-end">{{ (item.qty - (item.returnedQty || 0)) * item.unitPrice | number:'1.2-2' }}</td>
+        </tr>
+      </ng-template>
+    </p-table>
+
+    <div class="totals-box">
+      <div><span>{{ 'INVOICE_CONTROL.SUBTOTAL' | translate }}</span><strong>{{ detailsRemainingSubtotal | number:'1.2-2' }}</strong></div>
+      <div><span>{{ 'INVOICE_CONTROL.DISCOUNT' | translate }}</span><strong>- {{ detailsRemainingDiscount | number:'1.2-2' }}</strong></div>
+      <div><span>{{ 'INVOICE_CONTROL.TAX' | translate }}</span><strong>{{ detailsRemainingTax | number:'1.2-2' }}</strong></div>
+      <div class="grand"><span>{{ 'INVOICE_CONTROL.GRAND_TOTAL' | translate }}</span><strong>{{ detailsRemainingTotal | number:'1.2-2' }}</strong></div>
+    </div>
+
+    <div class="action-note" *ngIf="invoice.lastActionReason">
+      <i class="pi pi-info-circle"></i>
+      <span>{{ 'INVOICE_CONTROL.LAST_ACTION' | translate }} {{ invoice.lastActionReason }}</span>
+    </div>
+  </div>
+</p-dialog>
+
+<p-dialog
+  [(visible)]="showReprintDialog"
+  [modal]="true"
+  [draggable]="false"
+  [resizable]="false"
+  [style]="{width:'480px', maxWidth:'95vw'}"
+  styleClass="invoice-dialog"
+  [header]="'INVOICE_CONTROL.DIALOG_REPRINT_TITLE' | translate">
+  <div class="p-3">
+    <div class="mb-3 text-sm text-gray-700" *ngIf="selectedInvoice() as inv" style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 0.65rem 0.85rem;">
+      <div style="font-weight: 700; color: #1e293b; margin-bottom: 0.2rem;">فاتورة رقم: {{ inv.invoiceNo }}</div>
+      <div style="font-size: 0.8rem; color: #64748b;">الإجمالي: {{ inv.totalAmount | number:'1.2-2' }} ر.س &nbsp;|&nbsp; العميل: {{ inv.customerName || ('INVOICE_CONTROL.WALK_IN_CUSTOMER' | translate) }}</div>
+    </div>
+
+    <label style="display: block; font-size: 0.88rem; font-weight: 700; color: #334155; margin-bottom: 0.6rem;">
+      <i class="pi pi-print mr-1 text-primary"></i> اختر نوع ومقاس الإيصال الحراري:
+    </label>
+
+    <div style="display: flex; flex-direction: column; gap: 0.55rem;">
+      <!-- Thermal 80mm -->
+      <div class="print-option-card"
+           (click)="selectedReprintPrintType = 'Thermal80mm'"
+           style="display: flex; align-items: center; justify-content: space-between; padding: 0.75rem 1rem; border: 1.5px solid; border-radius: 10px; cursor: pointer; transition: all 0.2s ease;"
+           [style.border-color]="selectedReprintPrintType === 'Thermal80mm' ? '#10b981' : '#e2e8f0'"
+           [style.background]="selectedReprintPrintType === 'Thermal80mm' ? 'rgba(16, 185, 129, 0.05)' : '#ffffff'">
+        <div style="display: flex; align-items: center; gap: 0.75rem;">
+          <i class="pi pi-receipt" style="font-size: 1.65rem; color: #10b981;"></i>
+          <div>
+            <div style="font-weight: 700; font-size: 0.95rem; color: #1e293b;">إيصال حراري 80 ملم</div>
+            <div style="font-size: 0.78rem; color: #64748b; margin-top: 0.1rem;">طباعة حرارية بعرض 80 ملم</div>
+          </div>
+        </div>
+        <input type="radio" name="reprintPrintType" value="Thermal80mm"
+               [checked]="selectedReprintPrintType === 'Thermal80mm'"
+               (change)="selectedReprintPrintType = 'Thermal80mm'"
+               style="accent-color: #10b981; width: 1.15rem; height: 1.15rem; cursor: pointer;">
+      </div>
+
+      <!-- Thermal 58mm -->
+      <div class="print-option-card"
+           (click)="selectedReprintPrintType = 'Thermal58mm'"
+           style="display: flex; align-items: center; justify-content: space-between; padding: 0.75rem 1rem; border: 1.5px solid; border-radius: 10px; cursor: pointer; transition: all 0.2s ease;"
+           [style.border-color]="selectedReprintPrintType === 'Thermal58mm' ? '#10b981' : '#e2e8f0'"
+           [style.background]="selectedReprintPrintType === 'Thermal58mm' ? 'rgba(16, 185, 129, 0.05)' : '#ffffff'">
+        <div style="display: flex; align-items: center; gap: 0.75rem;">
+          <i class="pi pi-receipt" style="font-size: 1.65rem; color: #10b981;"></i>
+          <div>
+            <div style="font-weight: 700; font-size: 0.95rem; color: #1e293b;">إيصال حراري 58 ملم</div>
+            <div style="font-size: 0.78rem; color: #64748b; margin-top: 0.1rem;">طباعة حرارية بعرض 58 ملم</div>
+          </div>
+        </div>
+        <input type="radio" name="reprintPrintType" value="Thermal58mm"
+               [checked]="selectedReprintPrintType === 'Thermal58mm'"
+               (change)="selectedReprintPrintType = 'Thermal58mm'"
+               style="accent-color: #10b981; width: 1.15rem; height: 1.15rem; cursor: pointer;">
+      </div>
+    </div>
+  </div>
+
+  <ng-template pTemplate="footer">
+    <button pButton type="button" [label]="'INVOICE_CONTROL.CANCEL_BTN' | translate" class="p-button-text" (click)="showReprintDialog = false"></button>
+    <button pButton type="button" label="طباعة الإيصال" icon="pi pi-print" class="p-button-success" [loading]="processing()" (click)="confirmReprint()"></button>
+  </ng-template>
+</p-dialog>
+
+<p-dialog
+  [(visible)]="showTemplateManagerDialog"
+  [modal]="true"
+  [draggable]="false"
+  [resizable]="false"
+  [style]="{width:'520px', maxWidth:'95vw'}"
+  styleClass="invoice-dialog"
+  [header]="'INVOICE_CONTROL.DIALOG_TEMPLATE_TITLE' | translate">
+  <div class="dialog-form template-manager">
+    <label>
+      {{ 'INVOICE_CONTROL.SELECT_TEMPLATE' | translate }}
+      <p-dropdown [options]="templateOptions" optionLabel="label" optionValue="value" [(ngModel)]="adminTemplateSelection"></p-dropdown>
+    </label>
+
+    <div class="template-preview-box">
+      <span>{{ 'INVOICE_CONTROL.TEMPLATE_PREVIEW' | translate }}</span>
+      <app-cashier-receipt-template-preview
+        [templateId]="adminTemplateSelection"
+        [receipt]="templatePreviewData">
+      </app-cashier-receipt-template-preview>
+    </div>
+  </div>
+
+  <ng-template pTemplate="footer">
+    <button pButton type="button" [label]="'INVOICE_CONTROL.CANCEL_BTN' | translate" class="p-button-text" (click)="showTemplateManagerDialog = false"></button>
+    <button pButton type="button" [label]="'INVOICE_CONTROL.APPLY_TEMPLATE' | translate" icon="pi pi-check" (click)="applyTemplateManagerSelection()"></button>
+  </ng-template>
+</p-dialog>
+
+
+
+
+
+<p-dialog
+  [(visible)]="showRefundDialog"
+  [modal]="true"
+  [draggable]="false"
+  [resizable]="false"
+  [style]="{width:'920px', maxWidth:'95vw'}"
+  styleClass="invoice-dialog refund-dialog-custom"
+  header="استرجاع فاتورة (Refund)">
+
+  <div *ngIf="selectedInvoice() as invoice" class="dialog-body refund-dialog-body">
+    <!-- Invoice Quick Info Banner -->
+    <div class="refund-banner">
+      <div class="banner-item">
+        <span class="lbl">رقم الفاتورة:</span>
+        <strong class="val inv-code">{{ invoice.invoiceNo }}</strong>
+      </div>
+      <div class="banner-item">
+        <span class="lbl">العميل:</span>
+        <strong class="val">{{ invoice.customerName || 'عميل نقدي' }}</strong>
+      </div>
+      <div class="banner-item">
+        <span class="lbl">إجمالي الفاتورة:</span>
+        <strong class="val">{{ invoice.totalAmount | number:'1.2-2' }} <small>ر.س</small></strong>
+      </div>
+      <div class="banner-item highlight-item">
+        <span class="lbl">إجمالي الاسترجاع:</span>
+        <strong class="val refund-total">{{ calculatedRefundTotal | number:'1.2-2' }} <small>ر.س</small></strong>
+      </div>
+    </div>
+
+    <!-- Items Table for Refund Selection -->
+    <div class="refund-table-wrap">
+      <p-table [value]="invoice.items" styleClass="refund-items-table" [responsiveLayout]="'scroll'">
+        <ng-template pTemplate="header">
+          <tr>
+            <th style="width: 46px; text-align: center;">
+              <input
+                type="checkbox"
+                class="refund-chk"
+                [checked]="isAllRefundItemsSelected"
+                (change)="toggleSelectAllRefund($event)"
+                title="تحديد الكل" />
+            </th>
+            <th style="text-align: right;">الصنف</th>
+            <th class="text-center" style="width: 110px;">الكمية المباعة</th>
+            <th class="text-center" style="width: 110px;">المرتجع سابقاً</th>
+            <th class="text-center" style="width: 150px;">الكمية المسترجعة</th>
+            <th class="text-end" style="width: 115px;">سعر الوحدة</th>
+            <th class="text-end" style="width: 135px;">الإجمالي المسترجع</th>
+          </tr>
+        </ng-template>
+        <ng-template pTemplate="body" let-item>
+          <tr [class.disabled-row]="item.maxReturnQty <= 0" [class.selected-row]="item.selected">
+            <td style="text-align: center;">
+              <input
+                type="checkbox"
+                class="refund-chk"
+                [(ngModel)]="item.selected"
+                [disabled]="item.maxReturnQty <= 0" />
+            </td>
+            <td style="text-align: right;">
+              <div class="item-name-cell">
+                <span class="name">{{ item.name }}</span>
+                <span *ngIf="item.itemCode" class="code-badge">{{ item.itemCode }}</span>
+              </div>
+            </td>
+            <td class="text-center">
+              <span class="qty-pill sold-qty">{{ item.qty | number:'1.0-2' }}</span>
+            </td>
+            <td class="text-center">
+              <span class="qty-pill ret-qty" [class.has-ret]="(item.returnedQty || 0) > 0">
+                {{ item.returnedQty || 0 | number:'1.0-2' }}
+              </span>
+            </td>
+            <td class="text-center">
+              <div class="stepper-ctrl" [class.stepper-disabled]="!item.selected || item.maxReturnQty <= 0">
+                <button
+                  type="button"
+                  class="stepper-btn minus-btn"
+                  [disabled]="!item.selected || item.returnQty <= 1 || item.maxReturnQty <= 0"
+                  (click)="decrementItemReturn(item)"
+                  title="إنقاص الكمية">
+                  <i class="pi pi-minus"></i>
+                </button>
+                <input
+                  type="number"
+                  class="stepper-field"
+                  [(ngModel)]="item.returnQty"
+                  [min]="0.01"
+                  [max]="item.maxReturnQty"
+                  [disabled]="!item.selected || item.maxReturnQty <= 0"
+                  (change)="validateItemReturn(item)" />
+                <button
+                  type="button"
+                  class="stepper-btn plus-btn"
+                  [disabled]="!item.selected || item.returnQty >= item.maxReturnQty || item.maxReturnQty <= 0"
+                  (click)="incrementItemReturn(item)"
+                  title="زيادة الكمية">
+                  <i class="pi pi-plus"></i>
+                </button>
+              </div>
+            </td>
+            <td class="text-end">
+              <span class="item-price">{{ item.unitPrice | number:'1.2-2' }} <small>ر.س</small></span>
+            </td>
+            <td class="text-end">
+              <span class="item-refund-total">
+                {{ calculateItemRefundTotal(item) | number:'1.2-2' }}
+                <small>ر.س</small>
+              </span>
+            </td>
+          </tr>
+        </ng-template>
+        <ng-template pTemplate="emptymessage">
+          <tr>
+            <td colspan="7" class="text-center p-4 text-muted font-bold">لا توجد أصناف قابلة للاسترجاع في هذه الفاتورة</td>
+          </tr>
+        </ng-template>
+      </p-table>
+    </div>
+
+    <!-- Reason and Notes Form -->
+    <div class="refund-form-grid">
+      <div class="form-group">
+        <label class="form-label"><i class="pi pi-question-circle"></i> سبب الاسترجاع <span class="text-danger">*</span></label>
+        <p-dropdown
+          [options]="refundReasonOptions"
+          optionLabel="label"
+          optionValue="value"
+          [(ngModel)]="refundReason"
+          appendTo="body"
+          styleClass="w-full refund-reason-dropdown"
+          placeholder="اختر سبب الاسترجاع">
+        </p-dropdown>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label"><i class="pi pi-comment"></i> ملاحظات إضافية</label>
+        <textarea
+          pInputTextarea
+          rows="2"
+          [(ngModel)]="refundNotes"
+          class="w-full refund-textarea"
+          placeholder="أدخل أي ملاحظات أو تفاصيل بخصوص عملية الاسترجاع...">
+        </textarea>
+      </div>
+    </div>
+  </div>
+
+  <ng-template pTemplate="footer">
+    <div class="dialog-actions-row">
+      <button
+        pButton
+        type="button"
+        [label]="'INVOICE_CONTROL.CANCEL_BTN' | translate"
+        class="p-button-outlined p-button-secondary cancel-dialog-btn"
+        (click)="showRefundDialog = false">
+      </button>
+      <button
+        pButton
+        type="button"
+        label="تأكيد تنفيذ المرتجع"
+        icon="pi pi-undo"
+        class="p-button-primary confirm-refund-btn"
+        [loading]="processing()"
+        [disabled]="calculatedRefundTotal <= 0"
+        (click)="confirmRefund()">
+      </button>
+    </div>
+  </ng-template>
+</p-dialog>

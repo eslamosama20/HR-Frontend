@@ -1,0 +1,1070 @@
+<div class="card" [ngClass]="isRTL ? 'rtl-layout' : 'ltr-layout'">
+  <p-toast></p-toast>
+  <p-confirmDialog></p-confirmDialog>
+
+  <div class="card-header border-0 pt-6">
+    <div class="card-title">
+      <h2>{{ 'DATA.HOTELS_MANAGEMENT' | translate }}</h2>
+    </div>
+  </div>
+
+  <div class="card-body pt-0">
+    <p-tabView>
+      <!-- Hotels Tab -->
+      <p-tabPanel [header]="'DATA.HOTELS' | translate">
+        <div class="mb-4">
+          <div class="d-flex justify-content-between align-items-center">
+            <div class="d-flex align-items-center position-relative my-1">
+              <i class="ki-duotone ki-magnifier fs-1 position-absolute ms-6">
+                <span class="path1"></span>
+                <span class="path2"></span>
+              </i>
+              <input
+                type="text"
+                class="form-control form-control-solid w-250px ps-14"
+                [placeholder]="'DATA.SEARCH' | translate"
+                #searchHotelsInput
+                (input)="hotelsTable.filterGlobal(searchHotelsInput.value, 'contains')"
+              />
+            </div>
+
+            <button
+              pButton
+              pRipple
+              [label]="'DATA.ADD_NEW_HOTEL' | translate"
+              icon="pi pi-plus"
+              class="p-button-success"
+              (click)="openNewHotel()"
+            ></button>
+          </div>
+        </div>
+
+        <p-table
+          #hotelsTable
+          [value]="hotels"
+          [rows]="10"
+          [paginator]="true"
+          [loading]="loadingHotels"
+          [rowsPerPageOptions]="[10, 25, 50]"
+          [globalFilterFields]="['name', 'nameAr', 'city', 'country']"
+          styleClass="p-datatable-gridlines"
+          [tableStyle]="{ 'min-width': '50rem' }"
+        >
+          <ng-template pTemplate="header">
+            <tr>
+              <th style="width: 80px">{{ 'DATA.IMAGE' | translate }}</th>
+              <th>{{ 'DATA.NAME' | translate }}</th>
+              <th>{{ 'DATA.CITY' | translate }}</th>
+              <th>{{ 'DATA.STARS' | translate }}</th>
+              <th>{{ 'DATA.ACTIVE' | translate }}</th>
+              <th>{{ 'DATA.FEATURED' | translate }}</th>
+              <th>{{ 'DATA.ROOMS' | translate }}</th>
+              <th style="width: 200px">{{ 'DATA.ACTIONS' | translate }}</th>
+            </tr>
+          </ng-template>
+
+          <ng-template pTemplate="body" let-hotel>
+            <tr>
+              <td>
+                <img
+                  *ngIf="hotel.mainImageUrl"
+                  [src]="hotel.mainImageUrl"
+              [alt]="hotelFormGroup.get('name')?.value || 'Hotel Image'"
+                  class="hotel-image-preview"
+                />
+                <i *ngIf="!hotel.mainImageUrl" class="pi pi-image" style="font-size: 2rem"></i>
+              </td>
+              <td>
+                <strong>{{ hotel.name }}</strong>
+                <br />
+                <small class="text-muted" *ngIf="hotel.nameAr">{{ hotel.nameAr }}</small>
+              </td>
+              <td>{{ hotel.city || '-' }}</td>
+              <td>
+                <i
+                  *ngFor="let star of getStarsArray(hotel.stars)"
+                  class="pi pi-star-fill"
+                  style="color: #ffc107"
+                ></i>
+              </td>
+              <td>
+                <p-tag
+                  [value]="hotel.isActive ? ('DATA.ACTIVE' | translate) : ('DATA.INACTIVE' | translate)"
+                  [severity]="hotel.isActive ? 'success' : 'danger'"
+                ></p-tag>
+              </td>
+              <td>
+                <i
+                  *ngIf="hotel.isFeatured"
+                  class="pi pi-star-fill"
+                  style="color: #ffc107; font-size: 1.2rem"
+                ></i>
+              </td>
+              <td>
+                <p-tag 
+                  [value]="hotel.roomTypesCount?.toString() || '0'" 
+                  severity="info"
+                  class="rooms-count-badge"
+                >
+                  <i class="pi pi-building me-1"></i>
+                </p-tag>
+              </td>
+              <td>
+                <div class="quick-actions">
+                  <button
+                    pButton
+                    pRipple
+                    icon="pi pi-building"
+                    class="p-button-rounded p-button-text p-button-info manage-rooms-btn"
+                    (click)="manageHotelRooms(hotel)"
+                    pTooltip="{{ 'DATA.MANAGE_ROOMS' | translate }}"
+                  ></button>
+                  <button
+                    pButton
+                    pRipple
+                    icon="pi pi-pencil"
+                    class="p-button-rounded p-button-text p-button-warning"
+                    (click)="editHotel(hotel)"
+                    pTooltip="{{ 'DATA.EDIT' | translate }}"
+                  ></button>
+                  <button
+                    pButton
+                    pRipple
+                    icon="pi pi-trash"
+                    class="p-button-rounded p-button-text p-button-danger"
+                    (click)="deleteHotel(hotel)"
+                    pTooltip="{{ 'DATA.DELETE' | translate }}"
+                  ></button>
+                </div>
+              </td>
+            </tr>
+          </ng-template>
+
+          <ng-template pTemplate="emptymessage">
+            <tr>
+              <td colspan="8" class="text-center">{{ 'DATA.NO_DATA' | translate }}</td>
+            </tr>
+          </ng-template>
+        </p-table>
+      </p-tabPanel>
+
+      <!-- Room Types Tab -->
+      <p-tabPanel [header]="'DATA.ROOM_TYPES' | translate">
+        <div class="mb-4">
+          <div class="d-flex justify-content-between align-items-center">
+            <div class="d-flex align-items-center gap-3">
+              <div class="position-relative">
+                <i class="ki-duotone ki-magnifier fs-1 position-absolute ms-6">
+                  <span class="path1"></span>
+                  <span class="path2"></span>
+                </i>
+                <input
+                  type="text"
+                  class="form-control form-control-solid w-250px ps-14"
+                  [placeholder]="'DATA.SEARCH' | translate"
+                  #searchRoomTypesInput
+                  (input)="roomTypesTable.filterGlobal(searchRoomTypesInput.value, 'contains')"
+                />
+              </div>
+
+              <p-dropdown
+                [options]="hotels"
+                [(ngModel)]="selectedHotelId"
+                optionLabel="name"
+                optionValue="id"
+                [placeholder]="'DATA.FILTER_BY_HOTEL' | translate"
+                [showClear]="true"
+                (onChange)="filterByHotel($event.value)"
+                styleClass="w-250px"
+              ></p-dropdown>
+            </div>
+
+            <button
+              pButton
+              pRipple
+              [label]="'DATA.ADD_NEW_ROOM_TYPE' | translate"
+              icon="pi pi-plus"
+              class="p-button-success"
+              (click)="openNewRoomType()"
+            ></button>
+          </div>
+        </div>
+
+        <p-table
+          #roomTypesTable
+          [value]="roomTypes"
+          [rows]="10"
+          [paginator]="true"
+          [loading]="loadingRoomTypes"
+          [rowsPerPageOptions]="[10, 25, 50]"
+          [globalFilterFields]="['name', 'nameAr', 'hotelName', 'bedType']"
+          styleClass="p-datatable-gridlines"
+          [tableStyle]="{ 'min-width': '50rem' }"
+        >
+          <ng-template pTemplate="header">
+            <tr>
+              <th>{{ 'DATA.HOTEL' | translate }}</th>
+              <th>{{ 'DATA.ROOM_TYPE' | translate }}</th>
+              <th>{{ 'DATA.MAX_GUESTS' | translate }}</th>
+              <th>{{ 'DATA.BEDS' | translate }}</th>
+              <th>{{ 'DATA.BASE_PRICE' | translate }}</th>
+              <th>{{ 'DATA.TOTAL_ROOMS' | translate }}</th>
+              <th>{{ 'DATA.ACTIVE' | translate }}</th>
+              <th style="width: 150px">{{ 'DATA.ACTIONS' | translate }}</th>
+            </tr>
+          </ng-template>
+
+          <ng-template pTemplate="body" let-roomType>
+            <tr>
+              <td>
+                <strong>{{ roomType.hotelName }}</strong>
+              </td>
+              <td>
+                <strong>{{ roomType.name }}</strong>
+                <br />
+                <small class="text-muted" *ngIf="roomType.nameAr">{{ roomType.nameAr }}</small>
+                <br />
+                <small class="text-muted" *ngIf="roomType.viewType">
+                  <i class="pi pi-eye me-1"></i>{{ roomType.viewType }}
+                  <span *ngIf="roomType.viewPrice && roomType.viewPrice > 0" class="text-success">
+                    (+{{ roomType.viewPrice | currency:'SAR':'code':'1.2-2':'ar-SA' }})
+                  </span>
+                </small>
+              </td>
+              <td>
+                <i class="pi pi-users me-1"></i>{{ roomType.maxGuests }}
+              </td>
+              <td>
+                <i class="pi pi-box me-1"></i>{{ roomType.numberOfBeds }} {{ roomType.bedType }}
+              </td>
+              <td>
+                <!-- Base Price -->
+                <div class="mb-2">
+                  <strong>{{ roomType.basePrice | currency:'SAR':'code':'1.2-2':'ar-SA' }}</strong>
+                  <small class="text-muted d-block">سعر أساسي | Base Price</small>
+                </div>
+
+                <!-- View Price (if exists) -->
+                <div *ngIf="roomType.viewPrice && roomType.viewPrice > 0" class="mb-2">
+                  <span class="text-info">+{{ roomType.viewPrice | currency:'SAR':'code':'1.2-2':'ar-SA' }}</span>
+                  <small class="text-muted d-block">سعر الإطلالة | View Price</small>
+                </div>
+
+                <!-- Municipality Tax (if exists) -->
+                <div *ngIf="roomType.municipalityTaxPercentage && roomType.municipalityTaxPercentage > 0" class="mb-2">
+                  <span class="text-warning">+{{ (roomType.basePrice + (roomType.viewPrice || 0)) * (roomType.municipalityTaxPercentage / 100) | currency:'SAR':'code':'1.2-2':'ar-SA' }}</span>
+                  <small class="text-muted d-block">ضريبة البلدية ({{ roomType.municipalityTaxPercentage }}%) | Municipality Tax</small>
+                </div>
+
+                <!-- Subtotal before VAT -->
+                <div class="mb-2 pt-2" style="border-top: 1px solid #dee2e6;">
+                  <strong class="text-primary">{{ (roomType.basePrice + (roomType.viewPrice || 0)) * (1 + (roomType.municipalityTaxPercentage || 0) / 100) | currency:'SAR':'code':'1.2-2':'ar-SA' }}</strong>
+                  <small class="text-muted d-block">{{ 'DATA.EXCLUDING_VAT' | translate }}</small>
+                </div>
+
+                <!-- VAT -->
+                <small class="text-success d-block">
+                  {{ 'DATA.VAT' | translate }} (15%): {{ (roomType.basePrice + (roomType.viewPrice || 0)) * (1 + (roomType.municipalityTaxPercentage || 0) / 100) * 0.15 | currency:'SAR':'code':'1.2-2':'ar-SA' }}
+                </small>
+
+                <!-- Total with VAT -->
+                <small class="text-primary fw-bold d-block">
+                  {{ 'DATA.TOTAL_WITH_VAT' | translate }}: {{ (roomType.basePrice + (roomType.viewPrice || 0)) * (1 + (roomType.municipalityTaxPercentage || 0) / 100) * 1.15 | currency:'SAR':'code':'1.2-2':'ar-SA' }}
+                </small>
+
+                <!-- Weekend Price -->
+                <div *ngIf="roomType.weekendPrice" class="mt-3 pt-2" style="border-top: 1px dashed #dee2e6;">
+                  <small class="text-muted d-block mb-1">
+                    <strong>Weekend:</strong> {{ (roomType.weekendPrice + (roomType.viewPrice || 0)) * (1 + (roomType.municipalityTaxPercentage || 0) / 100) | currency:'SAR':'code':'1.2-2':'ar-SA' }}
+                  </small>
+                  <small class="text-success d-block">
+                    {{ 'DATA.VAT' | translate }} (15%): {{ (roomType.weekendPrice + (roomType.viewPrice || 0)) * (1 + (roomType.municipalityTaxPercentage || 0) / 100) * 0.15 | currency:'SAR':'code':'1.2-2':'ar-SA' }}
+                  </small>
+                  <small class="text-primary fw-bold d-block">
+                    {{ 'DATA.TOTAL_WITH_VAT' | translate }}: {{ (roomType.weekendPrice + (roomType.viewPrice || 0)) * (1 + (roomType.municipalityTaxPercentage || 0) / 100) * 1.15 | currency:'SAR':'code':'1.2-2':'ar-SA' }}
+                  </small>
+                </div>
+              </td>
+              <td>
+                <p-tag [value]="roomType.totalRooms?.toString()" severity="info"></p-tag>
+              </td>
+              <td>
+                <p-tag
+                  [value]="roomType.isActive ? ('DATA.ACTIVE' | translate) : ('DATA.INACTIVE' | translate)"
+                  [severity]="roomType.isActive ? 'success' : 'danger'"
+                ></p-tag>
+              </td>
+              <td>
+                <button
+                  pButton
+                  pRipple
+                  icon="pi pi-pencil"
+                  class="p-button-rounded p-button-text p-button-warning me-2"
+                  (click)="editRoomType(roomType)"
+                  pTooltip="{{ 'DATA.EDIT' | translate }}"
+                ></button>
+                <button
+                  pButton
+                  pRipple
+                  icon="pi pi-trash"
+                  class="p-button-rounded p-button-text p-button-danger"
+                  (click)="deleteRoomType(roomType)"
+                  pTooltip="{{ 'DATA.DELETE' | translate }}"
+                ></button>
+              </td>
+            </tr>
+          </ng-template>
+
+          <ng-template pTemplate="emptymessage">
+            <tr>
+              <td colspan="8" class="text-center">{{ 'DATA.NO_DATA' | translate }}</td>
+            </tr>
+          </ng-template>
+        </p-table>
+      </p-tabPanel>
+    </p-tabView>
+  </div>
+</div>
+
+<!-- Hotel Dialog -->
+<p-dialog
+  [(visible)]="hotelDialogVisible"
+  [header]="(hotelFormGroup.get('id')?.value ? 'DATA.EDIT_HOTEL' : 'DATA.ADD_NEW_HOTEL') | translate"
+  [modal]="true"
+  [style]="{ width: '800px' }"
+  styleClass="p-fluid"
+>
+  <ng-template pTemplate="content">
+    <form [formGroup]="hotelFormGroup">
+      <h5 class="form-section-title">{{ 'DATA.BASIC_INFO' | translate }}</h5>
+      <div class="row">
+        <div class="col-md-6 mb-3">
+          <label>{{ 'DATA.NAME_EN' | translate }} *</label>
+          <input pInputText formControlName="name" class="form-control" />
+        </div>
+
+        <div class="col-md-6 mb-3">
+          <label>{{ 'DATA.NAME_AR' | translate }}</label>
+          <input pInputText formControlName="nameAr" class="form-control" />
+        </div>
+
+        <div class="col-md-12 mb-3">
+          <label>{{ 'DATA.DESCRIPTION_EN' | translate }}</label>
+          <textarea
+            pInputTextarea
+            formControlName="description"
+            rows="3"
+            class="form-control"
+          ></textarea>
+        </div>
+
+        <div class="col-md-12 mb-3">
+          <label>{{ 'DATA.DESCRIPTION_AR' | translate }}</label>
+          <textarea
+            pInputTextarea
+            formControlName="descriptionAr"
+            rows="3"
+            class="form-control"
+          ></textarea>
+        </div>
+      </div>
+
+      <h5 class="form-section-title">{{ 'DATA.LOCATION' | translate }}</h5>
+      <div class="row">
+        <div class="col-md-6 mb-3">
+          <label>{{ 'DATA.ADDRESS' | translate }}</label>
+          <input pInputText formControlName="address" class="form-control" />
+        </div>
+
+        <div class="col-md-6 mb-3">
+          <label>{{ 'DATA.CITY' | translate }}</label>
+          <input pInputText formControlName="city" class="form-control" />
+        </div>
+
+        <div class="col-md-6 mb-3">
+          <label>{{ 'DATA.COUNTRY' | translate }}</label>
+          <input pInputText formControlName="country" class="form-control" />
+        </div>
+
+        <div class="col-md-6 mb-3">
+          <label>{{ 'DATA.STARS' | translate }} *</label>
+          <p-dropdown
+            formControlName="stars"
+            [options]="starsOptions"
+            placeholder="Select Stars"
+          ></p-dropdown>
+        </div>
+      </div>
+
+      <h5 class="form-section-title">{{ 'DATA.CONTACT' | translate }}</h5>
+      <div class="row">
+        <div class="col-md-6 mb-3">
+          <label>{{ 'DATA.PHONE' | translate }}</label>
+          <input pInputText formControlName="phone" class="form-control" />
+        </div>
+
+        <div class="col-md-6 mb-3">
+          <label>{{ 'DATA.EMAIL' | translate }}</label>
+          <input pInputText type="email" formControlName="email" class="form-control" />
+        </div>
+
+        <div class="col-md-6 mb-3">
+          <label>{{ 'DATA.CHECK_IN_TIME' | translate }}</label>
+          <input pInputText formControlName="checkInTime" class="form-control" />
+        </div>
+
+        <div class="col-md-6 mb-3">
+          <label>{{ 'DATA.CHECK_OUT_TIME' | translate }}</label>
+          <input pInputText formControlName="checkOutTime" class="form-control" />
+        </div>
+      </div>
+
+      <h5 class="form-section-title">{{ 'DATA.SETTINGS' | translate }}</h5>
+      <div class="row">
+        <div class="col-md-12 mb-3">
+          <label>{{ 'DATA.MAIN_IMAGE' | translate }}</label>
+          
+          <!-- Preview uploaded image -->
+          <div *ngIf="hotelMainImageUrl" class="mb-3">
+            <img 
+              [src]="hotelMainImageUrl" 
+              [alt]="hotelFormGroup.get('name')?.value || 'Hotel Image'"
+              class="img-thumbnail cursor-pointer"
+              style="max-width: 300px; max-height: 200px; object-fit: cover;"
+              (click)="viewImageFullScreen(hotelMainImageUrl)"
+              title="اضغط لعرض الصورة بحجم كامل"
+            />
+            <div class="mt-2">
+              <button
+                pButton
+                pRipple
+                type="button"
+                icon="pi pi-trash"
+                [label]="'DATA.REMOVE_IMAGE' | translate"
+                class="p-button-danger p-button-sm"
+                (click)="removeMainImage()"
+              ></button>
+            </div>
+          </div>
+
+          <!-- File upload component -->
+          <p-fileUpload
+            name="mainImage"
+            mode="basic"
+            (uploadHandler)="onMainImageSelected($event)"
+            customUpload="true"
+            [auto]="true"
+            accept="image/*"
+            maxFileSize="2000000"
+            [chooseLabel]="'DATA.CHOOSE_IMAGE' | translate"
+            chooseIcon="pi pi-upload"
+            #mainImageUploader
+          ></p-fileUpload>
+
+          <!-- Loading indicator -->
+          <div *ngIf="isFileUploading" class="mt-2">
+            <i class="pi pi-spin pi-spinner" style="font-size: 2rem"></i>
+            <p class="text-muted">{{ 'DATA.UPLOADING' | translate }}...</p>
+          </div>
+
+          <small class="text-muted d-block mt-1">
+            {{ 'DATA.MAX_FILE_SIZE' | translate }}: 2MB | {{ 'DATA.FORMATS' | translate }}: JPG, PNG, WebP
+          </small>
+        </div>
+
+        <!-- Additional Images Section -->
+        <div class="col-md-12 mb-3">
+          <label>{{ 'DATA.ADDITIONAL_IMAGES' | translate }} ({{ 'DATA.OPTIONAL' | translate }})</label>
+          
+          <!-- Preview uploaded additional images -->
+          <div *ngIf="hotelAdditionalImageUrls.length > 0" class="mb-3 d-flex flex-wrap gap-2">
+            <div *ngFor="let img of hotelAdditionalImageUrls; let i = index" class="position-relative">
+              <img 
+                [src]="img" 
+                [alt]="'Hotel Image ' + (i + 1)"
+                class="img-thumbnail cursor-pointer"
+                style="width: 120px; height: 120px; object-fit: cover;"
+                (click)="viewImageFullScreen(img)"
+                title="اضغط لعرض الصورة بحجم كامل"
+              />
+              <button
+                pButton
+                pRipple
+                type="button"
+                icon="pi pi-times"
+                class="p-button-danger p-button-rounded p-button-sm position-absolute"
+                style="top: 5px; right: 5px;"
+                (click)="removeAdditionalImage(i)"
+              ></button>
+            </div>
+          </div>
+
+          <!-- File upload component for multiple images -->
+          <p-fileUpload
+            name="additionalImages"
+            mode="basic"
+            (uploadHandler)="onAdditionalImagesSelected($event)"
+            customUpload="true"
+            [auto]="true"
+            accept="image/*"
+            [multiple]="true"
+            maxFileSize="2000000"
+            [chooseLabel]="'DATA.CHOOSE_IMAGES' | translate"
+            chooseIcon="pi pi-images"
+            #additionalImagesUploader
+          ></p-fileUpload>
+
+          <small class="text-muted d-block mt-1">
+            {{ 'DATA.SELECT_MULTIPLE_IMAGES' | translate }} | {{ 'DATA.MAX_FILE_SIZE' | translate }}: 2MB {{ 'DATA.PER_IMAGE' | translate }}
+          </small>
+        </div>
+
+        <!-- Hotel Amenities Section -->
+        <div class="col-md-12 mb-3">
+          <h5 class="form-section-title mb-3">
+            <i class="pi pi-star-fill text-warning me-2"></i>
+            {{ 'DATA.HOTEL_AMENITIES' | translate }}
+          </h5>
+          <p class="text-muted mb-3">
+            حدد الخدمات والمرافق المتاحة في الفندق | Select available hotel amenities and facilities
+          </p>
+          
+          <div class="row">
+            <div class="col-md-6 col-lg-4 mb-3" *ngFor="let amenity of hotelAmenitiesOptions">
+              <div class="amenity-checkbox-wrapper p-3 border rounded">
+                <p-checkbox
+                  [value]="amenity.value"
+                  [(ngModel)]="selectedAmenities"
+                  [ngModelOptions]="{standalone: true}"
+                  [binary]="false"
+                  [inputId]="'amenity_' + amenity.value"
+                ></p-checkbox>
+                <label [for]="'amenity_' + amenity.value" class="ms-2 cursor-pointer">
+                  <span class="amenity-icon me-2" style="font-size: 1.5rem;">{{ amenity.icon }}</span>
+                  <span class="amenity-label">{{ amenity.label }}</span>
+                </label>
+              </div>
+            </div>
+          </div>
+          
+          <small class="text-muted d-block mt-2">
+            <i class="pi pi-info-circle me-1"></i>
+            الخدمات المحددة ستظهر للعملاء في صفحة تفاصيل الفندق | Selected amenities will be displayed to customers
+          </small>
+        </div>
+      </div>
+
+      <h5 class="form-section-title mt-4">
+        <i class="pi pi-car me-2"></i>{{ 'DATA.PAID_SERVICES' | translate }}
+      </h5>
+      <div class="row">
+        <div class="col-12 mb-3">
+          <small class="text-muted d-block mb-3">
+            <i class="pi pi-info-circle me-1"></i>
+            اختر الخدمات المدفوعة التي يقدمها الفندق وحدد سعر كل خدمة | Select paid services offered by this hotel and set the price for each
+          </small>
+          
+          <div class="paid-services-list">
+            <div *ngFor="let service of availablePaidServices" class="paid-service-item mb-3 p-3 border rounded">
+              <div class="row align-items-center">
+                <div class="col-md-6">
+                  <div class="form-check">
+                    <p-checkbox
+                      [binary]="true"
+                      [ngModel]="isPaidServiceSelected(service.id!)"
+                      (onChange)="togglePaidService(service, $event)"
+                      [ngModelOptions]="{standalone: true}"
+                    ></p-checkbox>
+                    <span class="ms-2">
+                      <strong>{{ activeLanguage === 'ar' ? service.nameAr : service.nameEn }}</strong>
+                    </span>
+                  </div>
+                  <small class="text-muted ms-4" *ngIf="service.descriptionEn || service.descriptionAr">
+                    {{ activeLanguage === 'ar' ? service.descriptionAr : service.descriptionEn }}
+                  </small>
+                </div>
+                <div class="col-md-6" *ngIf="isPaidServiceSelected(service.id!)">
+                  <label class="form-label mb-1">{{ 'DATA.PRICE' | translate }} ({{ 'DATA.SAR' | translate }})</label>
+                  <p-inputNumber
+                    [ngModel]="getPaidServicePrice(service.id!)"
+                    (ngModelChange)="updatePaidServicePrice(service.id!, $event)"
+                    [ngModelOptions]="{standalone: true}"
+                    mode="currency"
+                    currency="SAR"
+                    [minFractionDigits]="2"
+                    [min]="0"
+                    class="w-100"
+                  ></p-inputNumber>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <h5 class="form-section-title mt-4">{{ 'DATA.SETTINGS' | translate }}</h5>
+      <div class="row">
+
+        <div class="col-md-6 mb-3">
+          <div class="form-check">
+            <p-checkbox
+              formControlName="isActive"
+              [binary]="true"
+              label="{{ 'DATA.ACTIVE' | translate }}"
+            ></p-checkbox>
+          </div>
+        </div>
+
+        <div class="col-md-6 mb-3">
+          <div class="form-check">
+            <p-checkbox
+              formControlName="isFeatured"
+              [binary]="true"
+              label="{{ 'DATA.FEATURED' | translate }}"
+            ></p-checkbox>
+          </div>
+        </div>
+      </div>
+    </form>
+  </ng-template>
+
+  <ng-template pTemplate="footer">
+    <button
+      pButton
+      pRipple
+      [label]="'DATA.CANCEL' | translate"
+      icon="pi pi-times"
+      class="p-button-text"
+      (click)="hideHotelDialog()"
+    ></button>
+    <button
+      pButton
+      pRipple
+      [label]="'DATA.SAVE' | translate"
+      icon="pi pi-check"
+      class="p-button-text"
+      (click)="saveHotel()"
+    ></button>
+  </ng-template>
+</p-dialog>
+
+<!-- Room Type Dialog -->
+<p-dialog
+  [(visible)]="roomTypeDialogVisible"
+  [header]="(roomTypeFormGroup.get('id')?.value ? 'DATA.EDIT_ROOM_TYPE' : 'DATA.ADD_NEW_ROOM_TYPE') | translate"
+  [modal]="true"
+  [style]="{ width: '700px' }"
+  styleClass="p-fluid"
+>
+  <ng-template pTemplate="content">
+    <form [formGroup]="roomTypeFormGroup">
+      <div class="row">
+        <!-- Hotel dropdown - only show when NOT managing a specific hotel's rooms -->
+        <div class="col-md-12 mb-3" *ngIf="!selectedHotelForRooms">
+          <label>{{ 'DATA.HOTEL' | translate }} *</label>
+          <p-dropdown
+            formControlName="hotelId"
+            [options]="hotels"
+            optionLabel="name"
+            optionValue="id"
+            [placeholder]="'DATA.SELECT_HOTEL' | translate"
+          ></p-dropdown>
+        </div>
+
+        <!-- Show hotel name when managing a specific hotel's rooms -->
+        <div class="col-md-12 mb-3" *ngIf="selectedHotelForRooms">
+          <div class="selected-hotel-info">
+            <i class="pi pi-building"></i>
+            <strong>{{ selectedHotelForRooms.name }}</strong>
+          </div>
+        </div>
+
+        <div class="col-md-6 mb-3">
+          <label>{{ 'DATA.NAME_EN' | translate }} *</label>
+          <input pInputText formControlName="name" class="form-control" />
+        </div>
+
+        <div class="col-md-6 mb-3">
+          <label>{{ 'DATA.NAME_AR' | translate }}</label>
+          <input pInputText formControlName="nameAr" class="form-control" />
+        </div>
+
+        <div class="col-md-12 mb-3">
+          <label>{{ 'DATA.DESCRIPTION_EN' | translate }}</label>
+          <textarea
+            pInputTextarea
+            formControlName="description"
+            rows="2"
+            class="form-control"
+          ></textarea>
+        </div>
+
+        <div class="col-md-6 mb-3">
+          <label>{{ 'DATA.MAX_GUESTS' | translate }} *</label>
+          <p-inputNumber formControlName="maxGuests" [showButtons]="true" [min]="1"></p-inputNumber>
+        </div>
+
+        <div class="col-md-6 mb-3">
+          <label>{{ 'DATA.NUMBER_OF_BEDS' | translate }} *</label>
+          <p-inputNumber formControlName="numberOfBeds" [showButtons]="true" [min]="1"></p-inputNumber>
+        </div>
+
+        <div class="col-md-6 mb-3">
+          <label>{{ 'DATA.BED_TYPE' | translate }}</label>
+          <p-dropdown
+            formControlName="bedType"
+            [options]="bedTypeOptions"
+            optionLabel="label"
+            optionValue="value"
+          ></p-dropdown>
+        </div>
+
+        <div class="col-md-6 mb-3">
+          <label>{{ 'DATA.VIEW_TYPE' | translate }}</label>
+          <p-dropdown
+            formControlName="viewType"
+            [options]="viewTypeOptions"
+            optionLabel="label"
+            optionValue="value"
+            [showClear]="true"
+          ></p-dropdown>
+        </div>
+
+        <div class="col-md-6 mb-3">
+          <label>{{ 'DATA.VIEW_PRICE_SALES' | translate }}</label>
+          <p-inputNumber 
+            formControlName="viewPrice" 
+            mode="currency" 
+            currency="SAR" 
+            currencyDisplay="code" 
+            locale="en-US" 
+            [min]="0"
+            placeholder="0.00">
+          </p-inputNumber>
+          <small class="text-muted d-block mt-1">
+            السعر الإضافي للإطلالة (يُضاف لسعر الغرفة الأساسي) | Additional price for this view
+          </small>
+        </div>
+
+        <div class="col-md-6 mb-3">
+          <label>ضريبة البلدية | Municipality Tax %</label>
+          <p-inputNumber 
+            formControlName="municipalityTaxPercentage" 
+            mode="decimal" 
+            [min]="0" 
+            [max]="100"
+            [minFractionDigits]="0"
+            [maxFractionDigits]="2"
+            suffix="%" 
+            placeholder="0">
+          </p-inputNumber>
+          <small class="text-muted d-block mt-1">
+            نسبة ضريبة البلدية (تُضاف للسعر الأساسي + سعر الإطلالة قبل الضريبة) | Municipality tax percentage (added before VAT)
+          </small>
+        </div>
+
+        <div class="col-md-6 mb-3">
+          <label>{{ 'DATA.BASE_PRICE' | translate }} *</label>
+          <p-inputNumber formControlName="basePrice" mode="currency" currency="SAR" currencyDisplay="code" locale="en-US" [min]="0"></p-inputNumber>
+        </div>
+
+        <div class="col-md-6 mb-3">
+          <label>{{ 'DATA.WEEKEND_PRICE' | translate }}</label>
+          <p-inputNumber formControlName="weekendPrice" mode="currency" currency="SAR" currencyDisplay="code" locale="en-US" [min]="0"></p-inputNumber>
+        </div>
+
+        <div class="col-md-6 mb-3">
+          <label>{{ 'DATA.SIZE_SQM' | translate }}</label>
+          <p-inputNumber formControlName="sizeInSqMeters" [min]="0"></p-inputNumber>
+        </div>
+
+        <div class="col-md-6 mb-3">
+          <label>{{ 'DATA.TOTAL_ROOMS' | translate }} *</label>
+          <p-inputNumber formControlName="totalRooms" [showButtons]="true" [min]="1"></p-inputNumber>
+        </div>
+
+        <div class="col-md-6 mb-3">
+          <label>{{ 'DATA.AVAILABLE_QUANTITY' | translate }} *</label>
+          <p-inputNumber formControlName="availableQuantity" [showButtons]="true" [min]="0"></p-inputNumber>
+        </div>
+
+        <!-- Payment Options Section -->
+        <div class="col-md-12 mb-3">
+          <label class="d-block mb-2">{{ 'DATA.PAYMENT_OPTIONS' | translate }} *</label>
+          <div class="d-flex gap-3">
+            <div class="form-check">
+              <input 
+                type="checkbox" 
+                class="form-check-input" 
+                id="payAtHotel" 
+                formControlName="payAtHotel">
+              <label class="form-check-label" for="payAtHotel">
+                {{ 'DATA.PAY_AT_HOTEL' | translate }}
+              </label>
+            </div>
+            <div class="form-check">
+              <input 
+                type="checkbox" 
+                class="form-check-input" 
+                id="payNow" 
+                formControlName="payNow">
+              <label class="form-check-label" for="payNow">
+                {{ 'DATA.PAY_NOW' | translate }}
+              </label>
+            </div>
+          </div>
+          <small class="text-muted d-block mt-1">
+            حدد طرق الدفع المتاحة (يجب تحديد واحدة على الأقل) | Select available payment methods (at least one required)
+          </small>
+        </div>
+
+        <!-- Cancellation Policy Section -->
+        <div class="col-md-6 mb-3">
+          <label>{{ 'DATA.CANCELLATION_POLICY' | translate }}</label>
+          <textarea 
+            formControlName="cancellationPolicy" 
+            class="form-control" 
+            rows="4"
+            placeholder="Enter cancellation policy in English..."></textarea>
+          <small class="text-muted d-block mt-1">
+            سياسة الإلغاء بالإنجليزية | Cancellation policy in English
+          </small>
+        </div>
+
+        <div class="col-md-6 mb-3">
+          <label>{{ 'DATA.CANCELLATION_POLICY_AR' | translate }}</label>
+          <textarea 
+            formControlName="cancellationPolicyAr" 
+            class="form-control" 
+            rows="4"
+            placeholder="أدخل سياسة الإلغاء بالعربية..."></textarea>
+          <small class="text-muted d-block mt-1">
+            سياسة الإلغاء بالعربية | Cancellation policy in Arabic
+          </small>
+        </div>
+
+        <!-- Room Images Section -->
+        <div class="col-md-12 mb-3">
+          <label>{{ 'DATA.ROOM_IMAGES' | translate }} ({{ 'DATA.OPTIONAL' | translate }})</label>
+          
+          <!-- Preview uploaded room images -->
+          <div *ngIf="roomTypeImageUrls.length > 0" class="mb-3 d-flex flex-wrap gap-2">
+            <div *ngFor="let img of roomTypeImageUrls; let i = index" class="position-relative">
+              <img 
+                [src]="img" 
+                [alt]="'Room Image ' + (i + 1)"
+                class="img-thumbnail cursor-pointer"
+                style="width: 120px; height: 120px; object-fit: cover;"
+                (click)="viewImageFullScreen(img)"
+                title="اضغط لعرض الصورة بحجم كامل"
+              />
+              <button
+                pButton
+                pRipple
+                type="button"
+                icon="pi pi-times"
+                class="p-button-danger p-button-rounded p-button-sm position-absolute"
+                style="top: 5px; right: 5px;"
+                (click)="removeRoomImage(i)"
+              ></button>
+            </div>
+          </div>
+
+          <!-- File upload component for multiple images -->
+          <p-fileUpload
+            name="roomImages"
+            mode="basic"
+            (uploadHandler)="onRoomImagesSelected($event)"
+            customUpload="true"
+            [auto]="true"
+            accept="image/*"
+            [multiple]="true"
+            maxFileSize="2000000"
+            [chooseLabel]="'DATA.CHOOSE_IMAGES' | translate"
+            chooseIcon="pi pi-images"
+            #roomImagesUploader
+          ></p-fileUpload>
+
+          <small class="text-muted d-block mt-1">
+            {{ 'DATA.SELECT_MULTIPLE_IMAGES' | translate }} | {{ 'DATA.MAX_FILE_SIZE' | translate }}: 2MB {{ 'DATA.PER_IMAGE' | translate }}
+          </small>
+        </div>
+
+        <div class="col-md-12 mb-3">
+          <div class="form-check">
+            <p-checkbox
+              formControlName="isActive"
+              [binary]="true"
+              label="{{ 'DATA.ACTIVE' | translate }}"
+            ></p-checkbox>
+          </div>
+        </div>
+      </div>
+    </form>
+  </ng-template>
+
+  <ng-template pTemplate="footer">
+    <button
+      pButton
+      pRipple
+      [label]="'DATA.CANCEL' | translate"
+      icon="pi pi-times"
+      class="p-button-text"
+      (click)="hideRoomTypeDialog()"
+    ></button>
+    <button
+      pButton
+      pRipple
+      [label]="'DATA.SAVE' | translate"
+      icon="pi pi-check"
+      class="p-button-text"
+      (click)="saveRoomType()"
+    ></button>
+  </ng-template>
+</p-dialog>
+
+<!-- Manage Hotel Rooms Dialog -->
+<p-dialog
+  [(visible)]="roomsManagementDialogVisible"
+  [header]="'DATA.MANAGE_HOTEL_ROOMS' | translate"
+  [modal]="true"
+  [style]="{ width: '90%', maxWidth: '1200px' }"
+  (onHide)="hideRoomsManagementDialog()"
+>
+  <ng-template pTemplate="content">
+    <div *ngIf="selectedHotelForRooms">
+      <div class="mb-4">
+        <div class="hotel-stats">
+          <div class="stat-item">
+            <i class="pi pi-building"></i>
+            <strong>{{ selectedHotelForRooms.name }}</strong>
+          </div>
+          <div class="stat-item" *ngIf="selectedHotelForRooms.city">
+            <i class="pi pi-map-marker"></i>
+            <span>{{ selectedHotelForRooms.city }}</span>
+          </div>
+          <div class="stat-item">
+            <i class="pi pi-box"></i>
+            <span>{{ getRoomTypesForHotel(selectedHotelForRooms.id).length }} {{ 'DATA.ROOM_TYPES' | translate }}</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="mb-3">
+        <button
+          pButton
+          pRipple
+          [label]="'DATA.ADD_NEW_ROOM_TYPE' | translate"
+          icon="pi pi-plus"
+          class="p-button-success"
+          (click)="openNewRoomType()"
+        ></button>
+      </div>
+
+      <p-table
+        [value]="getRoomTypesForHotel(selectedHotelForRooms.id)"
+        [rows]="10"
+        [paginator]="true"
+        [loading]="loadingRoomTypes"
+        styleClass="p-datatable-gridlines"
+      >
+        <ng-template pTemplate="header">
+          <tr>
+            <th>{{ 'DATA.ROOM_TYPE' | translate }}</th>
+            <th>{{ 'DATA.MAX_GUESTS' | translate }}</th>
+            <th>{{ 'DATA.BEDS' | translate }}</th>
+            <th>{{ 'DATA.BASE_PRICE' | translate }}</th>
+            <th>{{ 'DATA.TOTAL_ROOMS' | translate }}</th>
+            <th>{{ 'DATA.AVAILABLE' | translate }}</th>
+            <th>{{ 'DATA.ACTIVE' | translate }}</th>
+            <th style="width: 150px">{{ 'DATA.ACTIONS' | translate }}</th>
+          </tr>
+        </ng-template>
+
+        <ng-template pTemplate="body" let-roomType>
+          <tr>
+            <td>
+              <strong>{{ roomType.name }}</strong>
+              <br />
+              <small class="text-muted" *ngIf="roomType.viewType">
+                <i class="pi pi-eye me-1"></i>{{ roomType.viewType }}
+              </small>
+            </td>
+            <td>
+              <i class="pi pi-users me-1"></i>{{ roomType.maxGuests }}
+            </td>
+            <td>
+              <i class="pi pi-box me-1"></i>{{ roomType.numberOfBeds }} {{ roomType.bedType }}
+            </td>
+            <td>
+              <strong>{{ roomType.basePrice | currency:'SAR':'code':'1.2-2':'ar-SA' }}</strong>
+            </td>
+            <td>
+              <p-tag [value]="roomType.totalRooms?.toString()" severity="info"></p-tag>
+            </td>
+            <td>
+              <p-tag [value]="roomType.availableQuantity?.toString()" severity="success"></p-tag>
+            </td>
+            <td>
+              <p-tag
+                [value]="roomType.isActive ? ('DATA.ACTIVE' | translate) : ('DATA.INACTIVE' | translate)"
+                [severity]="roomType.isActive ? 'success' : 'danger'"
+              ></p-tag>
+            </td>
+            <td>
+              <button
+                pButton
+                pRipple
+                icon="pi pi-pencil"
+                class="p-button-rounded p-button-text p-button-warning me-2"
+                (click)="editRoomType(roomType)"
+                pTooltip="{{ 'DATA.EDIT' | translate }}"
+              ></button>
+              <button
+                pButton
+                pRipple
+                icon="pi pi-trash"
+                class="p-button-rounded p-button-text p-button-danger"
+                (click)="deleteRoomType(roomType)"
+                pTooltip="{{ 'DATA.DELETE' | translate }}"
+              ></button>
+            </td>
+          </tr>
+        </ng-template>
+
+        <ng-template pTemplate="emptymessage">
+          <tr>
+            <td colspan="8" class="text-center">
+              {{ 'DATA.NO_ROOM_TYPES_FOR_THIS_HOTEL' | translate }}
+            </td>
+          </tr>
+        </ng-template>
+      </p-table>
+    </div>
+  </ng-template>
+</p-dialog>
+
+<!-- Full Screen Image Viewer -->
+<p-dialog
+  [(visible)]="fullScreenImageVisible"
+  [modal]="true"
+  [closable]="true"
+  [dismissableMask]="true"
+  [maximizable]="false"
+  [style]="{width: '95vw', height: '95vh'}"
+  [contentStyle]="{padding: '0', display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', background: '#000'}"
+  (onHide)="hideFullScreenImage()"
+>
+  <ng-template pTemplate="header">
+    <span>معاينة الصورة</span>
+  </ng-template>
+  
+  <div style="width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; padding: 20px;">
+    <img 
+      *ngIf="fullScreenImage"
+      [src]="fullScreenImage" 
+      alt="Full Screen Image"
+      style="width: 100%; height: 100%; object-fit: contain;"
+    />
+  </div>
+</p-dialog>

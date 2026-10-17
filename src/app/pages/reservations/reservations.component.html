@@ -1,0 +1,582 @@
+<!-- شريط علوي -->
+<div class="toolbar">
+  <div class="search-filters-section">
+    <select [(ngModel)]="searchField" class="search-field-select">
+      <option value="referencenumber">{{ 'FINANCE.BOOKING_NUMBER' | translate }}</option>
+      <option value="clientcompanyname">{{ 'FINANCE.CLIENT_COMPANY' | translate }}</option>
+      <option value="guestname">{{ 'FINANCE.GUEST_NAME' | translate }}</option>
+      <option value="numberofnights">{{ 'FINANCE.NIGHTS' | translate }}</option>
+      <option value="reservationtype">{{ 'FINANCE.BOOKING_TYPE' | translate }}</option>
+      <option value="arrivaldate">{{ 'FINANCE.ARRIVAL_DATE' | translate }}</option>
+      <option value="departuredate">{{ 'FINANCE.DEPARTURE_DATE' | translate }}</option>
+    </select>
+
+    <span class="search" *ngIf="searchField !== 'arrivaldate' && searchField !== 'departuredate'">
+      <i class="pi pi-search"></i>
+      <input pInputText type="text" [(ngModel)]="searchValue" [placeholder]="'FINANCE.SEARCH' | translate"
+        class="search-input" />
+    </span>
+
+    <span class="search" *ngIf="searchField === 'arrivaldate' || searchField === 'departuredate'">
+      <p-calendar [(ngModel)]="searchValue" dateFormat="dd/mm/yy" [showIcon]="true"
+        [placeholder]="'FINANCE.CHOOSE_DATE' | translate" class="search-date-picker"></p-calendar>
+    </span>
+
+    <button pButton type="button" class="btn btn-outline clear-filters-btn" icon="pi pi-filter-slash"
+      [label]="'FINANCE.CLEAR_FILTERS' | translate" (click)="clearFilters()"></button>
+  </div>
+
+  <div class="toolbar-actions">
+    <button pButton type="button" class="btn btn-primary" icon="pi pi-plus"
+      [label]="'FINANCE.ADD_RESERVATION' | translate" (click)="navigateToAddReservation()"></button>
+    <button pButton type="button" class="btn btn-outline" icon="pi pi-external-link"
+      [label]="'FINANCE.EXPORT' | translate" (click)="exportCSV && exportCSV()"></button>
+    <button pButton type="button" class="btn btn-outline" icon="pi pi-share-alt" [label]="'FINANCE.SHARE' | translate"
+      (click)="handleToolbarShare()"></button>
+    <button *ngIf="hasPermission(PERMISSIONS.Reservation.Create)" pButton type="button" class="btn btn-outline" icon="pi pi-plus"
+      [label]="translate.instant('FINANCE.ADD_RESERVATION')" (click)="navigateToAddReservation()"></button>
+
+    <!-- 🔀 زر تبديل العرض (كروت/جدول) -->
+    <div class="view-toggle">
+      <button pButton type="button" class="p-button-outlined p-button-secondary toggle-btn"
+        [icon]="isTableView ? 'pi pi-th-large' : 'pi pi-table'"
+        [label]="isTableView ? ('FINANCE.VIEW_CARDS' | translate) : ('FINANCE.VIEW_TABLE' | translate)"
+        (click)="isTableView = !isTableView"></button>
+    </div>
+  </div>
+</div>
+
+<!-- ✅ حاوية موحدة تمنع تكرار رسالة (لا توجد بيانات) -->
+<ng-container *ngIf="reservations?.length; else noData">
+
+  <!-- الشبكة (الكروت) -->
+  <div class="cards-grid" *ngIf="!isTableView">
+    <div class="res-card" [ngClass]="{ 'cancelled-card': entry.isCancelled }" *ngFor="
+    let entry of filteredReservations
+      | slice : currentPage * rows : currentPage * rows + rows
+  " (click)="overlayPanel.hide(); navigateToReservation(entry)"
+      (contextmenu)="openOverlayPanel($event, overlayPanel, entry)">
+
+      <!-- زر الثلاث نقاط: يسار -->
+      <button pButton type="button" class="menu-btn" (click)="openOverlayPanel($event, overlayPanel, entry)">
+        <i class="pi pi-ellipsis-v"></i>
+      </button>
+
+      <!-- فتح القيد: يمين -->
+      <!-- <button
+        *ngIf="entry.transactionId"
+        pButton
+        type="button"
+        class="open-tx"
+        (click)="$event.stopPropagation()"
+        [routerLink]="
+          '/accounting/journal-transactions/transaction/' + entry.transactionId
+        "
+      >
+        <i class="pi pi-external-link"></i>
+      </button> -->
+
+      <!-- محتوى الكرت: صفوف ثنائية الأعمدة -->
+      <div class="rows">
+        <!-- الصف 1 -->
+        <div class="row">
+          <div class="cell">
+            <span class="ico"><i class="pi pi-user"></i></span>
+            <span class="label" translate="FINANCE.GUEST_NAME"></span>
+            <span class="value">{{ entry.guestName }}</span>
+          </div>
+
+          <div class="cell">
+            <span class="ico"><i class="pi pi-calendar"></i></span>
+            <span class="label" translate="FINANCE.NUMBER_OF_NIGHTS"></span>
+            <span class="value">{{ entry.numberOfNights }}</span>
+          </div>
+        </div>
+
+        <!-- الصف 2 -->
+        <div class="row">
+          <div class="cell">
+            <span class="ico"><i class="pi pi-hashtag"></i></span>
+            <span class="label" translate="FINANCE.RESERVATION_REFERENCE_NUMBER"></span>
+            <span class="value">{{ entry.referenceNumber }}</span>
+          </div>
+
+
+
+          <div class="cell">
+            <span class="ico"><i class="pi pi-book"></i></span>
+            <span class="label" translate="FINANCE.RESERVATION_TYPE"></span>
+            <span class="value">{{ entry.reservationType }}</span>
+          </div>
+        </div>
+        <!-- الصف الجديد: شركة العميل -->
+        <!-- الصف الجديد: شركة العميل + مؤكد -->
+        <div class="row">
+          <!-- شركة العميل -->
+          <div class="cell">
+            <span class="ico"><i class="pi pi-building"></i></span>
+            <span class="label" translate="FINANCE.CLIENT_COMPANY_NAME"></span>
+            <span class="value">{{ entry.clientCompanyName || "-" }}</span>
+          </div>
+
+          <!-- مؤكد -->
+          <div class="cell">
+            <span class="ico"><i class="pi pi-check-circle"></i></span>
+            <span class="label" translate="FINANCE.IS_CONFIRMED"></span>
+            <span class="value">
+              <span class="state-dot" [ngClass]="entry.isConfirmed ? 'ok' : 'bad'">
+                <i class="pi" [ngClass]="entry.isConfirmed ? 'pi-check' : 'pi-times'"></i>
+              </span>
+            </span>
+          </div>
+        </div>
+
+
+        <!-- الصف 3 -->
+        <div class="row">
+          <!-- إرسال إلى Zatca (أيقونة فقط) -->
+          <!-- <div class="cell">
+            <span class="ico"><i class="pi pi-sort-alt"></i></span>
+            <span class="label" translate="FINANCE.SEND_TO_ZATCA"></span>
+            <span class="value">
+              <span
+                class="state-dot"
+                [ngClass]="entry.isSentToZatca ? 'ok' : 'bad'"
+              >
+                <i
+                  class="pi"
+                  [ngClass]="entry.isSentToZatca ? 'pi-check' : 'pi-times'"
+                ></i>
+              </span>
+            </span>
+          </div> -->
+
+          <!-- مؤكد (أيقونة فقط) -->
+          <!-- <div class="cell">
+            <span class="ico"><i class="pi pi-sort-alt"></i></span>
+            <span class="label">مؤكد</span>
+            <span class="value">
+              <span
+                class="state-dot"
+                [ngClass]="
+                  entry.isConfirmed ?? !!entry.transactionId ? 'ok' : 'bad'
+                "
+              >
+                <i
+                  class="pi"
+                  [ngClass]="
+                    entry.isConfirmed ?? !!entry.transactionId
+                      ? 'pi-check'
+                      : 'pi-times'
+                  "
+                ></i>
+              </span>
+            </span>
+          </div> -->
+        </div>
+
+        <!-- الصف 4 -->
+        <div class="row">
+          <div class="cell" *ngIf="entry.arrivalDate">
+            <span class="ico"><i class="pi pi-calendar"></i></span>
+            <span class="label" translate="FINANCE.ARRIVAL_DATE"></span>
+            <span class="value">
+              {{
+              activeLanguage === "en"
+              ? (entry.arrivalDate
+              | customDate : "YYYY-MM-dd" : "" : "en-US")
+              : (entry.arrivalDate
+              | customDate : "YYYY-MM-dd" : "" : "ar-SA")
+              }}
+            </span>
+          </div>
+
+          <div class="cell" *ngIf="entry.departureDate">
+            <span class="ico"><i class="pi pi-calendar"></i></span>
+            <span class="label" translate="FINANCE.DEPARTURE_DATE"></span>
+            <span class="value">
+              {{
+              activeLanguage === "en"
+              ? (entry.departureDate
+              | customDate : "YYYY-MM-dd" : "" : "en-US")
+              : (entry.departureDate
+              | customDate : "YYYY-MM-dd" : "" : "ar-SA")
+              }}
+            </span>
+          </div>
+        </div>
+      </div>
+
+      <div class="card-footer" style="margin-top: 1rem; padding-top: 1rem; border-top: 1px solid #e0e0e0;">
+        <button *ngIf="!entry.hasSalesInvoice" pButton type="button" class="p-button-sm w-full"
+          icon="pi pi-file-invoice" [label]="'FINANCE.CREATE_SALES_INVOICE' | translate"
+          (click)="createSalesInvoiceFromReservation(entry); $event.stopPropagation()"
+          [disabled]="entry.isCancelled || !entry.isConfirmed"></button>
+
+        <button *ngIf="entry.hasSalesInvoice" pButton type="button" class="p-button-sm p-button-success w-full"
+          [label]="'FINANCE.VIEW_SALES_INVOICE' | translate"
+          (click)="viewSalesInvoice(entry); $event.stopPropagation()"></button>
+      </div>
+    </div>
+  </div>
+  <!-- ✅ Bulk actions bar: يظهر عند وجود تحديد في الجدول -->
+  <div class="bulk-actions" *ngIf="isTableView && selectedReservations?.length">
+    <div class="info">
+      <span class="selected-pill">
+        <i class="pi pi-check-circle me-1"></i>
+        <span>{{ selectedReservations.length }}</span>
+        <span class="ms-1">{{ activeLanguage === 'en' ? 'Selected' : 'محدد' }}</span>
+      </span>
+      <button
+        pButton
+        type="button"
+        icon="pi pi-times"
+        class="p-button-rounded p-button-text p-button-danger p-button-sm clear-btn-icon ms-1"
+        (click)="clearSelection()"
+        [disabled]="bulkBusy"
+        [title]="'FINANCE.CLEAR_SELECTION' | translate"
+      ></button>
+    </div>
+    <div class="actions flex items-center gap-2 flex-wrap">
+      <!-- 🖨️ قائمة الطباعة المجمعة -->
+      <p-menu #bulkPrintMenu [model]="bulkPrintMenuItems" [popup]="true" appendTo="body"></p-menu>
+      <button pButton type="button" class="p-button-sm btn-print"
+        (click)="initBulkMenus(); bulkPrintMenu.toggle($event)" [disabled]="bulkBusy">
+        <i class="pi pi-print me-1"></i>
+        <span>{{ 'DATA.PRINT' | translate }}</span>
+        <i class="pi pi-chevron-down ms-1" style="font-size: 0.8rem;"></i>
+      </button>
+
+      <!-- 📥 قائمة التنزيل المجمعة -->
+      <p-menu #bulkDownloadMenu [model]="bulkDownloadMenuItems" [popup]="true" appendTo="body"></p-menu>
+      <button pButton type="button" class="p-button-sm btn-download"
+        (click)="initBulkMenus(); bulkDownloadMenu.toggle($event)" [disabled]="bulkBusy">
+        <i class="pi pi-download me-1"></i>
+        <span>{{ 'DATA.DOWNLOAD' | translate }}</span>
+        <i class="pi pi-chevron-down ms-1" style="font-size: 0.8rem;"></i>
+      </button>
+
+      <span class="sep"></span>
+
+      <!-- 🧾 زر فاتورة مبيعات الذكي -->
+      <ng-container *ngIf="selectedReservations?.length === 1 && selectedReservations[0]?.hasSalesInvoice; else defaultInvoiceBtn">
+        <button
+          pButton
+          type="button"
+          class="p-button-sm p-button-success"
+          icon="pi pi-eye"
+          [label]="'FINANCE.VIEW_SALES_INVOICE' | translate"
+          (click)="viewSalesInvoice(selectedReservations[0])"
+          [disabled]="bulkBusy"
+        ></button>
+      </ng-container>
+
+      <ng-template #defaultInvoiceBtn>
+        <button
+          pButton
+          type="button"
+          class="p-button-sm p-button-success"
+          icon="pi pi-file-invoice"
+          [label]="'FINANCE.CREATE_SALES_INVOICE' | translate"
+          (click)="bulkCreateSalesInvoices()"
+          [disabled]="bulkBusy || !canBulkCreateSalesInvoices"
+        ></button>
+      </ng-template>
+    </div>
+  </div>
+
+  <!-- Single overlay panel for cards view -->
+  <p-overlayPanel #overlayPanel [showCloseIcon]="false" [dismissable]="true" [baseZIndex]="1000">
+    <div class="op-grid">
+      <!-- مجموعة 1: عرض + طباعة -->
+      <button pButton type="button" class="pill full-width" [label]="'FINANCE.VIEW' | translate"
+        (click)="navigateToReservation(selectedEntry)"></button>
+      <button pButton type="button" class="pill" icon="pi pi-print" [label]="'FINANCE.PRINT_GENERIC' | translate"
+        (click)="overlayPanel.hide(); printDocument(selectedEntry.id)"></button>
+
+      <!-- مجموعة 2: تنزيل الحجز (مفردة) -->
+      <button pButton type="button" class="pill" icon="pi pi-download"
+        [label]="'FINANCE.DOWNLOAD_RESERVATION' | translate"
+        (click)="overlayPanel.hide(); downloadDocument(selectedEntry.id, selectedEntry.referenceNumber); $event.stopPropagation()"></button>
+
+      <!-- مجموعة 3: طباعة إثبات التكلفة + تنزيل إثبات التكلفة -->
+      <button pButton type="button" class="pill" icon="pi pi-print" [label]="'FINANCE.PRINT_COST_SHEET' | translate"
+        (click)="overlayPanel.hide(); printCostSheet(selectedEntry.id)"></button>
+      <button pButton type="button" class="pill" icon="pi pi-download"
+        [label]="'FINANCE.DOWNLOAD_COST_SHEET' | translate"
+        (click)="overlayPanel.hide(); downloadCostSheet(selectedEntry.id, selectedEntry.referenceNumber)"></button>
+
+      <!-- مجموعة 4: طباعة طلب الفندق + تنزيل طلب الفندق -->
+      <button pButton type="button" class="pill" icon="pi pi-print" [label]="'FINANCE.PRINT_HOTEL_REQUEST' | translate"
+        (click)="overlayPanel.hide(); printHotelRequest(selectedEntry.id)"></button>
+      <button pButton type="button" class="pill" icon="pi pi-download"
+        [label]="'FINANCE.DOWNLOAD_HOTEL_REQUEST' | translate"
+        (click)="overlayPanel.hide(); downloadHotelRequest(selectedEntry.id, selectedEntry.referenceNumber)"></button>
+
+      <!-- زر فاتورة المبيعات -->
+      <button *ngIf="!selectedEntry?.hasSalesInvoice" pButton type="button" class="pill full-width"
+        icon="pi pi-file-invoice" [label]="'FINANCE.CREATE_SALES_INVOICE' | translate"
+        (click)="overlayPanel.hide(); createSalesInvoiceFromReservation(selectedEntry)"
+        [disabled]="selectedEntry?.isCancelled || !selectedEntry?.isConfirmed"></button>
+
+      <button *ngIf="selectedEntry?.hasSalesInvoice" pButton type="button" class="pill full-width p-button-success"
+        [label]="'FINANCE.VIEW_SALES_INVOICE' | translate"
+        (click)="overlayPanel.hide(); viewSalesInvoice(selectedEntry)"></button>
+
+      <button *ngIf="!selectedEntry?.isFrontal && !isFrontal" pButton type="button" class="pill" icon="pi pi-send"
+        [label]="'FINANCE.SEND_TO_FRONTAL' | translate"
+        [disabled]="isSendingToFrontal || selectedEntry?.isCancelled"
+        (click)="overlayPanel.hide(); sendToFrontal(selectedEntry)"></button>
+
+      <button pButton type="button" class="pill" icon="pi pi-share-alt" [label]="'FINANCE.SHARE' | translate"
+        (click)="overlayPanel.hide(); openShareDialog(selectedEntry); $event.stopPropagation()"></button>
+      <button pButton type="button" class="pill" icon="pi pi-copy" [label]="'FINANCE.COPY_RESERVATION' | translate"
+        (click)="overlayPanel.hide(); copyReservation(selectedEntry)"></button>
+
+      <!-- Reactivate Reservation (only for cancelled rows) -->
+      <button *ngIf="selectedEntry?.isCancelled" pButton type="button" class="pill" icon="pi pi-replay"
+        [label]="'RESERVATION.REACTIVATE_RESERVATION' | translate"
+        (click)="overlayPanel.hide(); reactivateReservation(selectedEntry); $event.stopPropagation()"
+        [disabled]="selectedEntry?.isSentToZatca"></button>
+    </div>
+  </p-overlayPanel>
+
+  <!-- عرض جدول -->
+  <div *ngIf="isTableView">
+    <p-table #dt appStickyHorizontalScroll [value]="reservations" [paginator]="true" [lazy]="true" (onLazyLoad)="onTableLazyLoad($event)"
+      [totalRecords]="totalRecords" [rows]="rows" [rowsPerPageOptions]="rowsPerPageOptions" dataKey="id"
+      styleClass="p-datatable-gridlines custom-paginator-table" [responsive]="true" [scrollable]="true"
+      scrollHeight="650px" [sortField]="'arrivalDate'" [sortOrder]="-1" [showCurrentPageReport]="true"
+      [resizableColumns]="true" columnResizeMode="expand"
+      [currentPageReportTemplate]="activeLanguage === 'en' ? 'Total ' + totalRecords : 'اجمالي ' + totalRecords"
+      paginatorTemplate="CurrentPageReport PrevPageLink PageLinks NextPageLink RowsPerPageDropdown"
+      selectionMode="multiple" [(selection)]="selectedReservations" [filterDelay]="0"
+      [globalFilterFields]="['guestName', 'referenceNumber', 'reservationType', 'clientCompanyName']">
+
+      <ng-template pTemplate="header">
+        <tr>
+          <!-- ✅ عمود Checkbox الهيدر -->
+          <th style="width: 3rem">
+            <p-tableHeaderCheckbox></p-tableHeaderCheckbox>
+          </th>
+
+          <th pSortableColumn="rowIndex">
+            #
+            <p-sortIcon field="rowIndex"></p-sortIcon>
+          </th>
+          <th pSortableColumn="referenceNumber">
+            {{ "FINANCE.RESERVATION_REFERENCE_NUMBER" | translate }}
+            <p-sortIcon field="referenceNumber"></p-sortIcon>
+            <p-columnFilter field="referenceNumber" type="text" display="menu"></p-columnFilter>
+          </th>
+
+          <!-- ✅ شركة العميل -->
+          <th pSortableColumn="clientCompanyName">
+            {{ "FINANCE.CLIENT_COMPANY_NAME" | translate }}
+            <p-sortIcon field="clientCompanyName"></p-sortIcon>
+            <p-columnFilter field="clientCompanyName" type="text" display="menu"></p-columnFilter>
+          </th>
+
+          <th pSortableColumn="guestName">
+            {{ "FINANCE.GUEST_NAME" | translate }}
+            <p-sortIcon field="guestName"></p-sortIcon>
+            <p-columnFilter field="guestName" type="text" display="menu"></p-columnFilter>
+          </th>
+
+          <th pSortableColumn="numberOfNights" class="nights-col">
+            <div class="th-flex">
+              <!-- ✅ عنوان قصير عشان المساحة -->
+              <span class="th-text" pTooltip="{{ 'FINANCE.NUMBER_OF_NIGHTS' | translate }}" tooltipPosition="top">
+                {{ 'FINANCE.NIGHTS_LABEL' | translate }}
+              </span>
+
+              <p-sortIcon field="numberOfNights" class="th-ico"></p-sortIcon>
+
+              <p-columnFilter field="numberOfNights" type="numeric" display="menu" class="th-ico"></p-columnFilter>
+            </div>
+          </th>
+
+
+          <th pSortableColumn="reservationType">
+            {{ "FINANCE.RESERVATION_TYPE" | translate }}
+            <p-sortIcon field="reservationType"></p-sortIcon>
+            <p-columnFilter field="reservationType" type="text" display="menu"></p-columnFilter>
+          </th>
+          <!-- <th pSortableColumn="isSentToZatca">
+            {{ "FINANCE.IS_SENT_TO_ZATCA" | translate }}
+            <p-sortIcon field="isSentToZatca"></p-sortIcon>
+            <p-columnFilter
+              field="isSentToZatca"
+              type="boolean"
+              display="menu"
+              [showMenu]="true"
+              [showApplyButton]="true"
+              [showClearButton]="true"
+            >
+            </p-columnFilter>
+          </th> -->
+          <th pSortableColumn="isConfirmed">
+            {{ "FINANCE.IS_CONFIRMED" | translate }}
+            <p-sortIcon field="isConfirmed"></p-sortIcon>
+            <p-columnFilter field="isConfirmedForFilter" type="boolean" display="menu" [showMenu]="true"
+              [showApplyButton]="true" [showClearButton]="true">
+            </p-columnFilter>
+          </th>
+          <th pSortableColumn="arrivalDate">
+            {{ "FINANCE.ARRIVAL_DATE" | translate }}
+            <p-sortIcon field="arrivalDate"></p-sortIcon>
+            <p-columnFilter field="arrivalDate" type="date" display="menu" [showMenu]="true" [showApplyButton]="true"
+              [showClearButton]="true" [showOperator]="true" [showMatchModes]="true">
+            </p-columnFilter>
+          </th>
+          <th pSortableColumn="departureDate">
+            {{ "FINANCE.DEPARTURE_DATE" | translate }}
+            <p-sortIcon field="departureDate"></p-sortIcon>
+            <p-columnFilter field="departureDate" type="date" display="menu" [showMenu]="true" [showApplyButton]="true"
+              [showClearButton]="true" [showOperator]="true" [showMatchModes]="true">
+            </p-columnFilter>
+          </th>
+          <th class="invoice-col">{{ "FINANCE.SALES_INVOICE" | translate }}</th>
+
+          <th class="actions-col">{{ "FINANCE.ACTIONS" | translate }}</th>
+
+        </tr>
+      </ng-template>
+
+      <ng-template pTemplate="body" let-entry let-rowIndex="rowIndex">
+        <tr class="datatable-row" [class.cancelled-row]="entry.isCancelled" (click)="navigateToReservation(entry)"
+          (contextmenu)="openOverlayPanel($event, overlayPanel, entry)" style="cursor: pointer">
+
+
+          <!-- ✅ Checkbox لكل صف -->
+          <td>
+            <p-tableCheckbox [value]="entry" (click)="$event.stopPropagation()"></p-tableCheckbox>
+          </td>
+
+          <td>{{ rowIndex + 1 }}</td>
+          <td>{{ entry.referenceNumber || "-" }}</td>
+          <td>{{ entry.clientCompanyName || "-" }}</td>
+          <td>{{ entry.guestName || "-" }}</td>
+          <td class="nights-col text-center">
+            {{ entry.numberOfNights ?? "-" }}
+          </td>
+
+          <td>{{ entry.reservationType || "-" }}</td>
+          <td class="text-center">
+            <span class="state-dot" [ngClass]="entry.isConfirmed ? 'ok' : 'bad'">
+              <i class="pi" [ngClass]="entry.isConfirmed ? 'pi-check' : 'pi-times'"></i>
+            </span>
+          </td>
+
+          <td>
+            {{
+            entry.arrivalDate
+            ? activeLanguage === "en"
+            ? (entry.arrivalDate
+            | customDate : "YYYY-MM-dd" : "" : "en-US")
+            : (entry.arrivalDate
+            | customDate : "YYYY-MM-dd" : "" : "ar-SA")
+            : "-"
+            }}
+          </td>
+          <td>
+            {{
+            entry.departureDate
+            ? activeLanguage === "en"
+            ? (entry.departureDate
+            | customDate : "YYYY-MM-dd" : "" : "en-US")
+            : (entry.departureDate
+            | customDate : "YYYY-MM-dd" : "" : "ar-SA")
+            : "-"
+            }}
+          </td>
+          <td>
+            <button *ngIf="!entry.hasSalesInvoice" pButton type="button" class="p-button-sm" icon="pi pi-file-invoice"
+              [label]="'FINANCE.CREATE_INVOICE' | translate"
+              (click)="createSalesInvoiceFromReservation(entry); $event.stopPropagation()"
+              [disabled]="entry.isCancelled || !entry.isConfirmed"></button>
+
+            <button *ngIf="entry.hasSalesInvoice" pButton type="button" class="p-button-sm p-button-success"
+              [label]="'FINANCE.VIEW_SALES_INVOICE' | translate"
+              (click)="viewSalesInvoice(entry); $event.stopPropagation()"></button>
+          </td>
+          <td class="actions-col">
+            <div class="flex align-items-center gap-2 flex-wrap">
+              <!-- زر القائمة -->
+              <button pButton type="button" class="p-button-rounded p-button-text p-button-sm" icon="pi pi-ellipsis-v"
+                (click)="openOverlayPanel($event, overlayPanel, entry)"></button>
+
+
+              <!-- أيقونة فتح القيد -->
+              <!-- <button
+                *ngIf="entry.transactionId"
+                pButton
+                type="button"
+                class="p-button-rounded p-button-text p-button-sm"
+                icon="pi pi-external-link"
+                [pTooltip]="'FINANCE.OPEN_ENTRY' | translate"
+                tooltipPosition="top"
+                (click)="$event.stopPropagation()"
+                [routerLink]="
+                  '/accounting/journal-transactions/transaction/' +
+                  entry.transactionId
+                "
+              ></button> -->
+            </div>
+          </td>
+        </tr>
+      </ng-template>
+
+      <ng-template pTemplate="emptymessage">
+        <tr>
+          <!-- ⬅️ زودنا colspan ليتوافق مع عمود الـ checkbox الجديد -->
+          <td [attr.colspan]="12" class="text-center py-6">
+
+            <div class="text-gray-500">
+              <i class="pi pi-search text-3xl mb-3"></i>
+              <p class="text-base">{{ 'FINANCE.NO_RESULTS' | translate }}</p>
+            </div>
+          </td>
+        </tr>
+      </ng-template>
+    </p-table>
+  </div>
+
+  <!-- المرقّم للكروت فقط -->
+  <div class="pager custom-paginator-table" *ngIf="!isTableView">
+    <p-paginator [rows]="rows" [first]="(pageNumber - 1) * rows" [totalRecords]="totalRecords"
+      [rowsPerPageOptions]="rowsPerPageOptions" [showCurrentPageReport]="true"
+      [currentPageReportTemplate]="activeLanguage === 'en' ? 'Total ' + totalRecords : 'اجمالي ' + totalRecords"
+      template="CurrentPageReport PrevPageLink PageLinks NextPageLink RowsPerPageDropdown"
+      (onPageChange)="onCardsPageChange($event)">
+    </p-paginator>
+
+  </div>
+</ng-container>
+
+<!-- رسالة لا توجد بيانات (تظهر مرة واحدة فقط) -->
+<ng-template #noData>
+  <div class="no-data">
+    {{
+    loading
+    ? ("FINANCE.LOADING" | translate)
+    : ("FINANCE.NO_RESERVATIONS" | translate)
+    }}
+  </div>
+</ng-template>
+
+<p-confirmDialog styleClass="custom-confirm-dialog" [style]="{ width: '480px', maxWidth: '95vw' }" [focusTrap]="false" [transitionOptions]="'0ms'" appendTo="body"></p-confirmDialog>
+<app-reservation-share-modal
+  [(visible)]="shareDialogVisible"
+  [reservation]="shareTargetReservation"
+  [bulkIds]="shareBulkIds"
+  [bulkMode]="shareMode === 'bulk'"
+  [activeLanguage]="activeLanguage"
+></app-reservation-share-modal>
+
+<p-toast></p-toast>
+
+<style>
+
+
+</style>

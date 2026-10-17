@@ -1,0 +1,50 @@
+/* Center content horizontally and vertically in all table cells */
+table td, table th {
+  text-align: center;  /* Horizontal centering */
+  vertical-align: middle; /* Vertical centering */
+}
+
+/* Increase the size of the remove icon */
+.big-icon {
+  font-size: 1.5rem; /* Adjust icon size */
+  cursor: pointer;
+}
+.btn-custom {
+  background-color: #00b7ff; /* Replace with your desired color */
+  color: #fff; /* Text color */
+  border: none; /* Remove default border */
+}
+
+.btn-custom:hover {
+  background-color: #008fb3; /* Darker shade for hover */
+}
+@media print {
+  /* Hide specific buttons or elements during print */
+  .btn,  /* All buttons with the class 'btn' */
+  .form-check, /* The checkbox to toggle table visibility */
+  .modal, /* The modal for tax (if it's visible) */
+  .text-right button, /* The 'Add Account' button */
+  .bi-dash-circle, /* The delete icon inside the table */
+  .modal-footer { /* The modal's footer */
+    display: none !important;
+  }
+
+  /* You can also target specific buttons by their classes if needed */
+}
+@media print {
+  .print-exclude {
+    display: none !important;
+  }
+}
+
+.bg-yellow {
+  background-color: #fff5cc !important;
+}
+
+.bg-yellow th,
+thead.bg-yellow th,
+table.table thead.bg-yellow th,
+table thead.bg-yellow th {
+  background-color: #fff5cc !important;
+  color: #000 !important;
+}

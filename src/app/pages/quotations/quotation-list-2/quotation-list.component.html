@@ -1,0 +1,89 @@
+<div class="container-fluid">
+  <div class="container-fluid">
+    <!-- Search Bar -->
+    <div class="row mb-3 center">
+      <div class="col-md-4">
+        <input
+          type="text"
+          class="form-control"
+          placeholder="{{'INVOICE.SEARCHINVOICE' | translate}}"
+          [(ngModel)]="searchText"
+          (input)="filterInvoices()"
+        />
+      </div>
+    </div>
+
+  <!-- Add Invoice Button -->
+  <a class="btn btn-primary mb-3" (click)="addInvoice()">{{"INVOICE.ADD_QUOTATION"|translate}}</a>
+  <!-- <div class="text-center">
+    <h3>{{"INVOICE.SALESINVOICES"|translate}}</h3>
+
+  </div> -->
+  <!-- Invoice Table -->
+  <table class="table table-bordered">
+    <thead class="thead-dark">
+      <tr>
+        <th class="text-center " scope="col">{{"INVOICE.QUOTATION_NO"|translate}}</th>
+        <th class="text-center " scope="col">{{"INVOICE.CLIENTNAME"|translate}}</th>
+
+        <th class="text-center " scope="col">{{"INVOICE.DESCRIPTION"|translate}}</th>
+        <th scope="col">{{"INVOICE.ISSUE_DATE"|translate}}</th>
+
+        <th class="text-center text-lg font-bold" scope="col" >{{"INVOICE.ACTIONS"|translate}}</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr *ngFor="let invoice of filteredInvoices" [class]="invoice.transactionId ? 'bg-sky-200' : ''">
+        <td class="text-center">
+          <div class="d-flex align-items-center justify-content-center gap-2">
+            {{ invoice.invoiceNo }}
+            <span *ngIf="invoice.convertedToInvoiceId" 
+                  class="badge bg-success text-white">
+              <i class="bi bi-check-circle me-1"></i>تم التحويل
+            </span>
+          </div>
+        </td>
+        <td class="text-center">{{ activeLanguage=="en"? invoice.customerProfile.englishName : invoice.customerProfile.arabicName }}</td>
+        <td class="text-center">{{ invoice.description }}</td>
+
+        <td class="font-semibold text-center">{{invoice.issueDate | customDate:'yyyy-MM-dd'}}</td>
+
+        <td class="text-center w-[45%]">
+        <!-- Action Buttons Container -->
+        <div class="d-flex justify-content-between ">
+          <!-- Action Buttons -->
+          <button *ngIf="invoice.transactionId === null && !invoice.convertedToInvoiceId" 
+                  class="btn btn-success btn-sm w-100 me-1" 
+                  (click)="createInvoice(invoice.id)"
+                  [disabled]="loadingStates[invoice.id]">
+            <span *ngIf="!loadingStates[invoice.id]">
+              <i class="bi bi-plus-circle"></i> {{"INVOICE.ADDINVOICE"|translate}}
+            </span>
+            <span *ngIf="loadingStates[invoice.id]">
+              <i class="bi bi-hourglass-split"></i> جاري التحويل...
+            </span>
+          </button>
+          <a *ngIf="invoice.transactionId != null" class="text-center btn btn-success btn-sm w-16 p-3 mr-1"
+             [routerLink]="'/accounting/journal-transactions/transaction/'+invoice.transactionId"
+             target="_blank"
+          >
+            <i class="pi pi-external-link text-center" style="font-size: 1rem"></i>
+          </a>
+          <button  class="btn btn-warning btn-sm w-100 me-1" (click)="editInvoice(invoice.id)">
+            <i class="bi bi-pencil"></i> {{"INVOICE.EDIT"| translate}}
+          </button>
+
+          <button class="btn btn-info btn-sm w-100 me-1" (click)="viewInvoice(invoice.id)">
+            <i class="bi bi-eye"></i> {{"INVOICE.VIEW"|translate}}
+          </button>
+          <button *ngIf="invoice.transactionId === null" class="btn btn-danger btn-sm w-100 me-1" (click)="deleteInvoice(invoice.id)">
+            <i class="bi bi-trash"></i> {{"INVOICE.DELETE"|translate}}
+          </button>
+        </div>
+      </td>
+    </tr>
+  </tbody>
+</table>
+
+</div>
+</div>

@@ -1,0 +1,297 @@
+﻿<div class="receipt-shell" *ngIf="receipt as invoice" [ngClass]="'tpl-' + templateId">
+  <section class="receipt-paper">
+    <ng-container [ngSwitch]="templateId">
+      <ng-container *ngSwitchCase="'compact'">
+        <header class="receipt-header center compact-head">
+          <img *ngIf="invoice.companyLogoUrl" [src]="invoice.companyLogoUrl" alt="logo" class="receipt-company-logo" style="max-height: 40px; max-width: 110px; margin: 0 auto 3px auto; display: block; object-fit: contain;" />
+          <h4>{{ invoice.companyName || 'SMART & PRO POS' }}</h4>
+          <p *ngIf="invoice.companyTaxNumber" class="text-xs">الرقم الضريبي: {{ invoice.companyTaxNumber }}</p>
+          <div style="font-weight: 700; font-size: 0.8rem; margin: 3px 0; border-top: 1px dashed #777; border-bottom: 1px dashed #777; padding: 2px 0;">
+            {{ invoice.customerTaxNumber ? 'فاتورة ضريبية' : 'فاتورة ضريبية مبسطة' }}
+          </div>
+          <p>{{ invoice.invoiceNo }}</p>
+          <p>{{ invoice.invoiceDate | customDate: 'yyyy/MM/dd - hh:mm a' }}</p>
+        </header>
+
+        <div class="meta-classic compact-meta">
+          <p><span>الكاشير:</span> {{ invoice.cashierName }}</p>
+          <p><span>النقطة:</span> {{ invoice.stationName }}</p>
+          <p><span>العميل:</span> {{ invoice.customerName }}</p>
+          <p *ngIf="invoice.customerTaxNumber"><span>ضريبي العميل:</span> {{ invoice.customerTaxNumber }}</p>
+          <p><span>الدفع:</span> {{ invoice.paymentLabel }}</p>
+        </div>
+
+        <div class="line-block compact-lines">
+          <div *ngFor="let item of invoice.items" class="line-row">
+            <span class="name">{{ item.name }}</span>
+            <span class="qty">{{ item.qty }}x{{ item.unitPrice | number:'1.2-2' }}</span>
+            <span class="total">{{ item.total | number:'1.2-2' }}</span>
+          </div>
+        </div>
+
+        <div class="totals-box">
+          <div><span>الفرعي</span><strong>{{ invoice.subtotal | number:'1.2-2' }}</strong></div>
+          <div><span>الخصم</span><strong>-{{ invoice.discount | number:'1.2-2' }}</strong></div>
+          <div><span>الضريبة</span><strong>{{ invoice.tax | number:'1.2-2' }}</strong></div>
+          <div class="grand"><span>الإجمالي</span><strong>{{ invoice.total | number:'1.2-2' }}</strong></div>
+          <ng-container *ngIf="invoice.isMixedPayment; else singlePayCompact">
+            <div class="text-xs"><span>• نقدي</span><strong>{{ (invoice.mixedCashAmount || 0) | number:'1.2-2' }}</strong></div>
+            <div class="text-xs"><span>• بطاقة/فيزا</span><strong>{{ (invoice.mixedCardAmount || 0) | number:'1.2-2' }}</strong></div>
+            <div class="text-xs" *ngIf="(invoice.mixedOtherAmount || 0) > 0"><span>• أخرى</span><strong>{{ (invoice.mixedOtherAmount || 0) | number:'1.2-2' }}</strong></div>
+          </ng-container>
+          <ng-template #singlePayCompact>
+            <div><span>مدفوع</span><strong>{{ invoice.paidAmount | number:'1.2-2' }}</strong></div>
+            <div><span>الباقي</span><strong>{{ invoice.changeAmount | number:'1.2-2' }}</strong></div>
+          </ng-template>
+        </div>
+      </ng-container>
+
+      <ng-container *ngSwitchCase="'modern'">
+        <header class="receipt-header modern-head">
+          <img *ngIf="invoice.companyLogoUrl" [src]="invoice.companyLogoUrl" alt="logo" style="max-height: 38px; max-width: 90px; object-fit: contain;" />
+          <div *ngIf="!invoice.companyLogoUrl" class="store-badge">POS</div>
+          <div>
+            <h4>{{ invoice.companyName || 'SMART & PRO MARKET' }}</h4>
+            <p *ngIf="invoice.companyTaxNumber" style="font-size: 0.68rem; margin: 0;">الضريبي: {{ invoice.companyTaxNumber }}</p>
+            <p>{{ invoice.stationName }} - {{ invoice.cashierName }}</p>
+          </div>
+        </header>
+
+        <div class="meta-grid">
+          <div><span>النوع</span><strong>{{ invoice.customerTaxNumber ? 'فاتورة ضريبية' : 'فاتورة ضريبية مبسطة' }}</strong></div>
+          <div><span>فاتورة</span><strong>{{ invoice.invoiceNo }}</strong></div>
+          <div><span>عميل</span><strong>{{ invoice.customerName }}</strong></div>
+          <div *ngIf="invoice.customerTaxNumber"><span>ضريبي العميل</span><strong>{{ invoice.customerTaxNumber }}</strong></div>
+          <div><span>دفع</span><strong>{{ invoice.paymentLabel }}</strong></div>
+          <div><span>تاريخ</span><strong>{{ invoice.invoiceDate | customDate: 'yyyy/MM/dd - hh:mm a' }}</strong></div>
+        </div>
+
+        <div class="line-block modern-lines">
+          <div *ngFor="let item of invoice.items" class="line-row">
+            <div class="name-wrap">
+              <strong>{{ item.name }}</strong>
+              <small>{{ item.qty }} × {{ item.unitPrice | number:'1.2-2' }}</small>
+            </div>
+            <strong class="total">{{ item.total | number:'1.2-2' }}</strong>
+          </div>
+        </div>
+
+        <div class="totals-box modern-total">
+          <div><span>الفرعي</span><strong>{{ invoice.subtotal | number:'1.2-2' }}</strong></div>
+          <div><span>الخصم</span><strong>-{{ invoice.discount | number:'1.2-2' }}</strong></div>
+          <div><span>الضريبة</span><strong>{{ invoice.tax | number:'1.2-2' }}</strong></div>
+          <div><span>الإجمالي</span><strong>{{ invoice.total | number:'1.2-2' }}</strong></div>
+          <ng-container *ngIf="invoice.isMixedPayment; else singlePayModern">
+            <div class="text-xs"><span>• نقدي:</span><strong>{{ (invoice.mixedCashAmount || 0) | number:'1.2-2' }}</strong></div>
+            <div class="text-xs"><span>• بطاقة/فيزا:</span><strong>{{ (invoice.mixedCardAmount || 0) | number:'1.2-2' }}</strong></div>
+            <div class="text-xs" *ngIf="(invoice.mixedOtherAmount || 0) > 0"><span>• أخرى:</span><strong>{{ (invoice.mixedOtherAmount || 0) | number:'1.2-2' }}</strong></div>
+          </ng-container>
+          <ng-template #singlePayModern>
+            <div><span>مدفوع</span><strong>{{ invoice.paidAmount | number:'1.2-2' }}</strong></div>
+            <div><span>الباقي</span><strong>{{ invoice.changeAmount | number:'1.2-2' }}</strong></div>
+          </ng-template>
+        </div>
+
+        <div class="qr-box" *ngIf="invoice.qrPayload">
+          <qrcode
+            [qrdata]="invoice.qrPayload"
+            [width]="92"
+            [errorCorrectionLevel]="'M'"
+            [margin]="1"
+            elementType="img">
+          </qrcode>
+          <small>QR تفاصيل الفاتورة</small>
+        </div>
+      </ng-container>
+
+      <ng-container *ngSwitchCase="'pro'">
+        <header class="receipt-header pro-head">
+          <div class="flex items-center gap-2" *ngIf="invoice.companyLogoUrl">
+            <img [src]="invoice.companyLogoUrl" alt="logo" style="max-height: 42px; max-width: 90px; object-fit: contain;" />
+          </div>
+          <div class="pro-title">
+            <h4>{{ invoice.companyName || 'SMART & PRO | PROFESSIONAL' }}</h4>
+            <p *ngIf="invoice.companyTaxNumber" style="font-size: 0.68rem; margin: 0;">الضريبي: {{ invoice.companyTaxNumber }}</p>
+            <p style="font-weight: 700;">{{ invoice.customerTaxNumber ? 'فاتورة ضريبية' : 'فاتورة ضريبية مبسطة' }}</p>
+          </div>
+          <div class="pro-invoice">
+            <strong>{{ invoice.invoiceNo }}</strong>
+            <small>{{ invoice.invoiceDate | customDate: 'yyyy/MM/dd - hh:mm a' }}</small>
+          </div>
+        </header>
+
+        <div class="pro-meta-grid">
+          <div class="meta-card"><span>الكاشير:</span><strong>{{ invoice.cashierName }}</strong></div>
+          <div class="meta-card"><span>النقطة:</span><strong>{{ invoice.stationName }}</strong></div>
+          <div class="meta-card"><span>العميل:</span><strong>{{ invoice.customerName }}</strong></div>
+          <div class="meta-card" *ngIf="invoice.customerTaxNumber"><span>الرقم الضريبي:</span><strong>{{ invoice.customerTaxNumber }}</strong></div>
+          <div class="meta-card"><span>طريقة الدفع:</span><strong>{{ invoice.paymentLabel }}</strong></div>
+        </div>
+
+        <div class="pro-table-wrap">
+          <table class="pro-items-table">
+            <thead>
+              <tr>
+                <th class="align-right">الصنف</th>
+                <th>كمية</th>
+                <th>سعر</th>
+                <th>الإجمالي</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let item of invoice.items">
+                <td class="align-right name">{{ item.name }}</td>
+                <td>{{ item.qty }}</td>
+                <td>{{ item.unitPrice | number:'1.2-2' }}</td>
+                <td>{{ item.total | number:'1.2-2' }}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="totals-box pro-total">
+          <div><span>الفرعي</span><strong>{{ invoice.subtotal | number:'1.2-2' }}</strong></div>
+          <div><span>الخصم</span><strong>-{{ invoice.discount | number:'1.2-2' }}</strong></div>
+          <div><span>الضريبة</span><strong>{{ invoice.tax | number:'1.2-2' }}</strong></div>
+          <div class="grand"><span>الإجمالي</span><strong>{{ invoice.total | number:'1.2-2' }}</strong></div>
+          <ng-container *ngIf="invoice.isMixedPayment; else singlePayPro">
+            <div class="text-xs"><span>• نقدي:</span><strong>{{ (invoice.mixedCashAmount || 0) | number:'1.2-2' }}</strong></div>
+            <div class="text-xs"><span>• بطاقة/فيزا:</span><strong>{{ (invoice.mixedCardAmount || 0) | number:'1.2-2' }}</strong></div>
+            <div class="text-xs" *ngIf="(invoice.mixedOtherAmount || 0) > 0"><span>• أخرى:</span><strong>{{ (invoice.mixedOtherAmount || 0) | number:'1.2-2' }}</strong></div>
+          </ng-container>
+          <ng-template #singlePayPro>
+            <div><span>مدفوع</span><strong>{{ invoice.paidAmount | number:'1.2-2' }}</strong></div>
+            <div><span>الباقي</span><strong>{{ invoice.changeAmount | number:'1.2-2' }}</strong></div>
+          </ng-template>
+        </div>
+
+        <div class="qr-box pro-qr" *ngIf="invoice.qrPayload">
+          <qrcode
+            [qrdata]="invoice.qrPayload"
+            [width]="102"
+            [errorCorrectionLevel]="'M'"
+            [margin]="1"
+            elementType="img">
+          </qrcode>
+          <small>QR تفاصيل الفاتورة</small>
+        </div>
+      </ng-container>
+
+      <ng-container *ngSwitchDefault>
+        <header class="receipt-header center">
+          <img *ngIf="invoice.companyLogoUrl" [src]="invoice.companyLogoUrl" alt="logo" class="receipt-company-logo" style="max-height: 48px; max-width: 140px; margin: 0 auto 4px auto; display: block; object-fit: contain;" />
+          <h4 style="margin: 2px 0; font-size: 1rem; font-weight: 800; color: #111;">{{ invoice.companyName || 'سمارت برو للخدمات' }}</h4>
+          <p *ngIf="invoice.companyTaxNumber" style="margin: 1px 0; font-size: 0.72rem; color: #333; font-weight: 600;">الرقم الضريبي: {{ invoice.companyTaxNumber }}</p>
+          <p *ngIf="invoice.companyPhone" style="margin: 1px 0; font-size: 0.72rem; color: #333;">هاتف: {{ invoice.companyPhone }}</p>
+          <h5 style="margin: 6px 0 3px 0; font-size: 0.88rem; font-weight: 800; color: #000; border-top: 1px solid #111; border-bottom: 1px solid #111; padding: 2px 0;">
+            {{ invoice.customerTaxNumber ? 'فاتورة ضريبية' : 'فاتورة ضريبية مبسطة' }}
+          </h5>
+        </header>
+
+        <div style="display: flex; justify-content: space-between; font-size: 0.72rem; line-height: 1.4; border-bottom: 1px dashed #999; padding-bottom: 4px; margin-bottom: 6px;">
+          <div style="text-align: right;">
+            <div><strong>رقم الفاتورة:</strong> {{ invoice.invoiceNo }}</div>
+            <div><strong>التاريخ:</strong> {{ invoice.invoiceDate | customDate: 'yyyy/MM/dd hh:mm a' }}</div>
+            <div><strong>العميل:</strong> {{ invoice.customerName }}</div>
+            <div *ngIf="invoice.customerTaxNumber"><strong>الرقم الضريبي للعميل:</strong> {{ invoice.customerTaxNumber }}</div>
+            <div><strong>البائع / الكاشير:</strong> {{ invoice.cashierName }}</div>
+            <div><strong>طريقة الدفع:</strong> {{ invoice.paymentLabel }}</div>
+          </div>
+          <div style="text-align: left;" *ngIf="invoice.isMixedPayment">
+            <div style="background: #f4f7fa; border: 1px dashed #aac; border-radius: 4px; padding: 3px 6px;">
+              <div>• نقدي: <strong>{{ (invoice.mixedCashAmount || 0) | number:'1.2-2' }}</strong></div>
+              <div>• بطاقة/فيزا: <strong>{{ (invoice.mixedCardAmount || 0) | number:'1.2-2' }}</strong></div>
+              <div *ngIf="(invoice.mixedOtherAmount || 0) > 0">• أخرى: <strong>{{ (invoice.mixedOtherAmount || 0) | number:'1.2-2' }}</strong></div>
+            </div>
+          </div>
+        </div>
+
+        <div style="margin-bottom: 6px;">
+          <table style="width: 100%; border-collapse: collapse; font-size: 0.72rem; text-align: center;">
+            <thead>
+              <tr style="border-top: 1px solid #222; border-bottom: 1px solid #222; background: #fafafa;">
+                <th style="text-align: right; padding: 3px 2px;">الصنف</th>
+                <th style="padding: 3px 2px;">الكمية</th>
+                <th style="padding: 3px 2px;">السعر</th>
+                <th style="text-align: left; padding: 3px 2px;">الإجمالي</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let item of invoice.items" style="border-bottom: 1px dashed #eee;">
+                <td style="text-align: right; padding: 3px 2px; font-weight: 600;">{{ item.name }}</td>
+                <td style="padding: 3px 2px;">{{ item.qty }}</td>
+                <td style="padding: 3px 2px;">{{ item.unitPrice | number:'1.2-2' }}</td>
+                <td style="text-align: left; padding: 3px 2px; font-weight: 600;">{{ item.total | number:'1.2-2' }}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div style="border-top: 1px dashed #888; padding-top: 4px; font-size: 0.74rem; line-height: 1.5;">
+          <div style="display: flex; justify-content: space-between;">
+            <span>المجموع</span>
+            <strong>{{ invoice.subtotal | number:'1.2-2' }} ر.س</strong>
+          </div>
+          <div style="display: flex; justify-content: space-between;" *ngIf="invoice.discount > 0">
+            <span>الخصم</span>
+            <strong>-{{ invoice.discount | number:'1.2-2' }} ر.س</strong>
+          </div>
+          <div style="display: flex; justify-content: space-between;">
+            <span>ضريبة القيمة المضافة (15%)</span>
+            <strong>{{ invoice.tax | number:'1.2-2' }} ر.س</strong>
+          </div>
+          <div style="display: flex; justify-content: space-between; font-size: 0.74rem; font-weight: 700; border-top: 1px solid #000; border-bottom: 1px solid #000; padding: 2px 0; margin-top: 2px;">
+            <span>الإجمالي شامل الضريبة</span>
+            <span>{{ invoice.total | number:'1.2-2' }} ر.س</span>
+          </div>
+
+          <!-- تفاصيل الدفع -->
+          <div style="margin-top: 6px; padding: 4px 6px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 4px; font-size: 0.72rem;">
+            <div style="font-weight: 700; color: #334155; margin-bottom: 2px; border-bottom: 1px dashed #cbd5e1; padding-bottom: 2px;">
+              طريقة الدفع: {{ invoice.paymentLabel }}
+            </div>
+            <div *ngIf="invoice.isMixedPayment">
+              <div style="display: flex; justify-content: space-between;">
+                <span>• نقدياً (Cash):</span>
+                <strong>{{ (invoice.mixedCashAmount || 0) | number:'1.2-2' }} ر.س</strong>
+              </div>
+              <div style="display: flex; justify-content: space-between;">
+                <span>• بطاقة / فيزا (Card):</span>
+                <strong>{{ (invoice.mixedCardAmount || 0) | number:'1.2-2' }} ر.س</strong>
+              </div>
+              <div style="display: flex; justify-content: space-between;" *ngIf="(invoice.mixedOtherAmount || 0) > 0">
+                <span>• أخرى:</span>
+                <strong>{{ (invoice.mixedOtherAmount || 0) | number:'1.2-2' }} ر.س</strong>
+              </div>
+            </div>
+            <div *ngIf="!invoice.isMixedPayment">
+              <div style="display: flex; justify-content: space-between;">
+                <span>المدفوع:</span>
+                <strong>{{ (invoice.paidAmount || invoice.total) | number:'1.2-2' }} ر.س</strong>
+              </div>
+              <div style="display: flex; justify-content: space-between;" *ngIf="invoice.changeAmount > 0">
+                <span>المتبقي للعميل:</span>
+                <strong>{{ invoice.changeAmount | number:'1.2-2' }} ر.س</strong>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="qr-box center" *ngIf="invoice.qrPayload" style="text-align: center; margin-top: 8px; border-top: 1px dashed #999; padding-top: 6px;">
+          <qrcode
+            [qrdata]="invoice.qrPayload"
+            [width]="95"
+            [errorCorrectionLevel]="'M'"
+            [margin]="1"
+            elementType="img">
+          </qrcode>
+        </div>
+      </ng-container>
+    </ng-container>
+
+    <footer class="receipt-footer" style="text-align: center; margin-top: 6px; border-top: 1px dashed #bbb; padding-top: 4px;">
+      <p style="margin: 0; font-weight: bold; font-size: 0.74rem;">شكراً لزيارتكم</p>
+      <p style="margin: 0; font-size: 0.68rem; color: #666;">Thank you for your visit</p>
+    </footer>
+  </section>
+</div>

@@ -1,0 +1,237 @@
+﻿<div class="container-fluid">
+  <p-toast></p-toast>
+  
+  <!-- Header: Title on Right, Tools on Left -->
+  <div class="store-transfer-header d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4 p-3 bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700">
+    <div class="d-flex flex-wrap align-items-center gap-3">
+      <h2 class="page-title m-0 text-xl font-bold text-gray-800 dark:text-gray-100">نقل المخزون</h2>
+
+      <span class="p-input-icon-left header-search-box">
+        <i class="pi pi-search"></i>
+        <input
+          pInputText
+          type="text"
+          class="p-inputtext-sm rounded-lg"
+          (input)="dt.filterGlobal($any($event.target).value, 'contains')"
+          placeholder="بحث في التحويلات..."
+        />
+      </span>
+    </div>
+
+    <div class="d-flex flex-wrap align-items-center gap-2">
+      <!-- Export & Report Tools Group -->
+      <div class="btn-group-wrapper d-flex align-items-center gap-2">
+        <p-button 
+          styleClass="rounded-md p-button-sm shadow-sm"
+          severity="success" 
+          icon="pi pi-file-excel" 
+          label="تصدير Excel"
+          pTooltip="تصدير إلى Excel"
+          tooltipPosition="bottom"
+          (onClick)="exportToExcel()"
+          [disabled]="!transfers() || transfers().length === 0">
+        </p-button>
+
+        <p-button 
+          styleClass="rounded-md p-button-sm shadow-sm"
+          severity="danger" 
+          icon="pi pi-file-pdf" 
+          label="تنزيل PDF"
+          pTooltip="تنزيل PDF"
+          tooltipPosition="bottom"
+          (onClick)="exportToPdf()"
+          [loading]="loading()"
+          [disabled]="!transfers() || transfers().length === 0">
+        </p-button>
+
+        <p-button 
+          styleClass="rounded-md p-button-sm shadow-sm"
+          severity="info" 
+          icon="pi pi-share-alt" 
+          label="مشاركة"
+          pTooltip="مشاركة التقرير"
+          tooltipPosition="bottom"
+          (onClick)="openShareDialog()"
+          [disabled]="!transfers() || transfers().length === 0">
+        </p-button>
+
+        <p-button 
+          styleClass="rounded-md p-button-sm shadow-sm"
+          severity="warning" 
+          icon="pi pi-print" 
+          label="طباعة"
+          pTooltip="طباعة التقرير"
+          tooltipPosition="bottom"
+          (onClick)="printPDF()"
+          [disabled]="!transfers() || transfers().length === 0">
+        </p-button>
+
+        <p-button 
+          styleClass="rounded-md p-button-sm shadow-sm"
+          severity="secondary" 
+          icon="pi pi-refresh" 
+          label="تحديث"
+          pTooltip="تحديث البيانات"
+          tooltipPosition="bottom"
+          (onClick)="loadTransfers()"
+          [loading]="loading()">
+        </p-button>
+      </div>
+
+      <!-- Divider between tool groups -->
+      <div class="header-divider d-none d-md-block"></div>
+
+      <!-- Main Creation Actions -->
+      <div class="d-flex align-items-center gap-2">
+        <p-button 
+          styleClass="rounded-md p-button-sm font-bold shadow-sm"
+          severity="success"
+          icon="pi pi-plus" 
+          label="إضافة تحويل مخزون"
+          (onClick)="addNewTransfer()">
+        </p-button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Transfers Table -->
+  <p-table 
+    #dt
+    [value]="transfers()" 
+    [loading]="loading()"
+    [paginator]="true" 
+    [rows]="15"
+    [rowsPerPageOptions]="[10, 15, 25, 50]"
+    [showCurrentPageReport]="true"
+    currentPageReportTemplate="{first} - {last} of {totalRecords}"
+    styleClass="p-datatable-gridlines p-datatable-sm p-datatable-striped"
+    [globalFilterFields]="['referenceNumber', 'fromStore', 'toStore']">
+      
+      <ng-template pTemplate="header">
+        <tr>
+          <th style="width: 60px; text-align: center">م</th>
+          <th pSortableColumn="transferDate" style="text-align: center">
+            تاريخ التحويل
+            <p-sortIcon field="transferDate"></p-sortIcon>
+          </th>
+          <th pSortableColumn="referenceNumber" style="text-align: center">
+            رقم المرجع
+            <p-sortIcon field="referenceNumber"></p-sortIcon>
+          </th>
+          <th style="text-align: center">من الموقع</th>
+          <th style="text-align: center">إلى الموقع</th>
+          <th style="text-align: center">الأصناف</th>
+          <th style="text-align: center">الكمية</th>
+          <th style="text-align: center">رسوم الشحن</th>
+        </tr>
+      </ng-template>
+
+      <ng-template pTemplate="body" let-transfer let-i="rowIndex">
+        <tr>
+          <td style="text-align: center">{{ i + 1 }}</td>
+          <td style="text-align: center">{{ transfer.transferDate | customDate: 'yyyy-MM-dd' }}</td>
+          <td style="text-align: center">{{ transfer.referenceNumber }}</td>
+          <td style="text-align: center">{{ transfer.fromStore }}</td>
+          <td style="text-align: center">{{ transfer.toStore }}</td>
+          <td style="text-align: center">{{ transfer.products }}</td>
+          <td style="text-align: center">
+            <span class="font-weight-bold">
+              {{ transfer.totalQuantity | number: '1.0-2' }}
+            </span>
+          </td>
+          <td style="text-align: center">
+            <span *ngIf="transfer.shippingCost > 0" class="text-success font-weight-bold">
+              {{ transfer.shippingCost | number: '1.2-2' }} SAR
+            </span>
+            <span *ngIf="!transfer.shippingCost || transfer.shippingCost === 0" class="text-danger">
+              <i class="pi pi-times"></i>
+            </span>
+          </td>
+        </tr>
+      </ng-template>
+
+      <ng-template pTemplate="emptymessage">
+        <tr>
+          <td colspan="8" style="text-align: center; padding: 3rem;">
+            <i class="pi pi-inbox" style="font-size: 3rem; color: #dee2e6;"></i>
+            <p class="mt-3 text-muted">لا توجد عمليات نقل مخزون</p>
+            <button 
+              pButton 
+              type="button" 
+              label="إضافة أول عملية نقل" 
+              icon="pi pi-plus"
+              class="p-button-outlined"
+              (click)="addNewTransfer()">
+            </button>
+          </td>
+        </tr>
+      </ng-template>
+    </p-table>
+</div>
+
+<!-- Share Dialog -->
+<p-dialog 
+  [(visible)]="shareDialogVisible" 
+  [header]="'مشاركة تقرير نقل المخزون'"
+  [modal]="true"
+  [style]="{width: '500px'}"
+  [closable]="true"
+  (onHide)="closeShareDialog()">
+  
+  <p-tabView [(activeIndex)]="shareActiveTabIndex">
+    <!-- Email Tab -->
+    <p-tabPanel header="البريد الإلكتروني" leftIcon="pi pi-envelope">
+      <div class="p-fluid">
+        <div class="field">
+          <label for="email">البريد الإلكتروني</label>
+          <input 
+            id="email" 
+            type="email" 
+            pInputText 
+            [formControl]="$any(shareForm.get('email'))"
+            placeholder="example@email.com">
+          <small *ngIf="shareForm.get('email')?.invalid && shareForm.get('email')?.touched" class="p-error">
+            يرجى إدخال بريد إلكتروني صحيح
+          </small>
+        </div>
+      </div>
+    </p-tabPanel>
+    
+    <!-- WhatsApp Tab -->
+    <p-tabPanel header="واتساب" leftIcon="pi pi-whatsapp">
+      <div class="p-fluid">
+        <div class="field">
+          <label for="whatsapp">رقم الواتساب</label>
+          <input 
+            id="whatsapp" 
+            type="tel" 
+            pInputText 
+            [formControl]="$any(shareForm.get('whatsappNumber'))"
+            placeholder="966xxxxxxxxx">
+          <small *ngIf="shareForm.get('whatsappNumber')?.invalid && shareForm.get('whatsappNumber')?.touched" class="p-error">
+            يرجى إدخال رقم واتساب صحيح
+          </small>
+        </div>
+      </div>
+    </p-tabPanel>
+  </p-tabView>
+  
+  <ng-template pTemplate="footer">
+    <button 
+      pButton 
+      type="button" 
+      label="إلغاء" 
+      icon="pi pi-times" 
+      class="p-button-text"
+      (click)="closeShareDialog()">
+    </button>
+    <button 
+      pButton 
+      type="button" 
+      label="إرسال" 
+      icon="pi pi-send" 
+      [loading]="shareBusy"
+      (click)="shareReport()">
+    </button>
+  </ng-template>
+</p-dialog>

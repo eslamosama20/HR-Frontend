@@ -1,0 +1,75 @@
+:host {
+  width: 100%;
+  @media (min-width: 992px) {
+    .login-form {
+      width: 100%;
+      max-width: 450px;
+
+      .mat-form-field {
+        width: 100%;
+      }
+    }
+  }
+}
+
+.separator-custom {
+  width: 35svw;
+  margin-top: 14px;
+  margin-bottom: 14px;
+}
+@media (max-width: 900px) {
+  .separator-custom {
+    width: 80svw;
+  }
+}
+
+// Password strength styling
+::ng-deep {
+  .p-password {
+    width: 100%;
+    
+    input {
+      width: 100%;
+    }
+  }
+
+  .p-password-panel {
+    padding: 1rem;
+    background: #ffffff;
+    color: #495057;
+    border: 1px solid #ced4da;
+    box-shadow: 0 3px 6px rgba(0, 0, 0, 0.16);
+    border-radius: 3px;
+  }
+
+  .p-password-meter {
+    margin-top: 0.5rem;
+    background: #dee2e6;
+    height: 10px;
+    border-radius: 3px;
+  }
+
+  .p-password-strength {
+    height: 100%;
+    width: 0;
+    transition: width 0.3s ease-in-out;
+    border-radius: 3px;
+  }
+
+  .p-password-strength.weak {
+    background: #dc3545;
+  }
+
+  .p-password-strength.medium {
+    background: #ffc107;
+  }
+
+  .p-password-strength.strong {
+    background: #28a745;
+  }
+
+  .p-password-info {
+    margin-top: 0.25rem;
+    font-size: 0.875rem;
+  }
+}

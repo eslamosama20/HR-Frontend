@@ -1,0 +1,116 @@
+{
+  "light-green": {
+    "name": "Light Mode (Green)",
+    "properties": {
+      "--sidebar-bg": "#018897",
+      "--sidebar-text": "#FFFFFF",
+      "--sidebar-active": "#E4F6FF",
+
+      "--button-primary-bg": "#018897",
+      "--button-primary-text": "#FFFFFF",
+      "--button-outline-text": "#092C4C",
+      "--button-outline-border": "#018897",
+
+      "--table-text": "#2E2A40",
+      "--table-header-bg": "#C6ECEA",
+
+      "--card-bg": "#F9FFFE",
+      "--card-text": "#0F172A",
+
+      "--input-bg": "#E4F6FF",
+      "--input-border": "#93D5D1",
+      "--input-text": "#092C4C",
+      "--input-placeholder": "#5E8A87",
+      "--input-focus": "#018897",
+
+      "--kt-app-sidebar-bg": "#018897",
+      "--kt-app-sidebar-base-color": "#FFFFFF",
+      "--kt-app-sidebar-link-active-bg": "#E4F6FF",
+      "--kt-app-sidebar-link-active-color": "#092C4C",
+
+      "--kt-primary": "#018897",
+      "--kt-primary-active": "#017684",
+      "--kt-primary-inverse": "#FFFFFF",
+
+      "--card-ico-bg": "#018897",
+      "--card-ico-text": "#FFFFFF",
+      "--navbar-text-color": "#000000",
+      "--navbar-bg": "linear-gradient(90deg, #B8E9EE, #FFFAD8)"
+    }
+  },
+  "light-darkblue": {
+    "name": "Light Mode (Dark blue)",
+    "properties": {
+      "--sidebar-bg": "#191D29",
+      "--sidebar-text": "#FFFFFF",
+      "--sidebar-active": "#DAD7FF",
+
+      "--button-primary-bg": "#191D29",
+      "--button-primary-text": "#FFFFFF",
+      "--button-outline-text": "#191D29",
+      "--button-outline-border": "#191D29",
+
+      "--table-text": "#191D29",
+      "--table-header-bg": "#DAD7FF",
+
+      "--card-bg": "#F7F7F7",
+      "--card-text": "#191D29",
+
+      "--input-bg": "#EEEDFF",
+      "--input-border": "#191D29",
+      "--input-text": "#2E2A40",
+      "--input-placeholder": "#6B7280",
+      "--input-focus": "#191D29",
+
+      "--kt-app-sidebar-bg": "#191D29",
+      "--kt-app-sidebar-base-color": "#FFFFFF",
+      "--kt-app-sidebar-link-active-bg": "#DAD7FF",
+      "--kt-app-sidebar-link-active-color": "#191D29",
+
+      "--kt-primary": "#191D29",
+      "--kt-primary-active": "#10131B",
+      "--kt-primary-inverse": "#FFFFFF",
+
+      "--card-ico-bg": "#191D29",
+      "--card-ico-text": "#FFFFFF"
+    }
+  },
+  "light-indigo": {
+    "name": "Light Mode (Indigo)",
+    "properties": {
+      "--sidebar-bg": "#474F7A",
+      "--sidebar-text": "#FFFFFF",
+      "--sidebar-active": "#C9D0F5",
+
+      "--button-primary-bg": "#3E4981",
+      "--button-primary-text": "#FFFFFF",
+      "--button-outline-text": "#3E4981",
+      "--button-outline-border": "#3E4981",
+
+      "--table-text": "#5D6679",
+      "--table-header-bg": "#C9D0F5",
+
+      "--card-bg": "#F7F7F7",
+      "--card-text": "#2E2A40",
+      "--card-border": "#3E4981",
+
+      "--input-bg": "#E4E9FF",
+      "--input-border": "#3E4981",
+      "--input-text": "#2E2A40",
+      "--input-placeholder": "#6B7280",
+      "--input-focus": "#3E4981",
+
+      "--kt-app-sidebar-bg": "#474F7A",
+      "--kt-app-sidebar-base-color": "#FFFFFF",
+      "--kt-app-sidebar-link-active-bg": "#C9D0F5",
+      "--kt-app-sidebar-link-active-color": "#2E2A40",
+
+      "--kt-primary": "#3E4981",
+      "--kt-primary-active": "#2C3560",
+      "--kt-primary-inverse": "#FFFFFF",
+
+      "--card-ico-bg": "#3E4981",
+      "--card-ico-text": "#FFFFFF"
+    }
+  }
+}

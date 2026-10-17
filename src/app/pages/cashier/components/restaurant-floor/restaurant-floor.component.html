@@ -1,0 +1,628 @@
+<div class="floor-shell">
+  <p-toast position="top-left"></p-toast>
+
+  <div class="floor-unified-card">
+    <!-- Header Section -->
+    <header class="floor-header">
+      <!-- Top Row: Title & Navigation -->
+      <div class="floor-header-top">
+        <div class="brand">
+          <span class="brand-icon">
+            <i class="pi pi-map"></i>
+          </span>
+          <div class="brand-text">
+            <h1>{{ 'CASHIER_FLOOR.PAGE_TITLE' | translate }}</h1>
+            <p>{{ 'CASHIER_FLOOR.PAGE_SUBTITLE' | translate }}</p>
+          </div>
+        </div>
+
+        <div class="header-actions">
+          <button pButton type="button" icon="pi pi-desktop" label="شاشة الكاشير (POS)" class="action-btn soft-btn" routerLink="/cashier/pos"></button>
+          <button pButton type="button" icon="pi pi-bolt" label="شاشة المطبخ (KDS)" class="action-btn kds-header-btn" routerLink="/cashier/kds" pTooltip="فتح شاشة المطبخ KDS"></button>
+          <button pButton type="button" icon="pi pi-file" label="سجل الفواتير" class="action-btn soft-btn" routerLink="/cashier/invoice-control"></button>
+          <button pButton type="button" icon="pi pi-file-edit" label="تقرير الإغلاق (Z-Report)" class="action-btn soft-btn" routerLink="/cashier/z-report"></button>
+          <button pButton type="button" icon="pi pi-clock" [label]="'CASHIER_POS.SESSION_MANAGEMENT' | translate" class="action-btn soft-btn" routerLink="/cashier/session"></button>
+          <button pButton type="button" icon="pi pi-chart-line" [label]="'CASHIER_REPORTS.PAGE_TITLE' | translate" class="action-btn soft-btn" routerLink="/cashier/reports"></button>
+        </div>
+      </div>
+
+      <!-- Bottom Row: Status Badge & Operational Actions -->
+      <div class="floor-header-bottom">
+        <div class="floor-status-badge">
+          <span class="live-dot"></span>
+          <span>عرض وإدارة الطاولات التفاعلية والطلبات الذاتية</span>
+        </div>
+
+        <div class="floor-header-ops">
+          <button
+            pButton
+            type="button"
+            icon="pi pi-bolt"
+            label="شاشة المطبخ (KDS)"
+            class="action-btn kds-ops-btn"
+            routerLink="/cashier/kds"
+            pTooltip="فتح شاشة وتذاكر المطبخ KDS">
+          </button>
+          <button
+            pButton
+            type="button"
+            icon="pi pi-bell"
+            [label]="'CASHIER_FLOOR.BTN_LIVE_ORDERS' | translate"
+            class="action-btn live-orders-btn"
+            routerLink="/cashier/live-orders">
+            <span class="pulse-ring" *ngIf="needsActionCount > 0"></span>
+          </button>
+          <button
+            pButton
+            type="button"
+            [icon]="isEditMode ? 'pi pi-check' : 'pi pi-pencil'"
+            [label]="(isEditMode ? 'CASHIER_FLOOR.BTN_FINISH_EDIT' : 'CASHIER_FLOOR.BTN_EDIT_LAYOUT') | translate"
+            [class.active-edit]="isEditMode"
+            class="action-btn edit-mode-btn"
+            (click)="toggleEditMode()">
+          </button>
+          <button
+            pButton
+            type="button"
+            icon="pi pi-plus"
+            [label]="'CASHIER_FLOOR.BTN_ADD_TABLE' | translate"
+            class="action-btn add-btn"
+            [disabled]="!canManageLayout()"
+            (click)="openAddTableDialog()">
+          </button>
+        </div>
+      </div>
+    </header>
+
+    <!-- Stats Overview Section -->
+    <section class="stats-row">
+      <article class="stat-card total">
+        <div class="stat-icon-wrap">
+          <i class="pi pi-th-large"></i>
+        </div>
+        <div class="stat-content">
+          <span>إجمالي الطاولات</span>
+          <strong>{{ totalTablesCount }}</strong>
+        </div>
+      </article>
+
+      <article class="stat-card available">
+        <div class="stat-icon-wrap">
+          <i class="pi pi-check-circle"></i>
+        </div>
+        <div class="stat-content">
+          <span>{{ 'CASHIER_FLOOR.AVAILABLE' | translate }}</span>
+          <strong>{{ availableCount }}</strong>
+        </div>
+      </article>
+
+      <article class="stat-card occupied">
+        <div class="stat-icon-wrap">
+          <i class="pi pi-users"></i>
+        </div>
+        <div class="stat-content">
+          <span>{{ 'CASHIER_FLOOR.OCCUPIED' | translate }}</span>
+          <strong>{{ occupiedCount }}</strong>
+        </div>
+      </article>
+
+      <article class="stat-card action">
+        <div class="stat-icon-wrap">
+          <i class="pi pi-bell"></i>
+        </div>
+        <div class="stat-content">
+          <span>{{ 'CASHIER_FLOOR.NEEDS_ACTION' | translate }}</span>
+          <strong>{{ needsActionCount }}</strong>
+        </div>
+      </article>
+
+      <article class="stat-card amount">
+        <div class="stat-icon-wrap">
+          <i class="pi pi-wallet"></i>
+        </div>
+        <div class="stat-content">
+          <span>{{ 'CASHIER_FLOOR.OPEN_AMOUNT' | translate }}</span>
+          <strong>{{ totalOpenAmount | number:'1.2-2' }} <small>ر.س</small></strong>
+        </div>
+      </article>
+    </section>
+
+    <!-- Interactive Filters & Toolbar -->
+    <section class="filters-toolbar">
+      <!-- Area Navigation Tabs / Chips -->
+      <div class="area-chips-bar">
+        <button
+          type="button"
+          class="area-chip"
+          [class.active]="selectedAreaId === ''"
+          (click)="selectAreaFilter('')">
+          <i class="pi pi-building"></i>
+          <span>كل الصالات</span>
+          <span class="chip-count">{{ totalTablesCount }}</span>
+        </button>
+        <button
+          type="button"
+          class="area-chip"
+          *ngFor="let area of areas()"
+          [class.active]="selectedAreaId === area.id"
+          (click)="selectAreaFilter(area.id)">
+          <span class="area-indicator" [style.background-color]="area.color"></span>
+          <span>{{ area.name }}</span>
+          <span class="chip-count">{{ getAreaTableCount(area.id) }}</span>
+        </button>
+      </div>
+
+      <!-- Search & Status Filter Row -->
+      <div class="filters-row">
+        <!-- Status Quick Pills -->
+        <div class="status-pills-bar">
+          <button
+            type="button"
+            class="status-filter-pill all"
+            [class.active]="selectedStatus === 'all'"
+            (click)="selectStatusFilter('all')">
+            <span>الكل</span>
+            <span class="pill-count">{{ totalTablesCount }}</span>
+          </button>
+          <button
+            type="button"
+            class="status-filter-pill available"
+            [class.active]="selectedStatus === tableStatus.Available"
+            (click)="selectStatusFilter(tableStatus.Available)">
+            <i class="pi pi-check-circle"></i>
+            <span>متاحة</span>
+            <span class="pill-count">{{ availableCount }}</span>
+          </button>
+          <button
+            type="button"
+            class="status-filter-pill occupied"
+            [class.active]="selectedStatus === tableStatus.Occupied"
+            (click)="selectStatusFilter(tableStatus.Occupied)">
+            <i class="pi pi-users"></i>
+            <span>مشغولة</span>
+            <span class="pill-count">{{ occupiedCount }}</span>
+          </button>
+          <button
+            type="button"
+            class="status-filter-pill new-order"
+            [class.active]="selectedStatus === tableStatus.NewOrder"
+            (click)="selectStatusFilter(tableStatus.NewOrder)">
+            <i class="pi pi-bell"></i>
+            <span>طلب جديد</span>
+            <span class="pill-count">{{ newOrderCount }}</span>
+          </button>
+          <button
+            type="button"
+            class="status-filter-pill ready-to-pay"
+            [class.active]="selectedStatus === tableStatus.ReadyToPay"
+            (click)="selectStatusFilter(tableStatus.ReadyToPay)">
+            <i class="pi pi-wallet"></i>
+            <span>جاهزة للحساب</span>
+            <span class="pill-count">{{ readyToPayCount }}</span>
+          </button>
+          <button
+            type="button"
+            class="status-filter-pill cleaning"
+            [class.active]="selectedStatus === tableStatus.Cleaning"
+            (click)="selectStatusFilter(tableStatus.Cleaning)">
+            <i class="pi pi-sparkles"></i>
+            <span>تنظيف</span>
+            <span class="pill-count">{{ cleaningCount }}</span>
+          </button>
+        </div>
+
+        <!-- Search Box -->
+        <div class="search-wrap">
+          <i class="pi pi-search search-icon"></i>
+          <input
+            pInputText
+            type="text"
+            [(ngModel)]="searchTerm"
+            [placeholder]="'CASHIER_FLOOR.SEARCH_PLACEHOLDER' | translate" />
+          <button
+            *ngIf="searchTerm"
+            type="button"
+            class="clear-search-btn"
+            (click)="searchTerm = ''"
+            pTooltip="مسح البحث">
+            <i class="pi pi-times"></i>
+          </button>
+        </div>
+
+        <!-- Reset Button -->
+        <button
+          *ngIf="hasActiveFilters"
+          type="button"
+          class="reset-filters-btn"
+          (click)="resetFilters()"
+          pTooltip="إعادة تعيين الفلاتر">
+          <i class="pi pi-filter-slash"></i>
+          <span>إلغاء الفلاتر</span>
+        </button>
+      </div>
+    </section>
+
+    <!-- Layout Sections & Tables -->
+    <section class="layout-sections">
+      <article class="area-section" *ngFor="let section of sections">
+        <!-- Area Section Header -->
+        <div class="section-head">
+          <div class="area-title-wrap">
+            <span class="area-color-badge" [style.background-color]="section.area.color"></span>
+            <h2>{{ section.area.name }}</h2>
+            <span class="area-stats-badge">
+              <i class="pi pi-table"></i>
+              {{ section.tables.length }} {{ 'CASHIER_FLOOR.TABLES_COUNT' | translate }}
+            </span>
+          </div>
+          <div class="area-occupancy-info">
+            <span class="occupancy-pill">
+              {{ getAreaOccupiedCount(section.area.id) }} من {{ section.tables.length }} مشغولة
+            </span>
+          </div>
+        </div>
+
+        <!-- Tables Grid -->
+        <div class="tables-grid" *ngIf="section.tables.length > 0; else noTablesInSection">
+          <article
+            class="table-card"
+            [ngClass]="[table.status, isEditMode ? 'in-edit-mode' : '']"
+            *ngFor="let table of section.tables; trackBy: trackByTable">
+
+            <!-- Card Top Header -->
+            <div class="table-top">
+              <div class="table-identity">
+                <span class="table-avatar">
+                  <i class="pi pi-table"></i>
+                </span>
+                <div class="table-name-wrap">
+                  <span class="table-num-label">طاولة</span>
+                  <h3 class="table-num">{{ table.tableNumber }}</h3>
+                </div>
+              </div>
+
+              <span class="status-pill" [ngClass]="table.status">
+                <i [class]="getStatusIcon(table.status)"></i>
+                <span>{{ getStatusLabel(table.status) }}</span>
+              </span>
+            </div>
+
+            <!-- Card Details Badges -->
+            <div class="table-meta-grid">
+              <div class="meta-item seats">
+                <i class="pi pi-users"></i>
+                <span>{{ table.seats }} {{ 'CASHIER_FLOOR.SEATS' | translate }}</span>
+              </div>
+              <div class="meta-item orders" [class.has-orders]="table.activeOrders > 0">
+                <i class="pi pi-receipt"></i>
+                <span>{{ table.activeOrders }} {{ 'CASHIER_FLOOR.ORDERS' | translate }}</span>
+              </div>
+              <div class="meta-item amount" [class.has-amount]="table.unpaidTotal > 0">
+                <i class="pi pi-wallet"></i>
+                <span>{{ table.unpaidTotal | number:'1.2-2' }} <small>ر.س</small></span>
+              </div>
+            </div>
+
+            <!-- Card Notes if present -->
+            <div class="table-notes" *ngIf="table.notes">
+              <i class="pi pi-info-circle"></i>
+              <span>{{ table.notes }}</span>
+            </div>
+
+            <!-- Main Interactive Action Buttons -->
+            <div class="table-primary-actions">
+              <button
+                pButton
+                type="button"
+                icon="pi pi-receipt"
+                [label]="'CASHIER_FLOOR.BTN_TABLE_ORDERS' | translate"
+                class="manage-orders-btn"
+                [routerLink]="['/cashier/table', table.id]">
+              </button>
+              <button
+                pButton
+                type="button"
+                icon="pi pi-tablet"
+                [label]="'CASHIER_FLOOR.BTN_CUSTOMER_SCREEN' | translate"
+                class="customer-screen-btn"
+                (click)="openCustomerScreen(table, $event)"
+                pTooltip="فتح شاشة العميل للطلب الذاتي">
+              </button>
+            </div>
+
+            <!-- Quick Vacate Button -->
+            <div class="quick-vacate-wrapper" *ngIf="table.status !== tableStatus.Available">
+              <button
+                pButton
+                type="button"
+                icon="pi pi-check-circle"
+                label="إخلاء الطاولة"
+                class="vacate-btn"
+                (click)="vacateTable(table, $event)"
+                pTooltip="إخلاء الطاولة فوراً وإعادتها متاحة">
+              </button>
+            </div>
+
+            <!-- Quick Status Switcher Segment -->
+            <div class="status-actions-bar">
+              <button
+                type="button"
+                class="quick-status-btn ready"
+                [class.active]="table.status === tableStatus.ReadyToPay"
+                (click)="setStatus(table, tableStatus.ReadyToPay)"
+                pTooltip="تغيير الحالة إلى جاهزة للحساب">
+                {{ 'CASHIER_FLOOR.STATUS_READY_PAY' | translate }}
+              </button>
+              <button
+                type="button"
+                class="quick-status-btn clean"
+                [class.active]="table.status === tableStatus.Cleaning"
+                (click)="setStatus(table, tableStatus.Cleaning)"
+                pTooltip="تغيير الحالة إلى قيد التنظيف">
+                {{ 'CASHIER_FLOOR.STATUS_CLEANING' | translate }}
+              </button>
+              <button
+                type="button"
+                class="quick-status-btn avail"
+                [class.active]="table.status === tableStatus.Available"
+                (click)="setStatus(table, tableStatus.Available)"
+                pTooltip="تغيير الحالة إلى متاحة">
+                {{ 'CASHIER_FLOOR.STATUS_AVAILABLE' | translate }}
+              </button>
+            </div>
+
+            <!-- Edit Mode Bar -->
+            <div class="edit-actions-bar" *ngIf="isEditMode && canManageLayout()">
+              <div class="order-reorder-group">
+                <button
+                  pButton
+                  type="button"
+                  icon="pi pi-arrow-right"
+                  class="edit-icon-btn"
+                  [pTooltip]="'CASHIER_FLOOR.ORDER_MOVE_UP' | translate"
+                  (click)="moveTable(table, -1)">
+                </button>
+                <button
+                  pButton
+                  type="button"
+                  icon="pi pi-arrow-left"
+                  class="edit-icon-btn"
+                  [pTooltip]="'CASHIER_FLOOR.ORDER_MOVE_DOWN' | translate"
+                  (click)="moveTable(table, 1)">
+                </button>
+              </div>
+              <div class="order-manage-group">
+                <button
+                  pButton
+                  type="button"
+                  icon="pi pi-pencil"
+                  class="edit-icon-btn primary"
+                  [pTooltip]="'CASHIER_FLOOR.ORDER_EDIT' | translate"
+                  (click)="editTable(table)">
+                </button>
+                <button
+                  pButton
+                  type="button"
+                  icon="pi pi-trash"
+                  class="edit-icon-btn danger"
+                  pTooltip="حذف الطاولة"
+                  (click)="deleteTable(table)">
+                </button>
+              </div>
+            </div>
+          </article>
+        </div>
+      </article>
+    </section>
+  </div>
+</div>
+
+<!-- Empty Section Template -->
+<ng-template #noTablesInSection>
+  <div class="empty-section-card">
+    <div class="empty-icon-wrap">
+      <i class="pi pi-inbox"></i>
+    </div>
+    <h3>{{ 'CASHIER_FLOOR.EMPTY_SECTION' | translate }}</h3>
+    <p>لا توجد طاولات تطابق خيارات التصفية الحالية في هذه الصالة</p>
+    <button
+      *ngIf="canManageLayout()"
+      pButton
+      type="button"
+      icon="pi pi-plus"
+      label="إضافة طاولة لهذا القسم"
+      class="action-btn add-btn"
+      (click)="openAddTableDialog()">
+    </button>
+  </div>
+</ng-template>
+
+<!-- Add Table Dialog -->
+<p-dialog
+  [(visible)]="showAddDialog"
+  [modal]="true"
+  [draggable]="false"
+  [resizable]="false"
+  [style]="{width: '450px', maxWidth: '95vw'}"
+  styleClass="floor-dialog"
+  [header]="'CASHIER_FLOOR.DIALOG_ADD_TITLE' | translate">
+  <div class="dialog-form-shell">
+    <div class="form-group">
+      <label class="form-label">
+        <i class="pi pi-tag"></i>
+        <span>{{ 'CASHIER_FLOOR.FIELD_TABLE_NO' | translate }}</span>
+        <span class="required-star">*</span>
+      </label>
+      <input
+        pInputText
+        type="text"
+        [(ngModel)]="newTable.tableNumber"
+        placeholder="مثال: T-01 أو 12"
+        class="form-control" />
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">
+        <i class="pi pi-users"></i>
+        <span>{{ 'CASHIER_FLOOR.FIELD_SEATS' | translate }}</span>
+      </label>
+      <p-inputNumber
+        [(ngModel)]="newTable.seats"
+        [min]="1"
+        [max]="50"
+        [showButtons]="true"
+        buttonLayout="horizontal"
+        spinnerMode="horizontal"
+        decrementButtonClass="p-button-secondary"
+        incrementButtonClass="p-button-secondary"
+        incrementButtonIcon="pi pi-plus"
+        decrementButtonIcon="pi pi-minus"
+        styleClass="w-full">
+      </p-inputNumber>
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">
+        <i class="pi pi-building"></i>
+        <span>{{ 'CASHIER_FLOOR.FIELD_AREA' | translate }}</span>
+      </label>
+      <p-dropdown
+        [options]="areaOptions"
+        [(ngModel)]="newTable.areaId"
+        optionLabel="label"
+        optionValue="value"
+        placeholder="اختر الصالة / القسم"
+        styleClass="w-full">
+      </p-dropdown>
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">
+        <i class="pi pi-comment"></i>
+        <span>{{ 'CASHIER_FLOOR.FIELD_NOTES' | translate }}</span>
+      </label>
+      <input
+        pInputText
+        type="text"
+        [(ngModel)]="newTable.notes"
+        placeholder="ملاحظات اختيارية (مثال: بجوار النافذة)"
+        class="form-control" />
+    </div>
+  </div>
+
+  <ng-template pTemplate="footer">
+    <div class="dialog-footer-actions">
+      <button
+        pButton
+        type="button"
+        [label]="'CASHIER_FLOOR.BTN_CANCEL' | translate"
+        icon="pi pi-times"
+        class="dialog-btn cancel-btn"
+        (click)="showAddDialog = false">
+      </button>
+      <button
+        pButton
+        type="button"
+        [label]="'CASHIER_FLOOR.BTN_SAVE' | translate"
+        icon="pi pi-check"
+        class="dialog-btn save-btn"
+        (click)="createTable()">
+      </button>
+    </div>
+  </ng-template>
+</p-dialog>
+
+<!-- Edit Table Dialog -->
+<p-dialog
+  [(visible)]="showEditDialog"
+  [modal]="true"
+  [draggable]="false"
+  [resizable]="false"
+  [style]="{width: '450px', maxWidth: '95vw'}"
+  styleClass="floor-dialog"
+  [header]="'CASHIER_FLOOR.DIALOG_EDIT_TITLE' | translate">
+  <div class="dialog-form-shell">
+    <div class="form-group">
+      <label class="form-label">
+        <i class="pi pi-tag"></i>
+        <span>{{ 'CASHIER_FLOOR.FIELD_TABLE_NO' | translate }}</span>
+        <span class="required-star">*</span>
+      </label>
+      <input
+        pInputText
+        type="text"
+        [(ngModel)]="editModel.tableNumber"
+        placeholder="رقم الطاولة"
+        class="form-control" />
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">
+        <i class="pi pi-users"></i>
+        <span>{{ 'CASHIER_FLOOR.FIELD_SEATS' | translate }}</span>
+      </label>
+      <p-inputNumber
+        [(ngModel)]="editModel.seats"
+        [min]="1"
+        [max]="50"
+        [showButtons]="true"
+        buttonLayout="horizontal"
+        spinnerMode="horizontal"
+        decrementButtonClass="p-button-secondary"
+        incrementButtonClass="p-button-secondary"
+        incrementButtonIcon="pi pi-plus"
+        decrementButtonIcon="pi pi-minus"
+        styleClass="w-full">
+      </p-inputNumber>
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">
+        <i class="pi pi-building"></i>
+        <span>{{ 'CASHIER_FLOOR.FIELD_AREA' | translate }}</span>
+      </label>
+      <p-dropdown
+        [options]="areaOptions"
+        [(ngModel)]="editModel.areaId"
+        optionLabel="label"
+        optionValue="value"
+        placeholder="اختر الصالة / القسم"
+        styleClass="w-full">
+      </p-dropdown>
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">
+        <i class="pi pi-comment"></i>
+        <span>{{ 'CASHIER_FLOOR.FIELD_NOTES' | translate }}</span>
+      </label>
+      <input
+        pInputText
+        type="text"
+        [(ngModel)]="editModel.notes"
+        placeholder="ملاحظات اختيارية"
+        class="form-control" />
+    </div>
+  </div>
+
+  <ng-template pTemplate="footer">
+    <div class="dialog-footer-actions">
+      <button
+        pButton
+        type="button"
+        [label]="'CASHIER_FLOOR.BTN_CANCEL' | translate"
+        icon="pi pi-times"
+        class="dialog-btn cancel-btn"
+        (click)="showEditDialog = false">
+      </button>
+      <button
+        pButton
+        type="button"
+        [label]="'CASHIER_FLOOR.BTN_SAVE_CHANGES' | translate"
+        icon="pi pi-check"
+        class="dialog-btn save-btn"
+        (click)="saveTableChanges()">
+      </button>
+    </div>
+  </ng-template>
+</p-dialog>

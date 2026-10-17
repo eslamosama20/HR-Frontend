@@ -1,0 +1,472 @@
+﻿<div class="pharmacy-page returns-theme">
+  <p-toast></p-toast>
+
+  <header class="hero-card">
+    <div>
+      <h1>مرتجعات الصيدلية</h1>
+      <p>شاشة مرتجعات جاهزة للربط مع المبيعات والمشتريات والمخازن عبر مراجع واضحة وقرارات مخزنية ومالية منظمة.</p>
+    </div>
+
+    <div class="hero-actions">
+      <button pButton type="button" icon="pi pi-plus" label="مرتجع جديد" class="hero-btn" (click)="openNewReturn()"></button>
+      <button pButton type="button" icon="pi pi-refresh" label="تحديث" class="p-button-outlined" (click)="loadReturns()"></button>
+    </div>
+  </header>
+
+  <section class="stats-grid">
+    <article class="stat-card warning">
+      <span>طلبات قيد المتابعة</span>
+      <strong>{{ pendingCount }}</strong>
+    </article>
+    <article class="stat-card success">
+      <span>مرتجعات معتمدة</span>
+      <strong>{{ approvedCount }}</strong>
+    </article>
+    <article class="stat-card danger">
+      <span>حالات بالحجر</span>
+      <strong>{{ quarantineCount }}</strong>
+    </article>
+  </section>
+
+  <section class="panel-card filters-row">
+    <span class="filter-input">
+      <i class="pi pi-search"></i>
+      <input pInputText type="text" [(ngModel)]="searchTerm" placeholder="ابحث برقم المرتجع أو المرجع أو الصنف أو المخزن أو صاحب الطلب" />
+    </span>
+
+    <p-dropdown
+      [options]="sourceOptions"
+      optionLabel="label"
+      optionValue="value"
+      [(ngModel)]="selectedSource"
+      appendTo="body"
+      placeholder="المصدر">
+    </p-dropdown>
+
+    <p-dropdown
+      [options]="statusOptions"
+      optionLabel="label"
+      optionValue="value"
+      [(ngModel)]="selectedStatus"
+      appendTo="body"
+      placeholder="الحالة">
+    </p-dropdown>
+  </section>
+
+  <section class="panel-card table-panel">
+    <p-table [value]="filteredReturns" [paginator]="true" [rows]="8" styleClass="pharmacy-table">
+      <ng-template pTemplate="header">
+        <tr>
+          <th>رقم المرتجع</th>
+          <th>المصدر</th>
+          <th>نوع المرجع</th>
+          <th>المرجع الأصلي</th>
+          <th>صاحب الطلب</th>
+          <th>الصنف</th>
+          <th>المخزن / الدفعة</th>
+          <th>الكمية</th>
+          <th>المعتمدة</th>
+          <th>الإجراء المخزني</th>
+          <th>الحالة</th>
+          <th>التسوية المالية</th>
+          <th>التاريخ</th>
+          <th>الإجراءات</th>
+        </tr>
+      </ng-template>
+
+      <ng-template pTemplate="body" let-returnItem>
+        <tr>
+          <td>{{ returnItem.returnNo }}</td>
+          <td>{{ getSourceLabel(returnItem.source) }}</td>
+          <td>{{ getReferenceTypeLabel(returnItem.referenceType) }}</td>
+          <td>{{ returnItem.referenceNo }}</td>
+          <td>{{ returnItem.requestorName }}</td>
+          <td>
+            <div class="cell-stack">
+              <strong>{{ returnItem.itemName }}</strong>
+              <span>{{ returnItem.itemCode }}</span>
+            </div>
+          </td>
+          <td>
+            <div class="cell-stack">
+              <strong>{{ returnItem.storeName }}</strong>
+              <span>{{ returnItem.batchNo || '-' }}</span>
+            </div>
+          </td>
+          <td>{{ returnItem.quantity }}</td>
+          <td>{{ returnItem.approvedQty }}</td>
+          <td>
+            <p-tag [value]="getInventoryActionLabel(returnItem.inventoryAction)" [severity]="getInventoryActionTag(returnItem.inventoryAction)"></p-tag>
+          </td>
+          <td>
+            <p-tag [value]="getStatusLabel(returnItem.status)" [severity]="getStatusTag(returnItem.status)"></p-tag>
+          </td>
+          <td>{{ getFinancialSummary(returnItem) }}</td>
+          <td>{{ returnItem.returnDate | customDate: 'yyyy/MM/dd - hh:mm a' }}</td>
+          <td class="actions-col">
+            <button pButton type="button" icon="pi pi-eye" class="p-button-text p-button-sm" (click)="openDetails(returnItem)"></button>
+            <button pButton type="button" icon="pi pi-sync" class="p-button-text p-button-sm" (click)="openStatusDialog(returnItem)"></button>
+            <button
+              pButton
+              type="button"
+              icon="pi pi-check"
+              class="p-button-text p-button-sm p-button-success"
+              [disabled]="returnItem.status === 'approved'"
+              (click)="updateStatus(returnItem, 'approved')">
+            </button>
+            <button
+              pButton
+              type="button"
+              icon="pi pi-times"
+              class="p-button-text p-button-sm p-button-danger"
+              [disabled]="returnItem.status === 'rejected'"
+              (click)="updateStatus(returnItem, 'rejected')">
+            </button>
+          </td>
+        </tr>
+      </ng-template>
+    </p-table>
+  </section>
+</div>
+
+<p-dialog
+  [(visible)]="showDetailsDialog"
+  [modal]="true"
+  [draggable]="false"
+  [resizable]="false"
+  [style]="{ width: '860px', maxWidth: '96vw' }"
+  header="تفاصيل المرتجع">
+  <div *ngIf="selectedReturn() as returnItem" class="details-grid">
+    <div><span>رقم المرتجع</span><strong>{{ returnItem.returnNo }}</strong></div>
+    <div><span>المصدر</span><strong>{{ getSourceLabel(returnItem.source) }}</strong></div>
+    <div><span>نوع المرجع</span><strong>{{ getReferenceTypeLabel(returnItem.referenceType) }}</strong></div>
+    <div><span>المرجع الأصلي</span><strong>{{ returnItem.referenceNo }}</strong></div>
+    <div><span>صاحب الطلب</span><strong>{{ returnItem.requestorName }}</strong></div>
+    <div><span>منشئ الطلب</span><strong>{{ returnItem.createdBy }}</strong></div>
+    <div><span>كود الصنف</span><strong>{{ returnItem.itemCode }}</strong></div>
+    <div><span>اسم الصنف</span><strong>{{ returnItem.itemName }}</strong></div>
+    <div><span>المخزن الأصلي</span><strong>{{ returnItem.storeName }}</strong></div>
+    <div><span>المخزن المستهدف</span><strong>{{ returnItem.targetStoreName || '-' }}</strong></div>
+    <div><span>رقم الدفعة</span><strong>{{ returnItem.batchNo || '-' }}</strong></div>
+    <div><span>الكمية المتاحة للمرتجع</span><strong>{{ returnItem.availableReturnQty }}</strong></div>
+    <div><span>الكمية المطلوبة</span><strong>{{ returnItem.quantity }}</strong></div>
+    <div><span>الكمية المعتمدة</span><strong>{{ returnItem.approvedQty }}</strong></div>
+    <div><span>الإجراء المخزني</span><strong>{{ getInventoryActionLabel(returnItem.inventoryAction) }}</strong></div>
+    <div><span>الحالة</span><strong>{{ getStatusLabel(returnItem.status) }}</strong></div>
+    <div><span>سعر الوحدة</span><strong>{{ returnItem.unitPrice | number:'1.2-2' }}</strong></div>
+    <div><span>رد المبلغ</span><strong>{{ returnItem.refundAmount | number:'1.2-2' }}</strong></div>
+    <div><span>طريقة رد المبلغ</span><strong>{{ returnItem.refundMethod || '-' }}</strong></div>
+    <div><span>إشعار دائن المورد</span><strong>{{ returnItem.supplierCreditAmount | number:'1.2-2' }}</strong></div>
+    <div><span>المراجع</span><strong>{{ returnItem.reviewedBy || '-' }}</strong></div>
+    <div><span>المعتمد</span><strong>{{ returnItem.approvedBy || '-' }}</strong></div>
+    <div><span>تاريخ الطلب</span><strong>{{ returnItem.returnDate | customDate: 'yyyy/MM/dd - hh:mm a' }}</strong></div>
+    <div><span>تاريخ المراجعة</span><strong>{{ returnItem.reviewedAt ? (returnItem.reviewedAt | customDate: 'yyyy/MM/dd - hh:mm a') : '-' }}</strong></div>
+    <div class="wide-box"><span>سبب المرتجع</span><p>{{ getReasonCodeLabel(returnItem.reasonCode) }} - {{ returnItem.reason || '-' }}</p></div>
+    <div class="wide-box"><span>سبب القرار</span><p>{{ returnItem.decisionReason || '-' }}</p></div>
+    <div class="wide-box"><span>ملاحظات</span><p>{{ returnItem.notes || '-' }}</p></div>
+  </div>
+</p-dialog>
+
+<p-dialog
+  [(visible)]="showReturnDialog"
+  [modal]="true"
+  [draggable]="false"
+  [resizable]="false"
+  [style]="{ width: '980px', maxWidth: '96vw' }"
+  [header]="editingReturnId ? 'تعديل مرتجع' : 'مرتجع جديد'">
+  <div class="form-section" *ngIf="!editingReturnId">
+    <div class="section-title">إرجاع حسب فاتورة مبيعات</div>
+    <div class="form-grid" style="align-items: flex-end">
+      <label>
+        <span>رقم الفاتورة</span>
+        <input pInputText type="text" [(ngModel)]="invoiceReturnNo" [disabled]="invoiceLookupLoading" />
+      </label>
+      <button
+        pButton
+        type="button"
+        label="بحث"
+        icon="pi pi-search"
+        class="p-button-outlined"
+        [loading]="invoiceLookupLoading"
+        (click)="lookupInvoiceForReturn()">
+      </button>
+    </div>
+    <p *ngIf="invoiceLookupError" class="p-error" style="margin-top:0.5rem">{{ invoiceLookupError }}</p>
+    <div *ngIf="invoiceLookupResult?.items?.length" style="margin-top:0.75rem">
+      <p *ngIf="invoiceLookupResult?.customerName"><strong>العميل:</strong> {{ invoiceLookupResult?.customerName }}</p>
+      <p-table [value]="invoiceLookupResult?.items || []" styleClass="p-datatable-sm">
+        <ng-template pTemplate="header">
+          <tr>
+            <th>الصنف</th>
+            <th>متاح</th>
+            <th>كمية الإرجاع</th>
+          </tr>
+        </ng-template>
+        <ng-template pTemplate="body" let-row>
+          <tr *ngIf="row.itemId">
+            <td>{{ row.itemName || row.itemId }}</td>
+            <td>{{ row.quantity }}</td>
+            <td>
+              <input
+                pInputText
+                type="number"
+                [ngModel]="invoiceReturnQuantities[row.itemId]"
+                (ngModelChange)="invoiceReturnQuantities[row.itemId] = $event"
+                [min]="0"
+                [max]="row.quantity" />
+            </td>
+          </tr>
+        </ng-template>
+      </p-table>
+      <div style="margin-top:0.75rem">
+        <button
+          pButton
+          type="button"
+          label="تسجيل مرتجع من الفاتورة"
+          icon="pi pi-check"
+          (click)="saveInvoiceReturn()">
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <div class="form-section">
+    <div class="section-title">أصل المرتجع (يدوي / تراكمي)</div>
+    <div class="form-grid">
+      <label>
+        <span>رقم المرتجع</span>
+        <input pInputText type="text" [(ngModel)]="returnDraft.returnNo" />
+      </label>
+
+      <label>
+        <span>المصدر</span>
+        <p-dropdown
+          [options]="sourceOptions.slice(1)"
+          optionLabel="label"
+          optionValue="value"
+          [(ngModel)]="returnDraft.source"
+          (onChange)="onSourceChange()"
+          appendTo="body">
+        </p-dropdown>
+      </label>
+
+      <label>
+        <span>نوع المرجع</span>
+        <p-dropdown
+          [options]="referenceTypeOptions"
+          optionLabel="label"
+          optionValue="value"
+          [(ngModel)]="returnDraft.referenceType"
+          (onChange)="onReferenceTypeChange()"
+          appendTo="body">
+        </p-dropdown>
+      </label>
+
+      <label>
+        <span>المرجع الأصلي</span>
+        <p-dropdown
+          [options]="referenceLookupOptions"
+          optionLabel="label"
+          optionValue="value"
+          [(ngModel)]="returnDraft.referenceId"
+          (onChange)="onReferenceSelectionChange()"
+          appendTo="body"
+          placeholder="اختر المرجع الأصلي">
+        </p-dropdown>
+      </label>
+
+      <label>
+        <span>رقم المرجع</span>
+        <input pInputText type="text" [(ngModel)]="returnDraft.referenceNo" readonly />
+      </label>
+
+      <label>
+        <span>صاحب الطلب</span>
+        <input pInputText type="text" [(ngModel)]="returnDraft.requestorName" readonly />
+      </label>
+
+      <label>
+        <span>منشئ الطلب</span>
+        <input pInputText type="text" [(ngModel)]="returnDraft.createdBy" />
+      </label>
+
+      <label>
+        <span>سبب المرتجع</span>
+        <p-dropdown
+          [options]="reasonCodeOptions"
+          optionLabel="label"
+          optionValue="value"
+          [(ngModel)]="returnDraft.reasonCode"
+          appendTo="body">
+        </p-dropdown>
+      </label>
+    </div>
+  </div>
+
+  <div class="form-section">
+    <div class="section-title">الصنف والكمية</div>
+    <div class="form-grid">
+      <label>
+        <span>كود الصنف</span>
+        <input pInputText type="text" [(ngModel)]="returnDraft.itemCode" />
+      </label>
+
+      <label>
+        <span>اسم الصنف</span>
+        <input pInputText type="text" [(ngModel)]="returnDraft.itemName" />
+      </label>
+
+      <label>
+        <span>المخزن الأصلي</span>
+        <input pInputText type="text" [(ngModel)]="returnDraft.storeName" readonly />
+      </label>
+
+      <label>
+        <span>رقم الدفعة</span>
+        <input pInputText type="text" [(ngModel)]="returnDraft.batchNo" />
+      </label>
+
+      <label>
+        <span>الكمية المتاحة للمرتجع</span>
+        <input pInputText type="number" [(ngModel)]="returnDraft.availableReturnQty" readonly />
+      </label>
+
+      <label>
+        <span>الكمية المطلوبة</span>
+        <input pInputText type="number" [(ngModel)]="returnDraft.quantity" (ngModelChange)="onQuantityChange()" />
+      </label>
+
+      <label>
+        <span>الكمية المعتمدة</span>
+        <input pInputText type="number" [(ngModel)]="returnDraft.approvedQty" (ngModelChange)="onApprovedQtyChange()" />
+      </label>
+
+      <label>
+        <span>سعر الوحدة</span>
+        <input pInputText type="number" [(ngModel)]="returnDraft.unitPrice" readonly />
+      </label>
+    </div>
+  </div>
+
+  <div class="form-section">
+    <div class="section-title">القرار المخزني والمالي</div>
+    <div class="form-grid">
+      <label>
+        <span>الإجراء المخزني</span>
+        <p-dropdown
+          [options]="inventoryActionOptions"
+          optionLabel="label"
+          optionValue="value"
+          [(ngModel)]="returnDraft.inventoryAction"
+          (onChange)="onInventoryActionChange()"
+          appendTo="body">
+        </p-dropdown>
+      </label>
+
+      <label *ngIf="requiresTargetStore">
+        <span>المخزن المستهدف</span>
+        <p-dropdown
+          [options]="storeOptions"
+          optionLabel="label"
+          optionValue="value"
+          [(ngModel)]="returnDraft.targetStoreId"
+          (onChange)="onTargetStoreChange()"
+          appendTo="body">
+        </p-dropdown>
+      </label>
+
+      <label>
+        <span>الحالة</span>
+        <p-dropdown
+          [options]="statusOptions.slice(1)"
+          optionLabel="label"
+          optionValue="value"
+          [(ngModel)]="returnDraft.status"
+          appendTo="body">
+        </p-dropdown>
+      </label>
+
+      <label *ngIf="shouldShowRefundSection">
+        <span>قيمة رد المبلغ</span>
+        <input pInputText type="number" [(ngModel)]="returnDraft.refundAmount" />
+      </label>
+
+      <label *ngIf="shouldShowRefundSection">
+        <span>طريقة رد المبلغ</span>
+        <p-dropdown
+          [options]="refundMethodOptions"
+          optionLabel="label"
+          optionValue="value"
+          [(ngModel)]="returnDraft.refundMethod"
+          appendTo="body">
+        </p-dropdown>
+      </label>
+
+      <label *ngIf="shouldShowSupplierCreditSection">
+        <span>إشعار دائن المورد</span>
+        <input pInputText type="number" [(ngModel)]="returnDraft.supplierCreditAmount" />
+      </label>
+
+      <label class="wide-field">
+        <span>الوصف التفصيلي للسبب</span>
+        <textarea pInputTextarea rows="3" [(ngModel)]="returnDraft.reason"></textarea>
+      </label>
+
+      <label class="wide-field">
+        <span>سبب القرار</span>
+        <textarea pInputTextarea rows="3" [(ngModel)]="returnDraft.decisionReason"></textarea>
+      </label>
+
+      <label class="wide-field">
+        <span>ملاحظات</span>
+        <textarea pInputTextarea rows="3" [(ngModel)]="returnDraft.notes"></textarea>
+      </label>
+    </div>
+  </div>
+
+  <div class="dialog-actions">
+    <button pButton type="button" label="حفظ" icon="pi pi-check" (click)="saveReturn()"></button>
+    <button pButton type="button" label="إلغاء" class="p-button-text" (click)="showReturnDialog = false"></button>
+  </div>
+</p-dialog>
+
+<p-dialog
+  [(visible)]="showStatusDialog"
+  [modal]="true"
+  [draggable]="false"
+  [resizable]="false"
+  [style]="{ width: '560px', maxWidth: '96vw' }"
+  header="تحديث حالة المرتجع">
+  <div class="form-grid single-column">
+    <label>
+      <span>الحالة</span>
+      <p-dropdown
+        [options]="statusOptions.slice(1)"
+        optionLabel="label"
+        optionValue="value"
+        [(ngModel)]="statusDraft.status"
+        appendTo="body">
+      </p-dropdown>
+    </label>
+
+    <label>
+      <span>الكمية المعتمدة</span>
+      <input pInputText type="number" [(ngModel)]="statusDraft.approvedQty" />
+    </label>
+
+    <label>
+      <span>سبب القرار</span>
+      <textarea pInputTextarea rows="3" [(ngModel)]="statusDraft.decisionReason"></textarea>
+    </label>
+
+    <label>
+      <span>ملاحظات</span>
+      <textarea pInputTextarea rows="4" [(ngModel)]="statusDraft.notes"></textarea>
+    </label>
+  </div>
+
+  <div class="dialog-actions">
+    <button pButton type="button" label="حفظ التحديث" icon="pi pi-check" (click)="saveStatus()"></button>
+    <button pButton type="button" label="إلغاء" class="p-button-text" (click)="showStatusDialog = false"></button>
+  </div>
+</p-dialog>

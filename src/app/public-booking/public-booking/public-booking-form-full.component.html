@@ -1,0 +1,733 @@
+<div class="public-booking-container">
+  <!-- Landing Page (Step 1) -->
+  <div *ngIf="!showCheckoutForm()" class="landing-page">
+    <!-- Hero Section -->
+    <div class="booking-hero">
+      <!-- Top Navigation -->
+      <nav class="nav-container">
+        <div class="nav-logo">
+          <img *ngIf="companyDetails?.logoUrl" [src]="companyDetails?.logoUrl" [alt]="companyDetails.englishName" class="logo-image">
+          <div *ngIf="!companyDetails?.logoUrl" class="logo-text">
+            {{companyDetails?.englishName || 'Smart & Pro ERP'}}
+          </div>
+        </div>
+        <div class="nav-contact">
+          <a href="tel:{{companyDetails?.phones?.[0]?.phoneNumber}}" *ngIf="companyDetails?.phones?.length">
+            <i class="pi pi-phone"></i>
+            {{companyDetails.phones[0].phoneNumber}}
+          </a>
+          <a href="mailto:{{companyDetails?.email}}" *ngIf="companyDetails?.email">
+            <i class="pi pi-envelope"></i>
+            {{companyDetails.email}}
+          </a>
+        </div>
+      </nav>
+
+      <!-- Hero Content -->
+      <div class="hero-content">
+        <h1>{{companyDetails?.englishName || 'Smart & Pro'}}</h1>
+        <p class="company-subtitle" *ngIf="companyDetails?.arabicName">{{companyDetails.arabicName}}</p>
+        <p>Your Premium Hotel Booking Experience | تجربة حجز فندقية متميزة</p>
+        <div class="company-address" *ngIf="companyDetails?.address">
+          <i class="pi pi-map-marker"></i>
+          <span>{{companyDetails.address}}</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Search Form -->
+    <div class="search-container">
+      <form [formGroup]="form" class="search-form">
+        <!-- Hotel Selection -->
+        <div class="form-group">
+          <label class="search-label">
+            <i class="pi pi-building"></i>
+            Hotel | الفندق
+          </label>
+          <select formControlName="hotelId" class="search-input">
+            <option value="">Select a hotel | اختر فندق</option>
+            <option *ngFor="let hotel of hotels" [value]="hotel.id">
+              {{hotel.englishName || hotel.arabicName}}
+            </option>
+          </select>
+        </div>
+
+        <!-- Check-in Date -->
+        <div class="form-group">
+          <label class="search-label">
+            <i class="pi pi-calendar"></i>
+            Check-in | تاريخ الوصول
+          </label>
+          <p-calendar 
+            formControlName="arrivalDate"
+            [minDate]="minDateObj"
+            [showIcon]="true"
+            dateFormat="dd/mm/yy"
+            styleClass="w-full">
+          </p-calendar>
+        </div>
+
+        <!-- Check-out Date -->
+        <div class="form-group">
+          <label class="search-label">
+            <i class="pi pi-calendar"></i>
+            Check-out | تاريخ المغادرة
+          </label>
+          <p-calendar 
+            formControlName="departureDate"
+            [minDate]="minDepartureDateObj"
+            [showIcon]="true"
+            dateFormat="dd/mm/yy"
+            styleClass="w-full">
+          </p-calendar>
+        </div>
+
+        <!-- Book Now Button -->
+        <button type="button" (click)="goToCheckout()" class="search-button">
+          <i class="pi pi-check"></i>
+          Book Now | احجز الآن
+        </button>
+      </form>
+    </div>
+
+    <!-- Hotel Listings -->
+    <div class="hotels-grid" *ngIf="hotels.length > 0">
+      <div *ngFor="let hotel of hotels" class="hotel-card" (click)="selectHotel(hotel.id)">
+        <div class="hotel-image">
+          <img
+            *ngIf="hotel.logoUrl"
+            [src]="hotel.logoUrl"
+            [alt]="hotel.englishName || hotel.arabicName">
+          <div *ngIf="!hotel.logoUrl" class="hotel-placeholder">
+            <i class="pi pi-building"></i>
+          </div>
+        </div>
+        <div class="hotel-info">
+          <h3 class="hotel-name">{{hotel.englishName || hotel.arabicName}}</h3>
+          <div class="hotel-location">
+            <i class="pi pi-map-marker"></i>
+            <span>{{hotel.arabicName}}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Promotional Banners with Images -->
+    <div class="promo-images-section">
+      <div class="promo-images-container">
+        <h2 class="promo-images-title">Trending destinations</h2>
+        <p class="promo-images-subtitle">Travelers searching for hotels also booked these</p>
+        
+        <div class="promo-images-grid">
+          <!-- Dubai -->
+          <div class="promo-image-card">
+            <div class="promo-image" style="background: linear-gradient(rgba(0,0,0,0.2), rgba(0,0,0,0.4)), url('https://images.unsplash.com/photo-1512453979798-5ea266f8880c?w=400&h=300&fit=crop') center/cover;">
+              <div class="promo-overlay">
+                <h3>Dubai</h3>
+                <p>1,234 properties</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- London -->
+          <div class="promo-image-card">
+            <div class="promo-image" style="background: linear-gradient(rgba(0,0,0,0.2), rgba(0,0,0,0.4)), url('https://images.unsplash.com/photo-1513635269975-59663e0ac1ad?w=400&h=300&fit=crop') center/cover;">
+              <div class="promo-overlay">
+                <h3>London</h3>
+                <p>2,156 properties</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Paris -->
+          <div class="promo-image-card">
+            <div class="promo-image" style="background: linear-gradient(rgba(0,0,0,0.2), rgba(0,0,0,0.4)), url('https://images.unsplash.com/photo-1502602898657-3e91760cbb34?w=400&h=300&fit=crop') center/cover;">
+              <div class="promo-overlay">
+                <h3>Paris</h3>
+                <p>1,987 properties</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- New York -->
+          <div class="promo-image-card">
+            <div class="promo-image" style="background: linear-gradient(rgba(0,0,0,0.2), rgba(0,0,0,0.4)), url('https://images.unsplash.com/photo-1496442226666-8d4d0e62e6e9?w=400&h=300&fit=crop') center/cover;">
+              <div class="promo-overlay">
+                <h3>New York</h3>
+                <p>3,421 properties</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Tokyo -->
+          <div class="promo-image-card">
+            <div class="promo-image" style="background: linear-gradient(rgba(0,0,0,0.2), rgba(0,0,0,0.4)), url('https://images.unsplash.com/photo-1540959733332-eab4deabeeaf?w=400&h=300&fit=crop') center/cover;">
+              <div class="promo-overlay">
+                <h3>Tokyo</h3>
+                <p>1,654 properties</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Barcelona -->
+          <div class="promo-image-card">
+            <div class="promo-image" style="background: linear-gradient(rgba(0,0,0,0.2), rgba(0,0,0,0.4)), url('https://images.unsplash.com/photo-1583422409516-2895a77efded?w=400&h=300&fit=crop') center/cover;">
+              <div class="promo-overlay">
+                <h3>Barcelona</h3>
+                <p>1,432 properties</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Special Offers Section -->
+    <div class="offers-section">
+      <div class="offers-container">
+        <h2 class="offers-title">Special offers for you</h2>
+        
+        <div class="offers-grid">
+          <div class="offer-card offer-large">
+            <div class="offer-image" style="background: linear-gradient(135deg, rgba(0,53,128,0.9), rgba(0,113,194,0.85)), url('https://images.unsplash.com/photo-1566073771259-6a8506099945?w=600&h=400&fit=crop') center/cover;">
+              <div class="offer-content">
+                <span class="offer-badge">Limited Time</span>
+                <h3>Save 15% or more</h3>
+                <p>Members get access to exclusive deals – sign in now</p>
+                <button class="offer-button">Sign in, it's free</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="offer-card">
+            <div class="offer-image" style="background: linear-gradient(rgba(0,0,0,0.3), rgba(0,0,0,0.5)), url('https://images.unsplash.com/photo-1571896349842-33c89424de2d?w=400&h=300&fit=crop') center/cover;">
+              <div class="offer-content">
+                <span class="offer-badge">New</span>
+                <h3>Fly away</h3>
+                <p>Compare and book flights</p>
+                <a href="#" class="offer-link">Explore flights</a>
+              </div>
+            </div>
+          </div>
+
+          <div class="offer-card">
+            <div class="offer-image" style="background: linear-gradient(rgba(0,0,0,0.3), rgba(0,0,0,0.5)), url('https://images.unsplash.com/photo-1602002418082-a4443e081dd1?w=400&h=300&fit=crop') center/cover;">
+              <div class="offer-content">
+                <span class="offer-badge">Popular</span>
+                <h3>Enjoy the sun</h3>
+                <p>Beach resorts and hotels</p>
+                <a href="#" class="offer-link">Discover more</a>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Features Section -->
+    <div class="features-section">
+      <div class="features-container">
+        <h2 class="features-title">Why book with us?</h2>
+        <div class="features-grid">
+          <div class="feature-card">
+            <i class="pi pi-shield"></i>
+            <h3>Secure Booking</h3>
+            <p>Your data is protected with advanced security measures</p>
+          </div>
+          <div class="feature-card">
+            <i class="pi pi-dollar"></i>
+            <h3>Best Price Guarantee</h3>
+            <p>Find a lower price? We'll match it and give you an extra discount</p>
+          </div>
+          <div class="feature-card">
+            <i class="pi pi-clock"></i>
+            <h3>24/7 Support</h3>
+            <p>Our customer service team is here for you around the clock</p>
+          </div>
+          <div class="feature-card">
+            <i class="pi pi-star"></i>
+            <h3>Verified Reviews</h3>
+            <p>Real reviews from real guests who stayed at these properties</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="booking-footer">
+      <div class="footer-container">
+        <div class="footer-info">
+          <p>&copy; 2025 {{companyDetails?.englishName || 'Smart & Pro'}}. All rights reserved.</p>
+          <div class="footer-links">
+            <a href="#">Privacy Policy</a>
+            <a href="#">Terms of Service</a>
+            <a href="#">Contact Us</a>
+          </div>
+        </div>
+      </div>
+    </footer>
+  </div>
+  <!-- End Landing Page -->
+
+  <!-- Checkout Form (Step 2) -->
+  <div *ngIf="showCheckoutForm()" class="checkout-page">
+    <!-- Back Button -->
+    <div class="back-button-container" style="padding: 20px; max-width: 1200px; margin: 0 auto;">
+      <button type="button" (click)="backToLanding()" class="back-button" style="background: #003580; color: white; padding: 12px 24px; border: none; border-radius: 4px; cursor: pointer; display: flex; align-items: center; gap: 8px; font-size: 16px;">
+        <i class="pi pi-arrow-left"></i>
+        Back to Search | العودة للبحث
+      </button>
+    </div>
+
+    <!-- Original Booking Form from old version -->
+    <div class="booking-card" style="max-width: 1200px; margin: 20px auto; background: white; padding: 32px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+      <div class="booking-header" style="text-align: center; margin-bottom: 40px;">
+        <h1 class="booking-title" style="font-size: 32px; color: #003580; margin-bottom: 12px;">
+          <span class="title">Complete Your Reservation | أكمل الحجز</span>
+        </h1>
+        <p class="booking-subtitle" style="font-size: 16px; color: #6b6b6b;">
+          <span class="english-subtitle">Fill in the details below to finalize your booking</span>
+          <span class="arabic-subtitle"> | أدخل التفاصيل أدناه لإنهاء حجزك</span>
+        </p>
+      </div>
+
+      <div class="booking-form-container">
+        <form [formGroup]="form" (ngSubmit)="submit()" class="booking-form">
+          <!-- Guest Information Section -->
+          <div class="form-section" style="margin-bottom: 32px; padding: 24px; background: #f5f5f5; border-radius: 4px;">
+            <h3 class="section-title" style="font-size: 20px; color: #003580; margin-bottom: 20px; display: flex; align-items: center; gap: 8px;">
+              <i class="pi pi-user"></i>
+              Guest Information | معلومات الضيف
+            </h3>
+            
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 16px;">
+              <div>
+                <label style="display: block; margin-bottom: 8px; font-weight: 600;">
+                  <i class="pi pi-user-plus"></i>
+                  Full Name * | الاسم الكامل *
+                </label>
+                <input 
+                  type="text" 
+                  formControlName="guestName" 
+                  placeholder="Enter your full name"
+                  style="width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 4px;">
+              </div>
+              
+              <div>
+                <label style="display: block; margin-bottom: 8px; font-weight: 600;">
+                  <i class="pi pi-phone"></i>
+                  Phone Number | رقم الهاتف
+                </label>
+                <input 
+                  type="tel" 
+                  formControlName="guestPhone" 
+                  placeholder="Enter phone number"
+                  style="width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 4px;">
+              </div>
+
+              <div>
+                <label style="display: block; margin-bottom: 8px; font-weight: 600;">
+                  <i class="pi pi-envelope"></i>
+                  Email | البريد الإلكتروني
+                </label>
+                <input 
+                  type="email" 
+                  formControlName="guestEmail" 
+                  placeholder="Enter email address"
+                  style="width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 4px;">
+              </div>
+
+              <div>
+                <label style="display: block; margin-bottom: 8px; font-weight: 600;">
+                  <i class="pi pi-globe"></i>
+                  Nationality * | الجنسية *
+                </label>
+                <select 
+                  formControlName="nationality" 
+                  style="width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 4px;">
+                  <option value="">Select nationality</option>
+                  <option *ngFor="let nationality of nationalities" [value]="nationality.value">
+                    {{nationality.label}}
+                  </option>
+                </select>
+              </div>
+            </div>
+          </div>
+
+          <!-- Stay Details Section -->
+          <div class="form-section" style="margin-bottom: 32px; padding: 24px; background: #f5f5f5; border-radius: 4px;">
+            <h3 class="section-title" style="font-size: 20px; color: #003580; margin-bottom: 20px; display: flex; align-items: center; gap: 8px;">
+              <i class="pi pi-calendar"></i>
+              Stay Details | تفاصيل الإقامة
+            </h3>
+            
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 16px;">
+              <div>
+                <label style="display: block; margin-bottom: 8px; font-weight: 600;">
+                  <i class="pi pi-calendar-plus"></i>
+                  Check-in Date * | تاريخ الوصول *
+                </label>
+                <p-calendar 
+                  formControlName="arrivalDate"
+                  [minDate]="minDateObj"
+                  [showIcon]="true"
+                  dateFormat="dd/mm/yy"
+                  styleClass="w-full"
+                  appendTo="body">
+                </p-calendar>
+              </div>
+              
+              <div>
+                <label style="display: block; margin-bottom: 8px; font-weight: 600;">
+                  <i class="pi pi-calendar-minus"></i>
+                  Check-out Date * | تاريخ المغادرة *
+                </label>
+                <p-calendar 
+                  formControlName="departureDate"
+                  [minDate]="minDepartureDateObj"
+                  [showIcon]="true"
+                  dateFormat="dd/mm/yy"
+                  styleClass="w-full"
+                  appendTo="body">
+                </p-calendar>
+              </div>
+              
+              <div>
+                <label style="display: block; margin-bottom: 8px; font-weight: 600;">
+                  <i class="pi pi-moon"></i>
+                  Number of Nights * | عدد الليالي *
+                </label>
+                <input 
+                  type="number" 
+                  formControlName="numberOfNights" 
+                  min="1"
+                  placeholder="Number of nights"
+                  style="width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 4px;">
+              </div>
+            </div>
+          </div>
+
+          <!-- Hotel & Business Section -->
+          <div class="form-section" style="margin-bottom: 32px; padding: 24px; background: #f5f5f5; border-radius: 4px;">
+            <h3 class="section-title" style="font-size: 20px; color: #003580; margin-bottom: 20px; display: flex; align-items: center; gap: 8px;">
+              <i class="pi pi-building"></i>
+              Hotel & Business Details | تفاصيل الفندق والعمل
+            </h3>
+            
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 16px;">
+              <div>
+                <label style="display: block; margin-bottom: 8px; font-weight: 600;">
+                  <i class="pi pi-home"></i>
+                  Hotel * | الفندق *
+                </label>
+                <select 
+                  formControlName="hotelId" 
+                  style="width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 4px;">
+                  <option value="">Select hotel</option>
+                  <option *ngFor="let hotel of hotels" [value]="hotel.id">
+                    {{hotel.englishName}} - {{hotel.arabicName}}
+                  </option>
+                </select>
+              </div>
+              
+              <div>
+                <label style="display: block; margin-bottom: 8px; font-weight: 600;">
+                  <i class="pi pi-bookmark"></i>
+                  Reservation Type * | نوع الحجز *
+                </label>
+                <select 
+                  formControlName="reservationType" 
+                  style="width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 4px;">
+                  <option value="HotelDirect">Hotel Direct | مباشر من الفندق</option>
+                  <option value="AgentDirect">Agent Direct | مباشر من الوكيل</option>
+                  <option value="Allotment">Allotment | التخصيص</option>
+                </select>
+              </div>
+
+              <div>
+                <label style="display: block; margin-bottom: 8px; font-weight: 600;">
+                  <i class="pi pi-briefcase"></i>
+                  Client Company * | شركة العميل *
+                </label>
+                <select 
+                  formControlName="reservationClientCompanyId" 
+                  style="width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 4px;">
+                  <option value="">Select company</option>
+                  <option *ngFor="let company of companies" [value]="company.id">
+                    {{company.englishName}} - {{company.arabicName}}
+                  </option>
+                </select>
+              </div>
+
+              <div>
+                <label style="display: block; margin-bottom: 8px; font-weight: 600;">
+                  <i class="pi pi-sitemap"></i>
+                  Reservation Company | شركة الحجز
+                </label>
+                <select 
+                  formControlName="reservationCompanyId" 
+                  style="width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 4px;">
+                  <option value="">Select company</option>
+                  <option *ngFor="let company of companies" [value]="company.id">
+                    {{company.englishName}} - {{company.arabicName}}
+                  </option>
+                </select>
+              </div>
+
+              <div>
+                <label style="display: block; margin-bottom: 8px; font-weight: 600;">
+                  <i class="pi pi-user-edit"></i>
+                  Sales Representative | مندوب المبيعات
+                </label>
+                <select 
+                  formControlName="salesRepresentativeId" 
+                  style="width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 4px;">
+                  <option value="">Select representative</option>
+                  <option *ngFor="let rep of salesRepresentatives" [value]="rep.id">
+                    {{rep.englishName}} - {{rep.arabicName}}
+                  </option>
+                </select>
+              </div>
+
+              <div>
+                <label style="display: block; margin-bottom: 8px; font-weight: 600;">
+                  <i class="pi pi-sun"></i>
+                  Season * | الموسم *
+                </label>
+                <select 
+                  formControlName="reservationSeasonId" 
+                  style="width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 4px;">
+                  <option value="">Select season</option>
+                  <option *ngFor="let season of seasons" [value]="season.id">
+                    {{season.englishName}} - {{season.arabicName}}
+                  </option>
+                </select>
+              </div>
+            </div>
+          </div>
+
+          <!-- Room Selection Section -->
+          <div class="form-section" style="margin-bottom: 32px; padding: 24px; background: #f5f5f5; border-radius: 4px;">
+            <h3 class="section-title" style="font-size: 20px; color: #003580; margin-bottom: 20px; display: flex; align-items: center; gap: 8px;">
+              <i class="pi pi-home"></i>
+              Room Selection | اختيار الغرف
+            </h3>
+            
+            <!-- Room Type Cards -->
+            <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 16px; margin-bottom: 24px;">
+              <div 
+                *ngFor="let roomType of roomTypes" 
+                (click)="toggleRoomType(roomType)"
+                style="border: 2px solid #ddd; border-radius: 4px; padding: 16px; cursor: pointer; text-align: center; transition: all 0.3s;"
+                [style.border-color]="isRoomTypeSelected(roomType.id) ? '#003580' : '#ddd'"
+                [style.background-color]="isRoomTypeSelected(roomType.id) ? '#e8f4fd' : 'white'">
+                
+                <div style="width: 60px; height: 60px; margin: 0 auto 12px; border-radius: 50%; background: #f5f5f5; display: flex; align-items: center; justify-content: center;">
+                  <img 
+                    *ngIf="roomType.logo" 
+                    [src]="'data:image/*;base64,' + roomType.logo" 
+                    [alt]="roomType.englishName"
+                    style="width: 40px; height: 40px; object-fit: contain;">
+                  <i *ngIf="!roomType.logo" class="pi pi-home" style="font-size: 24px; color: #003580;"></i>
+                </div>
+
+                <h4 style="font-size: 14px; font-weight: 600; margin-bottom: 8px; color: #003580;">
+                  {{roomType.englishName}}
+                </h4>
+                <p style="font-size: 12px; color: #6b6b6b; margin-bottom: 8px;">
+                  {{roomType.arabicName}}
+                </p>
+                <div style="display: flex; align-items: center; justify-content: center; gap: 4px; color: #6b6b6b; font-size: 12px;">
+                  <i class="pi pi-users"></i>
+                  <span>{{roomType.personNo}} PAX</span>
+                </div>
+
+                <div *ngIf="isRoomTypeSelected(roomType.id)" style="margin-top: 12px; background: #003580; color: white; padding: 4px 12px; border-radius: 12px; display: inline-block; font-size: 12px;">
+                  <i class="pi pi-check"></i>
+                  {{getRoomTypeQuantity(roomType.id)}}
+                </div>
+              </div>
+            </div>
+
+            <!-- Selected Rooms Summary -->
+            <div *ngIf="getSelectedRoomTypes().length > 0" style="background: white; padding: 20px; border-radius: 4px; border: 1px solid #ddd;">
+              <h4 style="font-size: 16px; color: #003580; margin-bottom: 16px; display: flex; align-items: center; gap: 8px;">
+                <i class="pi pi-shopping-bag"></i>
+                Selected Rooms | الغرف المختارة
+              </h4>
+              
+              <div *ngFor="let selectedRoom of getSelectedRoomTypes()" style="background: #f5f5f5; padding: 16px; border-radius: 4px; margin-bottom: 12px;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                  <div>
+                    <strong>{{selectedRoom.roomType.englishName}} - {{selectedRoom.roomType.arabicName}}</strong>
+                    <span style="color: #6b6b6b; font-size: 14px;"> ({{getRoomPax(selectedRoom.roomType, selectedRoom.quantity)}} PAX)</span>
+                  </div>
+                  <div style="display: flex; align-items: center; gap: 8px;">
+                    <button type="button" (click)="decrementRoomQuantity(selectedRoom.id)" style="background: white; border: 1px solid #ddd; padding: 4px 12px; border-radius: 4px; cursor: pointer;">
+                      <i class="pi pi-minus"></i>
+                    </button>
+                    <span style="font-weight: 600;">{{selectedRoom.quantity}}</span>
+                    <button type="button" (click)="incrementRoomQuantity(selectedRoom.id)" style="background: white; border: 1px solid #ddd; padding: 4px 12px; border-radius: 4px; cursor: pointer;">
+                      <i class="pi pi-plus"></i>
+                    </button>
+                    <button type="button" (click)="removeRoomEntry(selectedRoom.id)" style="background: #dc3545; color: white; border: none; padding: 4px 12px; border-radius: 4px; cursor: pointer;">
+                      <i class="pi pi-times"></i>
+                    </button>
+                  </div>
+                </div>
+
+                <!-- Room Options -->
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                  <div>
+                    <label style="display: block; margin-bottom: 4px; font-size: 14px; font-weight: 600;">
+                      <i class="pi pi-coffee"></i>
+                      Meal Plan | خطة الوجبات
+                    </label>
+                    <select 
+                      [value]="selectedRoom.mealId || ''" 
+                      (change)="updateRoomMeal(selectedRoom.id, ($any($event.target)).value)"
+                      style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
+                      <option value="">No Meal | بدون وجبة</option>
+                      <option *ngFor="let meal of meals" [value]="meal.id">
+                        {{meal.englishName}} - {{meal.arabicName}}
+                      </option>
+                    </select>
+                  </div>
+                  
+                  <div>
+                    <label style="display: block; margin-bottom: 4px; font-size: 14px; font-weight: 600;">
+                      <i class="pi pi-eye"></i>
+                      Room View | إطلالة الغرفة
+                    </label>
+                    <select 
+                      [value]="selectedRoom.viewId || ''" 
+                      (change)="updateRoomView(selectedRoom.id, ($any($event.target)).value)"
+                      style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
+                      <option value="">Standard View | إطلالة عادية</option>
+                      <option *ngFor="let view of views" [value]="view.id">
+                        {{view.englishName}} - {{view.arabicName}}
+                      </option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Services Section -->
+          <div class="form-section" style="margin-bottom: 32px; padding: 24px; background: #f5f5f5; border-radius: 4px;">
+            <h3 class="section-title" style="font-size: 20px; color: #003580; margin-bottom: 20px; display: flex; align-items: center; gap: 8px;">
+              <i class="pi pi-cog"></i>
+              Additional Services | الخدمات الإضافية
+              <small style="font-weight: normal; font-size: 14px; color: #6b6b6b;">(Optional | اختياري)</small>
+            </h3>
+            
+            <!-- Service Cards -->
+            <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 16px; margin-bottom: 24px;">
+              <div 
+                *ngFor="let service of availableServices" 
+                (click)="toggleService(service)"
+                style="border: 2px solid #ddd; border-radius: 4px; padding: 16px; cursor: pointer; text-align: center; transition: all 0.3s;"
+                [style.border-color]="isServiceSelected(service.id) ? '#003580' : '#ddd'"
+                [style.background-color]="isServiceSelected(service.id) ? '#e8f4fd' : 'white'">
+                
+                <div style="width: 60px; height: 60px; margin: 0 auto 12px; border-radius: 50%; background: #f5f5f5; display: flex; align-items: center; justify-content: center;">
+                  <img 
+                    *ngIf="service.logo" 
+                    [src]="'data:image/*;base64,' + service.logo" 
+                    [alt]="service.englishName"
+                    style="width: 40px; height: 40px; object-fit: contain;">
+                  <i *ngIf="!service.logo" class="pi pi-cog" style="font-size: 24px; color: #003580;"></i>
+                </div>
+
+                <h4 style="font-size: 14px; font-weight: 600; margin-bottom: 8px; color: #003580;">
+                  {{service.englishName}}
+                </h4>
+                <p style="font-size: 12px; color: #6b6b6b;">
+                  {{service.arabicName}}
+                </p>
+
+                <div *ngIf="isServiceSelected(service.id)" style="margin-top: 12px; background: #003580; color: white; padding: 4px 12px; border-radius: 12px; display: inline-block; font-size: 12px;">
+                  <i class="pi pi-check"></i>
+                  {{getServiceQuantity(service.id)}}
+                </div>
+              </div>
+            </div>
+
+            <!-- Selected Services Summary -->
+            <div *ngIf="getSelectedServices().length > 0" style="background: white; padding: 20px; border-radius: 4px; border: 1px solid #ddd;">
+              <h4 style="font-size: 16px; color: #003580; margin-bottom: 16px; display: flex; align-items: center; gap: 8px;">
+                <i class="pi pi-shopping-bag"></i>
+                Selected Services | الخدمات المختارة
+              </h4>
+              
+              <div *ngFor="let selectedService of getSelectedServices()" style="background: #f5f5f5; padding: 16px; border-radius: 4px; margin-bottom: 12px;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                  <div>
+                    <strong>{{selectedService.service.englishName}} - {{selectedService.service.arabicName}}</strong>
+                  </div>
+                  <div style="display: flex; align-items: center; gap: 8px;">
+                    <button type="button" (click)="decrementServiceQuantity(selectedService.id)" style="background: white; border: 1px solid #ddd; padding: 4px 12px; border-radius: 4px; cursor: pointer;">
+                      <i class="pi pi-minus"></i>
+                    </button>
+                    <span style="font-weight: 600;">{{selectedService.quantity}}</span>
+                    <button type="button" (click)="incrementServiceQuantity(selectedService.id)" style="background: white; border: 1px solid #ddd; padding: 4px 12px; border-radius: 4px; cursor: pointer;">
+                      <i class="pi pi-plus"></i>
+                    </button>
+                    <button type="button" (click)="removeServiceEntry(selectedService.id)" style="background: #dc3545; color: white; border: none; padding: 4px 12px; border-radius: 4px; cursor: pointer;">
+                      <i class="pi pi-times"></i>
+                    </button>
+                  </div>
+                </div>
+
+                <!-- Service Description -->
+                <div>
+                  <label style="display: block; margin-bottom: 4px; font-size: 14px; font-weight: 600;">
+                    <i class="pi pi-align-left"></i>
+                    Description / Notes | الوصف / الملاحظات
+                  </label>
+                  <textarea 
+                    [value]="selectedService.description || ''" 
+                    (input)="updateServiceDescription(selectedService.id, ($any($event.target)).value)"
+                    rows="2"
+                    placeholder="Add any special requests or notes..."
+                    style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px; resize: vertical;"></textarea>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Submit Section -->
+          <div style="text-align: center; margin-top: 32px;">
+            <button 
+              type="submit" 
+              [disabled]="form.invalid || submitting()"
+              style="background: #003580; color: white; padding: 16px 48px; border: none; border-radius: 4px; font-size: 18px; font-weight: 600; cursor: pointer; display: inline-flex; align-items: center; gap: 12px;"
+              [style.opacity]="form.invalid || submitting() ? '0.6' : '1'"
+              [style.cursor]="form.invalid || submitting() ? 'not-allowed' : 'pointer'">
+              <i [class]="submitting() ? 'pi pi-spinner pi-spin' : 'pi pi-check'"></i>
+              <span *ngIf="!submitting()">Book Now | احجز الآن</span>
+              <span *ngIf="submitting()">Processing... | جاري المعالجة...</span>
+            </button>
+          </div>
+
+          <!-- Success/Error Messages -->
+          <div style="margin-top: 24px;">
+            <div *ngIf="success() === true" style="background: #d4edda; border: 1px solid #c3e6cb; color: #155724; padding: 16px; border-radius: 4px; text-align: center;">
+              <i class="pi pi-check-circle" style="font-size: 24px; margin-bottom: 8px;"></i>
+              <h3 style="margin: 8px 0;">Booking Confirmed! | تم تأكيد الحجز!</h3>
+              <p style="margin: 0;">Your reservation has been successfully submitted. | تم إرسال حجزك بنجاح.</p>
+            </div>
+            
+            <div *ngIf="success() === false" style="background: #f8d7da; border: 1px solid #f5c6cb; color: #721c24; padding: 16px; border-radius: 4px; text-align: center;">
+              <i class="pi pi-exclamation-triangle" style="font-size: 24px; margin-bottom: 8px;"></i>
+              <h3 style="margin: 8px 0;">Booking Failed | فشل الحجز</h3>
+              <p style="margin: 0;">There was an error processing your reservation. Please try again. | حدث خطأ في معالجة حجزك. يرجى المحاولة مرة أخرى.</p>
+            </div>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+  <!-- End Checkout Form -->
+</div>

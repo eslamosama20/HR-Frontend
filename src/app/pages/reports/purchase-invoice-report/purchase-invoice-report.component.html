@@ -1,0 +1,375 @@
+<div class="w-full">
+  <div class="flex justify-center items-start gap-4 flex-col w-full px-10">
+    <div class="fixed inset-0 bg-gray-500 bg-opacity-75 flex items-center justify-center z-50" *ngIf="loading">
+      <i class="pi pi-spin pi-spinner" style="font-size: 2rem"></i>
+    </div>
+
+
+    <p-panel class="w-full" [header]="translate.instant('MENU.PURCHASES')">
+      <div class="flex flex-col w-full gap-4 ">
+        <div class="flex justify-start items-end gap-2 w-full">
+
+          <div class="field" style="min-width: 190px; max-width: 230px;">
+            <label for="startDate" class="block">{{
+              translate.instant("FINANCE.START_DATE")
+              }}</label>
+            <p-calendar id="startDate" [(ngModel)]="startDate" [showButtonBar]="true" variant="filled" [showIcon]="true"
+              [iconDisplay]="'input'" [dateFormat]="'dd/mm/yy'" appendTo="body" styleClass="w-full"
+              panelStyleClass="sales-report-calendar-panel"
+              (onShow)="onCalendarShow('start')"
+              (onInput)="onCalendarInput($event, 'start')">
+              <ng-template pTemplate="inputicon">
+                <i class="pi pi-calendar "></i>
+              </ng-template>
+            </p-calendar>
+          </div>
+          <div class="field" style="min-width: 190px; max-width: 230px;">
+            <label for="endDate" class="block">{{
+              translate.instant("FINANCE.END_DATE")
+              }}</label>
+            <p-calendar id="endDate" [(ngModel)]="endDate" [showButtonBar]="true" variant="filled" [showIcon]="true"
+              [iconDisplay]="'input'" [dateFormat]="'dd/mm/yy'" appendTo="body" styleClass="w-full"
+              panelStyleClass="sales-report-calendar-panel"
+              (onShow)="onCalendarShow('end')"
+              (onInput)="onCalendarInput($event, 'end')">
+              <ng-template pTemplate="inputicon">
+                <i class="pi pi-calendar "></i>
+              </ng-template>
+            </p-calendar>
+          </div>
+          <p-button styleClass="rounded-md report-action-button" [disabled]="startDate === '' || endDate === ''"
+            [label]="translate.instant('FINANCE.SEARCH')" (onClick)="handleSubmit()" />
+          <p-button
+            styleClass="rounded-md report-action-button"
+            [disabled]="purchasableInvoiceReport.length === 0"
+            icon="pi pi-share-alt"
+            [label]="'مشاركة'"
+            (onClick)="openShareDialog()"
+            severity="info"
+          />
+          <p-button
+            styleClass="rounded-md report-action-button"
+            [disabled]="purchasableInvoiceReport.length === 0"
+            icon="pi pi-print"
+            [label]="'طباعة PDF'"
+            (onClick)="printPDF()"
+            severity="warning"
+          />
+          <p-button
+            styleClass="rounded-md report-action-button"
+            [disabled]="purchasableInvoiceReport.length === 0"
+            icon="pi pi-file-pdf"
+            [label]="'تنزيل PDF'"
+            (onClick)="downloadPDF()"
+            severity="danger"
+          />
+          <p-button 
+            styleClass="rounded-md p-button-success report-action-button" 
+            [disabled]="purchasableInvoiceReport.length === 0"
+            label="تصدير Excel" 
+            icon="pi pi-file-excel" 
+            (onClick)="exportToExcel()" />
+        </div>
+      </div>
+      <div class="flex justify-center p-5 my-4 border border-gray-300 rounded-lg text-xl w-full text-center font-bold"
+        *ngIf="purchasableInvoiceReport.length === 0">
+        No Data
+      </div>
+      <div class="flex flex-col my-4 border border-gray-300 rounded-lg" *ngIf="purchasableInvoiceReport.length > 0">
+
+        <table class="w-full border-collapse">
+          <thead>
+            <tr class="text-center">
+              <th colspan="4" class="text-center font-semibold text-lgd w-[50%] bg-yellow">
+                {{translate.instant('INVOICE.INVOICE_DETAILS')}}
+              </th>
+              <th colspan="6" class="text-center font-semibold text-lg bg-yellow">
+                {{translate.instant('INVOICE.ITEMS_DETAILS')}}
+              </th>
+            </tr>
+            <tr>
+              <!-- Invoice details-->
+              <th class="w-[8%] text-center bg-yellow">
+                {{translate.instant('INVOICE.INVOICENO')}}
+              </th>
+              <th class="w-[22%] text-center bg-yellow">
+                {{translate.instant('INVOICE.SUPPLIERNAME')}}
+              </th>
+              <th class="w-[20%] text-center bg-yellow">
+                {{translate.instant('INVOICE.DESCRIPTION')}}
+              </th>
+              <th class="w-[10%] text-center bg-yellow">
+                {{translate.instant('INVOICE.ISSUE_DATE')}}
+              </th>
+
+              <!--Items details-->
+              <th class="w-[10%] text-center bg-yellow">
+                {{translate.instant('INVOICE.ITEM_CODE')}}
+              </th>
+              <th class="w-[10%] text-center bg-yellow">
+                {{translate.instant('INVOICE.ITEMNAME')}}
+              </th>
+              <th class="w-[10%] text-center bg-yellow">
+                {{translate.instant('DATA.QUANTITY')}}
+              </th>
+              <th class="w-[10%] text-center bg-yellow">
+                {{translate.instant('DATA.UNIT_PRICE')}}
+              </th>
+              <th class="w-[10%] text-center bg-yellow">
+                {{translate.instant('INVOICE.TOTAL')}}
+              </th>
+              <th class="w-[11%] text-center bg-yellow">
+                {{translate.instant('INVOICE.TOTAL_WITH_TAX')}}
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            <ng-container *ngFor="let item of purchasableInvoiceReport; let i = index">
+              <tr class="">
+                <!-- Invoice details spanning across multiple item rows -->
+                <td class="text-center" [rowSpan]="(item.itemDetails.length + 1) || 1">
+                  <a [href]="'/purchase-invoices/' + item.invoiceId"  target="_blank" class="text-decoration-none">
+                    {{ item.invoiceNo }}
+                  </a>
+                </td>
+                <td class="text-center" [rowSpan]="(item.itemDetails.length + 1) || 1">
+                  <!--<a
+                    [href]="'/accounting/customer-profile/' + item.supplierId"
+                    target="_blank"
+                    class="link-style">
+                    {{ activeLanguage === 'ar' ? item.suppilerArabicName : item.suppilerEnglishName }}
+                  </a>-->
+                  <a
+                    [href]="'/accounting/account-statement/' + item.mainAccountId"
+                    target="_blank"
+                    class="link-style">
+                    {{ activeLanguage === 'ar' ? item.suppilerArabicName : item.suppilerEnglishName }}
+                  </a>
+                </td>
+
+                <!--<td class="text-center" [rowSpan]="(item.itemDetails.length + 1) || 1">
+                  {{ activeLanguage === 'ar' ? item.suppilerArabicName : item.suppilerEnglishName }}
+                </td>-->
+                <td class="text-center" [rowSpan]="(item.itemDetails.length + 1) || 1">
+                  {{item.description}}
+                </td>
+                <td class="text-center" [rowSpan]="(item.itemDetails.length + 1) || 1">
+                  {{item.issueDate | customDate }}
+                </td>
+
+                <!-- First item row for the current invoice -->
+                <td class="text-center">
+                  {{item.itemDetails[0]?.referenceCode}}
+                </td>
+                <td class="text-center">
+                  {{activeLanguage === 'ar' ? item.itemDetails[0]?.itemArabicName :
+                  item.itemDetails[0]?.itemEnglishName}}
+                </td>
+                <td class="text-center">
+                  {{item.itemDetails[0]?.quantity}}
+                </td>
+                <td class="text-center">
+                  {{item.itemDetails[0]?.price}}
+                </td>
+                <td class="text-center">
+                  {{item.itemDetails[0]?.totalPrice | number}}
+                </td>
+                <td class="text-center">
+                  {{item.itemDetails[0]?.totalPriceWithTax | number}}
+                </td>
+              </tr>
+
+              <!-- Additional rows for remaining itemDetails in the current invoice -->
+              <tr *ngFor="let itemDetail of item.itemDetails.slice(1)">
+                <td class="text-center">
+                  {{itemDetail.referenceCode}}
+                </td>
+                <td class="text-center">
+                  {{activeLanguage === 'ar' ? itemDetail.itemArabicName : itemDetail.itemEnglishName}}
+                </td>
+                <td class="text-center">
+                  {{itemDetail.quantity}}
+                </td>
+                <td class="text-center">
+                  {{itemDetail.price | number : '1.0-2'}}
+                </td>
+                <td class="text-center">
+                  {{itemDetail?.totalPrice | number}}
+                </td>
+                <td class="text-center">
+                  {{itemDetail?.totalPriceWithTax | number}}
+                </td>
+              </tr>
+
+              <tr class="text-center subtotal border-bottom-2 border-black border-solid">
+                <td colspan="2">
+                  {{translate.instant('INVOICE.TOTAL')}}
+                </td>
+                <td class="price subtotal">
+                  {{item.totalItemQuantity}}
+                </td>
+                <td class="price subtotal">
+                  {{item.totalItemPrice | number : '1.0-2'}}
+                </td>
+                <td class="price subtotal">
+                  {{item.totalInvoicePrice | number}}
+                </td>
+                <td class="price subtotal">
+                  {{item.totalInvoicePriceWithTax | number}}
+                </td>
+              </tr>
+            </ng-container>
+
+            <tr class="text-center overall-total-row">
+              <td colspan="6" class="overall-total">
+                {{translate.instant('INVOICE.TOTAL')}}
+              </td>
+              <td class="overall-total">
+                {{totalQuantity | number : '1.0-2'}}
+              </td>
+              <td class="overall-total">
+                {{totalPrice | number : '1.0-2'}}
+              </td>
+              <td class="overall-total">
+                {{totalInvoicePrice | number : '1.0-2'}}
+              </td>
+              <td class="overall-total">
+                {{totalInvoicePriceWithTax | number : '1.0-2'}}
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </p-panel>
+  </div>
+</div>
+
+<!-- Share Dialog -->
+<p-dialog
+  *ngIf="shareDialogVisible"
+  [(visible)]="shareDialogVisible"
+  [modal]="true"
+  [dismissableMask]="true"
+  [draggable]="false"
+  [resizable]="false"
+  [style]="{ width: '520px', maxWidth: '95vw' }"
+  contentStyleClass="share-dialog"
+  [baseZIndex]="11000"
+>
+  <ng-template pTemplate="header">
+    <div class="share-header">
+      <span class="icon-chip"><i class="pi pi-share-alt"></i></span>
+      <div class="title">
+        <div class="title-main">مشاركة تقرير المشتريات</div>
+      </div>
+    </div>
+  </ng-template>
+
+  <p-tabView [(activeIndex)]="shareActiveTabIndex">
+    <!-- Email Tab -->
+    <p-tabPanel header="البريد الإلكتروني" leftIcon="pi pi-envelope mr-2">
+      <div class="share-tab">
+        <div class="form-row">
+          <label for="shareEmail">البريد الإلكتروني</label>
+          <input
+            id="shareEmail"
+            type="email"
+            pInputText
+            [formControl]="$any(shareForm.get('email'))"
+            placeholder="example@domain.com"
+            class="w-full"
+          />
+          <small
+            class="err"
+            *ngIf="shareForm.get('email')?.touched && shareForm.get('email')?.invalid"
+          >
+            برجاء إدخال بريد إلكتروني صحيح
+          </small>
+        </div>
+
+        <div class="actions">
+          <button
+            pButton
+            type="button"
+            class="p-button p-button-primary"
+            icon="pi pi-send"
+            label="إرسال"
+            (click)="submitShareEmail()"
+            [disabled]="shareForm.get('email')?.invalid || shareBusy"
+            [loading]="shareBusy"
+            styleClass="flex-1"
+          ></button>
+          <button
+            pButton
+            type="button"
+            class="p-button-outlined p-button-secondary"
+            icon="pi pi-times"
+            label="إلغاء"
+            (click)="closeShareDialog()"
+            [disabled]="shareBusy"
+            styleClass="flex-1"
+          ></button>
+        </div>
+      </div>
+    </p-tabPanel>
+
+    <!-- WhatsApp Tab -->
+    <p-tabPanel header="واتساب" leftIcon="pi pi-whatsapp mr-2">
+      <div class="share-tab">
+        <div class="media">
+          <span class="chip chip-whatsapp"><i class="pi pi-whatsapp"></i></span>
+          <div class="media-body">
+            <div class="media-title">إرسال عبر واتساب</div>
+            <div class="media-sub">
+              أدخل رقم الجوال (رمز الدولة + الرقم) بدون مسافات. مثال: 9665xxxxxxxx
+            </div>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <label for="sharePhone">رقم الجوال</label>
+          <input
+            id="sharePhone"
+            type="tel"
+            pInputText
+            [formControl]="$any(shareForm.get('whatsappNumber'))"
+            placeholder="9665xxxxxxxx"
+            class="w-full"
+          />
+          <small
+            class="err"
+            *ngIf="shareForm.get('whatsappNumber')?.touched && shareForm.get('whatsappNumber')?.invalid"
+          >
+            برجاء إدخال رقم صحيح (8–15 أرقام)
+          </small>
+        </div>
+
+        <div class="actions">
+          <button
+            pButton
+            type="button"
+            class="p-button p-button-success"
+            icon="pi pi-send"
+            label="إرسال"
+            (click)="submitShareWhatsApp()"
+            [disabled]="shareForm.get('whatsappNumber')?.invalid || shareBusy"
+            [loading]="shareBusy"
+            styleClass="flex-1"
+          ></button>
+          <button
+            pButton
+            type="button"
+            class="p-button-outlined p-button-secondary"
+            icon="pi pi-times"
+            label="إلغاء"
+            (click)="closeShareDialog()"
+            [disabled]="shareBusy"
+            styleClass="flex-1"
+          ></button>
+        </div>
+      </div>
+    </p-tabPanel>
+  </p-tabView>
+</p-dialog>
+
+<p-toast />

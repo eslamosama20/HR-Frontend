@@ -1,0 +1,25 @@
+<div class="barcode-input" [class.is-loading]="loading" [class.has-error]="hasError">
+  <div class="barcode-input__control">
+    <span class="barcode-input__icon">
+      <app-keenicon name="barcode" class="fs-2"></app-keenicon>
+    </span>
+
+    <input
+      type="text"
+      class="form-control barcode-input__field"
+      [placeholder]="placeholder"
+      [disabled]="disabled || loading"
+      [(ngModel)]="barcodeValue"
+      (ngModelChange)="onBarcodeValueChange($event)"
+      (keydown.enter)="onEnterPressed($event)"
+      autocomplete="off"
+      spellcheck="false"
+    />
+
+    <span class="barcode-input__state" *ngIf="loading" aria-live="polite">
+      <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+    </span>
+  </div>
+
+  <small class="barcode-input__error" *ngIf="hasError">{{ errorText }}</small>
+</div>

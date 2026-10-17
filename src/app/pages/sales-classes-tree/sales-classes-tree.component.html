@@ -1,0 +1,778 @@
+<div class="flex compact-page--xs">
+  <div class="w-full">
+    <div class="flex justify-center items-start gap-1 flex-col w-full px-2 md:px-3">
+
+      <!-- LOADING OVERLAY -->
+      <div
+        class="fixed inset-0 bg-gray-500 bg-opacity-75 flex items-center justify-center z-50"
+        *ngIf="loading"
+      >
+        <i class="pi pi-spin pi-spinner" style="font-size: 2rem"></i>
+      </div>
+
+      <!-- TOOLBAR -->
+      <div class="toolbar-row w-full flex flex-col md:flex-row md:items-center md:justify-between gap-2 mt-2">
+
+        <!-- Left: Buttons -->
+        <div class="flex flex-wrap items-center gap-2">
+          <p-button
+            *ngIf="hasPermission('MainSalesClass.Create')"
+            [label]="translate.instant('FINANCE.ADD_ROOT_SALES_CLASS')"
+            icon="pi pi-plus"
+            styleClass="rounded-md p-button-primary"
+            (onClick)="showRootSalesClassDialog(); $event.stopPropagation()"
+          ></p-button>
+
+          <!-- match purchase keys/classes -->
+          <p-button
+            [label]="translate.instant('COMMON.EXPAND_ALL') || 'Expand All'"
+            icon="pi pi-angle-double-down"
+            styleClass="rounded-md btn-expand-all"
+            [style]="{ 'margin-inline-start': '1rem' }"
+            (onClick)="expandAll()"
+          ></p-button>
+
+          <p-button
+            [label]="translate.instant('COMMON.COLLAPSE_ALL') || 'Collapse All'"
+            icon="pi pi-angle-double-up"
+            styleClass="rounded-md btn-collapse-all"
+            (onClick)="collapseAll()"
+          ></p-button>
+
+          <p-button *ngIf="hasPermission('System.DevOnly.ViewReservationSalesClasses')"
+            [label]="showReservationItems ? 'إخفاء أصناف الحجز' : 'إظهار أصناف الحجز'"
+            [icon]="showReservationItems ? 'pi pi-eye-slash' : 'pi pi-eye'"
+            styleClass="rounded-md p-button-secondary"
+            (onClick)="toggleReservationItems()"
+          ></p-button>
+        </div>
+
+        <!-- Right: Search -->
+        <div class="search-wrap w-full md:w-80">
+          <span class="p-input-icon-left w-full search-input">
+            <i class="pi pi-search"></i>
+            <input
+              #searchInput
+              pInputText
+              type="text"
+              class="w-full"
+              [placeholder]="translate.instant('DATA.SEARCH') || 'Search...'"
+              (input)="onSearch(searchInput.value)"
+            />
+          </span>
+        </div>
+
+      </div>
+
+      <!-- ✅ Tree + Side Editor (جنب بعض) -->
+      <div
+        class="tree-editor-wrap w-full"
+        [class.rtl]="activeLanguage === 'ar'"
+        *ngIf="!loading"
+      >
+
+        <!-- ======================
+             RIGHT: EDITOR (Side Panel)
+             ====================== -->
+        <div class="editor-col" [class.is-collapsed]="!sidePanelVisible">
+          <div class="editor-card">
+
+            <div class="editor-header">
+              <div class="editor-title">
+                <ng-container [ngSwitch]="selectedNodeType">
+                  <ng-container *ngSwitchCase="'rootSalesClass'">
+                    {{ (isEditing ? 'FINANCE.EDIT_ROOT_SALES_CLASS' : 'FINANCE.ADD_ROOT_SALES_CLASS') | translate }}
+                  </ng-container>
+                  <ng-container *ngSwitchCase="'headerSalesClass'">
+                    {{ (isEditing ? 'FINANCE.EDIT_HEADER_SALES_CLASS' : 'FINANCE.ADD_HEADER_SALES_CLASS') | translate }}
+                  </ng-container>
+                  <ng-container *ngSwitchCase="'detailSalesClass'">
+                    {{ (isEditing ? 'FINANCE.EDIT_DETAIL_SALES_CLASS' : 'FINANCE.ADD_DETAIL_SALES_CLASS') | translate }}
+                  </ng-container>
+                  <ng-container *ngSwitchCase="'mainSalesClass'">
+                    {{ (isEditing ? 'FINANCE.EDIT_MAIN_SALES_CLASS' : 'FINANCE.ADD_MAIN_SALES_CLASS') | translate }}
+                  </ng-container>
+                </ng-container>
+              </div>
+
+              <button
+                type="button"
+                class="p-button p-component p-button-text p-button-secondary"
+                (click)="cancelSidePanel()"
+              >
+                <span class="p-button-icon pi pi-times"></span>
+              </button>
+            </div>
+
+            <div class="editor-content">
+
+              <!-- ======================
+                   ROOT FORM
+                   ====================== -->
+              <form
+                *ngIf="selectedNodeType === 'rootSalesClass'"
+                [formGroup]="rootSalesClassFormGroup"
+                class="flex flex-col gap-3"
+                novalidate
+              >
+                <div class="field">
+                  <label class="block">
+                    {{ translate.instant("FINANCE.SALES_CLASS_ARABIC_NAME") }}
+                  </label>
+                  <textarea
+                    pInputTextarea
+                    [autoResize]="true"
+                    formControlName="arabicName"
+                    class="w-full"
+                    rows="1"
+                    maxlength="500"
+                  ></textarea>
+                  <small
+                    class="text-red-500 p-error block"
+                    *ngIf="
+                      rootSalesClassFormGroup.controls.arabicName.invalid &&
+                      rootSalesClassFormGroup.controls.arabicName.touched
+                    "
+                  >
+                    <span *ngIf="rootSalesClassFormGroup.controls.arabicName.hasError('required')">
+                      {{ translate.instant("FINANCE.SALES_CLASS_ARABIC_NAME_REQUIRED") }}
+                    </span>
+                    <span *ngIf="rootSalesClassFormGroup.controls.arabicName.hasError('maxlength')">
+                      {{ activeLanguage === 'ar' ? 'الحد الأقصى 500 حرف' : 'Maximum length is 500 characters' }}
+                    </span>
+                  </small>
+                </div>
+
+                <div class="field">
+                  <label class="block">
+                    {{ translate.instant("FINANCE.SALES_CLASS_ENGLISH_NAME") }}
+                  </label>
+                  <textarea
+                    pInputTextarea
+                    [autoResize]="true"
+                    formControlName="englishName"
+                    class="w-full"
+                    rows="1"
+                    maxlength="500"
+                  ></textarea>
+                  <small
+                    class="text-red-500 p-error block"
+                    *ngIf="
+                      rootSalesClassFormGroup.controls.englishName.invalid &&
+                      rootSalesClassFormGroup.controls.englishName.touched
+                    "
+                  >
+                    <span *ngIf="rootSalesClassFormGroup.controls.englishName.hasError('required')">
+                      {{ translate.instant("FINANCE.SALES_CLASS_ENGLISH_NAME_REQUIRED") }}
+                    </span>
+                    <span *ngIf="rootSalesClassFormGroup.controls.englishName.hasError('maxlength')">
+                      {{ activeLanguage === 'ar' ? 'الحد الأقصى 500 حرف' : 'Maximum length is 500 characters' }}
+                    </span>
+                  </small>
+                </div>
+
+                <div class="flex justify-content-end gap-2">
+                  <p-button
+                    type="button"
+                    [label]="translate.instant('FINANCE.CANCEL')"
+                    severity="secondary"
+                    (onClick)="cancelSidePanel(); $event.stopPropagation()"
+                  ></p-button>
+
+                  <p-button
+                    type="button"
+                    [label]="translate.instant('FINANCE.SAVE')"
+                    (onClick)="saveFromSidePanel(); $event.stopPropagation()"
+                    [disabled]="rootSalesClassFormGroup.invalid"
+                  ></p-button>
+                </div>
+              </form>
+
+              <!-- ======================
+                   HEADER FORM
+                   ====================== -->
+              <form
+                *ngIf="selectedNodeType === 'headerSalesClass'"
+                [formGroup]="headerSalesClassFormGroup"
+                class="flex flex-col gap-3"
+                novalidate
+              >
+                <div class="field">
+                  <label class="block">
+                    {{ translate.instant("FINANCE.SALES_CLASS_ARABIC_NAME") }}
+                  </label>
+                  <textarea
+                    pInputTextarea
+                    [autoResize]="true"
+                    formControlName="arabicName"
+                    class="w-full"
+                    rows="1"
+                    maxlength="500"
+                  ></textarea>
+                  <small
+                    class="text-red-500 p-error block"
+                    *ngIf="
+                      headerSalesClassFormGroup.controls.arabicName.invalid &&
+                      headerSalesClassFormGroup.controls.arabicName.touched
+                    "
+                  >
+                    <span *ngIf="headerSalesClassFormGroup.controls.arabicName.hasError('required')">
+                      {{ translate.instant("FINANCE.SALES_CLASS_ARABIC_NAME_REQUIRED") }}
+                    </span>
+                    <span *ngIf="headerSalesClassFormGroup.controls.arabicName.hasError('maxlength')">
+                      {{ activeLanguage === 'ar' ? 'الحد الأقصى 500 حرف' : 'Maximum length is 500 characters' }}
+                    </span>
+                  </small>
+                </div>
+
+                <div class="field">
+                  <label class="block">
+                    {{ translate.instant("FINANCE.SALES_CLASS_ENGLISH_NAME") }}
+                  </label>
+                  <textarea
+                    pInputTextarea
+                    [autoResize]="true"
+                    formControlName="englishName"
+                    class="w-full"
+                    rows="1"
+                    maxlength="500"
+                  ></textarea>
+                  <small
+                    class="text-red-500 p-error block"
+                    *ngIf="
+                      headerSalesClassFormGroup.controls.englishName.invalid &&
+                      headerSalesClassFormGroup.controls.englishName.touched
+                    "
+                  >
+                    <span *ngIf="headerSalesClassFormGroup.controls.englishName.hasError('required')">
+                      {{ translate.instant("FINANCE.SALES_CLASS_ENGLISH_NAME_REQUIRED") }}
+                    </span>
+                    <span *ngIf="headerSalesClassFormGroup.controls.englishName.hasError('maxlength')">
+                      {{ activeLanguage === 'ar' ? 'الحد الأقصى 500 حرف' : 'Maximum length is 500 characters' }}
+                    </span>
+                  </small>
+                </div>
+
+                <div class="flex justify-content-end gap-2">
+                  <p-button
+                    type="button"
+                    [label]="translate.instant('FINANCE.CANCEL')"
+                    severity="secondary"
+                    (onClick)="cancelSidePanel(); $event.stopPropagation()"
+                  ></p-button>
+
+                  <p-button
+                    type="button"
+                    [label]="translate.instant('FINANCE.SAVE')"
+                    (onClick)="saveFromSidePanel(); $event.stopPropagation()"
+                    [disabled]="headerSalesClassFormGroup.invalid"
+                  ></p-button>
+                </div>
+              </form>
+
+              <!-- ======================
+                   DETAIL FORM
+                   ====================== -->
+              <form
+                *ngIf="selectedNodeType === 'detailSalesClass'"
+                [formGroup]="detailSalesClassFormGroup"
+                class="flex flex-col gap-3"
+                novalidate
+              >
+                <div class="field">
+                  <label class="block">
+                    {{ translate.instant("FINANCE.SALES_CLASS_ARABIC_NAME") }}
+                  </label>
+                  <textarea
+                    pInputTextarea
+                    [autoResize]="true"
+                    formControlName="arabicName"
+                    class="w-full"
+                    rows="1"
+                    maxlength="500"
+                  ></textarea>
+                  <small
+                    class="text-red-500 p-error block"
+                    *ngIf="
+                      detailSalesClassFormGroup.controls.arabicName.invalid &&
+                      detailSalesClassFormGroup.controls.arabicName.touched
+                    "
+                  >
+                    <span *ngIf="detailSalesClassFormGroup.controls.arabicName.hasError('required')">
+                      {{ translate.instant("FINANCE.SALES_CLASS_ARABIC_NAME_REQUIRED") }}
+                    </span>
+                    <span *ngIf="detailSalesClassFormGroup.controls.arabicName.hasError('maxlength')">
+                      {{ activeLanguage === 'ar' ? 'الحد الأقصى 500 حرف' : 'Maximum length is 500 characters' }}
+                    </span>
+                  </small>
+                </div>
+
+                <div class="field">
+                  <label class="block">
+                    {{ translate.instant("FINANCE.SALES_CLASS_ENGLISH_NAME") }}
+                  </label>
+                  <textarea
+                    pInputTextarea
+                    [autoResize]="true"
+                    formControlName="englishName"
+                    class="w-full"
+                    rows="1"
+                    maxlength="500"
+                  ></textarea>
+                  <small
+                    class="text-red-500 p-error block"
+                    *ngIf="
+                      detailSalesClassFormGroup.controls.englishName.invalid &&
+                      detailSalesClassFormGroup.controls.englishName.touched
+                    "
+                  >
+                    <span *ngIf="detailSalesClassFormGroup.controls.englishName.hasError('required')">
+                      {{ translate.instant("FINANCE.SALES_CLASS_ENGLISH_NAME_REQUIRED") }}
+                    </span>
+                    <span *ngIf="detailSalesClassFormGroup.controls.englishName.hasError('maxlength')">
+                      {{ activeLanguage === 'ar' ? 'الحد الأقصى 500 حرف' : 'Maximum length is 500 characters' }}
+                    </span>
+                  </small>
+                </div>
+
+                <div class="field">
+                  <label class="block">
+                    {{ activeLanguage === 'ar' ? 'مخصص للمشاريع' : 'For Projects' }}
+                  </label>
+                  <p-inputSwitch formControlName="isForProjects"></p-inputSwitch>
+                </div>
+
+                <div class="flex justify-content-end gap-2">
+                  <p-button
+                    type="button"
+                    [label]="translate.instant('FINANCE.CANCEL')"
+                    severity="secondary"
+                    (onClick)="cancelSidePanel(); $event.stopPropagation()"
+                  ></p-button>
+
+                  <p-button
+                    type="button"
+                    [label]="translate.instant('FINANCE.SAVE')"
+                    (onClick)="saveFromSidePanel(); $event.stopPropagation()"
+                    [disabled]="detailSalesClassFormGroup.invalid"
+                  ></p-button>
+                </div>
+              </form>
+
+              <!-- ======================
+                   MAIN FORM (Sales extras)
+                   ====================== -->
+              <form
+                *ngIf="selectedNodeType === 'mainSalesClass'"
+                [formGroup]="mainSalesClassFormGroup"
+                class="flex flex-col gap-3"
+                novalidate
+              >
+                <div class="field">
+                  <label class="block">
+                    {{ translate.instant("FINANCE.SALES_CLASS_ARABIC_NAME") }}
+                  </label>
+                  <textarea
+                    pInputTextarea
+                    [autoResize]="true"
+                    formControlName="arabicName"
+                    class="w-full"
+                    rows="1"
+                    maxlength="500"
+                  ></textarea>
+                  <small
+                    class="text-red-500 p-error block"
+                    *ngIf="
+                      mainSalesClassFormGroup.controls.arabicName.invalid &&
+                      mainSalesClassFormGroup.controls.arabicName.touched
+                    "
+                  >
+                    <span *ngIf="mainSalesClassFormGroup.controls.arabicName.hasError('required')">
+                      {{ translate.instant("FINANCE.SALES_CLASS_ARABIC_NAME_REQUIRED") }}
+                    </span>
+                    <span *ngIf="mainSalesClassFormGroup.controls.arabicName.hasError('maxlength')">
+                      {{ activeLanguage === 'ar' ? 'الحد الأقصى 500 حرف' : 'Maximum length is 500 characters' }}
+                    </span>
+                  </small>
+                </div>
+
+                <div class="field">
+                  <label class="block">
+                    {{ translate.instant("FINANCE.SALES_CLASS_ENGLISH_NAME") }}
+                  </label>
+                  <textarea
+                    pInputTextarea
+                    [autoResize]="true"
+                    formControlName="englishName"
+                    class="w-full"
+                    rows="1"
+                    maxlength="500"
+                  ></textarea>
+                  <small
+                    class="text-red-500 p-error block"
+                    *ngIf="
+                      mainSalesClassFormGroup.controls.englishName.invalid &&
+                      mainSalesClassFormGroup.controls.englishName.touched
+                    "
+                  >
+                    <span *ngIf="mainSalesClassFormGroup.controls.englishName.hasError('required')">
+                      {{ translate.instant("FINANCE.SALES_CLASS_ENGLISH_NAME_REQUIRED") }}
+                    </span>
+                    <span *ngIf="mainSalesClassFormGroup.controls.englishName.hasError('maxlength')">
+                      {{ activeLanguage === 'ar' ? 'الحد الأقصى 500 حرف' : 'Maximum length is 500 characters' }}
+                    </span>
+                  </small>
+                </div>
+
+                <div class="field">
+                  <label class="block">
+                    {{ translate.instant("DATA.MEASUREMENT_UNIT") }}
+                  </label>
+                 <p-dropdown
+  formControlName="measurementUnitId"
+  [options]="measurementUnitOptions"
+  class="w-full"
+  [style]="{ width: '100%' }"
+  [filter]="true"
+  appendTo="body"
+></p-dropdown>
+
+                  <small
+                    class="text-red-500 p-error block"
+                    *ngIf="
+                      mainSalesClassFormGroup.controls.measurementUnitId.invalid &&
+                      mainSalesClassFormGroup.controls.measurementUnitId.touched
+                    "
+                  >
+                    {{ translate.instant("DATA.MEASUREMENT_UNIT_REQUIRED") }}
+                  </small>
+                </div>
+
+                <div class="field">
+                  <label class="block">
+                    {{ translate.instant("DATA.CLASS_TYPE") }}
+                  </label>
+                  <p-dropdown
+                    formControlName="classType"
+                    [options]="classTypeOptions"
+                    class="w-full"
+                  ></p-dropdown>
+                  <small
+                    class="text-red-500 p-error block"
+                    *ngIf="
+                      mainSalesClassFormGroup.controls.classType.invalid &&
+                      mainSalesClassFormGroup.controls.classType.touched
+                    "
+                  >
+                    {{ translate.instant("DATA.CLASS_TYPE_REQUIRED") }}
+                  </small>
+                </div>
+
+                <div class="field">
+                  <label class="block">
+                    {{ translate.instant("DATA.IS_TAX_EXEMPTED") }}
+                  </label>
+                  <p-inputSwitch formControlName="isTaxExempted"></p-inputSwitch>
+                </div>
+
+                <div class="flex justify-content-end gap-2">
+                  <p-button
+                    type="button"
+                    [label]="translate.instant('FINANCE.CANCEL')"
+                    severity="secondary"
+                    (onClick)="cancelSidePanel(); $event.stopPropagation()"
+                  ></p-button>
+
+                  <p-button
+                    type="button"
+                    [label]="translate.instant('FINANCE.SAVE')"
+                    (onClick)="saveFromSidePanel(); $event.stopPropagation()"
+                    [disabled]="mainSalesClassFormGroup.invalid"
+                  ></p-button>
+                </div>
+              </form>
+
+            </div>
+          </div>
+        </div>
+
+        <!-- ======================
+             LEFT: TREE
+             ====================== -->
+        <div class="tree-col">
+          <!-- Custom Accordion Cards Grid -->
+          <div class="custom-accordion-grid items-tree--xxs w-full flex flex-col gap-4">
+            
+            <!-- Root Card (Level 1) -->
+            <div *ngFor="let root of filteredFiles" [id]="'root-' + root.data.id" class="root-card border rounded-xl overflow-hidden mb-4 shadow-sm bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800">
+              
+              <!-- Root Header -->
+              <div class="root-header flex justify-between items-center p-3 cursor-pointer bg-slate-50 dark:bg-slate-800/50 border-b border-slate-200 dark:border-slate-800" [class.is-selected]="selectedNodeType === 'rootSalesClass' && selectedNodeData?.id === root.data?.id" (click)="openEditorFromNode(root, 'rootSalesClass'); root.expanded = !root.expanded; $event.stopPropagation()">
+                <div class="flex items-center gap-3 flex-1 min-w-0">
+                  <div class="expand-chevron text-slate-400">
+                    <i class="pi" [ngClass]="root.expanded ? 'pi-chevron-down' : (activeLanguage === 'ar' ? 'pi-chevron-left' : 'pi-chevron-right')"></i>
+                  </div>
+                  
+                  <div class="flex items-center gap-2 flex-1 min-w-0">
+                    <span class="node-code root-badge" style="font-size: 1.15rem !important; font-weight: bold !important; padding: 0.2rem 0.6rem !important;">{{ root.data.referenceCode }}</span>
+                    <span class="node-name root-title font-bold text-slate-800 dark:text-slate-100">{{ activeLanguage === 'en' ? root.data.englishName : root.data.arabicName }}</span>
+                  </div>
+                </div>
+
+                <div class="flex items-center gap-2" (click)="$event.stopPropagation()">
+                  <!-- ADD HEADER -->
+                  <p-button
+                    *ngIf="hasPermission('MainSalesClass.Create')"
+                    icon="pi pi-plus"
+                    class="p-button-contrast"
+                    styleClass="rounded-lg p-button-contrast"
+                    (onClick)="showHeaderSalesClassDialog(root.data); $event.stopPropagation()"
+                  ></p-button>
+
+                  <p-overlayPanel #opRootSalesClass [autoZIndex]="false" [baseZIndex]="80">
+                    <div class="flex flex-column gap-3 w-auto p-1">
+                      <p-button
+                        *ngIf="hasPermission('MainSalesClass.Update')"
+                        icon="pi pi-pencil"
+                        class="p-button-secondary"
+                        [label]="translate.instant('FINANCE.EDIT')"
+                        styleClass="rounded-lg p-button-secondary w-full"
+                        (onClick)="openEditorFromNode(root, 'rootSalesClass'); opRootSalesClass.hide(); $event.stopPropagation()"
+                      ></p-button>
+                    </div>
+                  </p-overlayPanel>
+
+                  <p-button
+                    *ngIf="hasPermission('MainSalesClass.Update')"
+                    [text]="true"
+                    (onClick)="opRootSalesClass.toggle($event); $event.stopPropagation()"
+                    severity="secondary"
+                    styleClass="p-button-secondary rounded-xl"
+                  >
+                    <ng-template pTemplate="icon">
+                      <i class="pi pi-ellipsis-v text-xl"></i>
+                    </ng-template>
+                  </p-button>
+                </div>
+              </div>
+
+              <!-- Root Body (Level 2: Header Accordions) -->
+              <div *ngIf="root.expanded" class="root-body p-3 flex flex-col gap-3">
+                <div *ngFor="let header of root.children" class="header-item">
+                  
+                  <!-- Header Row -->
+                  <div class="header-row flex justify-between items-center p-2.5 rounded-lg cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800/30" [class.is-selected]="selectedNodeType === 'headerSalesClass' && selectedNodeData?.id === header.data?.id" (click)="openEditorFromNode(header, 'headerSalesClass'); header.expanded = !header.expanded; $event.stopPropagation()">
+                    <div class="flex items-center gap-3 flex-1 min-w-0">
+                      <div class="expand-chevron text-slate-400">
+                        <i class="pi" [ngClass]="header.expanded ? 'pi-chevron-down' : (activeLanguage === 'ar' ? 'pi-chevron-left' : 'pi-chevron-right')"></i>
+                      </div>
+                      
+                      <div class="flex items-center gap-2 flex-1 min-w-0">
+                        <span class="node-code header-badge" style="font-size: 1.1rem !important; font-weight: bold !important; padding: 0.2rem 0.5rem !important;">{{ header.data.referenceCode }}</span>
+                        <span class="node-name header-title font-semibold text-slate-700 dark:text-slate-200">{{ activeLanguage === 'en' ? header.data.englishName : header.data.arabicName }}</span>
+                      </div>
+                    </div>
+
+                    <div class="flex items-center gap-2" (click)="$event.stopPropagation()">
+                      <!-- ADD DETAIL -->
+                      <p-button
+                        *ngIf="hasPermission('MainSalesClass.Create')"
+                        icon="pi pi-plus"
+                        class="p-button-contrast"
+                        styleClass="rounded-lg p-button-contrast"
+                        (onClick)="showDetailSalesClassDialog(header.data); $event.stopPropagation()"
+                      ></p-button>
+
+                      <p-overlayPanel #opHeaderSalesClass [autoZIndex]="false" [baseZIndex]="80">
+                        <div class="flex flex-column gap-3 w-auto p-1">
+                          <p-button
+                            *ngIf="hasPermission('MainSalesClass.Update')"
+                            icon="pi pi-pencil"
+                            class="p-button-secondary"
+                            [label]="translate.instant('FINANCE.EDIT')"
+                            styleClass="rounded-lg p-button-secondary w-full"
+                            (onClick)="openEditorFromNode(header, 'headerSalesClass'); opHeaderSalesClass.hide(); $event.stopPropagation()"
+                          ></p-button>
+                          <p-button
+                            *ngIf="hasPermission('MainSalesClass.Delete')"
+                            icon="pi pi-trash"
+                            class="p-button-danger"
+                            [label]="translate.instant('FINANCE.DELETE')"
+                            styleClass="rounded-lg p-button-danger w-full"
+                            (onClick)="confirmHeaderSalesClassDeletion($event, header.data); opHeaderSalesClass.hide(); $event.stopPropagation()"
+                          ></p-button>
+                        </div>
+                      </p-overlayPanel>
+
+                      <p-button
+                        *ngIf="hasPermission('MainSalesClass.Update') || hasPermission('MainSalesClass.Delete')"
+                        [text]="true"
+                        (onClick)="opHeaderSalesClass.toggle($event); $event.stopPropagation()"
+                        severity="secondary"
+                        styleClass="p-button-secondary rounded-xl"
+                      >
+                        <ng-template pTemplate="icon">
+                          <i class="pi pi-ellipsis-v text-lg"></i>
+                        </ng-template>
+                      </p-button>
+                    </div>
+                  </div>
+
+                  <!-- Header Body (Level 3: Detail Accordions) -->
+                  <div *ngIf="header.expanded" class="header-body">
+                    <div *ngFor="let detail of header.children" class="detail-item">
+                      
+                      <!-- Detail Row -->
+                      <div class="detail-row flex justify-between items-center p-2 rounded-md cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800/30" [class.is-selected]="selectedNodeType === 'detailSalesClass' && selectedNodeData?.id === detail.data?.id" (click)="openEditorFromNode(detail, 'detailSalesClass'); detail.expanded = !detail.expanded; $event.stopPropagation()">
+                        <div class="flex items-center gap-3 flex-1 min-w-0">
+                          <div class="expand-chevron text-slate-400">
+                            <i class="pi" [ngClass]="detail.expanded ? 'pi-chevron-down' : (activeLanguage === 'ar' ? 'pi-chevron-left' : 'pi-chevron-right')"></i>
+                          </div>
+                          
+                          <div class="flex items-center gap-2 flex-1 min-w-0">
+                            <span class="node-code detail-badge" style="font-size: 1.05rem !important; font-weight: bold !important; padding: 0.15rem 0.45rem !important;">{{ detail.data.referenceCode }}</span>
+                            <span class="node-name detail-title text-slate-600 dark:text-slate-300">{{ activeLanguage === 'en' ? detail.data.englishName : detail.data.arabicName }}</span>
+                          </div>
+                        </div>
+
+                        <div class="flex items-center gap-2" (click)="$event.stopPropagation()">
+                          <!-- ADD MAIN -->
+                          <p-button
+                            *ngIf="hasPermission('MainSalesClass.Create')"
+                            icon="pi pi-plus"
+                            class="p-button-contrast"
+                            styleClass="rounded-lg p-button-contrast"
+                            (onClick)="showMainSalesClassDialog(detail.data); $event.stopPropagation()"
+                          ></p-button>
+
+                          <p-overlayPanel #opDetailSalesClass [autoZIndex]="false" [baseZIndex]="80">
+                            <div class="flex flex-column gap-3 w-auto p-1">
+                              <p-button
+                                *ngIf="hasPermission('MainSalesClass.Update')"
+                                icon="pi pi-pencil"
+                                class="p-button-secondary"
+                                [label]="translate.instant('FINANCE.EDIT')"
+                                styleClass="rounded-lg p-button-secondary w-full"
+                                (onClick)="openEditorFromNode(detail, 'detailSalesClass'); opDetailSalesClass.hide(); $event.stopPropagation()"
+                              ></p-button>
+                              <p-button
+                                *ngIf="hasPermission('MainSalesClass.Delete')"
+                                icon="pi pi-trash"
+                                class="p-button-danger"
+                                [label]="translate.instant('FINANCE.DELETE')"
+                                styleClass="rounded-lg p-button-danger w-full"
+                                (onClick)="confirmDetailSalesClassDeletion($event, detail.data); opDetailSalesClass.hide(); $event.stopPropagation()"
+                              ></p-button>
+                            </div>
+                          </p-overlayPanel>
+
+                          <p-button
+                            *ngIf="hasPermission('MainSalesClass.Update') || hasPermission('MainSalesClass.Delete')"
+                            [text]="true"
+                            (onClick)="opDetailSalesClass.toggle($event); $event.stopPropagation()"
+                            severity="secondary"
+                            styleClass="p-button-secondary rounded-xl"
+                          >
+                            <ng-template pTemplate="icon">
+                              <i class="pi pi-ellipsis-v text-base"></i>
+                            </ng-template>
+                          </p-button>
+                        </div>
+                      </div>
+
+                      <!-- Detail Body (Level 4: Main Items) -->
+                      <div *ngIf="detail.expanded" class="detail-body">
+                        <div *ngFor="let main of detail.children" class="main-item flex justify-between items-center p-2 rounded-md hover:bg-slate-50 dark:hover:bg-slate-800/40 cursor-pointer" [class.is-selected]="selectedNodeType === 'mainSalesClass' && selectedNodeData?.id === main.data?.id" (click)="openEditorFromNode(main, 'mainSalesClass'); $event.stopPropagation()">
+                          <div class="flex items-center gap-3 flex-1">
+                            <i class="pi pi-circle text-[6px] text-slate-400"></i>
+                            
+                            <div class="flex items-center gap-2 flex-nowrap">
+                              <span class="node-code main-badge" style="font-size: 1.05rem !important; font-weight: bold !important; padding: 0.15rem 0.45rem !important; flex-shrink: 0;">{{ main.data.referenceCode }}</span>
+                              <span class="node-name main-title text-slate-700 dark:text-slate-200 font-semibold" style="white-space: nowrap !important;">{{ activeLanguage === 'en' ? main.data.englishName : main.data.arabicName }}</span>
+                              <span class="text-sm font-bold text-sky-600">
+                                {{
+                                  ' | ' +
+                                  (
+                                    translate.instant(
+                                      main.data.classType === "Direct"
+                                        ? "DATA.DIRECT"
+                                        : "DATA.COMPOUND"
+                                    )
+                                  )
+                                }}
+                              </span>
+                            </div>
+                          </div>
+
+                          <div class="flex items-center gap-4 w-auto">
+                            <div class="text-xs text-slate-400">
+                              {{ "DATA.MEASUREMENT_UNIT" | translate }}:
+                              {{ activeLanguage === "en" ? main.data.measurementUnit?.englishName : main.data.measurementUnit?.arabicName }}
+                            </div>
+                            <div *ngIf="main.data.isTaxExempted" class="text-xs text-amber-600 font-semibold">
+                              {{ "DATA.IS_TAX_EXEMPTED" | translate }}
+                            </div>
+                          </div>
+
+                          <div class="flex items-center gap-2" (click)="$event.stopPropagation()">
+                            <ng-container *ngIf="!main.data?.isReservationItem">
+                              <p-overlayPanel #opMainSalesClass [autoZIndex]="false" [baseZIndex]="80">
+                                <div class="flex flex-column gap-3 w-auto p-1">
+                                  <p-button
+                                    *ngIf="hasPermission('MainSalesClass.Update')"
+                                    icon="pi pi-pencil"
+                                    class="p-button-secondary"
+                                    [label]="translate.instant('FINANCE.EDIT')"
+                                    styleClass="rounded-lg p-button-secondary w-full"
+                                    (onClick)="openEditorFromNode(main, 'mainSalesClass'); opMainSalesClass.hide(); $event.stopPropagation()"
+                                  ></p-button>
+                                  <p-button
+                                    *ngIf="hasPermission('MainSalesClass.Delete')"
+                                    icon="pi pi-trash"
+                                    class="p-button-danger"
+                                    [label]="translate.instant('FINANCE.DELETE')"
+                                    styleClass="rounded-lg p-button-danger w-full"
+                                    (onClick)="confirmMainSalesClassDeletion($event, main.data); opMainSalesClass.hide(); $event.stopPropagation()"
+                                  ></p-button>
+                                </div>
+                              </p-overlayPanel>
+
+                              <p-button
+                                *ngIf="hasPermission('MainSalesClass.Update') || hasPermission('MainSalesClass.Delete')"
+                                [text]="true"
+                                (onClick)="opMainSalesClass.toggle($event); $event.stopPropagation()"
+                                severity="secondary"
+                                styleClass="p-button-secondary rounded-xl"
+                              >
+                                <ng-template pTemplate="icon">
+                                  <i class="pi pi-ellipsis-v text-base"></i>
+                                </ng-template>
+                              </p-button>
+                            </ng-container>
+                            
+                            <div *ngIf="main.data?.isReservationItem" class="text-xs text-indigo-500 font-semibold px-2 py-1 bg-indigo-50 dark:bg-indigo-900/30 rounded flex items-center gap-1">
+                              <i class="pi pi-lock text-[10px]"></i>
+                              <span>{{ activeLanguage === 'ar' ? 'صنف حجز' : 'Reservation Item' }}</span>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+
+                    </div>
+                  </div>
+
+                </div>
+              </div>
+
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<p-confirmDialog></p-confirmDialog>
+<p-toast></p-toast>

@@ -1,0 +1,82 @@
+<div class="min-h-screen bg-gray-50 flex items-center justify-center py-12 px-4">
+  <div class="max-w-md w-full">
+    <!-- Processing State -->
+    <div *ngIf="paymentStatus === 'processing'" class="bg-white rounded-lg shadow-lg p-8 text-center">
+      <div class="animate-spin rounded-full h-16 w-16 border-b-4 border-blue-600 mx-auto mb-4"></div>
+      <h2 class="text-2xl font-bold text-gray-800 mb-2">جاري معالجة الدفع...</h2>
+      <p class="text-gray-600">الرجاء الانتظار بينما نتحقق من عملية الدفع</p>
+    </div>
+
+    <!-- Success State -->
+    <div *ngIf="paymentStatus === 'success'" class="bg-white rounded-lg shadow-lg p-8 text-center">
+      <div class="bg-green-100 rounded-full w-20 h-20 flex items-center justify-center mx-auto mb-4">
+        <svg class="w-12 h-12 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+        </svg>
+      </div>
+      
+      <h2 class="text-3xl font-bold text-green-600 mb-2">تم الدفع بنجاح!</h2>
+      <p class="text-gray-600 mb-6">تم تأكيد حجزك وإتمام عملية الدفع بنجاح</p>
+      
+      <div class="bg-gray-50 rounded-lg p-4 mb-6 text-right">
+        <div class="flex justify-between mb-2">
+          <span class="font-semibold text-gray-700">رقم الحجز:</span>
+          <span class="text-gray-900">{{ bookingReference }}</span>
+        </div>
+        <div class="flex justify-between" *ngIf="transactionId">
+          <span class="font-semibold text-gray-700">رقم المعاملة:</span>
+          <span class="text-gray-900">{{ transactionId }}</span>
+        </div>
+      </div>
+
+      <p class="text-sm text-gray-500 mb-6">
+        سيتم إرسال تأكيد الحجز إلى بريدك الإلكتروني خلال دقائق
+      </p>
+
+      <div class="flex gap-3">
+        <button (click)="goToHomePage()" 
+                class="flex-1 bg-blue-600 text-white py-3 rounded-lg font-semibold hover:bg-blue-700 transition">
+          العودة للرئيسية
+        </button>
+        <button (click)="goToBookings()" 
+                class="flex-1 bg-gray-200 text-gray-800 py-3 rounded-lg font-semibold hover:bg-gray-300 transition">
+          حجوزاتي
+        </button>
+      </div>
+    </div>
+
+    <!-- Failed State -->
+    <div *ngIf="paymentStatus === 'failed'" class="bg-white rounded-lg shadow-lg p-8 text-center">
+      <div class="bg-red-100 rounded-full w-20 h-20 flex items-center justify-center mx-auto mb-4">
+        <svg class="w-12 h-12 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+        </svg>
+      </div>
+      
+      <h2 class="text-3xl font-bold text-red-600 mb-2">فشلت عملية الدفع</h2>
+      <p class="text-gray-600 mb-6">{{ errorMessage || 'حدث خطأ أثناء معالجة عملية الدفع' }}</p>
+      
+      <div class="bg-gray-50 rounded-lg p-4 mb-6 text-right" *ngIf="bookingReference">
+        <div class="flex justify-between">
+          <span class="font-semibold text-gray-700">رقم الحجز:</span>
+          <span class="text-gray-900">{{ bookingReference }}</span>
+        </div>
+      </div>
+
+      <p class="text-sm text-gray-500 mb-6">
+        يرجى المحاولة مرة أخرى أو الاتصال بالدعم الفني
+      </p>
+
+      <div class="flex gap-3">
+        <button (click)="retryPayment()" 
+                class="flex-1 bg-blue-600 text-white py-3 rounded-lg font-semibold hover:bg-blue-700 transition">
+          إعادة المحاولة
+        </button>
+        <button (click)="goToHomePage()" 
+                class="flex-1 bg-gray-200 text-gray-800 py-3 rounded-lg font-semibold hover:bg-gray-300 transition">
+          العودة للرئيسية
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

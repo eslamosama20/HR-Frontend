@@ -1,0 +1,368 @@
+﻿<div class="container-fluid">
+
+   <!-- Action Buttons -->
+   <div class="flex justify-between items-center m-5">
+    <div *ngIf="selectedSalesCreditNotes.length >= 1" class="flex gap-2">
+      <button *ngIf="hasPermission(PERMISSIONS.SalesCreditNote.Delete)" class="btn btn-danger" (click)="deleteAll()">
+        <i class="bi bi-trash"></i> حذف الكل
+      </button>
+      <button class="btn btn-success" (click)="createTransactionForAll()">
+        <i class="bi bi-plus-circle"></i> إنشاء قيد للكل
+      </button>
+    </div>
+  </div>
+
+  <!-- SalesCreditNote Table -->
+
+  <p-table #dt1 [(selection)]="selectedSalesCreditNotes" [value]="filteredSalesCreditNotes" [columns]="columns"
+    [resizableColumns]="true" columnResizeMode="expand" dataKey="id" [rows]="10" [sortField]="'createdAt'"
+         [sortOrder]="-1"
+    styleClass="p-datatable-gridlines scroller custom-paginator-table" [rowsPerPageOptions]="[10, 25, 50]" [loading]="loading"
+    [paginator]="true" [paginatorLocale]="activeLanguage === 'en' ? 'en-US' : 'ar-SA'"
+    [showCurrentPageReport]="true"
+    currentPageReportTemplate="الاجمالي {{ filteredSalesCreditNotes?.length ? (filteredSalesCreditNotes.length) : '' }}"
+    paginatorTemplate="CurrentPageReport PrevPageLink PageLinks NextPageLink RowsPerPageDropdown">
+    <ng-template pTemplate="caption">
+      <div class="flex rtl:flex-row-reverse justify-between gap-2">
+        <div class="flex gap-2">
+
+          <p-button styleClass="rounded-md w-auto text-nowrap	" [label]="translate.instant('FINANCE.CLEAR_FILTERS')"
+            [outlined]="true" icon="pi pi-filter-slash" (onClick)="clear(dt1)" />
+        </div>
+
+        <ng-container *ngIf="salesCreditNotes.length === 0 && !loading">
+          <div class="flex justify-center items-center w-full">
+            <p class="text-center font-semibold text-xl w-full flex justify-center">
+              لا يوجد إشعارات دائنة
+            </p>
+          </div>
+        </ng-container>
+        <div class="flex justify-between gap-2">
+          <div class="flex flex-wrap gap-3">
+            <div class="flex align-items-center">
+              <p-radioButton name="all" value="all" [(ngModel)]="transactionsFilterType" inputId="all" id="all" />
+              <label for="all" class="ml-2">
+                كل المعاملات
+              </label>
+            </div>
+
+            <div class="flex align-items-center">
+              <p-radioButton name="connected" value="connected" [(ngModel)]="transactionsFilterType" inputId="connected"
+                id="connected" />
+              <label for="connected" class="ml-2">
+                المعاملات المرحلة
+              </label>
+            </div>
+            <div class="flex align-items-center">
+              <p-radioButton name="notconnected" value="notconnected" [(ngModel)]="transactionsFilterType"
+                inputId="notconnected" id="notconnected" />
+              <label for="notconnected" class="ml-2">
+                المعاملات الغير مرحلة
+              </label>
+            </div>
+
+          </div>
+          <span class="p-input-icon-left ml-auto">
+            <i class="pi pi-search"></i>
+            <input pInputText type="text" [(ngModel)]="searchValue" (input)="filter(dt1, $event)"
+              [placeholder]="translate.instant('FINANCE.SEARCH')" />
+          </span>
+        </div>
+
+      </div>
+    </ng-template>
+    <ng-template pTemplate="header" let-columns>
+      <tr>
+        <th class="w-fit"></th>
+
+        <th style="width: 3rem"></th>
+
+        <th style="min-width: fit-content" *ngFor="let column of columns" pResizableColumn
+          [pSortableColumn]="column.field">
+          <div class="flex align-items-center">
+            {{ column.header }}
+            <p-sortIcon [field]="column.field" class="mx-1 "></p-sortIcon>
+            <p-columnFilter *ngIf="column.filter" [type]="column.filterType" [field]="column.field" display="menu" />
+          </div>
+        </th>
+        <th style="min-width: fit-content">
+          <div class="flex align-items-center text-base">
+            {{ "FINANCE.ACTIONS" | translate }}
+          </div>
+        </th>
+      </tr>
+    </ng-template>
+    <ng-template pTemplate="body" let-Entry let-i="rowIndex">
+      <tr *ngIf="salesCreditNotes.length > 0"
+        (click)="onRowClick(Entry)"
+        (contextmenu)="openOverlaySalesCreditNote($event, Entry)" 
+      class="cursor-pointer hover:bg-gray-100">
+        <td class="text-center">
+          {{i + 1}}
+        </td>
+        <td>
+          <p-tableCheckbox [value]="Entry" (click)="$event.stopPropagation()"></p-tableCheckbox>
+        </td>
+        <td class="text-lg rtl:text-right">
+          {{ Entry.salesCreditNoteNo }}
+        </td>
+        <td class="text-lg rtl:text-right">
+          {{ Entry.invoiceNo }}
+        </td>
+        <td class="text-lg rtl:text-right">
+          {{ Entry.customerProfileName }}
+        </td>
+        <td class="text-lg rtl:text-right">
+          {{ Entry.description }}
+        </td>
+        <td class="text-lg text-center" >
+          <i
+            class="pi"
+            [ngClass]="{
+            'text-green-500 pi-check-circle': Entry?.isCleared,
+            'text-red-500 pi-times-circle': !Entry?.isCleared
+          }"
+          ></i>
+        </td>
+        <td class="text-lg rtl:text-right">
+          {{
+          Entry.issueDate ? (Entry.issueDate | customDate : "yyyy/MM/dd" : "": "ar-SA"): '-'
+          }}
+        </td>
+        <td class="text-lg rtl:text-right">{{Entry.adjustmentReason}}</td>
+        <td class="text-lg rtl:text-right">
+          {{ getNetPrice(Entry) | formatDecimal }}
+        </td>
+        <td class="text-lg rtl:text-right">
+          {{ getTotalPrice(Entry) | formatDecimal }}
+        </td>
+
+        <td class="text-lg rtl:text-right flex gap-2">
+          <!-- Overlay panel that holds the buttons -->
+         
+
+          <!-- Button to toggle the overlay panel -->
+          <p-button
+            [text]="true"
+  (onClick)="openOverlaySalesCreditNote($event, Entry); $event.stopPropagation()"
+            severity="secondary"
+            styleClass="p-button-outlined rounded-xl"
+          >
+            <ng-template pTemplate="icon">
+              <i class="pi pi-cog text-xl"></i>
+            </ng-template>
+          </p-button>
+        </td>
+
+
+      </tr>
+    </ng-template>
+  </p-table>
+<p-overlayPanel #opSalesCreditNote [autoZIndex]="true" [appendTo]="'body'">
+  <div class="grid grid-cols-3 gap-2 p-2 w-auto min-w-[300px]">
+    <p-button icon="bi bi-printer" class="p-button-secondary" [label]="'طباعة'"
+      styleClass="rounded-lg w-full text-xs"
+      (onClick)="printSalesCreditNote(selectedSalesCreditNote?.id); $event.stopPropagation()">
+    </p-button>
+
+    <p-button *ngIf="hasPermission(PERMISSIONS.SalesCreditNote.Update)" icon="pi pi-pencil" class="p-button-warning" [label]="'تعديل'" styleClass="rounded-lg w-full text-xs"
+      (onClick)="editSalesCreditNote(selectedSalesCreditNote?.id); $event.stopPropagation()">
+    </p-button>
+
+    <p-button icon="pi pi-eye" class="p-button-info" [label]="'INVOICE.VIEW' | translate" styleClass="rounded-lg w-full text-xs"
+      (onClick)="viewSalesCreditNote(selectedSalesCreditNote?.id); $event.stopPropagation()">
+    </p-button>
+
+    <p-button *ngIf="selectedSalesCreditNote?.transactionId === null" icon="pi pi-plus-circle" class="p-button-success"
+      [label]="'INVOICE.CREATE_TRANSACTION' | translate" styleClass="rounded-lg w-full text-xs"
+      (onClick)="createTransaction(selectedSalesCreditNote?.id); $event.stopPropagation()">
+    </p-button>
+    <p-button
+      *ngIf="selectedSalesCreditNote?.isCleared === false"
+      icon="pi pi-arrow-left"
+      class="p-button-success"
+      label="ارسال ال Zatca"
+      styleClass="rounded-lg p-button-success w-full text-xs"
+      (onClick)="confirmClearSalesCreditNote($event,selectedSalesCreditNote?.id)">
+    </p-button>
+
+    <p-button
+      *ngIf="selectedSalesCreditNote?.transactionId !== null"
+      icon="pi pi-external-link"
+      class="p-button-info"
+      [label]="'فتح المعاملة'"
+      styleClass="rounded-lg p-button-info w-full text-xs"
+      [routerLink]="'/accounting/journal-transactions/transaction/' + selectedSalesCreditNote?.transactionId"
+      target="_blank">
+    </p-button>
+
+    <p-button
+      icon="pi pi-external-link"
+      class="p-button-info"
+      [label]="'فتح الفاتورة'"
+      styleClass="rounded-lg p-button-info w-full text-xs"
+      [routerLink]="'/invoices/' + selectedSalesCreditNote?.saleInvoiceId"
+      target="_blank">
+    </p-button>
+
+    <p-button *ngIf="hasPermission(PERMISSIONS.SalesCreditNote.Delete)" [disabled]="loadingStates[selectedSalesCreditNote?.id] || selectedSalesCreditNote?.isCleared" icon="pi pi-trash"
+      class="p-button-danger" [label]="'INVOICE.DELETE' | translate" styleClass="rounded-lg w-full text-xs"
+      (onClick)="deleteSalesCreditNote(selectedSalesCreditNote?.id); $event.stopPropagation()">
+    </p-button>
+
+    <div class="w-full"></div>
+  </div>
+</p-overlayPanel>
+
+</div>
+<p-toast></p-toast>
+<p-confirmDialog></p-confirmDialog>
+<ng-container>
+  <div class="absolute top-0 left-[-100%] " *ngIf="docData && docColumns.length > 0">
+    <app-print-document #printComponent [headerTemplate]="headerTemplate" [footerTemplate]="footerTemplate"
+                        [summaryTemplate]="summaryTemplate" [data]="docData" [columns]="docColumns"
+                        [qrImageUrl]="salesCreditNote.generatedQR">
+    </app-print-document>
+
+    <!-- Header Template -->
+    <ng-template #headerTemplate>
+      <div class="w-full flex flex-col">
+        @if (companyDetails) {
+          <ng-container class="container m-0 p-0">
+            <div class="py-1 px-1 flex justify-between ">
+              <div class="w-full ltr:text-left text-right">
+                <p class="font-semibold text-lg m-0 p-0">
+                  {{companyDetails.arabicName}}
+                </p>
+                <p class="font-semibold text-lg m-0 p-0" *ngIf="companyDetails.city">
+                  {{companyDetails.city}}
+                </p>
+                <p class="font-semibold text-lg m-0 p-0">
+                  {{companyDetails.phone}}
+                </p>
+                <p class="font-semibold text-lg m-0 p-0">
+                  {{ "INVOICE.TAXNUMBER"| translate}}: {{companyDetails.taxNumber}}
+                </p>
+              </div>
+              <div class="flex w-full justify-center items-center">
+                <img [src]="companyDetails?.logoUrl || ''"
+                     alt="company-logo" width="100" height="100">
+              </div>
+              <div class="w-full ltr:text-right text-left">
+                <p class="font-semibold text-lg m-0 p-0">
+                  {{companyDetails.englishName}}
+                </p>
+                <p class="font-semibold text-lg m-0 p-0" *ngIf="companyDetails.city">
+                  {{companyDetails.city}}
+                </p>
+                <p class="font-semibold text-lg m-0 p-0">
+                  {{companyDetails.phone}}
+                </p>
+                <p class="font-semibold text-lg m-0 p-0">
+                  TAX No: {{companyDetails.taxNumber}}
+                </p>
+              </div>
+            </div>
+
+          </ng-container>
+        }
+
+        <div class="flex justify-between items-center w-full text-center border border-slate-900">
+          <div class="w-full text-end ltr:text-start">
+            <p class="font-semibold text-lg m-0">{{"INVOICE.DATE"| translate}}: {{salesCreditNote.issueDate | customDate: 'yyyy-MM-dd'}}</p>
+          </div>
+          <div class="w-full flex justify-center">
+            <h2 class="text-2xl font-bold">{{
+                salesCreditNote.customerProfile.taxNumber
+                  ? "إشعار دائن ضريبي"
+                  : 'إشعار دائن مبسط'
+              }}</h2>
+          </div>
+          <div class="w-full flex flex-col">
+            <p class="mb-0">رقم الإشعار: {{salesCreditNote.salesCreditNoteNo}}</p>
+            <p class="mb-0">رقم الفاتورة:
+              <a class="text-blue-500 hover:underline" [routerLink]="'/invoices/' + salesCreditNote.saleInvoice.id" target="_blank">
+                {{salesCreditNote.saleInvoice.invoiceNo}}
+              </a>
+            </p>
+          </div>
+        </div>
+
+        <div class="flex justify-between py-4 items-center">
+          <p class="m-0 p-0">{{"INVOICE.CLIENTNAME"|translate}}:
+            {{activeLanguage==="en"?salesCreditNote.customerProfile.englishName:salesCreditNote.customerProfile.arabicName}}</p>
+          <p *ngIf="salesCreditNote.customerProfile.taxNumber" class="m-0 p-0"> {{ "INVOICE.TAXNUMBER"| translate}}:
+            {{salesCreditNote.customerProfile.taxNumber}}</p>
+        </div>
+      </div>
+    </ng-template>
+
+    <!-- Summery Template -->
+    <ng-template #summaryTemplate>
+      <div class="w-full">
+        <table class="w-full border border-gray-900">
+          <tbody>
+          <tr>
+            <td class="p-2 border border-gray-900">
+              <strong class=" text-dark">{{"INVOICE.TOTAL"|translate}}</strong>
+            </td>
+            <td class="p-2 text-center border border-gray-900">{{getNetPrice(salesCreditNote)| formatDecimal}}</td>
+          </tr>
+          <tr *ngIf="salesCreditNote.discountAmount > 0">
+            <td class="p-2 border border-gray-900">
+              <strong class="text-dark"> {{"INVOICE.DISCOUNT"|translate}}</strong>
+            </td>
+            <td class="p-2 text-center border border-gray-900">{{salesCreditNote.discountAmount| formatDecimal}}</td>
+          </tr>
+          <tr>
+            <td class="p-2 border border-gray-900">
+              <strong class="text-dark"> {{"INVOICE.ADDEDTAX"|translate}}</strong>
+            </td>
+            <td class="p-2 text-center border border-gray-900">{{getTaxAmount(salesCreditNote)| formatDecimal}}</td>
+          </tr>
+          <tr>
+            <td class="p-2 border border-gray-900">
+              <strong class="text-dark"> {{"INVOICE.TOTALWITHTAX"|translate}}</strong>
+            </td>
+            <td class="p-2 text-center border border-gray-900">
+              <strong class="text-dark">{{getTotalPrice(salesCreditNote)| formatDecimal}}</strong>
+            </td>
+          </tr>
+          </tbody>
+        </table>
+      </div>
+
+    </ng-template>
+    <!-- Footer Template -->
+    <ng-template #footerTemplate>
+      <br><br>
+      <div class="w-full border border-slate-900 rounded-2xl flex justify-between">
+        <div class="h-32 w-[40%] text-center font-semibold text-lg">
+          <p class="m-0 p-0">
+            {{activeLanguage==='en'?companyDetails.englishName:companyDetails.arabicName}}
+          </p>
+          <p class="m-0 p-0 w-full text-end ltr:text-start">
+            {{ "INVOICE.SIGNATURE" | translate}}: <span
+            class="text-sm font-light">...............................................................................................................</span>
+          </p>
+        </div>
+        <div class="h-32 w-[40%] text-center font-semibold text-lg">
+          <p class="m-0 p-0">
+            {{activeLanguage==='en'?salesCreditNote.customerProfile.englishName:salesCreditNote.customerProfile.arabicName}}
+          </p>
+          <p class="m-0 p-0 w-full text-end ltr:text-start">
+            {{ "INVOICE.SIGNATURE" | translate}}: <span
+            class="text-sm font-light">...............................................................................................................</span>
+
+          </p>
+        </div>
+      </div>
+      <div class="w-full border-t border-slate-900 rounded-2xl flex justify-center border absolute" style="bottom: 0;">
+        {{companyDetails?.getFullAddress()}}
+      </div>
+
+    </ng-template>
+  </div>
+</ng-container>
+
+

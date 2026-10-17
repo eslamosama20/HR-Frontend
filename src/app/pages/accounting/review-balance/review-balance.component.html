@@ -1,0 +1,563 @@
+  <div class="w-full">
+    <div class="flex justify-center items-start gap-4 flex-col w-full px-10">
+      <div class="fixed inset-0 bg-gray-500 bg-opacity-75 flex items-center justify-center z-50" *ngIf="loading">
+        <i class="pi pi-spin pi-spinner" style="font-size: 2rem"></i>
+      </div>
+
+
+      <p-panel class="w-full" [header]="translate.instant('FINANCE.TRAIL_BALANCE')">
+        <div class="flex gap-2 w-full items-end justify-between flex-wrap">
+          <div class="flex gap-2 items-end">
+            <div class="field" style="min-width: 280px; max-width: 350px;">
+              <label for="dateRange" class="block">{{
+                  translate.instant("FINANCE.DATE_RANGE")
+                }}</label>
+              <p-calendar
+                id="dateRange"
+                [(ngModel)]="dateRange"
+                selectionMode="range"
+                [showButtonBar]="true"
+                variant="filled"
+                [showIcon]="true"
+                [iconDisplay]="'input'"
+                [dateFormat]="'dd/mm/yy'"
+                appendTo="body"
+                styleClass="w-full"
+              >
+                <ng-template pTemplate="inputicon">
+                  <i class="pi pi-calendar "></i>
+                </ng-template>
+              </p-calendar>
+            </div>
+            <p-button
+              styleClass="rounded-md"
+              [label]="translate.instant('FINANCE.SEARCH')"
+              (onClick)="loadData()"
+              />
+          </div>
+          <div class="flex gap-2" *ngIf="trailBalanceData.length > 0">
+            <p-button
+              styleClass="rounded-md"
+              icon="pi pi-share-alt"
+              [label]="translate.instant('FINANCE.SHARE')"
+              (onClick)="openShareDialog()"
+              severity="info"
+              />
+            <p-button
+              styleClass="rounded-md"
+              icon="pi pi-print"
+              [label]="translate.instant('FINANCE.PRINT_PDF')"
+              (onClick)="printDocument()"
+              severity="warning"
+              />
+            <p-button
+              styleClass="rounded-md"
+              icon="pi pi-file-pdf"
+              [label]="translate.instant('FINANCE.DOWNLOAD_PDF')"
+              (onClick)="downloadDocument()"
+              severity="danger"
+              />
+            <p-button
+              styleClass="rounded-md p-button-success"
+              icon="pi pi-file-excel"
+              [label]="translate.instant('FINANCE.EXPORT_EXCEL')"
+              (onClick)="exportToExcel()"
+              />
+          </div>
+        </div>
+        <div *ngIf="trailBalanceData.length === 0" class="flex p-5 my-4 border border-gray-300 rounded-lg w-full justify-center items-center text-3xl font-bold">
+          {{ 'FINANCE.NO_DATA' | translate }}
+        </div>
+        <div *ngIf="trailBalanceData.length > 0" class="flex flex-col my-4 border border-gray-300 rounded-lg">
+
+          <p-tabMenu [model]="items" [activeItem]="activeTab"/>
+          <table class="w-full">
+            <thead>
+              <tr>
+                <th colspan="2"></th>
+                <th colspan="2" class="text-center">{{translate.instant('FINANCE.PREVIOUS')}}</th>
+                <th colspan="2" class="text-center">{{translate.instant('FINANCE.PERIOD')}}</th>
+                <th colspan="2" rowspan="2"  class="text-center ">
+                  <div class="text-center text-lg">{{translate.instant('FINANCE.BALANCE')}}</div>
+                  <div class="text-center text-lg">{{translate.instant('FINANCE.TOTAL')}}:
+                    {{calculateTotalBalance == 0 ? "-" :
+                      calculateTotalBalance > 0 ?
+                        ( (calculateTotalBalance | absoluteValue) |  number : "1.0-2") :
+                        "(" + ( (calculateTotalBalance | absoluteValue) |  number : "1.0-2") + ")"
+                    }}</div>
+                </th>
+              </tr>
+              <tr>
+                <th class="w-[8%] text-center">
+                  {{translate.instant('FINANCE.ACCOUNT_NUMBER')}}
+                </th>
+                <th class="w-[30%] text-center">
+                  {{translate.instant('FINANCE.ACCOUNT_NAME')}}
+                </th>
+
+                <th class="w-[10%] text-center">
+                  {{translate.instant('FINANCE.DEBIT')}}
+                </th>
+                <th class="w-[10%] text-center">
+                  {{translate.instant('FINANCE.CREDIT')}}
+                </th>
+
+                <th class="w-[10%] text-center">
+                  {{translate.instant('FINANCE.DEBIT')}}
+                </th>
+                <th class="w-[10%] text-center">
+                  {{translate.instant('FINANCE.CREDIT')}}
+                </th>
+
+
+
+
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let account of getFilteredData()">
+                <td class=" text-center">
+                  {{account.accountNumber}}
+                </td>
+                <td class=" text-center">
+                  {{this.activeLanguage === 'ar' ? account.accountArabicName : account.accountEnglishName}}
+                </td>
+
+                <td class=" text-center">
+                  {{ account.previousDebit == 0 ? "-" :
+                  activeLanguage === "en"
+                    ? (account.previousDebit|  number : "1.0-2")
+                    : (account.previousDebit | number : "1.0-2")
+                  }}
+                </td>
+                <td class=" text-center">
+                  {{ account.previousCredit == 0 ? "-" :
+                  activeLanguage === "en"
+                    ? (account.previousCredit|  number : "1.0-2")
+                    : (account.previousCredit | number : "1.0-2")
+                  }}
+                </td>
+
+                <td class="text-center bg-sky-200">
+                  {{ account.periodDebit == 0 ? "-" :
+                  activeLanguage === "en"
+                    ? (account.periodDebit|  number : "1.0-2")
+                    : (account.periodDebit | number : "1.0-2")
+                  }}
+                </td>
+                <td class="text-center bg-sky-200">
+                  {{ account.periodCredit == 0 ? "-" :
+                  activeLanguage === "en"
+                    ? (account.periodCredit|  number : "1.0-2")
+                    : (account.periodCredit | number : "1.0-2")
+                  }}
+                </td>
+
+                <td class="text-center font-bold text-lg" [class]="account.balance < 0 ? 'text-rose-500' : ''">
+                  {{ account.balance == 0 ? "-" :
+                  account.balance > 0 ?
+                    ( (account.balance | absoluteValue) |  number : "1.0-2") :
+                    "(" + ( (account.balance | absoluteValue) |  number : "1.0-2") + ")"
+                  }}
+                </td>
+              </tr>
+<!--
+              <ng-container *ngFor="let root of trailBalanceData">
+                <tr>
+                  <td class=" text-center">
+                    {{root.accountNumber}}
+                  </td>
+                  <td class=" text-center">
+                    {{this.activeLanguage === 'ar' ? root.accountArabicName : root.accountEnglishName}}
+                  </td>
+
+                  <td class=" text-center">
+                    {{ root.previousDebit == 0 ? "-" :
+                    activeLanguage === "en"
+                      ? (root.previousDebit|  number : "1.0-2")
+                      : (root.previousDebit | number : "1.0-2")
+                    }}
+                  </td>
+                  <td class=" text-center">
+                    {{ root.previousCredit == 0 ? "-" :
+                      activeLanguage === "en"
+                        ? (root.previousCredit|  number : "1.0-2")
+                        : (root.previousCredit | number : "1.0-2")
+                    }}
+                  </td>
+
+                  <td class="text-center bg-sky-200">
+                    {{ root.periodDebit == 0 ? "-" :
+                    activeLanguage === "en"
+                      ? (root.periodDebit|  number : "1.0-2")
+                      : (root.periodDebit | number : "1.0-2")
+                    }}
+                  </td>
+                  <td class="text-center bg-sky-200">
+                    {{ root.periodCredit == 0 ? "-" :
+                      activeLanguage === "en"
+                        ? (root.periodCredit|  number : "1.0-2")
+                        : (root.periodCredit | number : "1.0-2")
+                    }}
+                  </td>
+
+                  <td class="text-center font-bold text-lg" [class]="root.balance < 0 ? 'text-rose-500' : ''">
+                    {{ root.balance == 0 ? "-" :
+                      root.balance > 0 ?
+                        ( (root.balance | absoluteValue) |  number : "1.0-2") :
+                        "(" + ( (root.balance | absoluteValue) |  number : "1.0-2") + ")"
+                    }}
+                  </td>
+                  &lt;!&ndash;<td class="text-center">
+                    {{ root.balanceCredit == 0 ? "-" :
+                      activeLanguage === "en"
+                        ? (root.balanceCredit|  number : "1.0-2")
+                        : (root.balanceCredit | number : "1.0-2")
+                    }}
+                  </td>&ndash;&gt;
+
+                </tr>
+                <ng-container *ngFor="let header of root.headers">
+                  <tr>
+                    <td class=" text-center">
+                      {{header.accountNumber}}
+                    </td>
+                    <td class=" text-center">
+                      {{this.activeLanguage === 'ar' ? header.accountArabicName : header.accountEnglishName}}
+                    </td>
+                    <td class=" text-center">
+                      {{ header.previousDebit == 0 ? "-" :
+                      activeLanguage === "en"
+                        ? (header.previousDebit|  number : "1.0-2")
+                        : (header.previousDebit | number : "1.0-2")
+                      }}
+                    </td>
+                    <td class=" text-center">
+                      {{ header.previousCredit == 0 ? "-" :
+                        activeLanguage === "en"
+                          ? (header.previousCredit|  number : "1.0-2")
+                          : (header.previousCredit | number : "1.0-2")
+                      }}
+                    </td>
+                    <td class="text-center bg-sky-200">
+                      {{ header.periodDebit == 0 ? "-" :
+                      activeLanguage === "en"
+                        ? (header.periodDebit|  number : "1.0-2")
+                        : (header.periodDebit | number : "1.0-2")
+                      }}
+                    </td>
+                    <td class="text-center bg-sky-200">
+                      {{ header.periodCredit == 0 ? "-" :
+                        activeLanguage === "en"
+                          ? (header.periodCredit|  number : "1.0-2")
+                          : (header.periodCredit | number : "1.0-2")
+                      }}
+                    </td>
+
+                    <td class="text-center font-bold text-lg" [class]="header.balance < 0 ? 'text-rose-500' : ''">
+                      {{ header.balance == 0 ? "-" :
+                         header.balance > 0 ?
+                           ( (header.balance | absoluteValue) |  number : "1.0-2") :
+                           "(" + ( (header.balance | absoluteValue) |  number : "1.0-2") + ")"
+                      }}
+                    </td>
+                    &lt;!&ndash;<td class="text-center">
+                      {{ header.balanceDebit == 0 ? "-" :
+                        activeLanguage === "en"
+                          ? (header.balanceDebit|  number : "1.0-2")
+                          : (header.balanceDebit | number : "1.0-2")
+                      }}
+                    </td>&ndash;&gt;
+                  </tr>
+                  <ng-container *ngFor="let detail of header.details">
+                    <tr>
+                      <td class=" text-center">
+                        {{detail.accountNumber}}
+                      </td>
+                      <td class=" text-center">
+                        {{this.activeLanguage === 'ar' ? detail.accountArabicName : detail.accountEnglishName}}
+                      </td>
+                      <td class=" text-center">
+                        {{ detail.previousDebit == 0 ? "-" :
+                        activeLanguage === "en"
+                          ? (detail.previousDebit|  number : "1.0-2")
+                          : (detail.previousDebit | number : "1.0-2")
+                        }}
+                      </td>
+                      <td class=" text-center">
+                        {{ detail.previousCredit == 0 ? "-" :
+                          activeLanguage === "en"
+                            ? (detail.previousCredit|  number : "1.0-2")
+                            : (detail.previousCredit | number : "1.0-2")
+                        }}
+                      </td>
+
+                      <td class=" text-center bg-sky-200">
+                        {{ detail.periodDebit == 0 ? "-" :
+                        activeLanguage === "en"
+                          ? (detail.periodDebit|  number : "1.0-2")
+                          : (detail.periodDebit | number : "1.0-2")
+                        }}
+                      </td>
+                      <td class=" text-center bg-sky-200">
+                        {{ detail.periodCredit == 0 ? "-" :
+                          activeLanguage === "en"
+                            ? (detail.periodCredit|  number : "1.0-2")
+                            : (detail.periodCredit | number : "1.0-2")
+                        }}
+                      </td>
+
+                      <td class="text-center font-bold text-lg" [class]="detail.balance < 0 ? 'text-rose-500' : ''">
+                        {{ detail.balance == 0 ? "-" :
+                         detail.balance > 0 ?
+                           ( (detail.balance | absoluteValue) |  number : "1.0-2") :
+                           "(" + ( (detail.balance | absoluteValue) |  number : "1.0-2") + ")"
+                        }}
+                      </td>
+                      &lt;!&ndash;<td class="text-center">
+                        {{ detail.balanceCredit == 0 ? "-" :
+                          activeLanguage === "en"
+                            ? (detail.balanceCredit|  number : "1.0-2")
+                            : (detail.balanceCredit | number : "1.0-2")
+                        }}
+                      </td>&ndash;&gt;
+
+                    </tr>
+                    <ng-container *ngFor="let main of detail.mains">
+                      <tr>
+                        <td class=" text-center">
+                          {{main.accountNumber}}
+                        </td>
+                        <td class=" text-center">
+                          {{this.activeLanguage === 'ar' ? main.accountArabicName : main.accountEnglishName}}
+                        </td>
+                        <td class=" text-center">
+                          {{ main.previousDebit == 0 ? "-" :
+                          activeLanguage === "en"
+                            ? (main.previousDebit|  number : "1.0-2")
+                            : (main.previousDebit | number : "1.0-2")
+                          }}
+                        </td>
+                        <td class=" text-center">
+                          {{ main.previousCredit == 0 ? "-" :
+                            activeLanguage === "en"
+                              ? (main.previousCredit|  number : "1.0-2")
+                              : (main.previousCredit | number : "1.0-2")
+                          }}
+                        </td>
+
+                        <td class="text-center bg-sky-200">
+                          {{ main.periodDebit == 0 ? "-" :
+                          activeLanguage === "en"
+                            ? (main.periodDebit|  number : "1.0-2")
+                            : (main.periodDebit | number : "1.0-2")
+                          }}
+                        </td>
+                        <td class="text-center bg-sky-200">
+                          {{ main.periodCredit == 0 ? "-" :
+                            activeLanguage === "en"
+                              ? (main.periodCredit|  number : "1.0-2")
+                              : (main.periodCredit | number : "1.0-2")
+                          }}
+                        </td>
+
+                        <td class="text-center font-bold text-lg" [class]="main.balance < 0 ? 'text-rose-500' : ''">
+                          {{ main.balance == 0 ? "-" :
+                            main.balance > 0 ?
+                              ( (main.balance | absoluteValue) |  number : "1.0-2") :
+                              "(" + ( (main.balance | absoluteValue) |  number : "1.0-2") + ")"
+                          }}
+                        </td>
+                       &lt;!&ndash; <td class="text-center">
+                          {{ main.balanceDebit == 0 ? "-" :
+                            activeLanguage === "en"
+                              ? (main.balanceDebit|  number : "1.0-2")
+                              : (main.balanceDebit | number : "1.0-2")
+                          }}
+                        </td>&ndash;&gt;
+                      </tr>
+                  </ng-container>
+
+                </ng-container>
+              </ng-container>
+              </ng-container>
+-->
+              <tr>
+                <td colspan="2" class="text-center font-bold text-lg">{{translate.instant('FINANCE.TOTAL')}}</td>
+                <td class="text-center" [class]="totalPreviousDebit < 0 ?'text-rose-500' : ''">
+                  {{totalPreviousDebit == 0 ? "-" :
+                  totalPreviousDebit > 0 ?
+                    ( (totalPreviousDebit | absoluteValue) |  number : "1.0-2") :
+                    "(" + ( (totalPreviousDebit | absoluteValue) |  number : "1.0-2") + ")"
+                  }}
+                </td>
+                <td class="text-center" [class]="totalPreviousCredit< 0 ? 'text-rose-500' : ''">
+                  {{totalPreviousCredit == 0 ? "-" :
+                  totalPreviousCredit > 0 ?
+                    ( (totalPreviousCredit | absoluteValue) |  number : "1.0-2") :
+                    "(" + ( (totalPreviousCredit | absoluteValue) |  number : "1.0-2") + ")"
+                  }}
+                </td>
+                <td class="text-center" [class]="totalPeriodDebit < 0 ? 'text-rose-500' : ''">
+                  {{totalPeriodDebit == 0 ? "-" :
+                  totalPeriodDebit > 0 ?
+                    ( (totalPeriodDebit | absoluteValue) |  number : "1.0-2") :
+                    "(" + ( (totalPeriodDebit | absoluteValue) |  number : "1.0-2") + ")"
+                  }}
+                </td>
+                <td class="text-center" [class]="totalPeriodCredit < 0 ? 'text-rose-500' : ''">
+                  {{totalPeriodCredit == 0 ? "-" :
+                  totalPeriodCredit > 0 ?
+                    ( (totalPeriodCredit | absoluteValue) |  number : "1.0-2") :
+                    "(" + ( (totalPeriodCredit | absoluteValue) |  number : "1.0-2") + ")"
+                  }}
+                </td>
+                <td class="text-center" [class]="calculateTotalBalance < 0 ? 'text-rose-500' : ''">
+                  {{calculateTotalBalance == 0 ? "-" :
+                  calculateTotalBalance > 0 ?
+                    ( (calculateTotalBalance | absoluteValue) |  number : "1.0-2") :
+                    "(" + ( (calculateTotalBalance | absoluteValue) |  number : "1.0-2") + ")"
+                  }}
+                </td>
+              </tr>
+
+            </tbody>
+          </table>
+        </div>
+
+      </p-panel>
+
+    </div>
+  </div>
+
+  <!-- Share Dialog -->
+  <p-dialog
+    *ngIf="shareDialogVisible"
+    [(visible)]="shareDialogVisible"
+    [modal]="true"
+    [dismissableMask]="true"
+    [draggable]="false"
+    [resizable]="false"
+    [style]="{ width: '520px', maxWidth: '95vw' }"
+    contentStyleClass="share-dialog"
+    [baseZIndex]="11000"
+  >
+    <ng-template pTemplate="header">
+      <div class="share-header">
+        <span class="icon-chip"><i class="pi pi-share-alt"></i></span>
+        <div class="title">
+          <div class="title-main" translate="FINANCE.SHARE_TRIAL_BALANCE"></div>
+        </div>
+      </div>
+    </ng-template>
+
+    <p-tabView [(activeIndex)]="shareActiveTabIndex">
+      <!-- Email Tab -->
+      <p-tabPanel [header]="'FINANCE.EMAIL' | translate" leftIcon="pi pi-envelope mr-2">
+        <div class="share-tab">
+          <div class="form-row">
+            <label for="shareEmail" translate="FINANCE.EMAIL"></label>
+            <input
+              id="shareEmail"
+              type="email"
+              pInputText
+              [formControl]="$any(shareForm.get('email'))"
+              placeholder="example@domain.com"
+              class="w-full"
+            />
+            <small
+              class="err"
+              *ngIf="shareForm.get('email')?.touched && shareForm.get('email')?.invalid"
+            >
+              {{ 'FINANCE.INVALID_EMAIL_ERROR' | translate }}
+            </small>
+          </div>
+
+          <div class="actions">
+            <button
+              pButton
+              type="button"
+              class="p-button p-button-primary"
+              icon="pi pi-send"
+              [label]="'FINANCE.SEND' | translate"
+              (click)="submitShareEmail()"
+              [disabled]="shareForm.get('email')?.invalid || shareBusy"
+              [loading]="shareBusy"
+              styleClass="flex-1"
+            ></button>
+            <button
+              pButton
+              type="button"
+              class="p-button-outlined p-button-secondary"
+              icon="pi pi-times"
+              [label]="'FINANCE.CANCEL' | translate"
+              (click)="closeShareDialog()"
+              [disabled]="shareBusy"
+              styleClass="flex-1"
+            ></button>
+          </div>
+        </div>
+      </p-tabPanel>
+
+      <!-- WhatsApp Tab -->
+      <p-tabPanel [header]="'FINANCE.WHATSAPP' | translate" leftIcon="pi pi-whatsapp mr-2">
+        <div class="share-tab">
+          <div class="media">
+            <span class="chip chip-whatsapp"><i class="pi pi-whatsapp"></i></span>
+            <div class="media-body">
+              <div class="media-title" translate="FINANCE.SEND_VIA_WHATSAPP"></div>
+              <div class="media-sub">
+                {{ 'FINANCE.ENTER_WHATSAPP_DESC' | translate }}
+              </div>
+            </div>
+          </div>
+
+          <div class="form-row">
+            <label for="sharePhone" translate="FINANCE.MOBILE_NUMBER_LABEL"></label>
+            <input
+              id="sharePhone"
+              type="tel"
+              pInputText
+              [formControl]="$any(shareForm.get('whatsappNumber'))"
+              placeholder="9665xxxxxxxx"
+              class="w-full"
+            />
+            <small
+              class="err"
+              *ngIf="shareForm.get('whatsappNumber')?.touched && shareForm.get('whatsappNumber')?.invalid"
+            >
+              {{ 'FINANCE.INVALID_PHONE_ERROR' | translate }}
+            </small>
+          </div>
+
+          <div class="actions">
+            <button
+              pButton
+              type="button"
+              class="p-button p-button-success"
+              icon="pi pi-send"
+              [label]="'FINANCE.SEND' | translate"
+              (click)="submitShareWhatsApp()"
+              [disabled]="shareForm.get('whatsappNumber')?.invalid || shareBusy"
+              [loading]="shareBusy"
+              styleClass="flex-1"
+            ></button>
+            <button
+              pButton
+              type="button"
+              class="p-button-outlined p-button-secondary"
+              icon="pi pi-times"
+              [label]="'FINANCE.CANCEL' | translate"
+              (click)="closeShareDialog()"
+              [disabled]="shareBusy"
+              styleClass="flex-1"
+            ></button>
+          </div>
+        </div>
+      </p-tabPanel>
+    </p-tabView>
+  </p-dialog>
+
+  <p-toast />
+
+<p-toast />

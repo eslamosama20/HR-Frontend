@@ -1,0 +1,24 @@
+.start-0 {
+  left: 0px !important;
+  right: auto !important;
+}
+
+[dir="rtl"] .start-0 {
+  right: 0px !important;
+  left: auto !important;
+}
+
+.start-100 {
+  right: 0px !important;
+  left: auto !important;
+}
+
+[dir="rtl"] .start-100 {
+  left: 0px !important;
+  right: auto !important;
+}
+
+:host {
+  background-color: var(--kt-app-sidebar-bg, #0972EB) !important;
+  color: var(--kt-app-sidebar-base-color, white) !important;
+}

@@ -1,0 +1,362 @@
+<div class="fixed inset-0 bg-gray-500 bg-opacity-75 flex items-center justify-center z-50" *ngIf="loading">
+  <i class="pi pi-spin pi-spinner" style="font-size: 2rem"></i>
+</div>
+<div class="container" dir="rtl" *ngIf="salesReturn && !loading" id="salesReturnSection">
+  <div class="row justify-content-center">
+    <div class="card">
+      <div class="p-3 no-print">
+        <app-back-button></app-back-button>
+      </div>
+
+      <!-- Action Menu -->
+      <app-detail-actions-menu
+        class="no-print"
+        [showPrint]="true"
+        [showEdit]="true"
+        [showCopy]="true"
+        [showDelete]="true"
+        [showCreateEntry]="salesReturn?.transactionId === null"
+        [disableCreateEntry]="salesReturn?.transactionId !== null"
+        [customButtons]="customButtons"
+        [documentTitle]="'RETURN.SALES_RETURN' | translate"
+        (onPrint)="onPrintClick()"
+        (onEdit)="onEditClick()"
+        (onCopy)="onCopyClick()"
+        (onDelete)="onDeleteClick()"
+        (onCreateEntry)="onCreateEntryClick()">
+      </app-detail-actions-menu>
+
+    <div class="card-header p-4">
+    <h3 class="pt-2 d-inline-block"  data-abc="true"> {{"RETURN.SALES_RETURN"|translate}}</h3>
+    <div class="float-right"> <h3 class="mb-0">{{"RETURN.RETURN"|translate}} {{salesReturn.returnNo}}</h3>
+   </div>
+    </div>
+      <!-- Company Details - Make Sure it's Inside the Return Div -->
+      <div class="card-body print-only company-details">
+        <div class="mb-4">
+          <div class="row">
+            <div class="col-sm-6">
+              <strong>{{ "RETURN.COMPANYNAME" | translate }}: </strong> {{ companyDetails?.arabicName }}
+            </div>
+            <div class="col-sm-6">
+              <strong>{{ "RETURN.VATNUMBER" | translate }}: </strong> {{ companyDetails?.taxNumber }}
+            </div>
+            <div class="col-sm-6">
+              <strong>{{ "RETURN.PHONENO" | translate }}: </strong> {{ companyDetails?.phone }}
+            </div>
+            <div class="col-sm-6"></div>
+              <!-- <strong>{{ "RETURN.LOGO" | translate }}: </strong> {{ companyDetails?}} -->
+            </div>
+
+        </div>
+      </div>
+    <div class="card-body">
+    <div class="row mb-4">
+    <div class="col-sm-6">
+
+
+    <div class="text-dark mb-1">{{"RETURN.RETURNNO"|translate}}  :{{salesReturn.returnNo}}</div>
+
+    <div class="text-dark mb-1"> {{"RETURN.SALES" |translate}}</div>
+
+    <div class="text-dark mb-1"> {{"RETURN.CLIENTNAME"|translate}} : {{activeLanguage=="en"?salesReturn.customerProfile.englishName:salesReturn.customerProfile.arabicName}}</div>
+    <div class="text-dark mb-1">{{"RETURN.DATE"|translate}} : {{salesReturn.issueDate | customDate:'yyyy-MM-dd'}}</div>
+    </div>
+    <div class="col-sm-6 ">
+
+
+
+    <div class="text-dark mb-1" *ngIf="salesReturn.customerProfile.taxNumber"> {{"RETURN.TAXNUMBER"|translate}} : {{salesReturn.customerProfile.taxNumber}}</div>
+
+    <div class="text-dark mb-1" *ngIf="salesReturn.customerProfile.contactNumber">{{"RETURN.PHONENO"|translate}}  : {{salesReturn.customerProfile.contactNumber}}</div>
+    </div>
+    </div>
+    <div class="table-responsive-sm">
+    <table class="table table-bordered">
+    <thead class="bg-primary text-white">
+    <tr>
+      <th class="w-16"></th>
+    <th class="text-center"> {{"RETURN.ITEMNO"|translate}} </th>
+    <th class="text-center"> {{"RETURN.ITEMNAME"|translate}}</th>
+      <!-- <th> {{"RETURN.ITEMDESCRIPTION"|translate}}</th> -->
+      <th class="text-center">{{"RETURN.UNIT"|translate}}</th>
+    <th class="text-center">{{"RETURN.QUANTITY"|translate}}</th>
+
+    <th class="text-center">{{"RETURN.PRICE"|translate}}</th>
+    <th class="text-center">{{"RETURN.TOTAL_PRE_TAX"|translate}}</th>
+    <th class="text-center">{{"RETURN.TAX"|translate}}</th>
+    <th class="text-center">{{"RETURN.TOTAL"|translate}}</th>
+    </tr>
+    </thead>
+    <tbody>
+    <tr *ngFor="let item of salesReturn.salesReturnItems; let i = index">
+      <td class="center text-center">{{i + 1}}</td>
+      <td class="center text-center">{{item.mainSalesClass.referenceCode}}</td>
+      <td class="center text-center">{{activeLanguage=="en"?item.mainSalesClass.englishName:item.mainSalesClass.arabicName}}</td>
+      <td class="center text-center">{{activeLanguage=="en"?item.mainSalesClass.measurementUnit.englishSymbol:item.mainSalesClass.measurementUnit.arabicSymbol}}</td>
+    <!-- <td class="left strong">{{item.name}}</td>
+    <td class="left strong">{{item.description}}</td>
+    <td class="left">{{item.unit}}</td> -->
+    <td class="text-center">{{item.quantity}}</td>
+
+     <td class="text-center">{{item.price}}</td>
+      <td class="text-center">{{(item.quantity * item.price) }}</td>
+
+     <td class="right">{{item.taxAmount}}</td>
+     <td class="text-center">{{item.totalPrice}}</td>
+    </tr>
+
+
+
+    </tbody>
+    </table>
+    </div>
+    <div class="row">
+    <div class="col-lg-4 col-sm-5">
+    </div>
+    <div class="col-lg-4 col-sm-5 ml-auto">
+    <table class="table table-clear ">
+    <tbody>
+    <tr>
+    <td class="left">
+    <strong class="text-dark">{{"RETURN.TOTAL"|translate}} : </strong>
+    </td>
+    <td class="right">{{getNetPrice() | formatDecimal}}</td>
+    </tr>
+    <tr>
+    <td class="left">
+    <strong class="text-dark"> {{"RETURN.ADDEDTAX"|translate}} :</strong>
+    </td>
+    <td class="right">{{getTaxAmount() | formatDecimal}}</td>
+    </tr>
+    <tr>
+    <td class="left">
+    <strong class="text-dark"> {{"RETURN.TOTALWITHTAX"|translate}} :</strong>
+     </td>
+    <td class="right">
+    <strong class="text-dark">{{getTotalPrice() | formatDecimal}}</strong>
+    </td>
+    </tr>
+    </tbody>
+    </table>
+    </div>
+    </div>
+    </div>
+    <div class="card-footer bg-white">
+
+    </div>
+    </div>
+    </div>
+</div>
+<ng-container *ngIf="!loading">
+  <div class="absolute top-0 left-[-100%] " *ngIf="docData && docColumns.length > 0">
+    <app-print-document
+      #printComponent
+      [headerTemplate]="headerTemplate"
+      [footerTemplate]="footerTemplate"
+      [summaryTemplate]="summaryTemplate"
+      [data]="docData"
+      [columns]="docColumns">
+    </app-print-document>
+
+    <!-- Header Template -->
+    <ng-template #headerTemplate>
+      <div class="w-full flex flex-col">
+        @if (companyDetails) {
+          <ng-container class="container m-0 p-0">
+            <div class="py-1 px-1 flex justify-between ">
+              <div class="w-full ltr:text-left text-right">
+                <p class="font-semibold text-lg m-0 p-0">
+                  {{companyDetails.arabicName}}
+                </p>
+                <p class="font-semibold text-lg m-0 p-0"  *ngIf="companyDetails.city">
+                  {{companyDetails.city}}
+                </p>
+                <p class="font-semibold text-lg m-0 p-0">
+                  {{companyDetails.phone}}
+                </p>
+                <p class="font-semibold text-lg m-0 p-0">
+                  {{ "INVOICE.TAXNUMBER"| translate}}: {{companyDetails.taxNumber}}
+                </p>
+              </div>
+              <div
+                class="flex w-full justify-center items-center"
+              >
+                <img
+                  [src]="companyDetails?.logoUrl || ''"
+                  alt="company-logo"
+                  width="100"
+                  height="100"
+                >
+              </div>
+              <div class="w-full ltr:text-right text-left">
+                <p class="font-semibold text-lg m-0 p-0">
+                  {{companyDetails.englishName}}
+                </p>
+                <p class="font-semibold text-lg m-0 p-0" *ngIf="companyDetails.city">
+                  {{companyDetails.city}}
+                </p>
+                <p class="font-semibold text-lg m-0 p-0">
+                  {{companyDetails.phone}}
+                </p>
+                <p class="font-semibold text-lg m-0 p-0">
+                  TAX No: {{companyDetails.taxNumber}}
+                </p>
+              </div>
+            </div>
+
+          </ng-container>
+        }
+        <div class="flex justify-between items-center w-full text-center border border-slate-900">
+          <div class="w-full text-end ltr:text-start">
+            <p class="font-semibold text-lg m-0">{{"RETURN.DATE"| translate}}: {{salesReturn.issueDate | customDate:'yyyy-MM-dd'}}</p>
+          </div>
+          <div class="w-full flex justify-center">
+            <h2 class="text-2xl font-bold">{{ "RETURN.SALES_RETURN" | translate}}</h2>
+          </div>
+          <div class="w-full">
+            <p class="font-semibold text-lg m-0 text-start ltr:text-end">
+              {{"RETURN.RETURNNO"|translate}}: {{salesReturn.returnNo}}
+            </p>
+          </div>
+        </div>
+
+        <div class="flex justify-between py-4 items-center">
+          <p class="m-0 p-0">{{"RETURN.CLIENTNAME"|translate}}: {{activeLanguage=="en"?salesReturn.customerProfile.englishName:salesReturn.customerProfile.arabicName}}</p>
+          <p *ngIf="salesReturn.customerProfile.taxNumber" class="m-0 p-0"> {{ "INVOICE.TAXNUMBER"| translate}}: {{salesReturn.customerProfile.taxNumber}}</p>
+        </div>
+      </div>
+    </ng-template>
+
+    <!-- Summery Template -->
+    <ng-template #summaryTemplate>
+      <div class="w-full">
+        <table class="w-full border border-gray-900">
+          <tbody>
+          <tr>
+            <td class="p-2 border border-gray-900">
+              <strong class=" text-dark">{{"RETURN.TOTAL"|translate}}</strong>
+            </td>
+            <td class="p-2 text-center border border-gray-900">{{getNetPrice() | formatDecimal}}</td>
+          </tr>
+          <tr>
+            <td class="p-2 border border-gray-900">
+              <strong class="text-dark"> {{"RETURN.ADDEDTAX"|translate}}</strong>
+            </td>
+            <td class="p-2 text-center border border-gray-900">{{getTaxAmount() | formatDecimal}}</td>
+          </tr>
+          <tr>
+            <td class="p-2 border border-gray-900">
+              <strong class="text-dark"> {{"RETURN.TOTALWITHTAX"|translate}}</strong>
+            </td>
+            <td class="p-2 text-center border border-gray-900">
+              <strong class="text-dark">{{getTotalPrice() | formatDecimal}}</strong>
+            </td>
+          </tr>
+          </tbody>
+        </table>
+      </div>
+
+    </ng-template>
+    <!-- Footer Template -->
+    <ng-template #footerTemplate>
+      <div class="w-full border border-slate-900 rounded-2xl flex justify-between">
+        <div class="h-32 w-[40%] text-center font-semibold text-lg">
+          <p class="m-0 p-0">
+            {{activeLanguage=='en'?companyDetails.englishName:companyDetails.arabicName}}
+          </p>
+          <p class="m-0 p-0 w-full text-end ltr:text-start">
+            {{ "RETURN.SIGNATURE" | translate}}: <span class="text-sm font-light">...............................................................................................................</span>
+          </p>
+        </div>
+        <div class="h-32 w-[40%] text-center font-semibold text-lg">
+          <p class="m-0 p-0">
+            {{activeLanguage=='en'?salesReturn.customerProfile.englishName:salesReturn.customerProfile.arabicName}}
+          </p>
+          <p class="m-0 p-0 w-full text-end ltr:text-start">
+            {{ "RETURN.SIGNATURE" | translate}}: <span class="text-sm font-light">...............................................................................................................</span>
+
+          </p>
+        </div>
+      </div>
+      <div class="w-full border-t border-slate-900 rounded-2xl flex justify-center border absolute" style="bottom: 0;">
+        {{companyDetails?.getFullAddress()}}
+      </div>
+    </ng-template>
+  </div>
+</ng-container>
+
+
+<div class="p-5 mt-5">
+  <!-- File Upload -->
+  <div class="mb-4">
+    <p-fileUpload
+      name="file"
+      id="file"
+      mode="basic"
+      chooseIcon="pi pi-upload"
+      accept="application/pdf"
+      (uploadHandler)="onFileSelected($event)"
+      customUpload="true"
+      [auto]="true"
+      chooseLabel="ارفع ملف جديد"/>
+  </div>
+
+  <!-- List of PDFs -->
+  <div>
+    <table class="min-w-full bg-white shadow-md rounded border border-gray-200">
+      <thead>
+      <tr class="bg-gray-100">
+        <th class="text-center p-3">اسم الملف</th>
+        <th class="text-center p-3">العمليات</th>
+      </tr>
+      </thead>
+      <tbody>
+      <tr *ngFor="let pdf of attachments" class="border-t">
+        <td class="p-3">{{ pdf.fileName }}</td>
+        <td class="p-3 flex justify-center">
+          <button
+            pButton
+            label="عرض"
+            icon="pi pi-eye"
+            class="p-button-text text-blue-500 mr-2"
+            (click)="onView(pdf)"
+          ></button>
+          <p-fileUpload
+            mode="basic"
+            chooseIcon="pi pi-upload"
+            accept="application/pdf"
+            (uploadHandler)="onUpdate($event,pdf)"
+            customUpload="true"
+            [auto]="true"
+            chooseLabel="تعديل"/>
+          <button
+            pButton
+            label="مسح"
+            icon="pi pi-trash"
+            class="p-button-text text-red-500"
+            (click)="onDelete(pdf)"
+          ></button>
+        </td>
+      </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- View PDF Dialog -->
+<p-dialog
+  [(visible)]="viewDialog"
+  [header]="'View PDF'"
+  [style]="{ width: '70vw' , height: '70vh' }"
+>
+  <ng-container *ngIf="currentPdfUrl">
+    <a [href]="currentPdfUrl" target="_blank">
+      <button pButton type="button"  icon="pi pi-download">افتح الملف في نافذة جديدة</button>
+    </a>
+    <embed  [src]="currentPdfUrl" type="application/pdf" width="100%" height="500px" />
+  </ng-container>
+</p-dialog>
+
+
+<p-toast></p-toast>

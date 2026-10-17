@@ -1,0 +1,271 @@
+<!--begin::Search-->
+<!--
+<div [ngClass]="itemClass" class="app-navbar-item align-items-stretch">
+  &lt;!&ndash;begin::Search&ndash;&gt;
+  <div class="header-search d-flex align-items-stretch" data-kt-menu-overflow="false" data-kt-menu-permanent="true"
+       data-kt-menu-placement="bottom-end" data-kt-menu-trigger="{default: 'hover'}" data-kt-search="true"
+       data-kt-search-enter="enter" data-kt-search-keypress="true" data-kt-search-layout="menu"
+       data-kt-search-min-length="2" id="kt_header_search">
+    &lt;!&ndash;begin::Search toggle&ndash;&gt;
+    <div class="d-flex align-items-center" data-kt-search-element="toggle" id="kt_header_search_toggle">
+      <div [ngClass]="btnClass">
+        <app-keenicon [class]="btnIconClass" name="magnifier"></app-keenicon>
+      </div>
+    </div>
+    &lt;!&ndash;end::Search toggle&ndash;&gt;
+    <app-search-result-inner class="menu menu-sub menu-sub-dropdown p-7 w-325px w-md-375px" data-kt-menu="true"
+                             data-kt-search-element="content"></app-search-result-inner>
+  </div>
+
+</div>
+-->
+<!--end::Search-->
+
+<!--begin::Activities-->
+<!--<div [ngClass]="itemClass" class="app-navbar-item">
+  &lt;!&ndash;begin::Drawer toggle&ndash;&gt;
+  <div [ngClass]="btnClass" id="kt_activities_toggle">
+    <app-keenicon class="fs-2" name="messages"></app-keenicon>
+  </div>
+  &lt;!&ndash;end::Drawer toggle&ndash;&gt;
+</div>-->
+<!--end::Activities-->
+
+<!--begin::Notifications-->
+<!--<div [ngClass]="itemClass" class="app-navbar-item">
+  &lt;!&ndash;begin::Menu- wrapper&ndash;&gt;
+  <div [ngClass]="btnClass" data-kt-menu-attach="parent" data-kt-menu-placement="bottom-end"
+       data-kt-menu-trigger="{default: 'click', lg: 'hover'}">
+    <app-keenicon class="fs-2" name="notification-status"></app-keenicon>
+  </div>
+  <app-notifications-inner></app-notifications-inner>
+  &lt;!&ndash;end::Menu wrapper&ndash;&gt;
+</div>-->
+<!--end::Notifications-->
+
+<!--begin::Chat-->
+<!--<div [ngClass]="itemClass" class="app-navbar-item">
+  <div [ngClass]="btnClass" class="position-relative" id="kt_drawer_chat_toggle">
+    <app-keenicon class="fs-2" name="message-text-2"></app-keenicon>
+    <span
+      class="bullet bullet-dot bg-success h-6px w-6px position-absolute translate-middle top-0 start-50 animation-blink">
+    </span>
+  </div>
+</div>-->
+<!--end::Chat-->
+
+<!--begin::Quick links-->
+<!--<div [ngClass]="itemClass" class="app-navbar-item">
+  &lt;!&ndash;begin::Menu wrapper&ndash;&gt;
+  <div [ngClass]="btnClass" data-kt-menu-attach="parent" data-kt-menu-placement="bottom-end"
+       data-kt-menu-trigger="click">
+    <app-keenicon class="fs-2" name="element-11"></app-keenicon>
+  </div>
+  &lt;!&ndash;end::Menu wrapper&ndash;&gt;
+  <app-quick-links-inner></app-quick-links-inner>
+</div>-->
+<!--end::Quick links-->
+
+<!-- User Greeting -->
+<!-- User Name -->
+<!--<div class="user-name d-flex align-items-center">
+  <h3 class="username-text">Hi, {{ userName }}</h3>
+</div>-->
+
+<div class="w-full d-none d-md-block">
+  <ng-container *ngIf="showPageTitle()">
+    <app-page-title
+      [appPageTitleDirection]="appPageTitleDirection"
+      [appPageTitleBreadcrumb]="appPageTitleBreadcrumb"
+      [appPageTitleDescription]="appPageTitleDescription"
+      class="page-title d-flex flex-wrap me-3"
+      [ngClass]="{
+        'flex-column justify-content-center':
+          appPageTitleDirection === 'column',
+        'align-items-center': appPageTitleDirection !== 'column',
+        appPageTitleCSSClass
+      }"
+    >
+    </app-page-title>
+  </ng-container>
+</div>
+
+<!--begin::Global Search-->
+<div class="global-search-container ms-lg-4 d-none d-sm-block">
+  <div class="search-input-wrapper">
+    <i class="pi pi-search search-icon"></i>
+    <input 
+      type="text" 
+      class="global-search-input" 
+      [placeholder]="currentLang === 'ar' ? 'البحث في النظام...' : 'Search system...'"
+      [(ngModel)]="searchQuery" 
+      (input)="onSearchInput($event)"
+      (focus)="searchActive = true"
+      (blur)="onSearchBlur()"
+    />
+    <i class="pi pi-times-circle clear-icon" *ngIf="searchQuery" (click)="clearSearch()"></i>
+  </div>
+  
+  <!-- Dropdown of matching pages -->
+  <div class="search-results-dropdown" *ngIf="searchActive && filteredPages.length > 0">
+    <div 
+      class="search-result-item d-flex align-items-center gap-2" 
+      *ngFor="let page of filteredPages"
+      (mousedown)="navigateToPage(page.route)"
+    >
+      <i class="pi" [ngClass]="page.icon || 'pi-link'"></i>
+      <span class="result-title">{{ currentLang === 'ar' ? page.titleAr : page.titleEn }}</span>
+    </div>
+  </div>
+</div>
+<!--end::Global Search-->
+
+<!--begin::Theme mode-->
+<div [ngClass]="itemClass" class="app-navbar-item">
+  <app-theme-mode-switcher
+    [toggleBtnClass]="btnClass"
+  ></app-theme-mode-switcher>
+</div>
+<!--end::Theme mode-->
+
+<!--begin::Language switcher-->
+<div [ngClass]="itemClass" class="app-navbar-item">
+  <div class="lang-switch-toggle d-flex align-items-center" (click)="toggleLanguage()" [title]="currentLang === 'ar' ? 'Switch to English' : 'تغيير إلى العربية'">
+    <span class="lang-option" [class.active]="currentLang === 'ar'">AR</span>
+    <span class="lang-divider"></span>
+    <span class="lang-option" [class.active]="currentLang === 'en'">EN</span>
+  </div>
+</div>
+<!--end::Language switcher-->
+<!--begin::Notifications (Bell + dropdown panel)-->
+<div
+  [ngClass]="itemClass"
+  class="app-navbar-item notif-wrapper"
+  style="position: relative"
+>
+  <!-- زر الأيقونة (pin/bell) -->
+  <button
+    type="button"
+    [ngClass]="btnClass"
+    class="position-relative"
+    (click)="toggleNotificationsPanel()"
+    aria-label="Notifications"
+  >
+    <!-- استخدم keenicon أو أيقونة تفضّلها -->
+    <app-keenicon class="fs-2" name="notification-bing"></app-keenicon>
+
+    <!-- البادج (عدد غير المقروء) -->
+    <span
+      class="badge bg-danger position-absolute translate-middle"
+      style="top: -2px; inset-inline-start: 28px"
+      *ngIf="unreadCount$ | async as u"
+      [hidden]="u === 0"
+    >
+      {{ u }}
+    </span>
+  </button>
+
+  <!-- البانل المنسدل (يعرض صفحة الإشعارات كـ Component) -->
+  <div
+    class="notif-dropdown p-0"
+    *ngIf="showNotifications"
+    (click)="$event.stopPropagation()"
+  >
+    <app-notifications></app-notifications>
+  </div>
+</div>
+<!--end::Notifications-->
+
+<!--begin::User menu-->
+<div [ngClass]="itemClass" class="app-navbar-item">
+  <!--begin::Menu wrapper-->
+  <div
+    class="cursor-pointer"
+    data-kt-menu-attach="parent"
+    data-kt-menu-placement="bottom-end"
+    data-kt-menu-trigger="{default: 'click'}"
+  >
+    <div class="user-info-container d-flex align-items-center">
+      <div class="user-name me-2">
+        <span class="username-text">{{ userName }}</span>
+      </div>
+      <div class="user-avatar">
+        <div class="circle-avatar">
+          <img
+            *ngIf="avatarUrl; else initialsFallback"
+            [src]="avatarUrl"
+            alt="User Avatar"
+            style="width: 100%; height: 100%; border-radius: 50%; object-fit: cover;"
+          />
+          <ng-template #initialsFallback>
+            {{ userInitials }}
+          </ng-template>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div
+    class="menu menu-sub menu-sub-dropdown menu-column menu-rounded menu-gray-800 menu-state-bg menu-state-primary fw-semibold py-4 fs-6 w-275px"
+    data-kt-menu="true"
+  >
+    <form
+      class="form-group"
+      style="
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 0.5rem 1rem;
+      "
+      *ngIf="this.inputSwitchEnabled"
+    >
+      <p-inputSwitch
+        [ngModelOptions]="{ standalone: true }"
+        [(ngModel)]="twoFactorEnabledChecked"
+        name="twoFactorEnabledChecked"
+        id="twoFactorEnabledChecked"
+        (onChange)="toggleTwoFactorEnabled($event)"
+        [disabled]="!this.inputSwitchEnabled"
+      ></p-inputSwitch>
+      <label for="twoFactorEnabledChecked">{{
+        "DASHBOARD.TWO_FACTOR_ENABLED" | translate
+      }}</label>
+    </form>
+    <div class="menu-item px-3">
+      <a class="menu-link px-3" [routerLink]="'/user-profile'">
+        {{ "DASHBOARD.USER_PROFILE" | translate }}
+      </a>
+    </div>
+    <div (click)="logout()" class="menu-item px-3">
+      <a class="menu-link px-3" href="#">{{
+        "GENERAL.LOGOUT_BUTTON" | translate
+      }}</a>
+    </div>
+    <!-- Choose your language / 2 buttons 1 for English / 2 for Arabic -->
+
+    <div class="menu-item px-3">
+      <a class="menu-link px-3" (click)="changeLanguage('ar'); $event.preventDefault()" href="javascript:void(0)">العربية</a>
+    </div>
+    <div class="menu-item px-3">
+      <a class="menu-link px-3" (click)="changeLanguage('en'); $event.preventDefault()" href="javascript:void(0)">English</a>
+    </div>
+  </div>
+  <!--end::Menu wrapper-->
+</div>
+<!--end::User menu-->
+
+<!--begin::Header menu toggle-->
+<ng-container *ngIf="appHeaderDefaulMenuDisplay">
+  <div class="app-navbar-item d-lg-none ms-2 me-n3" title="Show header menu">
+    <div
+      class="btn btn-icon btn-active-color-primary w-35px h-35px"
+      id="kt_app_header_menu_toggle"
+    >
+      <app-keenicon
+        [ngClass]="btnIconClass"
+        class="fs-1"
+        name="element-4"
+      ></app-keenicon>
+    </div>
+  </div>
+</ng-container>
+<!--end::Header menu toggle-->

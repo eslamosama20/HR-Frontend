@@ -1,0 +1,358 @@
+<p-panel>
+  <ng-template pTemplate="header">
+    <div class="flex justify-between items-center w-full flex-wrap gap-2">
+      <!-- Breadcrumb Header -->
+      <nav class="flex items-center gap-2 text-base md:text-lg flex-wrap" aria-label="Breadcrumb">
+        <!-- Root: General Accounts -->
+        <span class="font-medium text-gray-500 dark:text-gray-400">
+          {{ 'MENU.GENERAL_ACCOUNTS' | translate }}
+        </span>
+
+        <!-- Separator -->
+        <i class="pi text-xs text-gray-400 font-bold"
+           [ngClass]="activeLanguage === 'ar' ? 'pi-chevron-left' : 'pi-chevron-right'"></i>
+
+        <!-- Secondary: Journal Transactions Link -->
+        <a [routerLink]="isFrontal ? '/accounting/frontal-journal-transactions' : '/accounting/journal-transactions'"
+           class="font-medium text-gray-600 hover:text-primary dark:text-gray-300 dark:hover:text-primary hover:underline transition-colors cursor-pointer text-decoration-none">
+          {{ isFrontal ? (activeLanguage === 'ar' ? 'قيود اليومية فرونتال' : 'Frontal Journal Transactions') : ('MENU.JOURNAL_TRANSACTIONS' | translate) }}
+        </a>
+
+        <!-- Separator -->
+        <i class="pi text-xs text-gray-400 font-bold"
+           [ngClass]="activeLanguage === 'ar' ? 'pi-chevron-left' : 'pi-chevron-right'"></i>
+
+        <!-- Current Action Label (Active in Blue) -->
+        <span class="font-bold text-primary">
+          {{ isEditMode ? (isReadOnly ? (activeLanguage === 'ar' ? 'عرض القيد' : 'View Transaction') : (activeLanguage === 'ar' ? 'تعديل القيد' : 'Edit Transaction')) : ('FINANCE.ADD_TRANSACTION' | translate) }}
+        </span>
+      </nav>
+
+      <div class="flex items-center gap-2 no-print">
+        <!-- زرار الطباعة - يظهر في وضع التعديل فقط -->
+        <button
+          *ngIf="isEditMode && currentTransaction && hasPermission(PERMISSIONS.Transaction.Export)"
+          pButton
+          type="button"
+          icon="pi pi-print"
+          [label]="translate.instant('COMMON.PRINT')"
+          class="p-button-secondary p-button-sm rounded-md"
+          (click)="onPrintClick()">
+        </button>
+
+        <!-- زرار النسخ - يظهر في وضع التعديل فقط -->
+        <button
+          *ngIf="isEditMode && currentTransaction && hasPermission(PERMISSIONS.Transaction.Create)"
+          pButton
+          type="button"
+          icon="pi pi-copy"
+          [label]="translate.instant('COMMON.COPY')"
+          class="p-button-info p-button-sm rounded-md"
+          (click)="copyTransaction()">
+        </button>
+
+        <!-- زرار الحذف - يظهر في وضع التعديل فقط بنفس شروط القائمة الرئيسية -->
+        <button
+          *ngIf="isEditMode && currentTransaction && hasPermission(PERMISSIONS.Transaction.Delete)"
+          pButton
+          type="button"
+          icon="pi pi-trash"
+          [label]="translate.instant('COMMON.DELETE')"
+          class="p-button-danger p-button-sm rounded-md"
+          [disabled]="!canDeleteTransaction()"
+          [pTooltip]="!canDeleteTransaction() ? getDeleteDisableTooltip() : ''"
+          tooltipPosition="bottom"
+          (click)="confirmTransactionDeletion($event)">
+        </button>
+
+        <!-- زرار الرجوع -->
+        <app-back-button
+          [customRoute]="isFrontal ? '/accounting/frontal-journal-transactions' : '/accounting/journal-transactions'"
+          [modernStyle]="false"
+          styleClass="p-button-secondary p-button-sm rounded-md">
+        </app-back-button>
+      </div>
+    </div>
+  </ng-template>
+
+  <div class="fixed inset-0 bg-gray-500 bg-opacity-75 flex items-center justify-center z-50 no-print" *ngIf="loading">
+    <i class="pi pi-spin pi-spinner" style="font-size: 2rem"></i>
+  </div>
+  <form *ngIf="!loading" [formGroup]="transactionFormGroup"
+    class="flex flex-col gap-2 p-2 py-1 border-l-1 border-gray-300" novalidate>
+
+    <div class="w-full" *ngIf="isEditMode && transactionFormGroup.controls.isOpeningTransaction.value">
+      <span class="inline-block bg-blue-50 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300 font-bold px-3 py-1 rounded-md text-sm mb-1">
+        <i class="pi pi-info-circle mr-1"></i>
+        {{ translate.instant("FINANCE.OPENING_TRANSACTION")}}
+      </span>
+    </div>
+
+    <!-- في حالة التعديل/العرض: شريط علوي لرقم القيد والمستند الأصلي -->
+    <div class="w-full my-2.5 p-3.5 bg-white dark:bg-gray-800/90 border border-gray-200 dark:border-gray-700/80 rounded-xl flex items-center justify-between flex-wrap gap-3 shadow-xs"
+         *ngIf="isEditMode && (transactionFormGroup?.get('referenceNumber')?.value || currentTransaction?.referenceNumber)">
+      
+      <!-- اليمين: رقم القيد بحجم خط أكبر وواضح -->
+      <div class="flex items-center gap-2.5">
+        <span class="text-base font-bold text-gray-700 dark:text-gray-300">
+          {{ 'FINANCE.REFERENCE_NUMBER' | translate }}:
+        </span>
+        <span class="text-xl md:text-2xl font-bold font-mono text-blue-600 dark:text-blue-400 tracking-wide">
+          {{ transactionFormGroup?.get('referenceNumber')?.value || currentTransaction?.referenceNumber }}
+        </span>
+      </div>
+
+      <!-- اليسار: زر الذهاب للمستند مع فاصل واضح بين الأيقونة والاسم -->
+      <div class="flex items-center" *ngIf="isReadOnly && hasSourceDocument()">
+        <button
+          pButton
+          type="button"
+          class="p-button-primary p-button-outlined p-button-sm rounded-lg font-bold inline-flex items-center gap-2.5 px-3.5 py-2"
+          (click)="goToSourceDocument()">
+          <span>{{ (activeLanguage === 'ar' ? 'الذهاب إلى ' : 'Go to ') + getSourceDocumentName() }}</span>
+          <i class="pi pi-external-link text-sm"></i>
+        </button>
+      </div>
+    </div>
+
+    <!-- الصف الأول: تاريخ القيد + نوع القيد -->
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-3 w-full">
+      <!-- تاريخ القيد -->
+      <div class="field">
+        <label for="transactionDate" class="block font-bold mb-1">
+          {{ translate.instant("FINANCE.TRANSACTION_DATE") }}
+          <span class="text-red-500 font-bold ml-1">*</span>
+        </label>
+        <p-calendar [readonlyInput]="isReadOnly" [disabled]="isReadOnly" id="transactionDate"
+          inputId="transactionDate" [showButtonBar]="true" variant="filled" formControlName="transactionDate"
+          [showIcon]="true" [iconDisplay]="'input'" [dateFormat]="'dd/mm/yy'" appendTo="body" styleClass="w-full"
+          [disabled]="isEditMode && transactionFormGroup.controls.isOpeningTransaction.value">
+          <ng-template pTemplate="inputicon">
+            <i class="pi pi-calendar"></i>
+          </ng-template>
+        </p-calendar>
+        <small class="text-red-500 p-error block" *ngIf="
+          transactionFormGroup.controls.transactionDate.invalid &&
+          (transactionFormGroup.controls.transactionDate.touched || isSubmitted)
+        ">
+          {{ translate.instant("FINANCE.TRANSACTION_DATE_REQUIRED") }}
+        </small>
+      </div>
+
+      <!-- نوع القيد -->
+      <div class="field">
+        <label for="transactionTypeId" class="block font-bold mb-1">
+          {{ translate.instant("FINANCE.TRANSACTION_TYPE") }}
+          <span class="text-red-500 font-bold ml-1">*</span>
+        </label>
+        <p-dropdown [readonly]="isReadOnly" id="transactionTypeId" formControlName="transactionTypeId"
+          [options]="transactionTypesOptions" [placeholder]="translate.instant('FINANCE.SELECT')"
+          [showClear]="!isReadOnly" [filter]="true" styleClass="w-full flex rtl:flex-row-reverse" appendTo="body">
+        </p-dropdown>
+        <small class="text-red-500 p-error block" *ngIf="
+            transactionFormGroup.controls.transactionTypeId.invalid &&
+            (transactionFormGroup.controls.transactionTypeId.touched || isSubmitted)
+          ">
+          {{ translate.instant("FINANCE.TRANSACTION_TYPE_REQUIRED") }}
+        </small>
+      </div>
+    </div>
+
+    <div class="field w-full">
+      <label for="description" class="block font-bold mb-1">
+        {{ translate.instant("FINANCE.DESCRIPTION") }}
+      </label>
+      <input [readonly]="isReadOnly" pInputText type="text" id="description" formControlName="description"
+        class="w-full" />
+    </div>
+    <div class="field w-full flex items-center gap-3 my-1"
+      *ngIf="transactionFormGroup.controls.transactionDate.value && !isEditMode">
+      <label for="isOpeningTransaction" class="font-bold cursor-pointer m-0">
+        {{ translate.instant("FINANCE.IS_OPENING_TRANSACTION") }} {{ transactionFormGroup.controls.transactionDate.value
+        | customDate: 'yyyy' }}؟
+      </label>
+      <p-inputSwitch id="isOpeningTransaction" formControlName="isOpeningTransaction"
+        [disabled]="isEditMode"></p-inputSwitch>
+    </div>
+
+  </form>
+</p-panel>
+
+<p-panel *ngIf="!loading" class="mt-2 block">
+  <ng-template pTemplate="header">
+    <span class="font-bold text-xl text-gray-800">
+      {{ translate.instant('FINANCE.TRANSACTION_ENTRIES') }}
+    </span>
+  </ng-template>
+
+  <app-transaction-entries-editable-table [isReadOnly]="isReadOnly"
+    [description]="transactionFormGroup.controls.description.value" [mainAccountOptions]="mainAccountsOptions"
+    [data]="transactionFormGroup.controls.transactionEntries.value"></app-transaction-entries-editable-table>
+
+  <small class="text-red-500 p-error block text-base"
+    *ngIf="transactionFormGroup.controls.transactionEntries.invalid && isSubmitted">
+    <ng-container *ngIf="transactionFormGroup.controls.transactionEntries.errors">
+      <div *ngIf="transactionFormGroup.controls.transactionEntries.errors.minLength">
+        {{ translate.instant("FINANCE.TRANSACTION_ENTRIES_REQUIRED") }}
+      </div>
+      <div *ngIf="transactionFormGroup.controls.transactionEntries.errors.missingEntryType">
+        {{ translate.instant("FINANCE.TRANSACTION_ENTRIES_MISSING_ENTRY_TYPE")}}
+      </div>
+      <div *ngIf="transactionFormGroup.controls.transactionEntries.errors.balanceMismatch">
+        {{ translate.instant("FINANCE.TRANSACTION_ENTRIES_BALANCE_MISMATCH", {debitAmount:
+        transactionFormGroup.controls.transactionEntries.errors.balanceMismatch?.debitAmount, creditAmount:
+        transactionFormGroup.controls.transactionEntries.errors.balanceMismatch?.creditAmount}) }}
+      </div>
+    </ng-container>
+  </small>
+
+  <div class="flex justify-content-end gap-2 no-print">
+    <p-button *ngIf="isEditMode ? hasPermission(PERMISSIONS.Transaction.Update) : hasPermission(PERMISSIONS.Transaction.Create)"
+      styleClass="rounded-md" [label]="translate.instant('FINANCE.SAVE')" icon="pi pi-check"
+      (onClick)="saveTransaction(false)" [disabled]="isReadOnly" />
+    <p-button *ngIf="!isEditMode && hasPermission(PERMISSIONS.Transaction.Create)" styleClass="rounded-md" [label]="translate.instant('DATA.SANE_AND_CONTINUE')"
+      severity="success" (onClick)="saveTransaction(true)" [disabled]="isReadOnly">
+      <ng-template pTemplate="icon">
+        <i class="pi pi-save me-2"></i>
+      </ng-template>
+    </p-button>
+    <p-button styleClass="rounded-md" [label]="translate.instant('FINANCE.CANCEL')" icon="pi pi-times"
+      severity="secondary" (onClick)="navigateToTransactionsPage()" />
+  </div>
+</p-panel>
+
+
+
+<ng-container *ngIf="isEditMode">
+  <div class="fixed top-0 left-0 w-0 h-0 overflow-hidden pointer-events-none" aria-hidden="true" *ngIf="docData && docColumns.length > 0">
+    <app-print-document #printComponent [headerTemplate]="headerTemplate" [footerTemplate]="footerTemplate"
+      [bodyTemplate]="bodyTemplate" [data]="docData" [columns]="docColumns">
+    </app-print-document>
+
+    <!-- Header Template -->
+    <ng-template #headerTemplate>
+      <div class="w-full flex flex-col  rounded-lg p-8">
+        @if (companyDetails) {
+        <ng-container class="container m-0 p-0">
+          <div class="py-1 px-1 flex justify-between ">
+            <div class="w-full ltr:text-left text-right">
+              <p class="font-semibold text-lg m-0 p-0">
+                {{companyDetails.arabicName}}
+              </p>
+              <p class="font-semibold text-lg m-0 p-0" *ngIf="companyDetails.city">
+                {{companyDetails.city}}
+              </p>
+              <p class="font-semibold text-lg m-0 p-0">
+                {{companyDetails.phone}}
+              </p>
+              <p class="font-semibold text-lg m-0 p-0">
+                {{ "INVOICE.TAXNUMBER"| translate}}: {{companyDetails.taxNumber}}
+              </p>
+            </div>
+            <div class="flex w-full justify-center items-center">
+              <img [src]="companyDetails?.logoUrl || ''" alt="company-logo" width="100" height="100">
+            </div>
+            <div class="w-full ltr:text-right text-left">
+              <p class="font-semibold text-lg m-0 p-0">
+                {{companyDetails.englishName}}
+              </p>
+              <p class="font-semibold text-lg m-0 p-0" *ngIf="companyDetails.city">
+                {{companyDetails.city}}
+              </p>
+              <p class="font-semibold text-lg m-0 p-0">
+                {{companyDetails.phone}}
+              </p>
+              <p class="font-semibold text-lg m-0 p-0">
+                TAX No: {{companyDetails.taxNumber}}
+              </p>
+            </div>
+          </div>
+
+        </ng-container>
+        }
+        <div class="flex-1 w-full text-center">
+          <h2 class="text-4xl font-bold">{{ "FINANCE.TRANSACTION" | translate}} ({{currentTransaction.referenceNumber}})
+          </h2>
+        </div>
+      </div>
+    </ng-template>
+
+    <!-- Body Template -->
+    <ng-template #bodyTemplate>
+      <div class="flex justify-between w-full gap-4">
+        <p class="font-semibold text-lg m-0">{{"FINANCE.TRANSACTION_DATE"| translate}}:
+          {{currentTransaction.transactionDate | customDate: 'dd/MM/yyyy'}}</p>
+        <p class="font-semibold text-lg m-0">{{"FINANCE.TRANSACTION_TYPE"| translate}}: {{activeLanguage == "en" ?
+          currentTransaction.transactionType.englishName:currentTransaction.transactionType.arabicName}}</p>
+        <p *ngIf="currentTransaction.description" class="font-semibold text-lg m-0">{{"FINANCE.DESCRIPTION"|
+          translate}}: {{currentTransaction.description}}</p>
+      </div>
+      <div class="flex justify-center w-full gap-8">
+        <p class="m-0">{{"FINANCE.TOTAL_DEBIT"| translate}}:
+          {{calculateTransactionTotalDebit(currentTransaction.transactionEntries) | currency : "SAR" : "symbol-narrow" :
+          "1.0-2" : "ar-SA"}}</p>
+        <p class="m-0">{{"FINANCE.TOTAL_CREDIT"| translate}}:
+          {{calculateTransactionTotalCredit(currentTransaction.transactionEntries) | currency : "SAR" : "symbol-narrow"
+          : "1.0-2" : "ar-SA"}}</p>
+      </div>
+
+    </ng-template>
+
+    <!-- Footer Template -->
+    <ng-template #footerTemplate>
+      <p class="p-0 m-0">SmartAndPro</p>
+      <div class="w-full border-t border-slate-900 rounded-2xl flex justify-center border absolute" style="bottom: 0;">
+        {{companyDetails?.getFullAddress()}}
+      </div>
+    </ng-template>
+  </div>
+</ng-container>
+
+
+<div class="p-5 mt-5" *ngIf="isEditMode">
+  <!-- File Upload -->
+  <div class="mb-4" *ngIf="hasPermission('Transaction.Import')">
+    <p-fileUpload name="file" id="file" mode="basic" chooseIcon="pi pi-upload" accept="application/pdf"
+      (uploadHandler)="onFileSelected($event)" customUpload="true" [auto]="true" chooseLabel="ارفع ملف جديد" />
+  </div>
+
+  <!-- List of PDFs -->
+  <div>
+    <table class="min-w-full bg-white shadow-md rounded border border-gray-200">
+      <thead>
+        <tr class="bg-gray-100">
+          <th class="text-center p-3">اسم الملف</th>
+          <th class="text-center p-3">العمليات</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let pdf of attachments" class="border-t">
+          <td class="p-3">{{ pdf.fileName }}</td>
+          <td class="p-3 flex justify-center">
+            <button pButton label="عرض" icon="pi pi-eye" class="p-button-text text-blue-500 mr-2"
+              (click)="onView(pdf)"></button>
+            <p-fileUpload mode="basic" chooseIcon="pi pi-upload" accept="application/pdf"
+              (uploadHandler)="onUpdate($event,pdf)" customUpload="true" [auto]="true" chooseLabel="تعديل" />
+            <button pButton label="مسح" icon="pi pi-trash" class="p-button-text text-red-500"
+              (click)="onDelete(pdf)"></button>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- View PDF Dialog -->
+<p-dialog [(visible)]="viewDialog" [header]="'View PDF'" [style]="{ width: '70vw' , height: '70vh' }">
+  <ng-container *ngIf="currentPdfUrl">
+    <a [href]="currentPdfUrl" target="_blank">
+      <p-button type="button" icon="pi pi-file-pdf" label="افتح الملف في نافذة جديدة" severity="danger"
+        styleClass="rounded-md" />
+    </a>
+    <embed [src]="currentPdfUrl" type="application/pdf" width="100%" height="500px" />
+  </ng-container>
+</p-dialog>
+
+
+<p-toast></p-toast>
+<p-confirmDialog></p-confirmDialog>

@@ -1,0 +1,222 @@
+<div class="container mt-5">
+	<h2 class="text-center mb-4">Generate Report</h2>
+	<form (ngSubmit)="onParametersSubmit()">
+		<div class="form-row flex justify-between gap-4">
+			<!-- Date From Input -->
+			<div class="form-group col-md-6">
+				<label for="dateFrom">Date From</label>
+				<input [(ngModel)]="dateFrom"
+					type="date"
+					class="form-control"
+					id="dateFrom"
+					name="dateFrom"
+					required>
+			</div>
+			<!-- Date To Input -->
+			<div class="form-group col-md-6">
+				<label for="dateTo">Date To</label>
+				<input [(ngModel)]="dateTo"
+					type="date"
+					class="form-control"
+					id="dateTo"
+					name="dateTo"
+					required>
+			</div>
+		</div>
+		<div class="form-row flex justify-between gap-4">
+			<!-- Supplier Dropdown -->
+			<div class="form-group col-md-6">
+				<label for="Supplier">{{ 'REPORT.SELECT_SUPPLIER' | translate }}</label>
+				<p-dropdown
+          [options]="suppliers"
+					[filter]="true"
+					[(ngModel)]="selectedSupplierId"
+					[ngModelOptions]="{standalone: true}"
+					id="Supplier"
+					placeholder="Select a Supplier"
+					styleClass="w-full"
+					appendTo="body"
+					variant="filled">
+				</p-dropdown>
+			</div>
+
+      <!--<div class="form-group col-md-6">
+        <label for="reportType">{{ 'REPORT.DISPLAY_BY' | translate}}</label>
+        <p-dropdown
+          [options]="reportTypeOptions"
+					[filter]="true"
+					[(ngModel)]="selectedReportType"
+					[ngModelOptions]="{standalone: true}"
+          optionLabel="name"
+					id="reportType"
+					placeholder="Select a report type"
+					styleClass="w-full"
+					appendTo="body"
+					variant="filled"
+          (onChange)="onReportTypeChange($event)">
+				</p-dropdown>
+      </div>-->
+		</div>
+		<!-- Submit Button -->
+    <div class="flex gap-4">
+      <button type="submit"
+        class="btn btn-primary btn-block mt-3 mb-3">
+        Generate Report
+      </button>
+      <button (click)="printDocument()" *ngIf="!isSubmitting && isReportLoaded"
+              class="btn btn-secondary btn-block mt-3 mb-3">
+        {{"DATA.PRINT" | translate}}
+      </button>
+    </div>
+	</form>
+</div>
+<ng-container *ngIf="!isSubmitting && !isReportLoaded">
+	<!-- No content or just show the form submission button, this is before submit -->
+</ng-container>
+<!-- 2. Case: After Submit, Before Data is Loaded (Show Loader) -->
+<ng-container *ngIf="isSubmitting && !isReportLoaded">
+	<div class="flex justify-center items-center min-h-screen">
+		<div class="loader"></div>
+	</div>
+</ng-container>
+
+<ng-container *ngIf="!isSubmitting && isReportLoaded">
+
+<app-print-document
+  #printComponent
+  [headerTemplate]="headerTemplate"
+  [footerTemplate]="footerTemplate"
+  [summaryTemplate]="summaryTemplate"
+  [data]="reportData"
+  [columns]="reportColumns">
+</app-print-document>
+
+<!-- Header Template -->
+<ng-template #headerTemplate>
+  <div class="w-full flex flex-col  rounded-lg p-8">
+
+    @if (companyDetailsModel) {
+      <ng-container class="container m-0 p-0">
+        <div class="py-1 px-1 flex justify-between ">
+          <div class="w-full ltr:text-left text-right">
+            <p class="font-semibold text-lg m-0 p-0">
+              {{companyDetailsModel.arabicName}}
+            </p>
+            <p class="font-semibold text-lg m-0 p-0"  *ngIf="companyDetailsModel.city">
+              {{companyDetailsModel.city}}
+            </p>
+            <p class="font-semibold text-lg m-0 p-0">
+              {{companyDetailsModel.phone}}
+            </p>
+            <p class="font-semibold text-lg m-0 p-0">
+              {{ "INVOICE.TAXNUMBER"| translate}}: {{companyDetailsModel.taxNumber}}
+            </p>
+          </div>
+          <div
+            class="flex w-full justify-center items-center"
+          >
+            <img
+              [src]="companyDetailsModel.logoUrl || ''"
+              alt="company-logo"
+              width="100"
+              height="100"
+            >
+          </div>
+          <div class="w-full ltr:text-right text-left">
+            <p class="font-semibold text-lg m-0 p-0">
+              {{companyDetailsModel.englishName}}
+            </p>
+            <p class="font-semibold text-lg m-0 p-0" *ngIf="companyDetailsModel.city">
+              {{companyDetailsModel.city}}
+            </p>
+            <p class="font-semibold text-lg m-0 p-0">
+              {{companyDetailsModel.phone}}
+            </p>
+            <p class="font-semibold text-lg m-0 p-0">
+              TAX No: {{companyDetailsModel.taxNumber}}
+            </p>
+          </div>
+        </div>
+
+      </ng-container>
+    }
+    <div class="flex-1 w-full text-center">
+      <h2 class="text-2xl font-bold">{{ "REPORT.SUPPLIER_REPORT" | translate}} - {{activeLanguage === 'en' ? selectedSupplier.englishName : selectedSupplier.arabicName}}</h2>
+    </div>
+    <div class="flex-1 w-full text-center">
+      <h2 class="text-xs font-semibold">{{ "REPORT.EMPLOYEE" | translate}}: {{ user.firstName }} {{ user.middleName }} {{ user.lastName }}</h2>
+    </div>
+    <div class="flex-1 w-full text-center">
+      <h2 class="text-sm">
+        Date From: {{ dateFrom }} | To: {{ dateTo }}
+      </h2>
+    </div>
+  </div>
+</ng-template>
+
+  <!-- Summery Template -->
+  <ng-template #summaryTemplate>
+    <div class="w-full" *ngIf="selectedReportType?.label == 2">
+      <table class="w-full border border-gray-900">
+        <tbody>
+        <tr>
+          <td class="p-2 border border-gray-900">
+            <strong class=" text-dark">{{"INVOICE.TOTAL"|translate}}</strong>
+          </td>
+          <td class="p-2 text-center border border-gray-900">{{getTotalNetPrice() | number:'1.0-2'}}</td>
+        </tr>
+        <tr>
+          <td class="p-2 border border-gray-900">
+            <strong class="text-dark"> {{"INVOICE.ADDEDTAX"|translate}}</strong>
+          </td>
+          <td class="p-2 text-center border border-gray-900">{{getTotalTaxAmount() | number:'1.0-2'}}</td>
+        </tr>
+        <tr>
+          <td class="p-2 border border-gray-900">
+            <strong class="text-dark"> {{"INVOICE.TOTALWITHTAX"|translate}}</strong>
+          </td>
+          <td class="p-2 text-center border border-gray-900">
+            <strong class="text-dark">{{getTotalPriceWithTax() | number:'1.0-2'}}</strong>
+          </td>
+        </tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="w-full" *ngIf="selectedReportType?.label == 1 || selectedReportType?.label == 3">
+      <table class="w-full border border-gray-900">
+        <tbody>
+        <tr>
+          <td class="p-2 border border-gray-900">
+            <strong class=" text-dark">{{"INVOICE.TOTAL_QUANTITY"|translate}}</strong>
+          </td>
+          <td class="p-2 text-center border border-gray-900">{{getTotalQuantity() | number:'1.0-2'}}</td>
+        </tr>
+        <tr>
+          <td class="p-2 border border-gray-900">
+            <strong class="text-dark"> {{"INVOICE.TOTAL"|translate}}</strong>
+          </td>
+          <td class="p-2 text-center border border-gray-900">
+            <strong class="text-dark">{{getTotalPrice() | number:'1.0-2'}}</strong>
+          </td>
+        </tr>
+        </tbody>
+      </table>
+    </div>
+
+  </ng-template>
+
+<!-- Body Template -->
+<!--
+<ng-template #bodyTemplate>
+  <p>This is the document body. You can include any content here.</p>
+</ng-template>
+-->
+
+
+<!-- Footer Template -->
+<ng-template #footerTemplate>
+  <div class="w-full border-t border-slate-900 rounded-2xl flex justify-center border absolute" style=" bottom: 0">
+    {{companyDetailsModel?.getFullAddress()}}
+  </div>
+</ng-template>
+</ng-container>

@@ -1,0 +1,218 @@
+<p-toast></p-toast>
+<p-dialog
+  *ngIf="visible"
+  [(visible)]="visible"
+  (visibleChange)="visibleChange.emit($event)"
+  [modal]="true"
+  [dismissableMask]="true"
+  [draggable]="false"
+  [resizable]="false"
+  [showHeader]="false"
+  [style]="{ width: '640px', maxWidth: '95vw' }"
+  contentStyleClass="share-dialog-redesign"
+  [baseZIndex]="11000"
+  appendTo="body"
+>
+  <div class="dialog-body-container">
+    
+    <!-- Unified Header Block -->
+    <div class="share-header-modern">
+      <div class="share-header-top">
+        <div class="share-header-left">
+          <div class="header-icon-wrapper">
+            <i class="pi pi-share-alt"></i>
+          </div>
+          <div class="header-text-group">
+            <h3 class="header-title">
+              {{ activeLanguage === 'ar' ? 'مشاركة الحجز' : 'Share Reservation' }}
+            </h3>
+            <p class="header-subtitle" *ngIf="!bulkMode">
+              {{ activeLanguage === 'ar' ? 'أرسل تفاصيل الحجز للضيف عبر البريد الإلكتروني أو الواتساب' : 'Send reservation details to guest via Email or WhatsApp' }}
+            </p>
+            <p class="header-subtitle" *ngIf="bulkMode">
+              {{ activeLanguage === 'ar' ? 'أرسل مجموعة الحجوزات المختارة عبر البريد أو الواتساب' : 'Send selected reservations via Email or WhatsApp' }}
+            </p>
+          </div>
+        </div>
+
+        <button type="button" class="close-x-btn" (click)="closeDialog()">
+          <i class="pi pi-times"></i>
+        </button>
+      </div>
+
+      <!-- Guest & Reservation Badges -->
+      <div class="meta-badges-row" *ngIf="!bulkMode">
+        <span class="meta-badge customer-badge" *ngIf="reservation?.guestName">
+          <i class="pi pi-user mr-1"></i>
+          {{ reservation?.guestName }}
+        </span>
+        <span class="meta-badge invoice-badge" *ngIf="reservation?.referenceNumber">
+          <i class="pi pi-bookmark mr-1"></i>
+          {{ reservation?.referenceNumber }}
+        </span>
+      </div>
+
+      <div class="meta-badges-row" *ngIf="bulkMode">
+        <span class="meta-badge bulk-badge">
+          <i class="pi pi-clone mr-1"></i>
+          {{ activeLanguage === 'ar' ? 'مجموع:' : 'Total:' }} {{ bulkIds.length }} {{ activeLanguage === 'ar' ? 'حجوزات' : 'Reservations' }}
+        </span>
+      </div>
+    </div>
+
+    <!-- Segmented Tab Switcher (Email vs WhatsApp) -->
+    <div class="segmented-control">
+      <button 
+        type="button" 
+        class="segmented-btn" 
+        [class.active]="shareActiveTabIndex === 0"
+        (click)="shareActiveTabIndex = 0"
+      >
+        <i class="pi pi-envelope"></i>
+        <span>{{ activeLanguage === 'ar' ? 'البريد الإلكتروني' : 'Email' }}</span>
+      </button>
+
+      <button 
+        type="button" 
+        class="segmented-btn" 
+        [class.active]="shareActiveTabIndex === 1"
+        (click)="shareActiveTabIndex = 1"
+      >
+        <i class="pi pi-whatsapp"></i>
+        <span>{{ activeLanguage === 'ar' ? 'الواتساب' : 'WhatsApp' }}</span>
+      </button>
+    </div>
+
+    <!-- Tab 0: Email Content -->
+    <div class="tab-body-panel" *ngIf="shareActiveTabIndex === 0">
+      <div class="info-callout email-callout">
+        <div class="callout-icon">
+          <i class="pi pi-envelope"></i>
+        </div>
+        <div class="callout-text">
+          <span class="callout-title">{{ activeLanguage === 'ar' ? 'إرسال مباشر للبريد في الخلفية' : 'Instant Email Send' }}</span>
+          <span class="callout-desc">
+            {{ activeLanguage === 'ar' ? 'سيتم إرسال تفاصيل وشروط الحجز بصيغة PDF للبريد المحدد.' : 'Reservation details PDF will be sent to the target email.' }}
+          </span>
+        </div>
+      </div>
+
+      <div class="form-field-group">
+        <label for="resShareEmailInput" class="field-label">
+          {{ activeLanguage === 'ar' ? 'البريد الإلكتروني المستهدف' : 'Target Email Address' }}
+          <span class="req">*</span>
+        </label>
+
+        <div class="p-input-icon-left w-full">
+          <i class="pi pi-envelope input-icon"></i>
+          <input
+            id="resShareEmailInput"
+            type="email"
+            pInputText
+            [formControl]="$any(shareForm.get('email'))"
+            placeholder="example@domain.com"
+            class="w-full modern-input"
+          />
+        </div>
+
+        <small
+          class="validation-error"
+          *ngIf="
+            shareForm.get('email')?.touched &&
+            shareForm.get('email')?.invalid
+          "
+        >
+          <i class="pi pi-exclamation-triangle"></i>
+          {{ activeLanguage === 'ar' ? 'برجاء إدخال بريد إلكتروني صحيح' : 'Please enter a valid email address' }}
+        </small>
+      </div>
+
+      <div class="dialog-actions-row">
+        <button
+          pButton
+          type="button"
+          class="send-btn email-send-btn"
+          icon="pi pi-send"
+          label="{{ activeLanguage === 'ar' ? 'إرسال' : 'Send' }}"
+          (click)="submitEmail()"
+          [disabled]="shareBusy"
+        ></button>
+        <button
+          pButton
+          type="button"
+          class="p-button-outlined p-button-secondary cancel-btn"
+          icon="pi pi-times"
+          label="{{ activeLanguage === 'ar' ? 'إلغاء' : 'Cancel' }}"
+          (click)="closeDialog()"
+          [disabled]="shareBusy"
+        ></button>
+      </div>
+    </div>
+
+    <!-- Tab 1: WhatsApp Content -->
+    <div class="tab-body-panel" *ngIf="shareActiveTabIndex === 1">
+      <div class="info-callout whatsapp-callout">
+        <div class="callout-icon">
+          <i class="pi pi-whatsapp"></i>
+        </div>
+        <div class="callout-text">
+          <span class="callout-title">{{ activeLanguage === 'ar' ? 'مشاركة فورية عبر تطبيق الواتساب' : 'Instant WhatsApp Launch' }}</span>
+          <span class="callout-desc">
+            {{ activeLanguage === 'ar' ? 'أدخل رقم الجوال (رمز الدولة + الرقم) بدون مسافات. مثال: 9665xxxxxxxx / 01xxxxxxxxx' : 'Enter mobile number with country code without spaces. Example: 9665xxxxxxxx' }}
+          </span>
+        </div>
+      </div>
+
+      <div class="form-field-group">
+        <label for="resSharePhoneInput" class="field-label">
+          {{ activeLanguage === 'ar' ? 'رقم الجوال (واتساب)' : 'Mobile Number (WhatsApp)' }}
+          <span class="req">*</span>
+        </label>
+
+        <div class="p-input-icon-left w-full">
+          <i class="pi pi-phone input-icon"></i>
+          <input
+            id="resSharePhoneInput"
+            type="tel"
+            pInputText
+            [formControl]="$any(shareForm.get('whatsappNumber'))"
+            placeholder="01xxxxxxxxx / 9665xxxxxxxx"
+            class="w-full modern-input"
+          />
+        </div>
+
+        <small
+          class="validation-error"
+          *ngIf="
+            shareForm.get('whatsappNumber')?.touched &&
+            shareForm.get('whatsappNumber')?.invalid
+          "
+        >
+          <i class="pi pi-exclamation-triangle"></i>
+          {{ activeLanguage === 'ar' ? 'برجاء إدخال رقم جوال صحيح' : 'Please enter a valid mobile number' }}
+        </small>
+      </div>
+
+      <div class="dialog-actions-row">
+        <button
+          pButton
+          type="button"
+          class="send-btn whatsapp-send-btn"
+          icon="pi pi-whatsapp"
+          label="{{ activeLanguage === 'ar' ? 'إرسال' : 'Send' }}"
+          (click)="submitWhatsapp()"
+          [disabled]="shareBusy"
+        ></button>
+        <button
+          pButton
+          type="button"
+          class="p-button-outlined p-button-secondary cancel-btn"
+          icon="pi pi-times"
+          label="{{ activeLanguage === 'ar' ? 'إلغاء' : 'Cancel' }}"
+          (click)="closeDialog()"
+          [disabled]="shareBusy"
+        ></button>
+      </div>
+    </div>
+  </div>
+</p-dialog>

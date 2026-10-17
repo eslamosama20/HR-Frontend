@@ -1,0 +1,61 @@
+table {
+  border-collapse: collapse;
+  width: 100%;
+}
+
+thead {
+  background-color: #46bbeb !important;
+  color: #ffffff !important;
+}
+
+thead th {
+  background-color: #46bbeb !important;
+  color: #ffffff !important;
+  font-size: 1.15rem !important;
+  font-weight: 700 !important;
+  padding: 0.65rem 0.5rem !important;
+}
+
+td {
+  padding: 8px;
+  border: 1px solid #ddd;
+}
+
+input {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 4px;
+  border: none;
+}
+
+input.focused {
+  background-color: #e0f7fa;
+  border: 1px solid #00acc1;
+}
+
+input.invalid {
+  border: 1px solid red;
+}
+
+.error-text {
+  color: red;
+  font-size: 0.8em;
+  margin-top: 2px;
+  display: block;
+}
+
+.add-row-link {
+  margin-top: 10px;
+  text-align: right;
+}
+
+.add-row-link a {
+  color: #007bff;
+  text-decoration: none;
+  cursor: pointer;
+  font-size: 0.9em;
+}
+
+.add-row-link a:hover {
+  text-decoration: underline;
+}

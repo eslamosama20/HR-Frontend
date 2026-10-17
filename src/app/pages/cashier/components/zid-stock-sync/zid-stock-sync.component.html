@@ -1,0 +1,84 @@
+<app-zid-shell activeTab="stock" titleKey="CASHIER_ZID.STOCK_TITLE" subtitleKey="CASHIER_ZID.STOCK_SUBTITLE">
+  <p-toast></p-toast>
+
+  <div zid-kpis class="zid-summary" *ngIf="result() as syncResult">
+    <div class="zid-metric"><span>{{ 'CASHIER_ZID.TOTAL_PRODUCTS' | translate }}</span><strong>{{ syncResult.totalProducts }}</strong></div>
+    <div class="zid-metric"><span>{{ 'CASHIER_ZID.SUCCEEDED' | translate }}</span><strong>{{ syncResult.succeeded }}</strong></div>
+    <div class="zid-metric"><span>{{ 'CASHIER_ZID.FAILED' | translate }}</span><strong>{{ syncResult.failed }}</strong></div>
+    <div class="zid-metric"><span>{{ 'CASHIER_ZID.DURATION' | translate }}</span><strong>{{ syncResult.durationMs }} {{ 'CASHIER_ZID.MILLISECONDS' | translate }}</strong></div>
+  </div>
+
+  <div class="zid-error" *ngIf="error()">
+    <i class="pi pi-exclamation-triangle"></i>
+    <span>{{ error() }}</span>
+    <button pButton type="button" icon="pi pi-refresh" class="p-button-text p-button-sm" [disabled]="!storeDetailsId || isBusy('syncAll')" (click)="syncAllStock()"></button>
+  </div>
+
+  <div class="zid-progress-grid">
+    <div class="zid-panel">
+      <div class="zid-panel-header">
+        <div>
+          <h2>{{ 'CASHIER_ZID.SYNC_ALL_STOCK' | translate }}</h2>
+          <p>{{ 'CASHIER_ZID.STOCK_SUBTITLE' | translate }}</p>
+        </div>
+      </div>
+      <div class="zid-grid">
+        <div class="zid-field">
+          <label>{{ 'CASHIER_ZID.STORE_DETAILS_ID' | translate }}</label>
+          <input pInputText [(ngModel)]="storeDetailsId" [placeholder]="'CASHIER_ZID.STORE_DETAILS_PLACEHOLDER' | translate" />
+        </div>
+        <div class="zid-actions">
+          <button pButton type="button" icon="pi pi-sync" [label]="'CASHIER_ZID.SYNC_ALL_STOCK' | translate" [loading]="isBusy('syncAll')" (click)="syncAllStock()"></button>
+        </div>
+      </div>
+    </div>
+
+    <div class="zid-panel">
+      <div class="zid-panel-header">
+        <div>
+          <h2>{{ 'CASHIER_ZID.UPDATE_SINGLE_STOCK' | translate }}</h2>
+          <p>{{ 'CASHIER_ZID.UPDATE_STOCK' | translate }}</p>
+        </div>
+      </div>
+      <div class="zid-grid">
+        <div class="zid-field">
+          <label>{{ 'CASHIER_ZID.ZID_PRODUCT_ID' | translate }}</label>
+          <input pInputText [(ngModel)]="zidProductId" [placeholder]="'CASHIER_ZID.PRODUCT_ID_PLACEHOLDER' | translate" />
+        </div>
+        <div class="zid-field">
+          <label>{{ 'CASHIER_ZID.QUANTITY' | translate }}</label>
+          <p-inputNumber [(ngModel)]="quantity" [min]="0" [showButtons]="true"></p-inputNumber>
+        </div>
+        <div class="zid-actions">
+          <button pButton type="button" icon="pi pi-upload" [label]="'CASHIER_ZID.UPDATE_STOCK' | translate" class="p-button-outlined" [loading]="isBusy('single')" (click)="updateSingleStock()"></button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="zid-table-panel" *ngIf="result() as syncResult">
+    <div class="zid-table-toolbar">
+      <div class="zid-table-title">
+        <strong>{{ 'CASHIER_ZID.STOCK_RESULTS' | translate }}</strong>
+        <span>{{ 'CASHIER_ZID.FAILED_ITEMS' | translate }}: {{ syncResult.errors.length }}</span>
+      </div>
+    </div>
+
+    <p-table *ngIf="syncResult.errors.length; else noStockErrors" [value]="syncResult.errors" styleClass="p-datatable-sm" responsiveLayout="scroll">
+      <ng-template pTemplate="header">
+        <tr>
+          <th>{{ 'CASHIER_ZID.ERRORS' | translate }}</th>
+        </tr>
+      </ng-template>
+      <ng-template pTemplate="body" let-errorItem>
+        <tr>
+          <td>{{ errorItem }}</td>
+        </tr>
+      </ng-template>
+    </p-table>
+
+    <ng-template #noStockErrors>
+      <app-zid-empty-state titleKey="CASHIER_ZID.EMPTY_STOCK_ERRORS_TITLE" descriptionKey="CASHIER_ZID.EMPTY_STOCK_ERRORS_DESC" icon="pi pi-check-circle"></app-zid-empty-state>
+    </ng-template>
+  </div>
+</app-zid-shell>

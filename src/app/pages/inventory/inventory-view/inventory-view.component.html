@@ -1,0 +1,538 @@
+﻿<div class="container-fluid">
+  <p-toast position="top-right"></p-toast>
+  
+  <!-- Loading Spinner -->
+  <div class="fixed inset-0 bg-gray-500 bg-opacity-75 flex items-center justify-center z-50" *ngIf="loading">
+    <i class="pi pi-spin pi-spinner" style="font-size: 2rem"></i>
+  </div>
+
+  <!-- Header -->
+  <div class="inventory-view-header d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4 p-3 bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700">
+    <div class="d-flex flex-wrap align-items-center gap-3">
+      <h2 class="page-title m-0 text-xl font-bold text-gray-800 dark:text-gray-100">صلاحيات المخزون</h2>
+
+      <div class="field mb-0" style="min-width: 170px;">
+        <p-dropdown
+          [options]="storeCategoryOptions"
+          [(ngModel)]="selectedStoreCategoryFilter"
+          optionLabel="label"
+          optionValue="value"
+          placeholder="نوع المخزن"
+          [showClear]="false"
+          (onChange)="applyStoreFilter()"
+          styleClass="w-full"
+          appendTo="body">
+        </p-dropdown>
+      </div>
+
+      <!-- Store Selection -->
+      <div class="field mb-0" style="min-width: 240px;">
+        <p-dropdown
+          id="store"
+          [options]="stores"
+          [(ngModel)]="selectedStore"
+          optionLabel="arabicName"
+          placeholder="اختر المخزن"
+          [filter]="true"
+          filterBy="arabicName,englishName"
+          [showClear]="true"
+          (onChange)="onStoreChange()"
+          styleClass="w-full"
+          appendTo="body"
+        >
+          <ng-template pTemplate="selectedItem">
+            <div class="flex align-items-center gap-2" *ngIf="selectedStore">
+              <div>{{ selectedStore.arabicName }}</div>
+              <small class="text-muted">({{ getStoreCategoryLabel(selectedStore) }})</small>
+            </div>
+          </ng-template>
+          <ng-template let-store pTemplate="item">
+            <div class="flex align-items-center justify-content-between gap-2 w-full">
+              <div>{{ store.arabicName }}</div>
+              <small class="text-muted">{{ getStoreCategoryLabel(store) }}</small>
+            </div>
+          </ng-template>
+        </p-dropdown>
+      </div>
+    </div>
+
+    <!-- Action Buttons -->
+    <div class="d-flex flex-wrap align-items-center gap-2" *ngIf="selectedStore && inventoryItems.length > 0">
+      <div class="btn-group-wrapper d-flex align-items-center gap-2">
+        <p-button 
+          styleClass="rounded-md p-button-sm shadow-sm"
+          severity="help" 
+          icon="pi pi-qrcode" 
+          label="مسح باركود"
+          pTooltip="مسح باركود"
+          tooltipPosition="bottom"
+          (onClick)="openScannerDialog()">
+        </p-button>
+
+        <p-button 
+          styleClass="rounded-md p-button-sm shadow-sm"
+          severity="success" 
+          icon="pi pi-file-excel" 
+          label="تصدير Excel"
+          pTooltip="تصدير إلى Excel"
+          tooltipPosition="bottom"
+          (onClick)="exportToExcel()"
+          [loading]="loadingSignal()">
+        </p-button>
+
+        <p-button 
+          styleClass="rounded-md p-button-sm shadow-sm"
+          severity="danger" 
+          icon="pi pi-file-pdf" 
+          label="تنزيل PDF"
+          pTooltip="تنزيل PDF"
+          tooltipPosition="bottom"
+          (onClick)="downloadPDF()"
+          [loading]="loadingSignal()">
+        </p-button>
+
+        <p-button 
+          styleClass="rounded-md p-button-sm shadow-sm"
+          severity="warning" 
+          icon="pi pi-print" 
+          label="طباعة"
+          pTooltip="طباعة التقرير"
+          tooltipPosition="bottom"
+          (onClick)="printPDF()"
+          [loading]="loadingSignal()">
+        </p-button>
+
+        <p-button 
+          styleClass="rounded-md p-button-sm shadow-sm"
+          severity="info" 
+          icon="pi pi-share-alt" 
+          label="مشاركة"
+          pTooltip="مشاركة التقرير"
+          tooltipPosition="bottom"
+          (onClick)="openShareDialog()"
+          [loading]="loadingSignal()">
+        </p-button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Inventory Table -->
+  <p-table
+    *ngIf="selectedStore"
+    [value]="inventoryItems || []"
+    dataKey="productCode"
+    [paginator]="true"
+    [rows]="15"
+    [showCurrentPageReport]="true"
+    [rowsPerPageOptions]="[15, 25, 50]"
+    currentPageReportTemplate="عرض {first} إلى {last} من {totalRecords} سجل"
+    [globalFilterFields]="['productName', 'productCode', 'unitName', 'batchNo', 'shelfNumber', 'rowNumber']"
+    styleClass="p-datatable-sm p-datatable-striped"
+    responsiveLayout="scroll"
+  >
+    <ng-template pTemplate="header">
+      <tr>
+        <th style="width: 60px; text-align: center;">م</th>
+        <th pSortableColumn="productCode" style="text-align: center;">
+          كود الصنف
+          <p-sortIcon field="productCode"></p-sortIcon>
+        </th>
+        <th pSortableColumn="productName" style="text-align: center;">
+          اسم الصنف
+          <p-sortIcon field="productName"></p-sortIcon>
+        </th>
+        <th pSortableColumn="unitName" style="text-align: center;">
+          الوحدة
+          <p-sortIcon field="unitName"></p-sortIcon>
+        </th>
+        <th pSortableColumn="quantity" style="text-align: center;">
+          الكمية
+          <p-sortIcon field="quantity"></p-sortIcon>
+        </th>
+        <th pSortableColumn="shelfNumber" style="text-align: center;">
+          رقم الرف
+          <p-sortIcon field="shelfNumber"></p-sortIcon>
+        </th>
+                <th pSortableColumn="rowNumber" style="text-align: center;">
+                  رقم العمود
+                  <p-sortIcon field="rowNumber"></p-sortIcon>
+                </th>
+                <th pSortableColumn="expiryDate" style="text-align: center;">
+                  تاريخ الصلاحية
+                  <p-sortIcon field="expiryDate"></p-sortIcon>
+                </th>
+                <th style="text-align: center;">
+                  الباركود
+                </th>
+              </tr>
+            </ng-template>
+            <ng-template pTemplate="body" let-item let-i="rowIndex">
+              <tr>
+                <td style="text-align: center;">{{ i + 1 }}</td>
+                <td style="text-align: center;">{{ item.productCode }}</td>
+                <td style="text-align: center;">
+                  <div>{{ item.productName }}</div>
+                  <small class="text-muted" *ngIf="item.batchNo">دفعة: {{ item.batchNo }}</small>
+                  <small class="text-success d-block" *ngIf="item.isTrackedMedication">دواء متتبع</small>
+                </td>
+                <td style="text-align: center;">{{ item.unitName }}</td>
+                <td style="text-align: center;">{{ item.quantity | number: '1.2-2' }}</td>
+                <td style="text-align: center;">{{ item.shelfNumber || '-' }}</td>
+                <td style="text-align: center;">{{ item.rowNumber || '-' }}</td>
+                <td style="text-align: center;">
+                  <span *ngIf="item.expiryDate" [ngClass]="{'text-danger': isExpired(item.expiryDate), 'text-warning': isExpiringSoon(item.expiryDate)}">
+                    {{ item.expiryDate | customDate: 'yyyy-MM-dd' }}
+                  </span>
+                  <span *ngIf="!item.expiryDate">-</span>
+                </td>
+                <td style="text-align: center;">
+                  <button pButton type="button" icon="pi pi-qrcode" 
+                    class="p-button-rounded p-button-info p-button-text p-button-sm"
+                    (click)="showBarcode(item)" pTooltip="عرض الباركود"></button>
+                  <button pButton type="button" icon="pi pi-print" 
+                    class="p-button-rounded p-button-success p-button-text p-button-sm"
+                    (click)="printBarcode(item)" pTooltip="طباعة الباركود"></button>
+                  <button pButton type="button" icon="pi pi-pause-circle" 
+                    class="p-button-rounded p-button-warning p-button-text p-button-sm"
+                    (click)="openStagnantDialog(item)" pTooltip="تحويل إلى الرواكد"></button>
+                </td>
+              </tr>
+            </ng-template>
+            <ng-template pTemplate="emptymessage">
+              <tr>
+                <td colspan="9" style="text-align: center;">
+                  <div class="p-4">
+                    <i class="pi pi-inbox" style="font-size: 3rem; color: #cbd5e0;"></i>
+                    <p class="mt-3 text-gray-500">{{ selectedStore ? 'لا توجد أصناف في هذا المخزن' : 'الرجاء اختيار مخزن' }}</p>
+                  </div>
+                </td>
+              </tr>
+            </ng-template>
+          </p-table>
+
+  <!-- Summary Card -->
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4" *ngIf="inventoryItems.length > 0">
+    <div class="bg-blue-50 p-4 rounded-lg border border-blue-200">
+      <div class="text-sm text-blue-600 mb-1">عدد الأصناف</div>
+      <div class="text-2xl font-bold text-blue-800">{{ inventoryItems.length }}</div>
+    </div>
+    <div class="bg-green-50 p-4 rounded-lg border border-green-200">
+      <div class="text-sm text-green-600 mb-1">إجمالي الكميات</div>
+      <div class="text-2xl font-bold text-green-800">
+        {{ getTotalQuantity() | number: '1.2-2' }}
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Share Dialog -->
+<p-dialog
+  [(visible)]="shareDialogVisible"
+  [modal]="true"
+  [draggable]="false"
+  [resizable]="false"
+  [style]="{ width: '500px' }"
+  [header]="'مشاركة تقرير المخزون'"
+  dir="rtl"
+  styleClass="p-fluid"
+>
+  <form [formGroup]="shareForm">
+    <p-tabView [(activeIndex)]="shareActiveTabIndex" dir="rtl">
+      <!-- Email Tab -->
+      <p-tabPanel header="البريد الإلكتروني" leftIcon="pi pi-envelope">
+        <div class="flex flex-col gap-4 py-4">
+          <div class="field">
+            <label for="email" class="block mb-2">
+              البريد الإلكتروني
+              <span class="text-red-500">*</span>
+            </label>
+            <input
+              pInputText
+              id="email"
+              type="email"
+              placeholder="example@email.com"
+              formControlName="email"
+              class="w-full"
+              [class.ng-invalid]="shareForm.get('email')?.invalid && shareForm.get('email')?.touched"
+              [class.ng-dirty]="shareForm.get('email')?.touched"
+            />
+            <small class="text-red-500" *ngIf="shareForm.get('email')?.invalid && shareForm.get('email')?.touched">
+              <span *ngIf="shareForm.get('email')?.errors?.['required']">
+                البريد الإلكتروني مطلوب
+              </span>
+              <span *ngIf="shareForm.get('email')?.errors?.['email']">
+                البريد الإلكتروني غير صحيح
+              </span>
+            </small>
+          </div>
+
+          <div class="flex justify-end gap-2">
+            <p-button
+              label="إلغاء"
+              icon="pi pi-times"
+              (onClick)="closeShareDialog()"
+              [outlined]="true"
+              severity="secondary"
+              [disabled]="shareBusy"
+            ></p-button>
+            <p-button
+              label="إرسال"
+              icon="pi pi-send"
+              (onClick)="submitShareEmail()"
+              [loading]="shareBusy"
+              severity="primary"
+            ></p-button>
+          </div>
+        </div>
+      </p-tabPanel>
+
+      <!-- WhatsApp Tab -->
+      <p-tabPanel header="واتساب" leftIcon="pi pi-whatsapp">
+        <div class="flex flex-col gap-4 py-4">
+          <div class="field">
+            <label for="whatsappNumber" class="block mb-2">
+              رقم الجوال
+              <span class="text-red-500">*</span>
+            </label>
+            <input
+              pInputText
+              id="whatsappNumber"
+              type="tel"
+              placeholder="9665xxxxxxxx"
+              formControlName="whatsappNumber"
+              class="w-full"
+              [class.ng-invalid]="shareForm.get('whatsappNumber')?.invalid && shareForm.get('whatsappNumber')?.touched"
+              [class.ng-dirty]="shareForm.get('whatsappNumber')?.touched"
+            />
+            <small class="text-muted block mt-1">
+              يجب أن يبدأ الرقم بمفتاح الدولة (مثال: 9665xxxxxxxx)
+            </small>
+            <small class="text-red-500" *ngIf="shareForm.get('whatsappNumber')?.invalid && shareForm.get('whatsappNumber')?.touched">
+              <span *ngIf="shareForm.get('whatsappNumber')?.errors?.['pattern']">
+                رقم الجوال غير صحيح (يجب أن يحتوي على 8-15 رقم)
+              </span>
+            </small>
+          </div>
+
+          <div class="flex justify-end gap-2">
+            <p-button
+              label="إلغاء"
+              icon="pi pi-times"
+              (onClick)="closeShareDialog()"
+              [outlined]="true"
+              severity="secondary"
+              [disabled]="shareBusy"
+            ></p-button>
+            <p-button
+              label="إرسال"
+              icon="pi pi-send"
+              (onClick)="submitShareWhatsApp()"
+              [loading]="shareBusy"
+              severity="success"
+            ></p-button>
+          </div>
+        </div>
+      </p-tabPanel>
+    </p-tabView>
+  </form>
+</p-dialog>
+
+<!-- Barcode Dialog -->
+<p-dialog
+  [(visible)]="barcodeDialogVisible"
+  [modal]="true"
+  [draggable]="false"
+  [resizable]="false"
+  [style]="{ width: '450px' }"
+  [header]="'باركود الصنف'"
+  dir="rtl"
+  styleClass="p-fluid"
+>
+  <div class="flex flex-col items-center gap-4 p-4" *ngIf="selectedItem">
+    <!-- QR Code -->
+    <div #barcodeContainer class="bg-white p-4 rounded-lg border">
+      <qrcode [qrdata]="generateBarcodeData(selectedItem)" [width]="200" [errorCorrectionLevel]="'M'"></qrcode>
+    </div>
+    
+    <!-- Item Details -->
+    <div class="w-full bg-gray-50 p-4 rounded-lg">
+      <h4 class="text-lg font-bold mb-3 text-center">معلومات الصنف</h4>
+      <div class="grid grid-cols-2 gap-2 text-sm">
+        <div class="font-medium">كود الصنف:</div>
+        <div>{{ selectedItem.productCode }}</div>
+        
+        <div class="font-medium">اسم الصنف:</div>
+        <div>{{ selectedItem.productName }}</div>
+        
+        <div class="font-medium">المخزن:</div>
+        <div>{{ selectedStore?.arabicName }}</div>
+        
+        <div class="font-medium">الكمية:</div>
+        <div>{{ selectedItem.quantity | number: '1.2-2' }}</div>
+        
+        <div class="font-medium">الوحدة:</div>
+        <div>{{ selectedItem.unitName }}</div>
+        <div class="font-medium">رقم الدفعة:</div>
+        <div>{{ selectedItem.batchNo || '-' }}</div>
+        
+        <div class="font-medium">رقم الرف:</div>
+        <div>{{ selectedItem.shelfNumber || '-' }}</div>
+        
+        <div class="font-medium">رقم العمود:</div>
+        <div>{{ selectedItem.rowNumber || '-' }}</div>
+        
+        <div class="font-medium">تاريخ الصلاحية:</div>
+        <div>{{ selectedItem.expiryDate ? (selectedItem.expiryDate | customDate: 'yyyy-MM-dd') : '-' }}</div>
+        
+        <div class="font-medium" *ngIf="selectedItem.unitPrice">السعر:</div>
+        <div *ngIf="selectedItem.unitPrice">{{ selectedItem.unitPrice | number: '1.2-2' }} ر.س</div>
+      </div>
+    </div>
+    
+    <!-- Action Buttons -->
+    <div class="flex gap-2 w-full justify-center">
+      <p-button
+        label="طباعة"
+        icon="pi pi-print"
+        (onClick)="printBarcodeDialog()"
+        styleClass="p-button-success"
+      ></p-button>
+      <p-button
+        label="إغلاق"
+        icon="pi pi-times"
+        (onClick)="closeBarcodeDialog()"
+        styleClass="p-button-secondary"
+      ></p-button>
+    </div>
+  </div>
+</p-dialog>
+
+<!-- Barcode Scanner Dialog -->
+<p-dialog
+  [(visible)]="scannerDialogVisible"
+  [modal]="true"
+  [draggable]="false"
+  [resizable]="false"
+  [style]="{ width: '500px' }"
+  [header]="'مسح الباركود'"
+  dir="rtl"
+  styleClass="p-fluid"
+>
+  <div class="flex flex-col gap-4 p-4">
+    <div class="field">
+      <label for="barcodeInput" class="block mb-2">أدخل بيانات الباركود أو امسحه</label>
+      <input
+        pInputText
+        id="barcodeInput"
+        [(ngModel)]="scannedBarcodeData"
+        (keyup.enter)="processBarcodeData()"
+        placeholder="امسح الباركود هنا..."
+        class="w-full text-center"
+        style="font-size: 1.2rem; padding: 1rem;"
+        autofocus
+      />
+    </div>
+    
+    <p-button
+      label="بحث"
+      icon="pi pi-search"
+      (onClick)="processBarcodeData()"
+      styleClass="w-full"
+    ></p-button>
+    
+    <!-- Scanned Item Details -->
+    <div class="w-full bg-blue-50 p-4 rounded-lg" *ngIf="scannedItem">
+      <h4 class="text-lg font-bold mb-3 text-center text-blue-800">معلومات الصنف الممسوح</h4>
+      <div class="grid grid-cols-2 gap-2 text-sm">
+        <div class="font-medium">كود الصنف:</div>
+        <div>{{ scannedItem.productCode }}</div>
+        
+        <div class="font-medium">اسم الصنف:</div>
+        <div>{{ scannedItem.productName }}</div>
+        
+        <div class="font-medium">المخزن:</div>
+        <div>{{ scannedItem.storeName }}</div>
+        
+        <div class="font-medium">الكمية:</div>
+        <div>{{ scannedItem.quantity | number: '1.2-2' }}</div>
+        
+        <div class="font-medium">الوحدة:</div>
+        <div>{{ scannedItem.unitName }}</div>
+        <div class="font-medium">رقم الدفعة:</div>
+        <div>{{ scannedItem.batchNo || '-' }}</div>
+        
+        <div class="font-medium">رقم الرف:</div>
+        <div>{{ scannedItem.shelfNumber || '-' }}</div>
+        
+        <div class="font-medium">رقم العمود:</div>
+        <div>{{ scannedItem.rowNumber || '-' }}</div>
+        
+        <div class="font-medium">تاريخ الصلاحية:</div>
+        <div>{{ scannedItem.expiryDate || '-' }}</div>
+        
+        <div class="font-medium">السعر:</div>
+        <div>{{ scannedItem.unitPrice | number: '1.2-2' }} ر.س</div>
+      </div>
+    </div>
+  </div>
+</p-dialog>
+
+<!-- Stagnant Dialog -->
+<p-dialog
+  [(visible)]="stagnantDialogVisible"
+  [modal]="true"
+  [draggable]="false"
+  [resizable]="false"
+  [style]="{ width: '450px' }"
+  header="تحويل إلى الرواكد"
+  [closable]="true"
+>
+  <div class="flex flex-col gap-4" *ngIf="stagnantItem">
+    <div class="bg-amber-50 p-4 rounded-lg border border-amber-200">
+      <div class="text-lg font-bold text-amber-800 mb-2">{{ stagnantItem.productName }}</div>
+      <div class="text-sm text-amber-600">كود: {{ stagnantItem.productCode }}</div>
+      <div class="text-sm text-amber-600">الكمية: {{ stagnantItem.quantity | number: '1.2-2' }}</div>
+    </div>
+    
+    <div class="field">
+      <label for="stagnantQuantity" class="block mb-2 font-medium">الكمية للتحويل</label>
+      <p-inputNumber
+        id="stagnantQuantity"
+        [(ngModel)]="stagnantQuantity"
+        [min]="0.01"
+        [max]="stagnantItem.quantity"
+        [showButtons]="true"
+        [step]="1"
+        mode="decimal"
+        [minFractionDigits]="2"
+        styleClass="w-full">
+      </p-inputNumber>
+    </div>
+    
+    <div class="field">
+      <label for="stagnantNotes" class="block mb-2 font-medium">ملاحظات (اختياري)</label>
+      <textarea pInputTextarea
+        id="stagnantNotes"
+        [(ngModel)]="stagnantNotes"
+        rows="3"
+        class="w-full"
+        placeholder="أدخل ملاحظات إضافية...">
+      </textarea>
+    </div>
+    
+    <div class="text-sm text-gray-600 bg-gray-50 p-3 rounded-lg">
+      <i class="pi pi-info-circle mr-2"></i>
+      سيتم تحويل هذا الصنف إلى قائمة الرواكد ولن يظهر في المخزون الحالي.
+    </div>
+  </div>
+  
+  <ng-template pTemplate="footer">
+    <div class="flex justify-end gap-2">
+      <button pButton type="button" label="إلغاء" class="p-button-text" (click)="stagnantDialogVisible = false"></button>
+      <button pButton type="button" label="تحويل للرواكد" icon="pi pi-pause-circle" class="p-button-warning" (click)="confirmTransferToStagnant()" [loading]="stagnantBusy"></button>
+    </div>
+  </ng-template>
+</p-dialog>
+
+<!-- Toast Messages -->
+<p-toast position="top-right"></p-toast>

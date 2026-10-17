@@ -1,0 +1,367 @@
+<p-toast></p-toast>
+<p-confirmDialog></p-confirmDialog>
+<div class="content">
+  <div class="container-fluid ">
+    <div class="row align-items-stretch justify-content-center no-gutters">
+      <div class="col-md-12">
+        <div class="fixed inset-0 bg-gray-500 bg-opacity-75 flex items-center justify-center z-50" *ngIf="loading">
+          <i class="pi pi-spin pi-spinner" style="font-size: 2rem"></i>
+        </div>
+        <div *ngIf="!loading" class="form h-100 contact-wrap p-5">
+          <!-- Action Menu (only in view mode) -->
+          <div *ngIf="isViewMode" class="no-print d-flex align-items-center justify-content-between mb-3 gap-2">
+            <app-detail-actions-menu
+              class="flex-grow-1"
+              [showPrint]="true"
+              [showEdit]="true"
+              [showCopy]="false"
+              [showDelete]="true"
+              [navigationControls]="navigationControls"
+              [customButtons]="customButtons"
+              [documentTitle]="'REQUEST_QUOTATION.TITLE' | translate"
+              (onPrint)="onPrintClick()"
+              (onEdit)="onEditClick()"
+              (onDelete)="onDeleteClick($event)">
+            </app-detail-actions-menu>
+            <app-back-button [customRoute]="'/purchase-invoices/request-quotation'"></app-back-button>
+          </div>
+          
+          <!-- Back button (only in edit/new mode) -->
+          <div *ngIf="!isViewMode" class="mb-3" style=" justify-self: left;">
+            <app-back-button></app-back-button>
+          </div>
+
+          <h3 class="text-center">{{"REQUEST_QUOTATION.TITLE"|translate}}</h3>
+          <form class="mb-5" method="post" [formGroup]="requestForm" (submit)="submitForm()">
+
+            <!-- Price Mode Switcher -->
+            <div class="flex flex-wrap gap-3 mb-4">
+              <div class="flex align-items-center">
+                <p-radioButton
+                  name="lastPrice"
+                  inputId="lastPrice"
+                  id="lastPrice"
+                  value="lastPrice"
+                  [(ngModel)]="priceMode"
+                  [ngModelOptions]="{standalone: true}"
+                  (onClick)="setPriceModeLastPrice()"
+                />
+                <label for="lastPrice" class="ml-2">
+                  {{ "DATA.LAST_PRICE" | translate }}
+                </label>
+              </div>
+              <div class="flex align-items-center">
+                <p-radioButton
+                  name="averagePrice"
+                  inputId="averagePrice"
+                  id="averagePrice"
+                  value="averagePrice"
+                  [(ngModel)]="priceMode"
+                  [ngModelOptions]="{standalone: true}"
+                  (onClick)="setPriceModeAveragePrice()"
+                />
+                <label for="averagePrice" class="ml-2">
+                  {{ "DATA.AVERAGE_PRICE" | translate }}
+                </label>
+              </div>
+            </div>
+
+            <!-- Form Fields -->
+            <div class="flex justify-between gap-4">
+              <!-- Supplier Dropdown  -->
+              <div class="w-[30%]">
+                <label>{{ "REQUEST_QUOTATION.SELECT_SUPPLIER" | translate }}</label>
+                <p-dropdown [options]="suppliers" formControlName="supplierDetailsId"
+                  placeholder="" optionLabel="label" optionValue="value" [filter]="true" styleClass="w-full"
+                  (onChange)="onSupplierChange($event)">
+                </p-dropdown>
+              </div>
+
+              <!-- Description Field with Validation Message -->
+              <div class="w-[30%]">
+                <label for="description">{{"INVOICE.DESCRIPTION"|translate}}:</label>
+                <input class="form-control" formControlName="description" name="description" id="description"
+                  [placeholder]="'INVOICE.DESCRIPTION' | translate" />
+                <div
+                  *ngIf="requestForm.get('description')?.invalid && (requestForm.get('description')?.touched || requestForm.get('description')?.dirty)"
+                  class="text-danger">
+                  <small *ngIf="requestForm.get('description')?.errors?.required">{{'VALIDATION.REQUIRED' |
+                    translate}}</small>
+                </div>
+              </div>
+
+              <!-- Issue Date Field -->
+              <div class="w-[20%]">
+                <label>{{ "INVOICE.ISSUE_DATE" | translate }}:</label>
+                <p-calendar
+                  [showIcon]="true"
+                  [iconDisplay]="'input'"
+                  [dateFormat]="'dd/mm/yy'"
+                  appendTo="body"
+                  styleClass="w-full"
+                  formControlName="issueDate"
+                  [showButtonBar]="true"
+                  variant="filled"
+                >
+                  <ng-template pTemplate="inputicon">
+                    <i class="pi pi-calendar"></i>
+                  </ng-template>
+                </p-calendar>
+                <small
+                  class="text-red-500 p-error block"
+                  *ngIf="
+                    requestForm.get('issueDate')?.invalid &&
+                    (requestForm.get('issueDate')?.touched ||
+                      requestForm.get('issueDate')?.dirty)
+                  "
+                >
+                  {{ "INVOICE.ISSUE_DATE_REQUIRED" | translate }}
+                </small>
+              </div>
+            </div>
+
+            <!-- Items Table -->
+            <div formArrayName="items">
+              <h3>{{"INVOICE.ITEMSLIST"|translate}}</h3>
+              <table class="table table-bordered w-full">
+                <thead class="bg-yellow text-center">
+                <tr>
+                  <th style="width: 5%">#</th>
+                  <th style="width: 35%">{{"INVOICE.NAME"|translate}}</th>
+                  <th style="width: 10%">{{"INVOICE.UNIT"|translate}}</th>
+                  <th style="width: 10%">{{"INVOICE.QUANTITY"|translate}}</th>
+                  <th style="width: 10%">{{"INVOICE.PRICE"|translate}} </th>
+                  <th style="width: 10%">{{"INVOICE.NETPRICE"|translate}}</th>
+                  <th style="width: 15%">{{"INVOICE.TOTAL"|translate}}</th>
+                  <th style="width: 5%"></th>
+                </tr>
+                </thead>
+                <tbody>
+                  <tr *ngFor="let item of items.controls; let i = index" [formGroupName]="i">
+                    <td>
+                      {{ i + 1}}
+                    </td>
+                    <td>
+                      <p-dropdown [options]="mainPurchaseArray" formControlName="mainPurchaseClassId" (onChange)="onPurchaseClick($event,item)" placeholder=""
+                        optionLabel="arabicName" optionValue="id" [filter]="true" styleClass="w-full [&>*]:p-1 text-4xl">
+                      </p-dropdown>
+                      <div *ngIf="item.get('mainPurchaseClassId')?.invalid && (item.get('mainPurchaseClassId')?.touched || item.get('mainPurchaseClassId')?.dirty)"
+                        class="text-danger">
+                        <small *ngIf="item.get('mainPurchaseClassId')?.errors?.required">{{'VALIDATION.REQUIRED' | translate}}</small>
+                      </div>
+                    </td>
+                    <td class="font-bold text-lg">
+                      {{ item.get('unit')?.value }}
+                    </td>
+                    <td>
+                      <input class="form-control" min="1" step="1" [id]="'quantity' + i" type="number" formControlName="quantity">
+                      <div
+                        *ngIf="item.get('quantity')?.invalid && (item.get('quantity')?.touched || item.get('quantity')?.dirty)"
+                        class="text-danger ">
+                        <small *ngIf="item.get('quantity')?.errors?.required">{{'VALIDATION.REQUIRED' |
+                          translate}}</small>
+                        <small *ngIf="item.get('quantity')?.errors?.min">{{'VALIDATION.MIN' | translate:{min: 1}
+                          }}</small>
+                        <small *ngIf="item.get('quantity')?.errors?.pattern">{{'VALIDATION.INTEGER_NUMBER' | translate}}</small>
+                      </div>
+                    </td>
+                    <td>
+                      <input class="form-control" [id]="'price' + i" type="number" formControlName="price" min="0" step="0.01" />
+                      <div
+                        *ngIf="item.get('price')?.invalid && (item.get('price')?.touched || item.get('price')?.dirty)"
+                        class="text-danger">
+                        <small *ngIf="item.get('price')?.errors?.required">{{'VALIDATION.REQUIRED' | translate}}</small>
+                        <small *ngIf="item.get('price')?.errors?.min">{{'VALIDATION.MIN' | translate:{min: 0} }}</small>
+                      </div>
+                    </td>
+<!--                    <td>-->
+<!--                      <input class="form-control" min="1" [id]="'noOfNights' + i" type="number" formControlName="noOfNights">-->
+<!--                      <div-->
+<!--                        *ngIf="item.get('noOfNights')?.invalid && (item.get('noOfNights')?.touched || item.get('noOfNights')?.dirty)"-->
+<!--                        class="text-danger">-->
+<!--                        <small *ngIf="item.get('noOfNights')?.errors?.required">{{'VALIDATION.REQUIRED' |-->
+<!--                          translate}}</small>-->
+<!--                        <small *ngIf="item.get('noOfNights')?.errors?.min">{{'VALIDATION.MIN' | translate:{min: 1}-->
+<!--                          }}</small>-->
+<!--                        <small *ngIf="item.get('noOfNights')?.errors?.pattern">{{'VALIDATION.INTEGER_NUMBER' | translate}}</small>-->
+<!--                      </div>-->
+<!--                    </td>-->
+                    <td>
+                      <input class="form-control" [id]="'netPriceItem' + i" type="number" formControlName="netPrice"
+                        readonly>
+                    </td>
+                    <td>
+                      <input class="form-control" [id]="'totalPriceItem' + i" type="number" formControlName="totalPrice"
+                        readonly>
+                    </td>
+                    <td *ngIf="!isViewMode">
+                      <button type="button" class="btn btn-danger btn-sm remove-btn" (click)="removeItem(i)">
+                        <i class="fas fa-trash-alt"></i>
+                      </button>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+
+            <div class="flex justify-between gap-4 fixed bottom-0 bg-slate-100">
+              <div class="w-[20%] form-group mb-3">
+                <label for="taxAmount">{{"INVOICE.TAXAMOUNT"|translate}} </label>
+                <input class="form-control" formControlName="taxAmount" name="taxAmount" id="taxAmount"
+                       placeholder="Tax Amount" readonly>
+              </div>
+              <div class="w-[20%] form-group mb-3">
+                <label for="netPrice">{{"INVOICE.NETPRICEWITHDISCOUNT"|translate}}</label>
+                <input class="form-control" formControlName="netPrice" name="netPrice" id="netPrice"
+                       placeholder="Net Price" readonly>
+              </div>
+
+              <div class="w-[20%]form-group mb-3">
+                <label for="totalPrice">{{"INVOICE.TOTALWITHTAX"|translate}}</label>
+                <input class="form-control" formControlName="totalPrice" name="totalPrice" id="totalPrice"
+                       placeholder="Total Price" readonly>
+              </div>
+              <div class="w-[40%] flex justify-center items-center gap-4" *ngIf="!isViewMode">
+                <div class="flex w-full items-center text-center ">
+                  <button class="btn btn-success" type="button"
+                          (click)="addItem()">{{"INVOICE.ADDITEM"|translate}}</button>
+                </div>
+                <div class="flex w-full items-center text-center  ">
+                  <button class="btn btn-primary" type="submit" >{{"INVOICE.SAVEINVOICE"|translate}}</button>
+                </div>
+              </div>
+            </div>
+
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Share Dialog -->
+<p-dialog
+  [(visible)]="shareDialogVisible"
+  [modal]="true"
+  [draggable]="false"
+  [resizable]="false"
+  [style]="{ width: '450px' }"
+  [header]="'REQUEST_QUOTATION.SHARE_QUOTATION' | translate"
+  (onHide)="closeShareDialog()">
+  
+  <p-tabView [(activeIndex)]="shareActiveTabIndex">
+    <!-- Email Tab -->
+    <p-tabPanel [header]="'REQUEST_QUOTATION.SHARE_VIA_EMAIL' | translate">
+      <form [formGroup]="shareForm" (ngSubmit)="submitShareEmail()">
+        <div class="p-fluid">
+          <div class="field">
+            <label for="shareEmail">{{ 'REQUEST_QUOTATION.EMAIL_ADDRESS' | translate }}</label>
+            <input
+              pInputText
+              id="shareEmail"
+              formControlName="email"
+              type="email"
+              [placeholder]="'REQUEST_QUOTATION.ENTER_EMAIL' | translate"
+              [disabled]="shareBusy" />
+          </div>
+          
+          <button
+            pButton
+            type="submit"
+            [label]="'REQUEST_QUOTATION.SEND_EMAIL' | translate"
+            icon="pi pi-envelope"
+            [loading]="shareBusy"
+            [disabled]="shareForm.get('email')?.invalid || shareBusy"
+            class="p-button-primary w-full">
+          </button>
+        </div>
+      </form>
+    </p-tabPanel>
+    
+    <!-- WhatsApp Tab -->
+    <p-tabPanel [header]="'REQUEST_QUOTATION.SHARE_VIA_WHATSAPP' | translate">
+      <form [formGroup]="shareForm" (ngSubmit)="submitShareWhatsapp()">
+        <div class="p-fluid">
+          <div class="field">
+            <label for="shareWhatsapp">{{ 'REQUEST_QUOTATION.WHATSAPP_NUMBER' | translate }}</label>
+            <input
+              pInputText
+              id="shareWhatsapp"
+              formControlName="whatsappNumber"
+              type="tel"
+              [placeholder]="'REQUEST_QUOTATION.ENTER_PHONE' | translate"
+              [disabled]="shareBusy" />
+            <small class="p-text-secondary">{{ 'REQUEST_QUOTATION.PHONE_FORMAT_HINT' | translate }}</small>
+          </div>
+          
+          <button
+            pButton
+            type="submit"
+            [label]="'REQUEST_QUOTATION.SEND_WHATSAPP' | translate"
+            icon="pi pi-whatsapp"
+            [loading]="shareBusy"
+            [disabled]="shareForm.get('whatsappNumber')?.invalid || shareBusy"
+            class="p-button-success w-full">
+          </button>
+        </div>
+      </form>
+    </p-tabPanel>
+  </p-tabView>
+</p-dialog>
+
+<!-- Convert to Invoice Dialog -->
+<p-dialog
+  [(visible)]="showConvertDialog"
+  [modal]="true"
+  [draggable]="false"
+  [resizable]="false"
+  [closable]="!submitting"
+  [style]="{ width: '500px' }"
+  [header]="'REQUEST_QUOTATION.CONVERT_TO_INVOICE' | translate">
+  
+  <div class="p-fluid">
+    <div class="field">
+      <label for="storeSelect">{{ 'REQUEST_QUOTATION.SELECT_STORE' | translate }} <span class="text-danger">*</span></label>
+      <p-dropdown
+        id="storeSelect"
+        [(ngModel)]="selectedStoreId"
+        [options]="stores"
+        optionLabel="arabicName"
+        optionValue="id"
+        [placeholder]="'REQUEST_QUOTATION.SELECT_STORE_PLACEHOLDER' | translate"
+        [disabled]="submitting"
+        [filter]="true"
+        filterBy="arabicName,englishName"
+        [appendTo]="'body'"
+        [showClear]="true">
+      </p-dropdown>
+    </div>
+    
+    <div *ngIf="convertError" class="p-message p-message-error mt-3">
+      <span class="p-message-icon pi pi-times-circle"></span>
+      <span class="p-message-detail">{{ convertError }}</span>
+    </div>
+  </div>
+  
+  <ng-template pTemplate="footer">
+    <button
+      pButton
+      type="button"
+      [label]="'FINANCE.NO' | translate"
+      icon="pi pi-times"
+      class="p-button-text"
+      (click)="closeConvertDialog()"
+      [disabled]="submitting">
+    </button>
+    <button
+      pButton
+      type="button"
+      [label]="'REQUEST_QUOTATION.CONVERT' | translate"
+      icon="pi pi-check"
+      class="p-button-success"
+      (click)="confirmConvert()"
+      [disabled]="!selectedStoreId || submitting"
+      [loading]="submitting">
+    </button>
+  </ng-template>
+</p-dialog>

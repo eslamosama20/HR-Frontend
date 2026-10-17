@@ -1,0 +1,161 @@
+<p-toast></p-toast>
+
+<div class="workbench-shell">
+  <header class="workbench-head">
+    <div>
+      <h1>{{ 'PHARMACY_CRUD_WORKBENCH.PAGE_TITLE' | translate }}</h1>
+      <p>{{ 'PHARMACY_CRUD_WORKBENCH.PAGE_SUB' | translate }}</p>
+    </div>
+    <button pButton type="button" icon="pi pi-arrow-left" class="p-button-text" [label]="'CASHIER_POS.SALLA_BACK_TO_POS' | translate" routerLink="/cashier/pos"></button>
+  </header>
+
+  <div class="workbench-grid">
+    <p-card [header]="'PHARMACY_CRUD_WORKBENCH.FORM_CARD' | translate">
+      <form [formGroup]="form" (ngSubmit)="save()" class="crud-form">
+        <label>
+          {{ 'PHARMACY_CRUD_WORKBENCH.RX_NO' | translate }}
+          <input pInputText formControlName="prescriptionNo" class="w-full" />
+          <small class="err" *ngIf="form.get('prescriptionNo')?.touched && form.get('prescriptionNo')?.invalid">
+            {{ 'PHARMACY_CRUD_WORKBENCH.REQUIRED' | translate }}
+          </small>
+        </label>
+
+        <label>
+          {{ 'PHARMACY_CRUD_WORKBENCH.PATIENT' | translate }}
+          <p-dropdown
+            [options]="patientOptions"
+            formControlName="patientId"
+            optionLabel="displayName"
+            optionValue="patientId"
+            [placeholder]="'PHARMACY_CRUD_WORKBENCH.PATIENT_PLACEHOLDER' | translate"
+            styleClass="w-full">
+          </p-dropdown>
+        </label>
+
+        <label>
+          {{ 'PHARMACY_CRUD_WORKBENCH.DOCTOR' | translate }}
+          <input pInputText formControlName="doctorName" class="w-full" />
+        </label>
+
+        <div class="two-col">
+          <label>
+            {{ 'PHARMACY_CRUD_WORKBENCH.STATE' | translate }}
+            <p-dropdown [options]="lifecycleOptions" formControlName="lifecycleState" optionLabel="label" optionValue="value" styleClass="w-full"></p-dropdown>
+          </label>
+          <label>
+            {{ 'PHARMACY_CRUD_WORKBENCH.NPHIES' | translate }}
+            <p-dropdown [options]="approvalOptions" formControlName="insuranceApprovalStatus" optionLabel="label" optionValue="value" styleClass="w-full"></p-dropdown>
+          </label>
+        </div>
+
+        <label>
+          {{ 'PHARMACY_CRUD_WORKBENCH.NOTES' | translate }}
+          <textarea pInputTextarea formControlName="notes" rows="2" class="w-full"></textarea>
+        </label>
+
+        <h3>{{ 'PHARMACY_CRUD_WORKBENCH.ITEMS' | translate }}</h3>
+        <div formArrayName="items" class="items-editor">
+          <div *ngFor="let g of items.controls; let i = index" [formGroupName]="i" class="item-row">
+            <input pInputText formControlName="name" [placeholder]="'PHARMACY_CRUD_WORKBENCH.ITEM_NAME' | translate" />
+            <p-inputNumber formControlName="qty" [min]="0.01" [maxFractionDigits]="2" [placeholder]="'PHARMACY_CRUD_WORKBENCH.QTY' | translate"></p-inputNumber>
+            <input pInputText formControlName="dosage" [placeholder]="'PHARMACY_CRUD_WORKBENCH.DOSAGE' | translate" />
+            <input pInputText formControlName="batchNo" [placeholder]="'CASHIER_POS.READY_RX_BATCH' | translate" />
+            <input pInputText formControlName="expiryDate" [placeholder]="'CASHIER_POS.READY_RX_EXPIRY' | translate" />
+            <input pInputText formControlName="notes" [placeholder]="'PHARMACY_CRUD_WORKBENCH.LINE_NOTES' | translate" />
+            <button pButton type="button" icon="pi pi-times" class="p-button-danger p-button-text" (click)="removeItemRow(i)"></button>
+          </div>
+        </div>
+        <button pButton type="button" icon="pi pi-plus" class="p-button-outlined p-button-sm" [label]="'PHARMACY_CRUD_WORKBENCH.ADD_LINE' | translate" (click)="addItemRow()"></button>
+
+        <div class="form-actions">
+          <button pButton type="button" class="p-button-text" [label]="'PHARMACY_CRUD_WORKBENCH.RESET_FORM' | translate" (click)="newDraft()"></button>
+          <button pButton type="submit" icon="pi pi-save" [label]="'PHARMACY_CRUD_WORKBENCH.SAVE' | translate"></button>
+        </div>
+        <p class="hint">{{ 'PHARMACY_CRUD_WORKBENCH.EDIT_HINT' | translate }}</p>
+      </form>
+    </p-card>
+
+    <p-card [header]="'PHARMACY_CRUD_WORKBENCH.LIST_CARD' | translate">
+      <!-- Loading State -->
+      <div *ngIf="isLoading()" class="text-center p-5">
+        <i class="pi pi-spin pi-spinner" style="font-size: 2.5rem; color: #3B82F6;"></i>
+        <p class="mt-3 text-600 font-semibold" style="color: #6B7280; font-size: 0.95rem;">جاري تحميل الوصفات الطبية من الخادم...</p>
+      </div>
+
+      <!-- Error State -->
+      <div *ngIf="hasError()" class="p-4 mb-3 border-round" style="background-color: #FEF2F2; border: 1px solid #FCA5A5; color: #DC2626;">
+        <div class="flex align-items-center">
+          <i class="pi pi-exclamation-triangle" style="font-size: 1.5rem; margin-left: 0.75rem;"></i>
+          <div>
+            <h4 class="m-0 font-bold" style="font-size: 1rem; color: #991B1B;">عذراً، فشل الاتصال بالخادم</h4>
+            <p class="m-0 mt-1" style="font-size: 0.85rem; color: #7F1D1D;">يرجى التأكد من تشغيل الباك إند أو الاتصال بالشبكة بشكل صحيح.</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Data Table -->
+      <p-table *ngIf="!isLoading()" [value]="prescriptions()" styleClass="p-datatable-sm">
+        <ng-template pTemplate="header">
+          <tr>
+            <th>{{ 'PHARMACY_CRUD_WORKBENCH.RX_NO' | translate }}</th>
+            <th>{{ 'PHARMACY_CRUD_WORKBENCH.PATIENT' | translate }}</th>
+            <th>{{ 'PHARMACY_CRUD_WORKBENCH.STATE' | translate }}</th>
+            <th>{{ 'PHARMACY_CRUD_WORKBENCH.NPHIES' | translate }}</th>
+            <th>{{ 'PHARMACY_CRUD_WORKBENCH.SERVER_ID' | translate }}</th>
+            <th></th>
+          </tr>
+        </ng-template>
+        <ng-template pTemplate="body" let-row>
+          <tr>
+            <td>{{ row.prescriptionNo }}</td>
+            <td>{{ row.patient.displayName }}</td>
+            <td><p-tag [value]="row.lifecycleState" [severity]="lifecycleSeverity(row.lifecycleState)"></p-tag></td>
+            <td><p-tag [value]="row.insuranceApprovalStatus" [severity]="approvalSeverity(row.insuranceApprovalStatus)"></p-tag></td>
+            <td><small>{{ row.serverPrescriptionId || '—' }}</small></td>
+            <td>
+              <button pButton type="button" icon="pi pi-pencil" class="p-button-text" (click)="loadForEdit(row)"></button>
+            </td>
+          </tr>
+        </ng-template>
+      </p-table>
+      <p *ngIf="!prescriptions().length && !isLoading()" class="empty-inline">{{ 'PHARMACY_CRUD_WORKBENCH.EMPTY_LIST' | translate }}</p>
+
+      <div class="detail-lines" *ngIf="prescriptions().length">
+        <h4>{{ 'PHARMACY_CRUD_WORKBENCH.LINES_DETAIL' | translate }}</h4>
+        <ng-container *ngFor="let row of prescriptions()">
+          <div class="rx-block">
+            <strong>{{ row.prescriptionNo }}</strong>
+            <p-table [value]="row.items" styleClass="p-datatable-sm">
+              <ng-template pTemplate="header">
+                <tr>
+                  <th>{{ 'PHARMACY_CRUD_WORKBENCH.ITEM_NAME' | translate }}</th>
+                  <th>{{ 'PHARMACY_CRUD_WORKBENCH.QTY' | translate }}</th>
+                  <th>{{ 'CASHIER_POS.READY_RX_BATCH' | translate }}</th>
+                  <th>{{ 'CASHIER_POS.READY_RX_EXPIRY' | translate }}</th>
+                  <th></th>
+                </tr>
+              </ng-template>
+              <ng-template pTemplate="body" let-line>
+                <tr>
+                  <td>{{ line.name }}</td>
+                  <td>{{ line.qty }}</td>
+                  <td>{{ line.batchNo || '—' }}</td>
+                  <td>{{ line.expiryDate || '—' }}</td>
+                  <td>
+                    <button
+                      pButton
+                      type="button"
+                      icon="pi pi-trash"
+                      class="p-button-danger p-button-text p-button-sm"
+                      (click)="removeServerLine(row, line.clientLineId)">
+                    </button>
+                  </td>
+                </tr>
+              </ng-template>
+            </p-table>
+          </div>
+        </ng-container>
+      </div>
+    </p-card>
+  </div>
+</div>

@@ -1,0 +1,1973 @@
+// Page Header
+.page-header {
+  border-bottom: 1px solid #e5e7eb;
+  padding-bottom: 0.4rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+
+  .page-header-text {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    flex: 1 1 auto;
+    min-width: 240px;
+  }
+
+  h2 {
+    color: #1f2937;
+    font-weight: 700;
+    font-size: 1.25rem;
+    margin: 0;
+  }
+
+  p {
+    margin: 0;
+    color: #6b7280;
+    font-size: 0.85rem;
+  }
+
+  .page-header-actions {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+
+    .header-action-btn {
+      font-size: 0.9rem;
+      padding: 0.4rem 0.85rem;
+      font-weight: 600;
+      border-radius: 0.375rem;
+      transition: all 0.2s ease;
+      box-shadow: 0 2px 4px rgba(59, 130, 246, 0.15);
+
+      &:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 4px 8px rgba(59, 130, 246, 0.2);
+      }
+
+      &:active {
+        transform: translateY(0);
+      }
+    }
+  }
+}
+
+.preview-content {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.basic-info-row {
+  cursor: pointer;
+}
+
+.preview-paginator {
+  margin-top: 0.75rem;
+}
+
+.empty-state-content {
+  text-align: center;
+  max-width: 500px;
+  padding: 3rem 2rem;
+
+  .icon-wrapper {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 8rem;
+    height: 8rem;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border-radius: 50%;
+    margin-bottom: 2rem;
+    box-shadow: 0 10px 25px rgba(102, 126, 234, 0.3);
+    transition: transform 0.3s ease;
+
+    i {
+      font-size: 1.5rem;
+      color: white;
+    }
+
+    &:hover {
+      transform: scale(1.05);
+    }
+  }
+
+  .empty-state-title {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #1f2937;
+    margin-bottom: 0.75rem;
+  }
+
+  .empty-state-description {
+    font-size: 1.25rem;
+    color: #6b7280;
+    margin-bottom: 2rem;
+    line-height: 1.6;
+  }
+}
+
+.add-button {
+  font-size: 0.9rem;
+  padding: 0.4rem 0.85rem;
+  font-weight: 600;
+  border-radius: 0.375rem;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 4px rgba(59, 130, 246, 0.15);
+
+  &:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(59, 130, 246, 0.2);
+  }
+
+  &:active {
+    transform: translateY(0);
+  }
+}
+
+// Purchase Page (Full Page View)
+.purchase-page {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: #f3f4f6;
+  z-index: 1000;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.page-header-bar {
+  background: white;
+  border-bottom: 2px solid #e5e7eb;
+  padding: 0.35rem 0.75rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+
+  .header-content {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+
+    .back-button {
+      padding: 0.25rem;
+    }
+
+    .page-title {
+      font-size: 1rem;
+      font-weight: 700;
+      color: #1f2937;
+      margin: 0;
+    }
+
+    .invoice-navigation {
+      display: flex;
+      align-items: center;
+      gap: 0.35rem;
+      margin-inline-start: 1rem;
+      padding-inline-start: 1rem;
+      border-inline-start: 1px solid #e5e7eb;
+
+      .invoice-counter {
+        font-size: 1rem;
+        font-weight: 600;
+        color: #6b7280;
+        min-width: 60px;
+        text-align: center;
+      }
+
+      .nav-btn {
+        padding: 0.25rem;
+        min-width: 32px;
+        width: 32px;
+        height: 32px;
+
+        &:disabled {
+          opacity: 0.4;
+          cursor: not-allowed;
+        }
+      }
+    }
+  }
+
+  .header-actions {
+    display: flex;
+    gap: 0.35rem;
+    align-items: center;
+
+    .header-btn {
+      font-size: 0.8rem;
+      padding: 0.3rem 0.5rem;
+      font-weight: 600;
+      border-radius: 0.25rem;
+      transition: all 0.2s ease;
+      min-width: 80px;
+      width: auto;
+      
+      &:hover:not(:disabled) {
+        transform: translateY(-1px);
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+      }
+
+      &:active:not(:disabled) {
+        transform: translateY(0);
+      }
+
+      ::ng-deep .p-button-label {
+        font-size: 0.9rem;
+        padding: 0;
+      }
+
+      ::ng-deep .p-button-icon {
+        font-size: 0.9rem;
+        margin-right: 0.25rem;
+      }
+    }
+  }
+}
+
+.page-content {
+  flex: 1;
+  overflow-y: auto;
+  padding: 0.5rem 0.75rem;
+  display: flex;
+  flex-direction: column;
+}
+
+// Form Sections
+.purchase-form {
+  max-width: 100%;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow: hidden;
+}
+
+.form-section {
+  background: white;
+  border-radius: 0.375rem;
+  padding: 0.35rem 0.5rem;
+  margin-bottom: 0.35rem;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.06);
+}
+
+.section-title {
+  font-size: 1rem;
+  font-weight: 700;
+  color: #1f2937;
+  margin-bottom: 0.35rem;
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+
+  i {
+    color: #667eea;
+    font-size: 1rem;
+  }
+}
+
+.section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.75rem;
+}
+
+// Form Grid
+.form-grid {
+  display: grid;
+  grid-template-columns: repeat(12, 1fr);
+  gap: 0.35rem;
+  align-items: flex-start;
+
+  .form-field {
+    &.description-field { grid-column: span 3; }
+    &.hotel-field { grid-column: span 2; }
+    &.account-field { grid-column: span 2; }
+    &.currency-field { grid-column: span 1; }
+    &.issue-date-field { grid-column: span 1; }
+    &.due-date-field { grid-column: span 1; }
+    &.tax-field { grid-column: span 1; }
+    &.discount-field { grid-column: span 1; }
+  }
+}
+
+// Form Field
+.form-field {
+  .field-label {
+    display: block;
+    font-size: 0.8rem;
+    font-weight: 700;
+    color: #374151;
+    margin-bottom: 0.15rem;
+
+    &.required::after {
+      content: ' *';
+      color: #ef4444;
+    }
+  }
+
+  .error-message {
+    display: block;
+    color: #ef4444;
+    font-size: 0.75rem;
+    margin-top: 0.15rem;
+  }
+}
+
+// Tab Content
+.tab-content {
+  padding: 1rem;
+  min-height: 200px;
+}
+
+.payment-actions {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 0.75rem;
+  justify-content: flex-start;
+}
+
+// Custom TabView Styling
+::ng-deep .custom-tabview {
+  .p-tabview-nav {
+    background: #f8f9fa;
+    border-bottom: 2px solid #dee2e6;
+    padding: 0;
+    display: flex;
+    justify-content: center;
+    
+    li {
+      margin: 0;
+      
+      .p-tabview-nav-link {
+        background: transparent;
+        border: none;
+        border-bottom: 3px solid transparent;
+        color: #6c757d;
+        font-weight: 600;
+        padding: 1rem 1.5rem;
+        transition: all 0.3s ease;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        
+        &:hover {
+          background: #e9ecef;
+          color: #495057;
+        }
+      }
+      
+      &.p-highlight {
+        .p-tabview-nav-link {
+          background: white;
+          color: #0d6efd;
+          border-bottom-color: #0d6efd;
+        }
+      }
+    }
+  }
+  
+  .p-tabview-panels {
+    background: white;
+    padding: 0;
+    border: none;
+  }
+  
+  .p-tabview-panel {
+    padding: 0.5rem 0.75rem;
+  }
+}
+
+.rooms-cost-actions {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 1rem;
+}
+
+// Excel-like Table
+.excel-table-wrapper {
+  overflow-x: auto;
+  overflow-y: auto;
+  border: 1px solid #d1d5db;
+  border-radius: 0.25rem;
+  background: white;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+  flex: 1;
+  min-height: 0;
+  position: relative;
+  // Max height for 6 rows: header (~40px) + 6 rows (~33px each) = ~238px
+  max-height: 238px;
+  
+  // Custom scrollbar styling
+  &::-webkit-scrollbar {
+    width: 12px;
+    height: 12px;
+  }
+
+  &::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 6px;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background: #c1c1c1;
+    border-radius: 6px;
+    border: 2px solid #f1f1f1;
+
+    &:hover {
+      background: #a8a8a8;
+    }
+  }
+
+  // Firefox scrollbar
+  scrollbar-width: thin;
+  scrollbar-color: #c1c1c1 #f1f1f1;
+}
+
+.preview-section .excel-table-wrapper {
+  max-height: none;
+}
+
+.excel-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.95rem;
+  background: white;
+  min-width: 1200px;
+
+  &.basic-info-table {
+    min-width: 900px;
+  }
+
+  thead {
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    border-bottom: 2px solid #d1d5db;
+
+    &.bg-yellow {
+      background: #fff5cc !important;
+    }
+
+    th {
+      padding: 0.35rem 0.25rem;
+      text-align: center;
+      font-weight: 700;
+      color: #374151;
+      border-inline-end: 1px solid #e5e7eb;
+      white-space: nowrap;
+      background-color: #fff5cc !important;
+      position: relative;
+      font-size: 0.9rem;
+      height: 36px;
+    }
+
+    &.bg-yellow th {
+      background-color: #fff5cc !important;
+
+      &:first-child {
+        border-inline-start: none;
+      }
+
+      &:last-child {
+        border-inline-end: none;
+      }
+
+      &.col-checkbox {
+        width: 40px;
+        min-width: 40px;
+        text-align: center;
+
+        input[type="checkbox"] {
+          width: 1.15rem !important;
+          height: 1.15rem !important;
+          cursor: pointer !important;
+          accent-color: #3b82f6 !important;
+          margin: 0 auto !important;
+          display: inline-block !important;
+          box-shadow: none !important;
+        }
+      }
+      &.col-sn { width: 35px; min-width: 35px; }
+      &.col-date { width: 150px; min-width: 150px; }
+      &.col-days { width: 65px; min-width: 65px; }
+      &.col-rooms { width: 65px; min-width: 65px; }
+      &.col-room { width: 110px; min-width: 110px; }
+      &.col-room-type { width: 100px; min-width: 100px; }
+      &.col-meal { width: 85px; min-width: 85px; }
+      &.col-cost { width: 70px; min-width: 70px; }
+      &.col-view { width: 85px; min-width: 85px; }
+      &.col-day-count { width: 45px; min-width: 45px; }
+      &.col-total { width: 90px; min-width: 90px; }
+      &.col-action { width: 45px; min-width: 45px; }
+      &.col-actions { width: 60px; min-width: 60px; max-width: 60px; }
+      &.col-vat { width: 80px; min-width: 80px; max-width: 80px; }
+      &.col-amount { width: 120px; min-width: 120px; max-width: 120px; }
+      &.col-notes { width: 200px; min-width: 200px; max-width: 200px; }
+      &.col-entry { width: 120px; min-width: 120px; max-width: 120px; }
+      &.col-day { width: 80px; min-width: 80px; max-width: 80px; }
+      &.col-status { width: 90px; min-width: 90px; max-width: 90px; }
+      &.col-receipt { width: 130px; min-width: 130px; max-width: 130px; }
+    }
+  }
+
+  tbody {
+    tr {
+      border-bottom: 1px solid #e5e7eb;
+      transition: background-color 0.15s;
+
+      &:hover {
+        background-color: #f9fafb;
+      }
+
+      &:last-child {
+        border-bottom: none;
+      }
+
+      &.table-row {
+        td:not(.col-checkbox) {
+          padding: 0 !important;
+          vertical-align: middle;
+          text-align: center;
+          border-inline-end: 1px solid #e5e7eb;
+          position: relative;
+          height: 32px;
+          font-weight: 600;
+
+          input:not([type="checkbox"]),
+          input.excel-cell-input {
+            border: none !important;
+            background-color: transparent !important;
+            border-radius: 0 !important;
+            box-shadow: none !important;
+            width: 100% !important;
+            height: 32px !important;
+            margin: 0 !important;
+            padding: 0.15rem 0.4rem !important;
+            text-align: center !important;
+            font-size: 1.05rem !important;
+            font-weight: 600 !important;
+
+            &:focus {
+              background-color: #f0f9ff !important;
+              outline: none !important;
+            }
+          }
+        }
+
+        td.col-checkbox {
+          padding: 0.35rem !important;
+          vertical-align: middle;
+          text-align: center !important;
+          width: 40px !important;
+          min-width: 40px !important;
+
+          input[type="checkbox"] {
+            width: 1.15rem !important;
+            height: 1.15rem !important;
+            cursor: pointer !important;
+            accent-color: #3b82f6 !important;
+            margin: 0 auto !important;
+            display: inline-block !important;
+            box-shadow: none !important;
+            border-radius: 3px !important;
+          }
+        }
+      }
+    }
+  }
+}
+
+// Seamless Integrated Table Dropdowns & Calendar Inputs matching Create Reservation
+::ng-deep {
+  .excel-table td {
+    .p-dropdown {
+      border: none !important;
+      background-color: transparent !important;
+      border-radius: 0 !important;
+      box-shadow: none !important;
+      width: 100% !important;
+      height: 32px !important;
+      margin: 0 !important;
+
+      .p-dropdown-label {
+        border: none !important;
+        background: transparent !important;
+        box-shadow: none !important;
+        padding: 0.15rem 0.4rem !important;
+        font-size: 1.05rem !important;
+        font-weight: 400 !important;
+        text-align: center !important;
+        line-height: 28px !important;
+      }
+
+      .p-dropdown-trigger {
+        border: none !important;
+        background: transparent !important;
+        width: 20px !important;
+        padding: 0 !important;
+      }
+
+      &.p-focus,
+      &:hover {
+        background-color: #f0f9ff !important;
+      }
+    }
+
+    p-inputnumber,
+    .p-inputnumber,
+    app-custom-date-picker,
+    .p-calendar {
+      width: 100% !important;
+      border: none !important;
+      background-color: transparent !important;
+      border-radius: 0 !important;
+      box-shadow: none !important;
+      outline: none !important;
+
+      .p-inputtext,
+      .p-inputnumber-input,
+      input {
+        border: none !important;
+        background-color: transparent !important;
+        border-radius: 0 !important;
+        box-shadow: none !important;
+        outline: none !important;
+        width: 100% !important;
+        height: 32px !important;
+        margin: 0 !important;
+        padding: 0.15rem 0.4rem !important;
+        font-size: 1.05rem !important;
+        font-weight: 400 !important;
+        text-align: center !important;
+
+        &:focus {
+          background-color: #f0f9ff !important;
+          outline: none !important;
+        }
+      }
+
+      .p-datepicker-trigger {
+        border: none !important;
+        background: transparent !important;
+        width: 24px !important;
+        padding: 0 !important;
+        color: #6b7280 !important;
+      }
+    }
+  }
+
+  input.excel-cell-input {
+    border: none !important;
+    border-radius: 0 !important;
+    padding: 0.25rem 0.35rem !important;
+    font-size: 0.85rem !important;
+    font-weight: 600 !important;
+    background: transparent !important;
+    box-shadow: none !important;
+    text-align: center !important;
+    width: 100% !important;
+
+    &:hover {
+      background: #f3f4f6 !important;
+    }
+
+    &:focus {
+      background: #e0e7ff !important;
+      outline: 2px solid #667eea !important;
+      outline-offset: -2px !important;
+    }
+  }
+
+  input.excel-cell-input {
+    border: none !important;
+    border-radius: 0 !important;
+    padding: 0.25rem 0.35rem !important;
+    font-size: 0.85rem !important;
+    font-weight: 600 !important;
+    background: transparent !important;
+    box-shadow: none !important;
+    text-align: center !important;
+    width: 100% !important;
+
+    &:hover {
+      background: #f3f4f6 !important;
+    }
+
+    &:focus {
+      background: #e0e7ff !important;
+      outline: 2px solid #667eea !important;
+      outline-offset: -2px !important;
+    }
+
+    &[type="number"] {
+      -moz-appearance: textfield;
+
+      &::-webkit-outer-spin-button,
+      &::-webkit-inner-spin-button {
+        -webkit-appearance: none;
+        margin: 0;
+      }
+    }
+  }
+
+  .p-calendar.excel-input {
+    .p-inputtext {
+      border: none !important;
+      border-radius: 0 !important;
+      padding: 0.25rem 0.35rem !important;
+      font-size: 0.85rem !important;
+      font-weight: 600 !important;
+      background: transparent !important;
+      box-shadow: none !important;
+
+      &:hover {
+        background: #f3f4f6 !important;
+      }
+
+      &:focus {
+        background: #e0e7ff !important;
+        outline: 2px solid #667eea !important;
+        outline-offset: -2px !important;
+      }
+    }
+
+    .p-datepicker-trigger {
+      padding: 0.5rem !important;
+      width: 2rem !important;
+      height: 2rem !important;
+      border: none !important;
+      background: transparent !important;
+      color: #6b7280 !important;
+
+      &:hover {
+        background: #f3f4f6 !important;
+        color: #374151 !important;
+      }
+    }
+  }
+
+  // Fix datepicker overlay positioning and visibility
+  .p-datepicker {
+    z-index: 10000 !important;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06) !important;
+  }
+
+  .p-datepicker-panel {
+    z-index: 10000 !important;
+  }
+
+  // Ensure calendar cells allow overflow for datepicker
+  .excel-table {
+    tbody {
+      tr {
+        td {
+          &.col-date {
+            overflow: visible !important;
+            
+            .p-calendar {
+              position: static !important;
+            }
+          }
+        }
+      }
+    }
+  }
+
+  .delete-btn {
+    padding: 0.15rem !important;
+    width: 1.5rem !important;
+    height: 1.5rem !important;
+    font-size: 0.875rem !important;
+  }
+
+  // Styling for saved (disabled) payment fields
+  .payment-schedule-table {
+    tbody tr td {
+      // Disabled calendar inputs
+      .p-calendar.p-disabled {
+        .p-inputtext {
+          background-color: #f3f4f6 !important;
+          color: #6b7280 !important;
+          cursor: not-allowed !important;
+          opacity: 0.85 !important;
+        }
+        
+        .p-datepicker-trigger {
+          cursor: not-allowed !important;
+          opacity: 0.5 !important;
+        }
+      }
+
+      // Disabled input number
+      .p-inputnumber.p-disabled {
+        .p-inputnumber-input {
+          background-color: #f3f4f6 !important;
+          color: #6b7280 !important;
+          cursor: not-allowed !important;
+          opacity: 0.85 !important;
+        }
+      }
+
+      // Disabled text inputs
+      input[disabled] {
+        background-color: #f3f4f6 !important;
+        color: #6b7280 !important;
+        cursor: not-allowed !important;
+        opacity: 0.85 !important;
+      }
+
+      // Add Payment Button styling
+      .add-payment-btn {
+        white-space: nowrap;
+        font-size: 0.75rem !important;
+        padding: 0.35rem 0.65rem !important;
+        font-weight: 600;
+        
+        .pi {
+          font-size: 0.875rem;
+        }
+      }
+
+      // Payment saved indicator
+      .payment-saved-indicator {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+        color: #22c55e;
+        font-weight: 700;
+        font-size: 0.8rem;
+        padding: 0.35rem 0.5rem;
+        background-color: #f0fdf4;
+        border-radius: 0.375rem;
+        white-space: nowrap;
+
+        i {
+          font-size: 1.1rem;
+        }
+
+        span {
+          line-height: 1;
+        }
+      }
+    }
+  }
+  
+  // Rooms Cost Table - Make cells smaller to match Room Type table
+  .excel-table tbody tr.table-row td {
+    font-size: 1rem !important;
+    padding: 0.2rem 0.15rem !important;
+    
+    // Ensure consistent sizing across all cells in Rooms Cost table
+    &.col-room-type,
+    &.col-meal,
+    &.col-view,
+    &.col-date,
+    &.col-day,
+    &.col-cost,
+    &.col-vat,
+    &.col-rooms,
+    &.col-total {
+      font-size: 1.125rem !important;
+      padding: 0.2rem 0.15rem !important;
+      font-weight: 600;
+    }
+  }
+}
+
+// Summary Section
+.summary-section {
+  .summary-grid {
+    display: flex;
+    gap: 0.75rem;
+    background: #f9fafb;
+    border-radius: 0.5rem;
+    padding: 0.75rem;
+    border: 2px solid #e5e7eb;
+    margin-left: auto;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+
+    @media (max-width: 768px) {
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+  }
+
+  .summary-item {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+    padding: 0.5rem 0.75rem;
+    background: white;
+    border-radius: 0.375rem;
+    border: 1px solid #e5e7eb;
+    transition: all 0.2s ease;
+    min-width: 200px;
+    flex: 1;
+    max-width: 250px;
+
+    @media (max-width: 768px) {
+      max-width: 100%;
+      width: 100%;
+    }
+
+    &:hover {
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+
+    &.total {
+      border: 2px solid #374151;
+      background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
+      min-width: 220px;
+
+      .summary-label {
+        font-size: 0.9rem;
+        font-weight: 700;
+        color: #1f2937;
+      }
+
+      .summary-value {
+        font-size: 1.25rem;
+        font-weight: 700;
+        color: #059669;
+      }
+    }
+
+    &.remaining {
+      border: 2px solid #f59e0b;
+      background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+      min-width: 220px;
+
+      .summary-label {
+        font-size: 0.9rem;
+        font-weight: 700;
+        color: #78350f;
+      }
+
+      .summary-value {
+        font-size: 1.25rem;
+        font-weight: 700;
+        color: #b45309;
+      }
+    }
+
+    &.status {
+      border: 2px solid #6366f1;
+      background: linear-gradient(135deg, #e0e7ff 0%, #c7d2fe 100%);
+      min-width: 220px;
+      align-items: center;
+      justify-content: center;
+
+      .summary-label {
+        font-size: 0.9rem;
+        font-weight: 700;
+        color: #312e81;
+        text-align: center;
+      }
+    }
+
+    .summary-label {
+      font-weight: 700;
+      color: #4b5563;
+      font-size: 0.875rem;
+      text-align: start;
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+
+    .summary-value {
+      font-weight: 700;
+      color: #1f2937;
+      font-size: 1.25rem;
+
+      &.paid {
+        color: #10b981;
+      }
+      text-align: end;
+      white-space: nowrap;
+      flex-shrink: 0;
+
+      &.tax {
+        color: #dc2626;
+      }
+
+      &.discount {
+        color: #059669;
+      }
+    }
+  }
+}
+
+// PrimeNG Customization - Single Unified Dropdown Box Style
+::ng-deep {
+  .p-dropdown:not(.excel-dropdown) {
+    border: 1px solid #cbd5e1 !important;
+    border-radius: 0.375rem !important;
+    background-color: #ffffff !important;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    width: 100% !important;
+
+    &:hover:not(.p-disabled) {
+      border-color: #94a3b8 !important;
+    }
+
+    &.p-focus {
+      border-color: #3b82f6 !important;
+      box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15) !important;
+    }
+
+    .p-dropdown-label {
+      border: none !important;
+      background: transparent !important;
+      font-size: 0.95rem !important;
+      font-weight: 600 !important;
+      padding: 0.4rem 0.6rem !important;
+      color: #1e293b !important;
+      border-radius: 0 !important;
+      box-shadow: none !important;
+    }
+
+    .p-dropdown-trigger {
+      border: none !important;
+      background: transparent !important;
+      color: #64748b !important;
+      width: 2rem !important;
+    }
+
+    .p-dropdown-clear-icon {
+      color: #ef4444 !important;
+      font-size: 0.85rem !important;
+    }
+  }
+
+  .p-calendar:not(.excel-input) .p-inputtext,
+  .p-inputnumber:not(.excel-input) .p-inputnumber-input,
+  .p-inputtext:not(.excel-cell-input) {
+    border: 1px solid #cbd5e1 !important;
+    border-radius: 0.375rem !important;
+    font-size: 0.95rem !important;
+    font-weight: 600 !important;
+    padding: 0.4rem 0.6rem !important;
+    background-color: #ffffff !important;
+    color: #1e293b !important;
+
+    &:hover:not(:disabled) {
+      border-color: #94a3b8 !important;
+    }
+
+    &:focus:not(:disabled) {
+      border-color: #3b82f6 !important;
+      box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15) !important;
+    }
+  }
+
+  // Calendar - unified style (remove blue background from trigger)
+  .p-calendar:not(.excel-input) {
+    .p-inputtext {
+      font-size: 0.875rem !important;
+      font-weight: 600 !important;
+      padding: 0.35rem 0.5rem !important;
+      background-color: #ffffff !important;
+      border: 1px solid #d1d5db !important;
+      border-radius: 0.375rem !important;
+    }
+
+    .p-datepicker-trigger {
+      width: 2rem !important;
+      height: 2rem !important;
+      padding: 0.5rem !important;
+      background-color: transparent !important;
+      border-inline-start: 1px solid #d1d5db !important;
+      color: #6b7280 !important;
+      border-radius: 0 0.375rem 0.375rem 0 !important;
+      
+      &:hover {
+        background-color: #f3f4f6 !important;
+        color: #374151 !important;
+      }
+    }
+  }
+
+  // InputNumber - unified style
+  .p-inputnumber:not(.excel-input) {
+    .p-inputnumber-input {
+      font-size: 0.875rem !important;
+      font-weight: 600 !important;
+      padding: 0.35rem 0.5rem !important;
+      background-color: #ffffff !important;
+      border: 1px solid #d1d5db !important;
+      border-radius: 0.375rem !important;
+    }
+
+    .p-inputnumber-button-group {
+      .p-inputnumber-button {
+        background-color: transparent !important;
+        border-inline-start: 1px solid #d1d5db !important;
+        color: #6b7280 !important;
+        
+        &:hover {
+          background-color: #f3f4f6 !important;
+          color: #374151 !important;
+        }
+      }
+    }
+  }
+
+  // Textarea - unified style
+  .p-inputtextarea {
+    font-size: 0.875rem !important;
+    padding: 0.35rem 0.5rem !important;
+    background-color: #ffffff !important;
+    border: 1px solid #d1d5db !important;
+    border-radius: 0.375rem !important;
+    
+    &:enabled:hover {
+      border-color: #9ca3af !important;
+    }
+
+    &:enabled:focus {
+      border-color: #667eea !important;
+      box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1) !important;
+    }
+  }
+
+  // Remove any blue backgrounds from readonly inputs
+  input[readonly] {
+    background-color: #f3f4f6 !important;
+    cursor: not-allowed !important;
+    border: 1px solid #d1d5db !important;
+  }
+
+  .p-button {
+    transition: all 0.2s ease;
+
+    &:hover:not(:disabled) {
+      transform: translateY(-1px);
+    }
+
+    &:active:not(:disabled) {
+      transform: translateY(0);
+    }
+  }
+
+  .p-inputnumber-input:not(.excel-cell-input) {
+    text-align: end;
+  }
+}
+
+// Utilities
+.text-center {
+  text-align: center;
+}
+
+.text-end {
+  text-align: end;
+}
+
+.font-semibold {
+  font-weight: 600;
+}
+
+.font-bold {
+  font-weight: 700;
+}
+
+.text-gray-400 {
+  color: #9ca3af;
+}
+
+.text-gray-500 {
+  color: #6b7280;
+}
+
+.text-gray-600 {
+  color: #4b5563;
+}
+
+.text-gray-800 {
+  color: #1f2937;
+}
+
+// Print orientation dialog - force above purchase page (z-index: 1000)
+::ng-deep .p-dialog-mask:has(.print-orientation-dialog) {
+  z-index: 99999 !important;
+}
+::ng-deep .print-orientation-dialog.p-dialog {
+  z-index: 100000 !important;
+}
+
+// Responsive
+@media (max-width: 768px) {
+  .page-header-bar {
+    padding: 1rem;
+    flex-direction: column;
+    gap: 1rem;
+
+    .header-content {
+      width: 100%;
+    }
+
+    .header-actions {
+      width: 100%;
+      flex-direction: column;
+
+      button {
+        width: 100%;
+      }
+    }
+  }
+
+  .page-content {
+    padding: 1rem;
+  }
+
+  .form-section {
+    padding: 1rem;
+  }
+
+  .form-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .excel-table-wrapper {
+    overflow-x: scroll;
+  }
+
+  .summary-section {
+    .summary-grid {
+      max-width: 100%;
+    }
+  }
+}
+
+// Animations
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.empty-state-content,
+.form-section {
+  animation: fadeIn 0.5s ease-out;
+}
+/* ============================
+   ✅ Purchase Preview (Outer Table) - Bigger + themed header
+   ============================ */
+
+/* خلي الـ wrapper ياخد عرض أكبر ويبان زي datatable */
+.purchase-preview-wrapper {
+  width: 100%;
+  border-radius: 6px;
+  border: 1px solid #e5e7eb;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.04);
+}
+
+/* خلّي الجدول نفسه كبير (font/padding) */
+.purchase-preview-table {
+  width: 100%;
+  min-width: 100% !important;       /* بدل 900px */
+  font-size: 1.125rem !important;    /* قريب من datatable */
+}
+
+/* خلايا الهيدر */
+.purchase-preview-table thead th {
+  padding: 0.4rem 0.35rem !important;
+  font-weight: 700 !important;
+  text-align: center !important;
+  background: #f9fafb !important;
+  color: #374151 !important;
+  border: 1px solid #e5e7eb !important;
+  font-size: 0.9rem !important;
+}
+
+.purchase-preview-table thead.bg-yellow th {
+  background: #fff5cc !important;
+}
+
+/* خلايا البودي */
+.purchase-preview-table tbody td {
+  padding: 0.35rem 0.3rem !important;
+  font-weight: 400 !important;
+  text-align: center !important;
+  border: 1px solid #e5e7eb !important;
+  white-space: nowrap !important;
+  font-size: 0.9rem !important;
+}
+
+/* hover + zebra زي datatable */
+.purchase-preview-table tbody tr:hover td {
+  background: #f3f4f6 !important;
+}
+
+.purchase-preview-table tbody tr:nth-child(even) td {
+  background: #fafafa !important;
+}
+
+/* ============================
+   ✅ Theme Header Colors (3 themes)
+   ============================ */
+
+/* 🌿 Light-Green */
+:host-context(.light-green-mode) .purchase-preview-table thead th,
+:host-context([data-bs-theme="light-green"]) .purchase-preview-table thead th,
+:host-context(body.light-green) .purchase-preview-table thead th {
+  background: #c6ecea !important;
+  color: #2e2a40 !important;
+  border-color: #93d5d1 !important;
+}
+
+/* 🌊 Light-DarkBlue */
+:host-context(.light-darkblue-mode) .purchase-preview-table thead th,
+:host-context([data-bs-theme="light-darkblue"]) .purchase-preview-table thead th,
+:host-context(body.light-darkblue) .purchase-preview-table thead th {
+  background: #dad7ff !important;
+  color: #191d29 !important;
+  border-color: #dad7ff !important;
+}
+
+/* 💜 Light-Indigo */
+:host-context(.light-indigo-mode) .purchase-preview-table thead th,
+:host-context([data-bs-theme="light-indigo"]) .purchase-preview-table thead th,
+:host-context(body.light-indigo) .purchase-preview-table thead th {
+  background: #c9d0f5 !important;
+  color: #2e2a40 !important;
+  border-color: #c9d0f5 !important;
+}
+::ng-deep .p-overlaypanel .op-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0.5rem;
+  max-width: 520px;
+  padding: 0.5rem;
+}
+
+::ng-deep .p-overlaypanel .op-grid .full-width {
+  grid-column: span 2;
+}
+
+::ng-deep .p-overlaypanel .pill {
+  background: #e6f4ff !important;
+  color: #245f8c !important;
+  border: 1px solid #cfe8ff !important;
+  border-radius: 20px !important;
+  height: 34px !important;
+  padding: 0 0.9rem !important;
+  font-weight: 600;
+  transition: 0.3s ease-in-out;
+}
+
+::ng-deep .p-overlaypanel .pill:hover {
+  background-color: #d4f2ff !important;
+  color: #185a8b !important;
+}
+
+::ng-deep .p-overlaypanel .pill.danger {
+  background: #ffe8e8 !important;
+  color: #b91c1c !important;
+  border-color: #ffc6c6 !important;
+}
+
+::ng-deep .p-overlaypanel .pill.danger:hover {
+  background-color: #ffdbdb !important;
+  color: #9e1b1b !important;
+}
+/* ✅ خلي overlay أعلى من أي overflow/scroll */
+:host ::ng-deep .invoice-overlay {
+  z-index: 20000 !important;
+}
+
+/* (اختياري) صغّر زر الثلاث نقاط في جدول preview */
+.purchase-preview-table .col-actions button {
+  width: 32px;
+  height: 32px;
+  padding: 0 !important;
+}
+:host ::ng-deep .invoice-overlay.p-overlaypanel {
+  z-index: 11000 !important;
+}
+
+:host ::ng-deep .invoice-overlay .op-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0.5rem;
+  max-width: 520px;
+  padding: 0.5rem;
+}
+
+:host ::ng-deep .invoice-overlay .op-grid .full-width {
+  grid-column: span 2;
+}
+
+:host ::ng-deep .invoice-overlay .pill {
+  background: #e6f4ff !important;
+  color: #245f8c !important;
+  border: 1px solid #cfe8ff !important;
+  border-radius: 20px !important;
+  height: 34px !important;
+  padding: 0 0.9rem !important;
+  font-weight: 600;
+  transition: 0.3s ease-in-out;
+}
+
+:host ::ng-deep .invoice-overlay .pill:hover {
+  background-color: #d4f2ff !important;
+  color: #185a8b !important;
+}
+
+:host ::ng-deep .invoice-overlay .pill.danger {
+  background: #ffe8e8 !important;
+  color: #b91c1c !important;
+  border-color: #ffc6c6 !important;
+}
+
+:host ::ng-deep .invoice-overlay .pill.danger:hover {
+  background-color: #ffdbdb !important;
+  color: #9e1b1b !important;
+}
+
+.bg-yellow {
+  background-color: #fff5cc !important;
+}
+
+.bg-yellow th,
+thead.bg-yellow th,
+table.table thead.bg-yellow th,
+table thead.bg-yellow th,
+.excel-table thead.bg-yellow th,
+.purchase-preview-table thead.bg-yellow th {
+  background-color: #fff5cc !important;
+  color: #000 !important;
+}
+/* صف الفاتورة الملغاة في جدول الـ preview */
+.cancelled-invoice-row {
+  background: #ffe6e6 !important;
+  border-inline-start: 4px solid #dc2626;
+}
+
+/* Badge صغيرة بجانب العنوان */
+.invoice-cancelled-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-inline-start: 10px;
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  line-height: 1;
+  color: #b91c1c;
+  background: #fee2e2;
+  border: 1px solid #fecaca;
+}
+
+/* =========================
+   New centered pagination (Total + pages + page/rows) all centered
+   ========================= */
+::ng-deep .custom-paginator-table .p-paginator {
+  direction: rtl;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.5rem 0.75rem;
+  border-top: 1px solid #e5e7eb;
+  background: #fff;
+  flex-wrap: wrap;
+}
+
+::ng-deep .custom-paginator-table .p-paginator .p-paginator-current {
+  color: #111827;
+  font-weight: 600;
+  white-space: nowrap;
+  margin: 0;
+}
+
+::ng-deep .custom-paginator-table .p-paginator .p-paginator-pages {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.25rem;
+  direction: ltr;
+  margin: 0;
+}
+
+::ng-deep .custom-paginator-table .p-paginator .p-paginator-page {
+  min-width: 34px;
+  height: 34px;
+  border-radius: 8px;
+  border: 1px solid transparent;
+  color: #374151;
+}
+
+::ng-deep .custom-paginator-table .p-paginator .p-paginator-page:not(.p-highlight):hover {
+  background: #f3f4f6;
+  border-color: #e5e7eb;
+}
+
+::ng-deep .custom-paginator-table .p-paginator .p-paginator-page.p-highlight {
+  background: #eaf2ff;
+  border-color: #93c5fd;
+  color: #1d4ed8;
+  font-weight: 600;
+}
+
+::ng-deep .custom-paginator-table .p-paginator .p-paginator-prev,
+::ng-deep .custom-paginator-table .p-paginator .p-paginator-next {
+  width: 34px;
+  height: 34px;
+  border-radius: 8px;
+}
+
+::ng-deep .custom-paginator-table .p-paginator .p-paginator-prev:hover,
+::ng-deep .custom-paginator-table .p-paginator .p-paginator-next:hover {
+  background: #f3f4f6;
+}
+
+::ng-deep .custom-paginator-table .p-paginator .p-paginator-rpp-options {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  margin: 0;
+}
+
+::ng-deep .custom-paginator-table .p-paginator .p-paginator-rpp-options::before {
+  content: "page /";
+  color: #6b7280;
+  font-size: 14px;
+  white-space: nowrap;
+}
+
+::ng-deep .custom-paginator-table .p-paginator .p-dropdown {
+  min-width: 80px;
+}
+
+::ng-deep .custom-paginator-table .p-paginator .p-paginator-ellipsis {
+  color: #6b7280;
+  padding: 0 0.25rem;
+}
+
+@media (max-width: 576px) {
+  ::ng-deep .p-paginator {
+    flex-direction: row !important;
+    flex-wrap: wrap !important;
+    gap: 0.5rem;
+    padding: 0.5rem;
+    font-size: 0.75rem;
+    justify-content: center;
+  }
+  ::ng-deep .p-paginator .p-paginator-pages {
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+  ::ng-deep .p-paginator .p-paginator-page,
+  ::ng-deep .p-paginator .p-paginator-prev,
+  ::ng-deep .p-paginator .p-paginator-next {
+    min-width: 28px;
+    height: 28px;
+  }
+  ::ng-deep .p-paginator .p-dropdown {
+    min-width: 70px;
+  }
+}
+
+/* Font-size overrides (quotation-list reference) */
+.page-header-bar .header-content .page-title {
+  font-size: 1.25rem;
+}
+
+.header-btn {
+  font-size: 0.8rem !important;
+  padding: 0.3rem 0.5rem !important;
+  font-weight: 600;
+  border-radius: 0.25rem;
+
+  ::ng-deep .p-button-label,
+  ::ng-deep .p-button-icon {
+    font-size: 0.8rem !important;
+  }
+}
+
+.form-field .field-label {
+  font-size: 0.9rem;
+}
+
+.section-title {
+  font-size: 1.125rem;
+}
+
+.section-title i {
+  font-size: 1.125rem;
+}
+
+.excel-table {
+  font-size: 1rem;
+}
+
+.excel-table thead th {
+  font-size: 1rem;
+}
+
+.excel-table tbody td {
+  font-size: 1rem;
+}
+
+::ng-deep .excel-input,
+::ng-deep .excel-dropdown {
+  .p-inputtext,
+  .p-dropdown-label {
+    font-size: 1rem !important;
+  }
+}
+
+::ng-deep .excel-cell-input {
+  font-size: 1rem !important;
+}
+
+::ng-deep input.excel-cell-input {
+  font-size: 1rem !important;
+}
+
+::ng-deep .p-calendar.excel-input .p-inputtext {
+  font-size: 1rem !important;
+}
+
+.tooltip-inner {
+  font-size: 14px;
+}
+
+.dropdown .dropdown-item {
+  font-size: 0.9rem;
+}
+
+@media (max-width: 768px) {
+  ::ng-deep .p-datatable {
+    .p-datatable-thead > tr > th,
+    .p-datatable-tbody > tr > td {
+      font-size: 0.7rem !important;
+    }
+  }
+}
+
+@media (max-width: 576px) {
+  ::ng-deep .p-datatable {
+    .p-datatable-thead > tr > th,
+    .p-datatable-tbody > tr > td {
+      font-size: 0.65rem !important;
+    }
+  }
+
+  ::ng-deep .p-paginator {
+    font-size: 0.75rem !important;
+
+    .p-paginator-left-content,
+    .p-paginator-right-content {
+      font-size: 0.75rem !important;
+    }
+
+    .p-paginator-page,
+    .p-paginator-prev,
+    .p-paginator-next,
+    .p-paginator-first,
+    .p-paginator-last {
+      font-size: 0.75rem !important;
+    }
+
+    .p-dropdown {
+      font-size: 0.75rem !important;
+
+      .p-inputtext {
+        font-size: 0.75rem !important;
+      }
+    }
+
+    .p-paginator-rpp-options {
+      font-size: 0.75rem !important;
+    }
+  }
+}
+
+::ng-deep .custom-paginator-table .p-paginator .p-paginator-rpp-options::before {
+  font-size: 14px;
+}
+
+/* Larger table text (1.125rem) as requested */
+.purchase-preview-table {
+  font-size: 1.125rem !important;
+}
+
+.purchase-preview-table thead th,
+.purchase-preview-table tbody td {
+  font-size: 1.125rem !important;
+}
+
+.purchase-preview-table tbody tr.table-row td {
+  font-size: 1.125rem !important;
+}
+
+// ====== رابط رقم سند الصرف في رأس الفاتورة ======
+a.transaction-header-btn {
+  color: #ffffff !important;
+  text-decoration: none !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 0.45rem !important;
+  font-weight: 600 !important;
+  background: linear-gradient(135deg, #10b981, #059669) !important;
+  border: none !important;
+  box-shadow: 0 2px 6px rgba(16, 185, 129, 0.3) !important;
+  border-radius: 0.375rem !important;
+  padding: 0.4rem 0.85rem !important;
+
+  &:hover {
+    background: linear-gradient(135deg, #059669, #047857) !important;
+    color: #ffffff !important;
+    box-shadow: 0 4px 10px rgba(16, 185, 129, 0.4) !important;
+    transform: translateY(-1px) !important;
+  }
+
+  span, i {
+    color: #ffffff !important;
+  }
+}
+
+// ====== زر إنشاء سند داخل جدول الدفعات ======
+button.create-receipt-btn {
+  background: linear-gradient(135deg, #059669, #10b981) !important;
+  color: #ffffff !important;
+  border: none !important;
+  font-size: 0.8rem !important;
+  font-weight: 600 !important;
+  padding: 0.35rem 0.75rem !important;
+  border-radius: 6px !important;
+  box-shadow: 0 2px 4px rgba(16, 185, 129, 0.25) !important;
+  transition: all 0.2s ease-in-out !important;
+  white-space: nowrap !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 0.35rem !important;
+
+  &:hover {
+    background: linear-gradient(135deg, #047857, #059669) !important;
+    box-shadow: 0 4px 8px rgba(16, 185, 129, 0.35) !important;
+    transform: translateY(-1px) !important;
+    color: #ffffff !important;
+  }
+
+  .p-button-icon {
+    font-size: 0.85rem !important;
+    color: #ffffff !important;
+  }
+
+  .p-button-label {
+    color: #ffffff !important;
+    font-weight: 600 !important;
+  }
+}
+
+// ====== رابط رقم سند الصرف ======
+.receipt-link-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 10px;
+  border-radius: 20px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  background: linear-gradient(135deg, #059669, #10b981);
+  color: #fff !important;
+  text-decoration: none;
+  box-shadow: 0 2px 6px rgba(16, 185, 129, 0.35);
+  transition: all 0.2s ease;
+  white-space: nowrap;
+
+  &:hover {
+    background: linear-gradient(135deg, #047857, #059669);
+    box-shadow: 0 4px 12px rgba(16, 185, 129, 0.45);
+    transform: translateY(-1px);
+    color: #fff !important;
+  }
+
+  &:active {
+    transform: translateY(0);
+  }
+
+  i {
+    font-size: 0.85rem;
+  }
+}
+
+// حالة الدفع في جدول الدفعات
+.payment-saved-indicator {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 8px;
+  border-radius: 12px;
+  background: #eff6ff;
+  border: 1px solid #bfdbfe;
+  font-size: 0.78rem;
+}
+
+.payment-paid-indicator {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 8px;
+  border-radius: 12px;
+  background: #f0fdf4;
+  border: 1px solid #bbf7d0;
+  font-size: 0.78rem;
+}
+
+// ====== Custom Confirm Dialog Styling ======
+::ng-deep .custom-confirm-dialog {
+  border-radius: 14px !important;
+  overflow: hidden;
+  box-shadow: 0 20px 30px -5px rgba(0, 0, 0, 0.15), 0 10px 12px -5px rgba(0, 0, 0, 0.08) !important;
+
+  .p-dialog-header {
+    background: #f8fafc !important;
+    border-bottom: 1px solid #e2e8f0 !important;
+    padding: 1.25rem 1.5rem !important;
+
+    .p-dialog-title {
+      font-weight: 700 !important;
+      font-size: 1.2rem !important;
+      color: #0f172a !important;
+    }
+
+    .p-dialog-header-icon {
+      border-radius: 50% !important;
+      width: 2rem !important;
+      height: 2rem !important;
+      &:hover {
+        background: #e2e8f0 !important;
+      }
+    }
+  }
+
+  .p-dialog-content {
+    padding: 1.75rem 1.5rem !important;
+    font-size: 1.05rem !important;
+    color: #334155 !important;
+    line-height: 1.6 !important;
+    display: flex !important;
+    align-items: center !important;
+    gap: 1.25rem !important;
+
+    .p-confirm-dialog-icon {
+      font-size: 2.5rem !important;
+      color: #2563eb !important;
+    }
+  }
+
+  .p-dialog-footer {
+    background: #f8fafc !important;
+    border-top: 1px solid #e2e8f0 !important;
+    padding: 1rem 1.5rem !important;
+    display: flex !important;
+    justify-content: flex-end !important;
+    align-items: center !important;
+    gap: 0.75rem !important;
+
+    .p-confirm-dialog-accept {
+      order: 1 !important;
+    }
+
+    .p-confirm-dialog-reject {
+      order: 2 !important;
+    }
+
+    button {
+      min-width: 110px !important;
+      border-radius: 8px !important;
+      font-weight: 600 !important;
+      padding: 0.6rem 1.35rem !important;
+      font-size: 0.95rem !important;
+      display: inline-flex !important;
+      align-items: center !important;
+      justify-content: center !important;
+      gap: 0.4rem !important;
+      transition: all 0.2s ease !important;
+    }
+
+    .p-button-success {
+      background: linear-gradient(135deg, #16a34a, #22c55e) !important;
+      border: none !important;
+      box-shadow: 0 4px 10px rgba(34, 197, 94, 0.25) !important;
+      color: #ffffff !important;
+
+      &:hover {
+        background: linear-gradient(135deg, #15803d, #16a34a) !important;
+        box-shadow: 0 6px 14px rgba(34, 197, 94, 0.35) !important;
+        transform: translateY(-1px) !important;
+      }
+    }
+
+    .p-button-secondary {
+      background: #ffffff !important;
+      border: 1px solid #cbd5e1 !important;
+      color: #475569 !important;
+
+      &:hover {
+        background: #f8fafc !important;
+        border-color: #94a3b8 !important;
+        color: #0f172a !important;
+      }
+    }
+  }
+}
+
+// ====== تمييز رؤوس الجداول (Headers BOLD) عن المحتوى (Body Normal) ======
+.excel-table,
+.purchase-preview-table {
+  thead th {
+    font-weight: 700 !important;
+    color: #0f172a !important;
+  }
+
+  tbody td,
+  tbody td input,
+  tbody td span,
+  tbody td a,
+  tbody td .p-inputtext,
+  tbody td .p-dropdown-label,
+  tbody td .p-inputnumber-input {
+    font-weight: 400 !important;
+  }
+
+  // المحافظة على سطر الإجمالي وعمود الحالة عريضاً (BOLD)
+  tbody tr.total-row td,
+  tbody tr.total-row td span,
+  tbody td.col-status,
+  tbody td.col-status span,
+  tbody td.col-status i,
+  .payment-saved-indicator span,
+  .payment-paid-indicator span,
+  tfoot tr td {
+    font-weight: 700 !important;
+  }
+}
+

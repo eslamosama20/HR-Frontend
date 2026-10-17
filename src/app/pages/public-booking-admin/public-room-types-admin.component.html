@@ -1,0 +1,267 @@
+<div class="card">
+  <p-toast></p-toast>
+  <p-confirmDialog></p-confirmDialog>
+
+  <div class="card-header border-0 pt-6">
+    <div class="card-title">
+      <div class="d-flex align-items-center gap-3">
+        <div class="position-relative">
+          <i class="ki-duotone ki-magnifier fs-1 position-absolute ms-6">
+            <span class="path1"></span>
+            <span class="path2"></span>
+          </i>
+          <input
+            type="text"
+            class="form-control form-control-solid w-250px ps-14"
+            [placeholder]="'DATA.SEARCH' | translate"
+            #searchInput
+            (input)="dt.filterGlobal(searchInput.value, 'contains')"
+          />
+        </div>
+
+        <p-dropdown
+          [options]="hotels"
+          [(ngModel)]="selectedHotelId"
+          optionLabel="name"
+          optionValue="id"
+          [placeholder]="'DATA.FILTER_BY_HOTEL' | translate"
+          [showClear]="true"
+          (onChange)="filterByHotel($event.value)"
+          styleClass="w-250px"
+        ></p-dropdown>
+      </div>
+    </div>
+
+    <div class="card-toolbar">
+      <button
+        pButton
+        pRipple
+        [label]="'DATA.ADD_NEW' | translate"
+        icon="pi pi-plus"
+        class="p-button-success"
+        (click)="openNew()"
+      ></button>
+    </div>
+  </div>
+
+  <div class="card-body pt-0">
+    <p-table
+      #dt
+      [value]="roomTypes"
+      [rows]="10"
+      [paginator]="true"
+      [loading]="loading"
+      [rowsPerPageOptions]="[10, 25, 50]"
+      [globalFilterFields]="['name', 'nameAr', 'hotelName', 'bedType']"
+      styleClass="p-datatable-gridlines"
+      [tableStyle]="{ 'min-width': '50rem' }"
+    >
+      <ng-template pTemplate="header">
+        <tr>
+          <th>{{ 'DATA.HOTEL' | translate }}</th>
+          <th>{{ 'DATA.ROOM_TYPE' | translate }}</th>
+          <th>{{ 'DATA.MAX_GUESTS' | translate }}</th>
+          <th>{{ 'DATA.BEDS' | translate }}</th>
+          <th>{{ 'DATA.BASE_PRICE' | translate }}</th>
+          <th>{{ 'DATA.TOTAL_ROOMS' | translate }}</th>
+          <th>{{ 'DATA.ACTIVE' | translate }}</th>
+          <th style="width: 150px">{{ 'DATA.ACTIONS' | translate }}</th>
+        </tr>
+      </ng-template>
+
+      <ng-template pTemplate="body" let-roomType>
+        <tr>
+          <td>
+            <strong>{{ roomType.hotelName }}</strong>
+          </td>
+          <td>
+            <strong>{{ roomType.name }}</strong>
+            <br />
+            <small class="text-muted" *ngIf="roomType.nameAr">{{ roomType.nameAr }}</small>
+            <br />
+            <small class="text-muted" *ngIf="roomType.viewType">
+              <i class="pi pi-eye me-1"></i>{{ roomType.viewType }}
+            </small>
+          </td>
+          <td>
+            <i class="pi pi-users me-1"></i>{{ roomType.maxGuests }}
+          </td>
+          <td>
+            <i class="pi pi-box me-1"></i>{{ roomType.numberOfBeds }} {{ roomType.bedType }}
+          </td>
+          <td>
+            <strong>{{ roomType.basePrice | currency }}</strong>
+            <br />
+            <small class="text-muted" *ngIf="roomType.weekendPrice">
+              Weekend: {{ roomType.weekendPrice | currency }}
+            </small>
+          </td>
+          <td>
+            <p-tag [value]="roomType.totalRooms?.toString()" severity="info"></p-tag>
+          </td>
+          <td>
+            <p-tag
+              [value]="roomType.isActive ? ('DATA.ACTIVE' | translate) : ('DATA.INACTIVE' | translate)"
+              [severity]="roomType.isActive ? 'success' : 'danger'"
+            ></p-tag>
+          </td>
+          <td>
+            <button
+              pButton
+              pRipple
+              icon="pi pi-pencil"
+              class="p-button-rounded p-button-text p-button-warning me-2"
+              (click)="editRoomType(roomType)"
+              pTooltip="{{ 'DATA.EDIT' | translate }}"
+            ></button>
+            <button
+              pButton
+              pRipple
+              icon="pi pi-trash"
+              class="p-button-rounded p-button-text p-button-danger"
+              (click)="deleteRoomType(roomType)"
+              pTooltip="{{ 'DATA.DELETE' | translate }}"
+            ></button>
+          </td>
+        </tr>
+      </ng-template>
+
+      <ng-template pTemplate="emptymessage">
+        <tr>
+          <td colspan="8" class="text-center">{{ 'DATA.NO_DATA' | translate }}</td>
+        </tr>
+      </ng-template>
+    </p-table>
+  </div>
+</div>
+
+<!-- Room Type Dialog -->
+<p-dialog
+  [(visible)]="roomTypeDialogVisible"
+  [header]="(roomTypeFormGroup.get('id')?.value ? 'DATA.EDIT' : 'DATA.ADD_NEW') | translate"
+  [modal]="true"
+  [style]="{ width: '700px' }"
+  styleClass="p-fluid"
+>
+  <ng-template pTemplate="content">
+    <form [formGroup]="roomTypeFormGroup">
+      <div class="row">
+        <div class="col-md-12 mb-3">
+          <label>{{ 'DATA.HOTEL' | translate }} *</label>
+          <p-dropdown
+            formControlName="hotelId"
+            [options]="hotels"
+            optionLabel="name"
+            optionValue="id"
+            [placeholder]="'DATA.SELECT_HOTEL' | translate"
+          ></p-dropdown>
+        </div>
+
+        <div class="col-md-6 mb-3">
+          <label>{{ 'DATA.NAME_EN' | translate }} *</label>
+          <input pInputText formControlName="name" class="form-control" />
+        </div>
+
+        <div class="col-md-6 mb-3">
+          <label>{{ 'DATA.NAME_AR' | translate }}</label>
+          <input pInputText formControlName="nameAr" class="form-control" />
+        </div>
+
+        <div class="col-md-12 mb-3">
+          <label>{{ 'DATA.DESCRIPTION_EN' | translate }}</label>
+          <textarea
+            pInputTextarea
+            formControlName="description"
+            rows="2"
+            class="form-control"
+          ></textarea>
+        </div>
+
+        <div class="col-md-6 mb-3">
+          <label>{{ 'DATA.MAX_GUESTS' | translate }} *</label>
+          <p-inputNumber formControlName="maxGuests" [showButtons]="true" [min]="1"></p-inputNumber>
+        </div>
+
+        <div class="col-md-6 mb-3">
+          <label>{{ 'DATA.NUMBER_OF_BEDS' | translate }} *</label>
+          <p-inputNumber formControlName="numberOfBeds" [showButtons]="true" [min]="1"></p-inputNumber>
+        </div>
+
+        <div class="col-md-6 mb-3">
+          <label>{{ 'DATA.BED_TYPE' | translate }}</label>
+          <p-dropdown
+            formControlName="bedType"
+            [options]="bedTypeOptions"
+            optionLabel="label"
+            optionValue="value"
+          ></p-dropdown>
+        </div>
+
+        <div class="col-md-6 mb-3">
+          <label>{{ 'DATA.VIEW_TYPE' | translate }}</label>
+          <p-dropdown
+            formControlName="viewType"
+            [options]="viewTypeOptions"
+            optionLabel="label"
+            optionValue="value"
+            [showClear]="true"
+          ></p-dropdown>
+        </div>
+
+        <div class="col-md-6 mb-3">
+          <label>{{ 'DATA.BASE_PRICE' | translate }} *</label>
+          <p-inputNumber formControlName="basePrice" mode="currency" currency="USD" [min]="0"></p-inputNumber>
+        </div>
+
+        <div class="col-md-6 mb-3">
+          <label>{{ 'DATA.WEEKEND_PRICE' | translate }}</label>
+          <p-inputNumber formControlName="weekendPrice" mode="currency" currency="USD" [min]="0"></p-inputNumber>
+        </div>
+
+        <div class="col-md-6 mb-3">
+          <label>{{ 'DATA.SIZE_SQM' | translate }}</label>
+          <p-inputNumber formControlName="sizeInSqMeters" [min]="0"></p-inputNumber>
+        </div>
+
+        <div class="col-md-6 mb-3">
+          <label>{{ 'DATA.TOTAL_ROOMS' | translate }} *</label>
+          <p-inputNumber formControlName="totalRooms" [showButtons]="true" [min]="1"></p-inputNumber>
+        </div>
+
+        <div class="col-md-6 mb-3">
+          <label>{{ 'DATA.AVAILABLE_QUANTITY' | translate }} *</label>
+          <p-inputNumber formControlName="availableQuantity" [showButtons]="true" [min]="0"></p-inputNumber>
+        </div>
+
+        <div class="col-md-12 mb-3">
+          <div class="form-check">
+            <p-checkbox
+              formControlName="isActive"
+              [binary]="true"
+              label="{{ 'DATA.ACTIVE' | translate }}"
+            ></p-checkbox>
+          </div>
+        </div>
+      </div>
+    </form>
+  </ng-template>
+
+  <ng-template pTemplate="footer">
+    <button
+      pButton
+      pRipple
+      [label]="'DATA.CANCEL' | translate"
+      icon="pi pi-times"
+      class="p-button-text"
+      (click)="hideDialog()"
+    ></button>
+    <button
+      pButton
+      pRipple
+      [label]="'DATA.SAVE' | translate"
+      icon="pi pi-check"
+      class="p-button-text"
+      (click)="saveRoomType()"
+    ></button>
+  </ng-template>
+</p-dialog>

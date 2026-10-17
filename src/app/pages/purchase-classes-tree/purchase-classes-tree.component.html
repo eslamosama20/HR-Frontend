@@ -1,0 +1,1358 @@
+<div class="flex compact-page--xs">
+  <div class="w-full">
+    <div class="flex justify-center items-start gap-1 flex-col w-full px-2 md:px-3">
+
+      <div class="fixed inset-0 bg-gray-500 bg-opacity-75 flex items-center justify-center z-50" *ngIf="loading">
+        <i class="pi pi-spin pi-spinner" style="font-size: 2rem"></i>
+      </div>
+   <div class="toolbar-row w-full flex flex-col md:flex-row md:items-center md:justify-between gap-2 mt-2">
+
+  <!-- Left side: Buttons -->
+  <div class="flex flex-wrap items-center gap-2">
+    <p-button
+      [label]="translate.instant('FINANCE.ADD_ROOT_PURCHASE_CLASS')"
+      icon="pi pi-plus"
+      styleClass="rounded-md p-button-primary"
+      (onClick)="showRootPurchaseClassDialog();$event.stopPropagation()"
+    ></p-button>
+
+<p-button
+  [label]="translate.instant('COMMON.EXPAND_ALL') || 'Expand All'"
+  icon="pi pi-angle-double-down"
+  styleClass="rounded-md btn-expand-all"
+  [style]="{ 'margin-inline-start': '1rem' }"
+  (onClick)="expandAll()"
+></p-button>
+
+<p-button
+  [label]="translate.instant('COMMON.COLLAPSE_ALL') || 'Collapse All'"
+  icon="pi pi-angle-double-up"
+  styleClass="rounded-md btn-collapse-all"
+  (onClick)="collapseAll()"
+></p-button>
+
+  </div>
+
+  <!-- Right side: Search -->
+  <div class="search-wrap w-full md:w-80">
+    <span class="p-input-icon-left w-full search-input">
+      <i class="pi pi-search"></i>
+      <input
+        #searchInput
+        pInputText
+        type="text"
+        class="w-full"
+        [placeholder]="translate.instant('DATA.SEARCH') || 'Search...'"
+        (input)="onSearch(searchInput.value)"
+      />
+    </span>
+  </div>
+
+</div>
+
+ <!-- <p-tree
+  class="items-tree--xxs tree-half"
+  [value]="filteredFiles"
+  *ngIf="!loading"
+>
+
+
+      
+        <ng-template let-node pTemplate="rootPurchaseClass" class="w-full flex">
+          <div class="w-full p-2 flex justify-between items-center tree-node-clickable"  (click)="showRootPurchaseClassDialog(node.data)">
+            <div class="flex items-center gap-2 flex-1 min-w-0">
+
+              <app-font-awesome-icon-picker (valueChange)="handleRootPurchaseClassIconChange($event, node.data)" [value]="node.data.icon"></app-font-awesome-icon-picker>
+              <p class="p-0 m-0 font-bold text-white text-3xl flex items-center flex-1 min-w-0 node-text">
+               <span class="text-4xl font-bold text-cyan-700 node-code">
+                  {{
+                    node.data.referenceCode
+                  }}
+                </span>
+               
+  <span class="node-name">
+    {{
+      activeLanguage === "en"
+        ? ' | ' + node.data.englishName
+        : ' | ' + node.data.arabicName
+    }}
+  </span>
+              </p>
+            </div>
+
+            <div class="flex items-center gap-2">
+              <p-button
+
+                icon="pi pi-plus"
+                class="p-button-contrast"
+                styleClass="rounded-lg p-button-contrast"
+                (onClick)="showHeaderPurchaseClassDialog(node.data);$event.stopPropagation()"
+              ></p-button>
+              <p-overlayPanel #opRootPurchaseClass [autoZIndex]="false" [baseZIndex]="80">
+                <div class="flex flex-column gap-3 w-auto p-1">
+                  <p-button
+
+                    icon="pi pi-pencil"
+                    class="p-button-secondary"
+                    [label]="translate.instant('FINANCE.EDIT')"
+                    styleClass="rounded-lg p-button-secondary w-full"
+                    (onClick)="showRootPurchaseClassDialog(node.data) ;$event.stopPropagation()"
+                  ></p-button>
+                </div>
+              </p-overlayPanel>
+              <p-button  [text]="true" (onClick)="opRootPurchaseClass.toggle($event);$event.stopPropagation()" severity="secondary" styleClass="p-button-secondary rounded-xl" >
+                <ng-template pTemplate="icon">
+                  <i class="pi pi-ellipsis-v text-2xl"></i>
+                </ng-template>
+              </p-button>
+            </div>
+          </div>
+        </ng-template>
+        <ng-template let-node pTemplate="headerPurchaseClass" class="w-full flex">
+          <div class="w-full p-2 flex justify-between items-center tree-node-clickable" (click)="showHeaderPurchaseClassDialog(null,node.data);$event.stopPropagation()">
+            <div class="flex items-center gap-2 flex-1 min-w-0">
+
+              <app-font-awesome-icon-picker (valueChange)="handleHeaderPurchaseClassIconChange($event, node.data)" [value]="node.data.icon"></app-font-awesome-icon-picker>
+              <p class="p-0 m-0 font-semibold text-lg flex items-center flex-1 min-w-0 node-text">               <span class="text-xl font-bold text-cyan-600 node-code">
+                  {{
+                   node.data.referenceCode
+                  }}
+                </span>
+              
+  <span class="node-name">
+    {{
+      activeLanguage === "en"
+        ? ' | ' + node.data.englishName
+        : ' | ' + node.data.arabicName
+    }}
+  </span>
+              </p>
+            </div>
+            <div class="flex items-center gap-2">
+              <p-button
+
+                icon="pi pi-plus"
+                class="p-button-contrast"
+                styleClass="rounded-lg p-button-contrast"
+                (onClick)="showDetailPurchaseClassDialog(node.data);$event.stopPropagation()"
+              ></p-button>
+              <p-overlayPanel #opHeaderPurchaseClass [autoZIndex]="false" [baseZIndex]="80">
+                <div class="flex flex-column gap-3 w-auto p-1">
+                  <p-button
+
+                    icon="pi pi-pencil"
+                    class="p-button-secondary"
+                    [label]="translate.instant('FINANCE.EDIT')"
+                    styleClass="rounded-lg p-button-secondary w-full"
+                    (onClick)="showHeaderPurchaseClassDialog(null, node.data);$event.stopPropagation()"
+                  ></p-button>
+                  <p-button
+
+                    icon="pi pi-trash"
+                    class="p-button-danger"
+                    [label]="translate.instant('FINANCE.DELETE')"
+                    styleClass="rounded-lg p-button-danger w-full"
+                    (onClick)="confirmHeaderPurchaseClassDeletion($event, node.data);$event.stopPropagation()"
+                  ></p-button>
+                </div>
+              </p-overlayPanel>
+              <p-button [text]="true" (onClick)="opHeaderPurchaseClass.toggle($event);$event.stopPropagation()" severity="secondary" styleClass="p-button-secondary rounded-xl" >
+                <ng-template pTemplate="icon">
+                  <i class="pi pi-ellipsis-v text-2xl"></i>
+                </ng-template>
+              </p-button>
+
+            </div>
+          </div>
+        </ng-template>
+        <ng-template let-node pTemplate="detailPurchaseClass" class="w-full flex">
+          <div class="w-full p-2 flex justify-between items-center tree-node-clickable" (click)="showDetailPurchaseClassDialog(null,node.data);$event.stopPropagation()">
+            <div class="flex items-center gap-2 flex-1 min-w-0">
+
+              <app-font-awesome-icon-picker (valueChange)="handleDetailPurchaseClassIconChange($event, node.data)" [value]="node.data.icon"></app-font-awesome-icon-picker>
+
+               <p class="p-0 m-0 text-lg flex items-center flex-1 min-w-0 node-text">
+                <span class="text-xl font-bold text-cyan-600 node-code">
+                  {{
+                    node.data.referenceCode
+                  }}
+                </span>
+               
+  <span class="node-name">
+    {{
+      activeLanguage === "en"
+        ? ' | ' + node.data.englishName
+        : ' | ' + node.data.arabicName
+    }}
+  </span>
+              </p>
+            </div>
+
+            <div class="flex items-center gap-2">
+              <p-button
+
+                icon="pi pi-plus"
+                class="p-button-contrast"
+                styleClass="rounded-lg p-button-contrast"
+                (onClick)="showMainPurchaseClassDialog(node.data);$event.stopPropagation()"
+              ></p-button>
+              <p-overlayPanel #opDetailPurchaseClass [autoZIndex]="false" [baseZIndex]="80">
+                <div class="flex flex-column gap-3 w-auto p-1">
+                  <p-button
+
+                    icon="pi pi-pencil"
+                    class="p-button-secondary"
+                    [label]="translate.instant('FINANCE.EDIT')"
+                    styleClass="rounded-lg p-button-secondary w-full"
+                    (onClick)="showDetailPurchaseClassDialog( null,node.data);$event.stopPropagation()"
+                  ></p-button>
+                  <p-button
+
+                    icon="pi pi-trash"
+                    class="p-button-danger"
+                    [label]="translate.instant('FINANCE.DELETE')"
+                    styleClass="rounded-lg p-button-danger w-full"
+                    (onClick)="confirmDetailPurchaseClassDeletion($event, node.data);$event.stopPropagation()"
+                  ></p-button>
+                </div>
+              </p-overlayPanel>
+              <p-button [text]="true" (onClick)="opDetailPurchaseClass.toggle($event);$event.stopPropagation()" severity="secondary" styleClass="p-button-secondary rounded-xl">
+                <ng-template pTemplate="icon">
+                  <i class="pi pi-ellipsis-v text-2xl"></i>
+                </ng-template>
+              </p-button>
+            </div>
+          </div>
+        </ng-template>
+        <ng-template let-node pTemplate="mainPurchaseClass" class="w-full flex">
+          <div class="w-full p-2 flex justify-between items-center tree-node-clickable" (click)="showMainPurchaseClassDialog(null,node.data);$event.stopPropagation()">
+            <div class="flex items-center gap-2 flex-1 min-w-0">
+
+              <app-font-awesome-icon-picker (valueChange)="handleMainPurchaseClassIconChange($event, node.data)" [value]="node.data.icon"></app-font-awesome-icon-picker>
+               <p class="p-0 m-0 text-lg flex items-center flex-1 min-w-0 node-text">
+                 <span class="text-xl font-bold text-cyan-600 node-code">
+                  {{
+                    node.data.referenceCode
+                  }}
+                </span>
+               
+  <span class="node-name">
+    {{
+      activeLanguage === "en"
+        ? ' | ' + node.data.englishName
+        : ' | ' + node.data.arabicName
+    }}
+  </span>
+              </p>
+            </div>
+            <div class="flex items-center gap-8 w-auto">
+              <div>
+                {{ "DATA.MEASUREMENT_UNIT" | translate }}:
+                {{
+                  activeLanguage === "en"
+                    ? node.data.measurementUnit.englishName
+                    : node.data.measurementUnit.arabicName
+                }}
+              </div>
+
+            </div>
+
+            <div class="flex items-center gap-2">
+              <p-overlayPanel #opMainPurchaseClass [autoZIndex]="false" [baseZIndex]="80">
+                <div class="flex flex-column gap-3 w-auto p-1">
+                  <p-button
+
+                    icon="pi pi-pencil"
+                    class="p-button-secondary"
+                    [label]="translate.instant('FINANCE.EDIT')"
+                    styleClass="rounded-lg p-button-secondary w-full"
+                    (onClick)="showMainPurchaseClassDialog( null,node.data);$event.stopPropagation()"
+                  ></p-button>
+                  <p-button
+
+                    icon="pi pi-trash"
+                    class="p-button-danger"
+                    [label]="translate.instant('FINANCE.DELETE')"
+                    styleClass="rounded-lg p-button-danger w-full"
+                    (onClick)="confirmMainPurchaseClassDeletion($event, node.data);$event.stopPropagation()"
+                  ></p-button>
+                </div>
+              </p-overlayPanel>
+              <p-button [text]="true" (onClick)="opMainPurchaseClass.toggle($event);$event.stopPropagation()" severity="secondary" styleClass="p-button-secondary rounded-xl">
+                <ng-template pTemplate="icon">
+                  <i class="pi pi-ellipsis-v text-2xl"></i>
+                </ng-template>
+              </p-button>
+            </div>
+          </div>
+        </ng-template>
+      </p-tree> -->
+      <!-- ✅ Tree + Side Editor (جنب بعض) -->
+      <div class="tree-editor-wrap w-full"
+           [class.rtl]="activeLanguage === 'ar'"
+           *ngIf="!loading">
+
+        <!-- ======================
+             RIGHT: EDITOR (جنب الشجرة)
+             ====================== -->
+        <div class="editor-col" [class.is-collapsed]="!sidePanelVisible">
+          <div class="editor-card">
+
+            <div class="editor-header">
+              <div class="editor-title">
+                <ng-container [ngSwitch]="selectedNodeType">
+                  <ng-container *ngSwitchCase="'rootPurchaseClass'">
+                    {{ (isEditing ? 'FINANCE.EDIT_ROOT_PURCHASE_CLASS' : 'FINANCE.ADD_ROOT_PURCHASE_CLASS') | translate }}
+                  </ng-container>
+                  <ng-container *ngSwitchCase="'headerPurchaseClass'">
+                    {{ (isEditing ? 'FINANCE.EDIT_HEADER_PURCHASE_CLASS' : 'FINANCE.ADD_HEADER_PURCHASE_CLASS') | translate }}
+                  </ng-container>
+                  <ng-container *ngSwitchCase="'detailPurchaseClass'">
+                    {{ (isEditing ? 'FINANCE.EDIT_DETAIL_PURCHASE_CLASS' : 'FINANCE.ADD_DETAIL_PURCHASE_CLASS') | translate }}
+                  </ng-container>
+                  <ng-container *ngSwitchCase="'mainPurchaseClass'">
+                    {{ (isEditing ? 'FINANCE.EDIT_MAIN_PURCHASE_CLASS' : 'FINANCE.ADD_MAIN_PURCHASE_CLASS') | translate }}
+                  </ng-container>
+                </ng-container>
+              </div>
+
+              <button
+                type="button"
+                class="p-button p-component p-button-text p-button-secondary"
+                (click)="cancelSidePanel()"
+              >
+                <span class="p-button-icon pi pi-times"></span>
+              </button>
+            </div>
+
+            <div class="editor-content">
+
+              <!-- ROOT FORM -->
+              <form *ngIf="selectedNodeType === 'rootPurchaseClass'"
+                    [formGroup]="rootPurchaseClassFormGroup"
+                    class="flex flex-col gap-3"
+                    novalidate>
+                <div class="field">
+                  <label class="block">{{ translate.instant("FINANCE.PURCHASE_CLASS_ARABIC_NAME") }}</label>
+                  <textarea pInputTextarea [autoResize]="true" formControlName="arabicName" class="w-full" rows="1" maxlength="500"></textarea>
+                  <small class="text-red-500 p-error block" *ngIf="rootPurchaseClassFormGroup.controls.arabicName.invalid && rootPurchaseClassFormGroup.controls.arabicName.touched">
+                    <span *ngIf="rootPurchaseClassFormGroup.controls.arabicName.hasError('maxlength')">
+                      {{ activeLanguage === 'ar' ? 'الحد الأقصى 500 حرف' : 'Maximum length is 500 characters' }}
+                    </span>
+                  </small>
+                </div>
+                <div class="field">
+                  <label class="block">{{ translate.instant("FINANCE.PURCHASE_CLASS_ENGLISH_NAME") }}</label>
+                  <textarea pInputTextarea [autoResize]="true" formControlName="englishName" class="w-full" rows="1" maxlength="500"></textarea>
+                  <small class="text-red-500 p-error block" *ngIf="rootPurchaseClassFormGroup.controls.englishName.invalid && rootPurchaseClassFormGroup.controls.englishName.touched">
+                    <span *ngIf="rootPurchaseClassFormGroup.controls.englishName.hasError('maxlength')">
+                      {{ activeLanguage === 'ar' ? 'الحد الأقصى 500 حرف' : 'Maximum length is 500 characters' }}
+                    </span>
+                  </small>
+                </div>
+                <div class="flex justify-content-end gap-2">
+                  <p-button type="button" [label]="'FINANCE.CANCEL' | translate" severity="secondary"
+                            (onClick)="cancelSidePanel(); $event.stopPropagation()"></p-button>
+                  <p-button type="button" [label]="'FINANCE.SAVE' | translate"
+                            (onClick)="saveFromSidePanel(); $event.stopPropagation()"
+                            [disabled]="rootPurchaseClassFormGroup.invalid"></p-button>
+                </div>
+              </form>
+
+              <!-- HEADER FORM -->
+              <form *ngIf="selectedNodeType === 'headerPurchaseClass'"
+                    [formGroup]="headerPurchaseClassFormGroup"
+                    class="flex flex-col gap-3"
+                    novalidate>
+                <div class="field">
+                  <label class="block">{{ translate.instant("FINANCE.PURCHASE_CLASS_ARABIC_NAME") }}</label>
+                  <textarea pInputTextarea [autoResize]="true" formControlName="arabicName" class="w-full" rows="1" maxlength="500"></textarea>
+                  <small class="text-red-500 p-error block" *ngIf="headerPurchaseClassFormGroup.controls.arabicName.invalid && headerPurchaseClassFormGroup.controls.arabicName.touched">
+                    <span *ngIf="headerPurchaseClassFormGroup.controls.arabicName.hasError('maxlength')">
+                      {{ activeLanguage === 'ar' ? 'الحد الأقصى 500 حرف' : 'Maximum length is 500 characters' }}
+                    </span>
+                  </small>
+                </div>
+                <div class="field">
+                  <label class="block">{{ translate.instant("FINANCE.PURCHASE_CLASS_ENGLISH_NAME") }}</label>
+                  <textarea pInputTextarea [autoResize]="true" formControlName="englishName" class="w-full" rows="1" maxlength="500"></textarea>
+                  <small class="text-red-500 p-error block" *ngIf="headerPurchaseClassFormGroup.controls.englishName.invalid && headerPurchaseClassFormGroup.controls.englishName.touched">
+                    <span *ngIf="headerPurchaseClassFormGroup.controls.englishName.hasError('maxlength')">
+                      {{ activeLanguage === 'ar' ? 'الحد الأقصى 500 حرف' : 'Maximum length is 500 characters' }}
+                    </span>
+                  </small>
+                </div>
+                <div class="flex justify-content-end gap-2">
+                  <p-button type="button" [label]="'FINANCE.CANCEL' | translate" severity="secondary"
+                            (onClick)="cancelSidePanel(); $event.stopPropagation()"></p-button>
+                  <p-button type="button" [label]="'FINANCE.SAVE' | translate"
+                            (onClick)="saveFromSidePanel(); $event.stopPropagation()"
+                            [disabled]="headerPurchaseClassFormGroup.invalid"></p-button>
+                </div>
+              </form>
+
+              <!-- DETAIL FORM -->
+              <form *ngIf="selectedNodeType === 'detailPurchaseClass'"
+                    [formGroup]="detailPurchaseClassFormGroup"
+                    class="flex flex-col gap-3"
+                    novalidate>
+                <div class="field">
+                  <label class="block">{{ translate.instant("FINANCE.PURCHASE_CLASS_ARABIC_NAME") }}</label>
+                  <textarea pInputTextarea [autoResize]="true" formControlName="arabicName" class="w-full" rows="1" maxlength="500"></textarea>
+                  <small class="text-red-500 p-error block" *ngIf="detailPurchaseClassFormGroup.controls.arabicName.invalid && detailPurchaseClassFormGroup.controls.arabicName.touched">
+                    <span *ngIf="detailPurchaseClassFormGroup.controls.arabicName.hasError('maxlength')">
+                      {{ activeLanguage === 'ar' ? 'الحد الأقصى 500 حرف' : 'Maximum length is 500 characters' }}
+                    </span>
+                  </small>
+                </div>
+                <div class="field">
+                  <label class="block">{{ translate.instant("FINANCE.PURCHASE_CLASS_ENGLISH_NAME") }}</label>
+                  <textarea pInputTextarea [autoResize]="true" formControlName="englishName" class="w-full" rows="1" maxlength="500"></textarea>
+                  <small class="text-red-500 p-error block" *ngIf="detailPurchaseClassFormGroup.controls.englishName.invalid && detailPurchaseClassFormGroup.controls.englishName.touched">
+                    <span *ngIf="detailPurchaseClassFormGroup.controls.englishName.hasError('maxlength')">
+                      {{ activeLanguage === 'ar' ? 'الحد الأقصى 500 حرف' : 'Maximum length is 500 characters' }}
+                    </span>
+                  </small>
+                </div>
+                <div class="flex justify-content-end gap-2">
+                  <p-button type="button" [label]="'FINANCE.CANCEL' | translate" severity="secondary"
+                            (onClick)="cancelSidePanel(); $event.stopPropagation()"></p-button>
+                  <p-button type="button" [label]="'FINANCE.SAVE' | translate"
+                            (onClick)="saveFromSidePanel(); $event.stopPropagation()"
+                            [disabled]="detailPurchaseClassFormGroup.invalid"></p-button>
+                </div>
+              </form>
+
+              <!-- MAIN FORM -->
+              <form *ngIf="selectedNodeType === 'mainPurchaseClass'"
+                    [formGroup]="mainPurchaseClassFormGroup"
+                    class="flex flex-col gap-3"
+                    novalidate>
+                <div class="field">
+                  <label class="block">{{ translate.instant("FINANCE.PURCHASE_CLASS_ARABIC_NAME") }}</label>
+                  <textarea pInputTextarea [autoResize]="true" formControlName="arabicName" class="w-full" rows="1" maxlength="500"></textarea>
+                  <small class="text-red-500 p-error block" *ngIf="mainPurchaseClassFormGroup.controls.arabicName.invalid && mainPurchaseClassFormGroup.controls.arabicName.touched">
+                    <span *ngIf="mainPurchaseClassFormGroup.controls.arabicName.hasError('maxlength')">
+                      {{ activeLanguage === 'ar' ? 'الحد الأقصى 500 حرف' : 'Maximum length is 500 characters' }}
+                    </span>
+                  </small>
+                </div>
+                <div class="field">
+                  <label class="block">{{ translate.instant("FINANCE.PURCHASE_CLASS_ENGLISH_NAME") }}</label>
+                  <textarea pInputTextarea [autoResize]="true" formControlName="englishName" class="w-full" rows="1" maxlength="500"></textarea>
+                  <small class="text-red-500 p-error block" *ngIf="mainPurchaseClassFormGroup.controls.englishName.invalid && mainPurchaseClassFormGroup.controls.englishName.touched">
+                    <span *ngIf="mainPurchaseClassFormGroup.controls.englishName.hasError('maxlength')">
+                      {{ activeLanguage === 'ar' ? 'الحد الأقصى 500 حرف' : 'Maximum length is 500 characters' }}
+                    </span>
+                  </small>
+                </div>
+                <div class="field">
+                  <label class="block">{{ translate.instant("DATA.MEASUREMENT_UNIT") }}</label>
+                  <p-dropdown
+                    formControlName="measurementUnitId"
+                    [options]="measurementUnitOptions"
+                    class="w-full"
+                    [style]="{ width: '100%' }"
+                    [filter]="true"
+                    appendTo="body"
+                  ></p-dropdown>
+                </div>
+
+                <!-- Product Behavior (pharmacy-ready foundation) -->
+                <p-panel
+                  [header]="translate.instant('FINANCE.PRODUCT_BEHAVIOR') || 'Product Behavior'"
+                  styleClass="mt-2"
+                >
+                  <div class="flex flex-col gap-3">
+                    <div class="field">
+                      <label class="block">{{ translate.instant('FINANCE.ITEM_TYPE') || 'Item Type' }}</label>
+                      <p-dropdown
+                        formControlName="itemType"
+                        [options]="itemTypeOptions"
+                        optionLabel="label"
+                        optionValue="value"
+                        class="w-full"
+                        appendTo="body"
+                      ></p-dropdown>
+                    </div>
+
+                    <!-- Pharmacy behavior shown only when itemType=medication -->
+                    <ng-container *ngIf="isMedicationMainItem">
+                      <div class="product-flags-grid">
+                        <div class="checkbox-field-card">
+                          <p-checkbox formControlName="needsBatch" [binary]="true" inputId="needsBatch"></p-checkbox>
+                          <label for="needsBatch" class="checkbox-label">
+                            {{ 'FINANCE.NEEDS_BATCH' | translate }}
+                          </label>
+                        </div>
+
+                        <div class="checkbox-field-card">
+                          <p-checkbox formControlName="needsExpiry" [binary]="true" inputId="needsExpiry"></p-checkbox>
+                          <label for="needsExpiry" class="checkbox-label">
+                            {{ 'FINANCE.NEEDS_EXPIRY' | translate }}
+                          </label>
+                        </div>
+
+                        <div class="checkbox-field-card">
+                          <p-checkbox formControlName="isPharmacyItem" [binary]="true" inputId="isPharmacyItem"></p-checkbox>
+                          <label for="isPharmacyItem" class="checkbox-label">
+                            {{ 'FINANCE.PHARMACY_ITEM' | translate }}
+                          </label>
+                        </div>
+
+                        <div class="checkbox-field-card">
+                          <p-checkbox formControlName="isControlled" [binary]="true" inputId="isControlled"></p-checkbox>
+                          <label for="isControlled" class="checkbox-label">
+                            {{ 'FINANCE.CONTROLLED_DRUG' | translate }}
+                          </label>
+                        </div>
+                      </div>
+
+                      <div class="field">
+                        <label class="block">{{ translate.instant('FINANCE.SFDA_CODE') || 'SFDA Code' }}</label>
+                        <input
+                          pInputText
+                          type="text"
+                          formControlName="sfdaCode"
+                          class="w-full"
+                          [placeholder]="translate.instant('FINANCE.SFDA_CODE_PLACEHOLDER') || 'Optional (for Saudi compliance)'"
+                        />
+                      </div>
+                    </ng-container>
+                  </div>
+                </p-panel>
+
+                <div class="field">
+                  <label class="block mb-1">صورة المنتج</label>
+                  <div class="image-upload-wrap">
+                    <img *ngIf="mainPurchaseImagePreview" [src]="mainPurchaseImagePreview" alt="صورة المنتج" class="product-img-preview" />
+                    <div *ngIf="!mainPurchaseImagePreview" class="no-img-placeholder">
+                      <i class="pi pi-image"></i>
+                      <span>لا توجد صورة</span>
+                    </div>
+                    <label class="upload-btn">
+                      <i class="pi pi-upload"></i> اختر صورة
+                      <input type="file" accept="image/*" hidden (change)="onMainProductImageSelected($event)" />
+                    </label>
+                    <button *ngIf="mainPurchaseImagePreview" type="button" class="remove-img-btn" (click)="mainPurchaseImagePreview=null; mainPurchaseClassFormGroup.patchValue({imageUrl:''})">
+                      <i class="pi pi-times"></i> إزالة
+                    </button>
+                  </div>
+                </div>
+                <div class="flex justify-content-end gap-2">
+                  <p-button type="button" [label]="'FINANCE.CANCEL' | translate" severity="secondary"
+                            (onClick)="cancelSidePanel(); $event.stopPropagation()"></p-button>
+                  <p-button type="button" [label]="'FINANCE.SAVE' | translate"
+                            (onClick)="saveFromSidePanel(); $event.stopPropagation()"
+                            [disabled]="mainPurchaseClassFormGroup.invalid"></p-button>
+                </div>
+              </form>
+
+            </div>
+          </div>
+        </div>
+
+        <!-- ======================
+             LEFT: TREE
+             ====================== -->
+        <div class="tree-col">
+          <!-- Custom Accordion Cards Grid -->
+          <div class="custom-accordion-grid items-tree--xxs w-full flex flex-col gap-4">
+            
+            <!-- Root Card (Level 1) -->
+            <div *ngFor="let root of filteredFiles" class="root-card border rounded-xl overflow-hidden mb-4 shadow-sm bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800">
+              
+              <!-- Root Header -->
+              <div class="root-header flex justify-between items-center p-3 cursor-pointer bg-slate-50 dark:bg-slate-800/50 border-b border-slate-200 dark:border-slate-800" [class.is-selected]="selectedNodeType === 'rootPurchaseClass' && selectedNodeData?.id === root.data?.id" (click)="openEditorFromNode(root, 'rootPurchaseClass'); root.expanded = !root.expanded; $event.stopPropagation()">
+                <div class="flex items-center gap-3 flex-1 min-w-0">
+                  <div class="expand-chevron text-slate-400">
+                    <i class="pi" [ngClass]="root.expanded ? 'pi-chevron-down' : (activeLanguage === 'ar' ? 'pi-chevron-left' : 'pi-chevron-right')"></i>
+                  </div>
+                  
+                  <div class="flex items-center gap-2 flex-1 min-w-0">
+                    <span class="node-code root-badge" style="font-size: 1.15rem !important; font-weight: bold !important; padding: 0.2rem 0.6rem !important;">{{ root.data.referenceCode }}</span>
+                    <span class="node-name root-title font-bold text-slate-800 dark:text-slate-100">{{ activeLanguage === 'en' ? root.data.englishName : root.data.arabicName }}</span>
+                  </div>
+                </div>
+
+                <div class="flex items-center gap-2" (click)="$event.stopPropagation()">
+                  <!-- ADD HEADER -->
+                  <p-button
+                    icon="pi pi-plus"
+                    class="p-button-contrast"
+                    styleClass="rounded-lg p-button-contrast"
+                    (onClick)="showHeaderPurchaseClassDialog(root.data); $event.stopPropagation()"
+                  ></p-button>
+
+                  <p-overlayPanel #opRootPurchaseClass [autoZIndex]="false" [baseZIndex]="80">
+                    <div class="flex flex-column gap-3 w-auto p-1">
+                      <p-button
+                        icon="pi pi-pencil"
+                        class="p-button-secondary"
+                        [label]="translate.instant('FINANCE.EDIT')"
+                        styleClass="rounded-lg p-button-secondary w-full"
+                        (onClick)="openEditorFromNode(root, 'rootPurchaseClass'); opRootPurchaseClass.hide(); $event.stopPropagation()"
+                      ></p-button>
+                    </div>
+                  </p-overlayPanel>
+
+                  <p-button
+                    [text]="true"
+                    (onClick)="opRootPurchaseClass.toggle($event); $event.stopPropagation()"
+                    severity="secondary"
+                    styleClass="p-button-secondary rounded-xl"
+                  >
+                    <ng-template pTemplate="icon">
+                      <i class="pi pi-ellipsis-v text-xl"></i>
+                    </ng-template>
+                  </p-button>
+                </div>
+              </div>
+
+              <!-- Root Body (Level 2: Header Accordions) -->
+              <div *ngIf="root.expanded" class="root-body p-3 flex flex-col gap-3">
+                <div *ngFor="let header of root.children" class="header-item">
+                  
+                  <!-- Header Row -->
+                  <div class="header-row flex justify-between items-center p-2.5 rounded-lg cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800/30" [class.is-selected]="selectedNodeType === 'headerPurchaseClass' && selectedNodeData?.id === header.data?.id" (click)="openEditorFromNode(header, 'headerPurchaseClass'); header.expanded = !header.expanded; $event.stopPropagation()">
+                    <div class="flex items-center gap-3 flex-1 min-w-0">
+                      <div class="expand-chevron text-slate-400">
+                        <i class="pi" [ngClass]="header.expanded ? 'pi-chevron-down' : (activeLanguage === 'ar' ? 'pi-chevron-left' : 'pi-chevron-right')"></i>
+                      </div>
+                      
+                      <div class="flex items-center gap-2 flex-1 min-w-0">
+                        <span class="node-code header-badge" style="font-size: 1.1rem !important; font-weight: bold !important; padding: 0.2rem 0.5rem !important;">{{ header.data.referenceCode }}</span>
+                        <span class="node-name header-title font-semibold text-slate-700 dark:text-slate-200">{{ activeLanguage === 'en' ? header.data.englishName : header.data.arabicName }}</span>
+                      </div>
+                    </div>
+
+                    <div class="flex items-center gap-2" (click)="$event.stopPropagation()">
+                      <!-- ADD DETAIL -->
+                      <p-button
+                        icon="pi pi-plus"
+                        class="p-button-contrast"
+                        styleClass="rounded-lg p-button-contrast"
+                        (onClick)="showDetailPurchaseClassDialog(header.data); $event.stopPropagation()"
+                      ></p-button>
+
+                      <p-overlayPanel #opHeaderPurchaseClass [autoZIndex]="false" [baseZIndex]="80">
+                        <div class="flex flex-column gap-3 w-auto p-1">
+                          <p-button
+                            icon="pi pi-pencil"
+                            class="p-button-secondary"
+                            [label]="translate.instant('FINANCE.EDIT')"
+                            styleClass="rounded-lg p-button-secondary w-full"
+                            (onClick)="openEditorFromNode(header, 'headerPurchaseClass'); opHeaderPurchaseClass.hide(); $event.stopPropagation()"
+                          ></p-button>
+                          <p-button
+                            icon="pi pi-trash"
+                            class="p-button-danger"
+                            [label]="translate.instant('FINANCE.DELETE')"
+                            styleClass="rounded-lg p-button-danger w-full"
+                            (onClick)="confirmHeaderPurchaseClassDeletion($event, header.data); opHeaderPurchaseClass.hide(); $event.stopPropagation()"
+                          ></p-button>
+                        </div>
+                      </p-overlayPanel>
+
+                      <p-button
+                        [text]="true"
+                        (onClick)="opHeaderPurchaseClass.toggle($event); $event.stopPropagation()"
+                        severity="secondary"
+                        styleClass="p-button-secondary rounded-xl"
+                      >
+                        <ng-template pTemplate="icon">
+                          <i class="pi pi-ellipsis-v text-lg"></i>
+                        </ng-template>
+                      </p-button>
+                    </div>
+                  </div>
+
+                  <!-- Header Body (Level 3: Detail Accordions) -->
+                  <div *ngIf="header.expanded" class="header-body">
+                    <div *ngFor="let detail of header.children" class="detail-item">
+                      
+                      <!-- Detail Row -->
+                      <div class="detail-row flex justify-between items-center p-2 rounded-md cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800/30" [class.is-selected]="selectedNodeType === 'detailPurchaseClass' && selectedNodeData?.id === detail.data?.id" (click)="openEditorFromNode(detail, 'detailPurchaseClass'); detail.expanded = !detail.expanded; $event.stopPropagation()">
+                        <div class="flex items-center gap-3 flex-1 min-w-0">
+                          <div class="expand-chevron text-slate-400">
+                            <i class="pi" [ngClass]="detail.expanded ? 'pi-chevron-down' : (activeLanguage === 'ar' ? 'pi-chevron-left' : 'pi-chevron-right')"></i>
+                          </div>
+                          
+                          <div class="flex items-center gap-2 flex-1 min-w-0">
+                            <span class="node-code detail-badge" style="font-size: 1.05rem !important; font-weight: bold !important; padding: 0.15rem 0.45rem !important;">{{ detail.data.referenceCode }}</span>
+                            <span class="node-name detail-title text-slate-600 dark:text-slate-300">{{ activeLanguage === 'en' ? detail.data.englishName : detail.data.arabicName }}</span>
+                          </div>
+                        </div>
+
+                        <div class="flex items-center gap-2" (click)="$event.stopPropagation()">
+                          <!-- ADD MAIN -->
+                          <p-button
+                            icon="pi pi-plus"
+                            class="p-button-contrast"
+                            styleClass="rounded-lg p-button-contrast"
+                            (onClick)="showMainPurchaseClassDialog(detail.data); $event.stopPropagation()"
+                          ></p-button>
+
+                          <p-overlayPanel #opDetailPurchaseClass [autoZIndex]="false" [baseZIndex]="80">
+                            <div class="flex flex-column gap-3 w-auto p-1">
+                              <p-button
+                                icon="pi pi-pencil"
+                                class="p-button-secondary"
+                                [label]="translate.instant('FINANCE.EDIT')"
+                                styleClass="rounded-lg p-button-secondary w-full"
+                                (onClick)="openEditorFromNode(detail, 'detailPurchaseClass'); opDetailPurchaseClass.hide(); $event.stopPropagation()"
+                              ></p-button>
+                              <p-button
+                                icon="pi pi-trash"
+                                class="p-button-danger"
+                                [label]="translate.instant('FINANCE.DELETE')"
+                                styleClass="rounded-lg p-button-danger w-full"
+                                (onClick)="confirmDetailPurchaseClassDeletion($event, detail.data); opDetailPurchaseClass.hide(); $event.stopPropagation()"
+                              ></p-button>
+                            </div>
+                          </p-overlayPanel>
+
+                          <p-button
+                            [text]="true"
+                            (onClick)="opDetailPurchaseClass.toggle($event); $event.stopPropagation()"
+                            severity="secondary"
+                            styleClass="p-button-secondary rounded-xl"
+                          >
+                            <ng-template pTemplate="icon">
+                              <i class="pi pi-ellipsis-v text-base"></i>
+                            </ng-template>
+                          </p-button>
+                        </div>
+                      </div>
+
+                      <!-- Detail Body (Level 4: Main Items) -->
+                      <div *ngIf="detail.expanded" class="detail-body">
+                        <div *ngFor="let main of detail.children" class="main-item flex justify-between items-center p-2 rounded-md hover:bg-slate-50 dark:hover:bg-slate-800/40 cursor-pointer" [class.is-selected]="selectedNodeType === 'mainPurchaseClass' && selectedNodeData?.id === main.data?.id" (click)="openEditorFromNode(main, 'mainPurchaseClass'); $event.stopPropagation()">
+                          <div class="flex items-center gap-3 flex-1">
+                            <i class="pi pi-circle text-[6px] text-slate-400"></i>
+                            
+                            <div class="flex items-center gap-2 flex-nowrap">
+                              <span class="node-code main-badge" style="font-size: 1.05rem !important; font-weight: bold !important; padding: 0.15rem 0.45rem !important; flex-shrink: 0;">{{ main.data.referenceCode }}</span>
+                              <span class="node-name main-title text-slate-700 dark:text-slate-200 font-semibold" style="white-space: nowrap !important;">{{ activeLanguage === 'en' ? main.data.englishName : main.data.arabicName }}</span>
+                            </div>
+                          </div>
+
+                          <div class="flex items-center gap-4 w-auto">
+                            <div class="text-xs text-slate-400">
+                              {{ "DATA.MEASUREMENT_UNIT" | translate }}:
+                              {{ activeLanguage === "en" ? main.data.measurementUnit.englishName : main.data.measurementUnit.arabicName }}
+                            </div>
+                          </div>
+
+                          <div class="flex items-center gap-2" (click)="$event.stopPropagation()">
+                            <p-overlayPanel #opMainPurchaseClass [autoZIndex]="false" [baseZIndex]="80">
+                              <div class="flex flex-column gap-3 w-auto p-1">
+                                <p-button
+                                  icon="pi pi-pencil"
+                                  class="p-button-secondary"
+                                  [label]="translate.instant('FINANCE.EDIT')"
+                                  styleClass="rounded-lg p-button-secondary w-full"
+                                  (onClick)="openEditorFromNode(main, 'mainPurchaseClass'); opMainPurchaseClass.hide(); $event.stopPropagation()"
+                                ></p-button>
+                                <p-button
+                                  icon="pi pi-trash"
+                                  class="p-button-danger"
+                                  [label]="translate.instant('FINANCE.DELETE')"
+                                  styleClass="rounded-lg p-button-danger w-full"
+                                  (onClick)="confirmMainPurchaseClassDeletion($event, main.data); opMainPurchaseClass.hide(); $event.stopPropagation()"
+                                ></p-button>
+                              </div>
+                            </p-overlayPanel>
+
+                            <p-button
+                              [text]="true"
+                              (onClick)="opMainPurchaseClass.toggle($event); $event.stopPropagation()"
+                              severity="secondary"
+                              styleClass="p-button-secondary rounded-xl"
+                            >
+                              <ng-template pTemplate="icon">
+                                <i class="pi pi-ellipsis-v text-base"></i>
+                              </ng-template>
+                            </p-button>
+                          </div>
+                        </div>
+                      </div>
+
+                    </div>
+                  </div>
+
+                </div>
+              </div>
+
+            </div>
+          </div>
+  </div>
+</div>
+
+  
+    </div>
+  </div>
+</div>
+
+<p-dialog
+  [header]="
+    (rootPurchaseClassFormGroup.controls.id.value
+      ? 'FINANCE.EDIT_ROOT_PURCHASE_CLASS'
+      : 'FINANCE.ADD_ROOT_PURCHASE_CLASS') | translate
+  "
+  [(visible)]="rootPurchaseClassVisible"
+  [style]="{ width: '50%' }"
+  (onHide)="closeRootPurchaseClassDialog()"
+>
+  <span class="p-text-secondary block mb-5">{{
+    (rootPurchaseClassFormGroup.controls.id.value
+      ? 'FINANCE.EDIT_ROOT_PURCHASE_CLASS'
+      : 'FINANCE.ADD_ROOT_PURCHASE_CLASS') | translate
+  }}</span>
+
+  <form
+    [formGroup]="rootPurchaseClassFormGroup"
+    (ngSubmit)="saveRootPurchaseClass()"
+    class="flex flex-col gap-4 p-2 py-4"
+    novalidate
+  >
+    <!--<div class="field">
+      <label for="rootReferenceCode" class="block">{{
+        'FINANCE.REFERENCE_CODE' | translate
+      }}</label>
+      <input
+        pInputText
+        type="text"
+        id="rootReferenceCode"
+        formControlName="referenceCode"
+        class="input w-full"
+        [disabled]="true"
+      />
+    </div>-->
+    <div class="field">
+      <label for="rootEnglishName" class="block">{{
+        'FINANCE.PURCHASE_CLASS_ENGLISH_NAME' | translate
+      }}</label>
+      <textarea
+        pInputTextarea
+        id="rootEnglishName"
+        formControlName="englishName"
+        class="input w-full"
+        rows="3"
+        cols="30"
+      ></textarea>
+      <small
+        class="text-red-500 p-error block"
+        *ngIf="
+          rootPurchaseClassFormGroup.controls.englishName.invalid &&
+          rootPurchaseClassFormGroup.controls.englishName.touched
+        "
+      >
+        {{ 'FINANCE.PURCHASE_CLASS_ENGLISH_NAME_REQUIRED' | translate }}
+      </small>
+    </div>
+    <div class="field">
+      <label for="rootArabicName" class="block">{{
+        'FINANCE.PURCHASE_CLASS_ARABIC_NAME' | translate
+      }}</label>
+      <textarea
+        pInputTextarea
+        id="rootArabicName"
+        formControlName="arabicName"
+        class="input w-full"
+        rows="3"
+        cols="30"
+      ></textarea>
+      <small
+        class="text-red-500 p-error block"
+        *ngIf="
+          rootPurchaseClassFormGroup.controls.arabicName.invalid &&
+          rootPurchaseClassFormGroup.controls.arabicName.touched
+        "
+      >
+        {{ 'FINANCE.PURCHASE_CLASS_ARABIC_NAME_REQUIRED' | translate }}
+      </small>
+    </div>
+    <div class="flex justify-content-end gap-2">
+      <p-button
+        [label]="'FINANCE.CANCEL' | translate"
+        severity="secondary"
+        (onClick)="closeRootPurchaseClassDialog();$event.stopPropagation()"
+        styleClass="rounded-md "
+      />
+      <p-button
+        [label]="'FINANCE.SAVE' | translate"
+        (onClick)="saveRootPurchaseClass();$event.stopPropagation()"
+        styleClass="rounded-md"
+        [disabled]="rootPurchaseClassFormGroup.invalid"
+      />
+    </div>
+  </form>
+</p-dialog>
+
+<p-dialog
+  [header]="
+    (headerPurchaseClassFormGroup.controls.id.value
+      ? 'FINANCE.EDIT_HEADER_PURCHASE_CLASS'
+      : 'FINANCE.ADD_HEADER_PURCHASE_CLASS') | translate
+  "
+  [(visible)]="headerPurchaseClassVisible"
+  [style]="{ width: '50%' }"
+  (onHide)="closeHeaderPurchaseClassDialog()"
+>
+  <span class="p-text-secondary block mb-5">
+    {{
+      (headerPurchaseClassFormGroup.controls.id.value
+        ? 'FINANCE.EDIT_HEADER_PURCHASE_CLASS'
+        : 'FINANCE.ADD_HEADER_PURCHASE_CLASS') | translate
+    }}
+  </span>
+
+  <form
+    [formGroup]="headerPurchaseClassFormGroup"
+    (ngSubmit)="saveHeaderPurchaseClass()"
+    class="flex flex-col gap-4 p-2 py-4"
+    novalidate
+  >
+    <!--<div class="field">
+      <label for="headerReferenceCode" class="block">{{
+        'FINANCE.REFERENCE_CODE' | translate
+      }}</label>
+      <input
+        pInputText
+        type="text"
+        id="headerReferenceCode"
+        formControlName="referenceCode"
+        class="input w-full"
+      />
+    </div>-->
+    <div class="field">
+      <label for="headerEnglishName" class="block">{{
+        'FINANCE.PURCHASE_CLASS_ENGLISH_NAME' | translate
+      }}</label>
+      <textarea
+        pInputTextarea
+        id="headerEnglishName"
+        formControlName="englishName"
+        class="input w-full"
+        rows="3"
+        cols="30"
+      ></textarea>
+      <small
+        class="text-red-500 p-error block"
+        *ngIf="
+          headerPurchaseClassFormGroup.controls.englishName.invalid &&
+          headerPurchaseClassFormGroup.controls.englishName.touched
+        "
+      >
+        {{ 'FINANCE.PURCHASE_CLASS_ENGLISH_NAME_REQUIRED' | translate }}
+      </small>
+    </div>
+    <div class="field">
+      <label for="headerArabicName" class="block">{{
+        'FINANCE.PURCHASE_CLASS_ARABIC_NAME' | translate
+      }}</label>
+      <textarea
+        pInputTextarea
+        id="headerArabicName"
+        formControlName="arabicName"
+        class="input w-full"
+        rows="3"
+        cols="30"
+      ></textarea>
+      <small
+        class="text-red-500 p-error block"
+        *ngIf="
+          headerPurchaseClassFormGroup.controls.arabicName.invalid &&
+          headerPurchaseClassFormGroup.controls.arabicName.touched
+        "
+      >
+        {{ 'FINANCE.PURCHASE_CLASS_ARABIC_NAME_REQUIRED' | translate }}
+      </small>
+    </div>
+
+    <div class="flex justify-content-end gap-2">
+      <p-button
+        [label]="'FINANCE.CANCEL' | translate"
+        severity="secondary"
+        (onClick)="closeHeaderPurchaseClassDialog();$event.stopPropagation()"
+        styleClass="rounded-md "
+      />
+      <p-button
+        [label]="'FINANCE.SAVE' | translate"
+        (onClick)="saveHeaderPurchaseClass();$event.stopPropagation()"
+        styleClass="rounded-md"
+        [disabled]="headerPurchaseClassFormGroup.invalid"
+      />
+    </div>
+  </form>
+</p-dialog>
+
+<p-dialog
+  [header]="
+    (detailPurchaseClassFormGroup.controls.id.value
+      ? 'FINANCE.EDIT_DETAIL_PURCHASE_CLASS'
+      : 'FINANCE.ADD_DETAIL_PURCHASE_CLASS') | translate
+  "
+  [(visible)]="detailPurchaseClassVisible"
+  [style]="{ width: '50%' }"
+  (onHide)="closeDetailPurchaseClassDialog()"
+>
+  <span class="p-text-secondary block mb-5">
+    {{
+      (detailPurchaseClassFormGroup.controls.id.value
+        ? 'FINANCE.EDIT_DETAIL_PURCHASE_CLASS'
+        : 'FINANCE.ADD_DETAIL_PURCHASE_CLASS') | translate
+    }}
+  </span>
+
+  <form
+    [formGroup]="detailPurchaseClassFormGroup"
+    (ngSubmit)="saveDetailPurchaseClass()"
+    class="flex flex-col gap-4 p-2 py-4"
+    novalidate
+  >
+    <!--<div class="field">
+      <label for="detailReferenceCode" class="block">{{
+        'FINANCE.REFERENCE_CODE' | translate
+      }}</label>
+      <input
+        pInputText
+        type="text"
+        id="detailReferenceCode"
+        formControlName="referenceCode"
+        class="input w-full"
+        [disabled]="true"
+      />
+    </div>-->
+    <div class="field">
+      <label for="englishName" class="block">{{
+        'FINANCE.PURCHASE_CLASS_ENGLISH_NAME' | translate
+      }}</label>
+      <textarea
+        pInputTextarea
+        id="englishName"
+        formControlName="englishName"
+        class="input w-full"
+        rows="3"
+        cols="30"
+      ></textarea>
+      <small
+        class="text-red-500 p-error block"
+        *ngIf="
+          detailPurchaseClassFormGroup.controls.englishName.invalid &&
+          detailPurchaseClassFormGroup.controls.englishName.touched
+        "
+      >
+        {{ 'FINANCE.PURCHASE_CLASS_ENGLISH_NAME_REQUIRED' | translate }}
+      </small>
+    </div>
+    <div class="field">
+      <label for="arabicName" class="block">{{
+        'FINANCE.PURCHASE_CLASS_ARABIC_NAME' | translate
+      }}</label>
+      <textarea
+        pInputTextarea
+        id="arabicName"
+        formControlName="arabicName"
+        class="input w-full"
+        rows="3"
+        cols="30"
+      ></textarea>
+      <small
+        class="text-red-500 p-error block"
+        *ngIf="
+          detailPurchaseClassFormGroup.controls.arabicName.invalid &&
+          detailPurchaseClassFormGroup.controls.arabicName.touched
+        "
+      >
+        {{ 'FINANCE.PURCHASE_CLASS_ARABIC_NAME_REQUIRED' | translate }}
+      </small>
+    </div>
+
+    <div class="flex justify-content-end gap-2">
+      <p-button
+        [label]="'FINANCE.CANCEL' | translate"
+        severity="secondary"
+        (onClick)="closeDetailPurchaseClassDialog();$event.stopPropagation()"
+        styleClass="rounded-md "
+      />
+      <p-button
+        [label]="'FINANCE.SAVE' | translate"
+        (onClick)="saveDetailPurchaseClass(); $event.stopPropagation()"
+        styleClass="rounded-md"
+        [disabled]="detailPurchaseClassFormGroup.invalid"
+      />
+    </div>
+  </form>
+</p-dialog>
+
+<p-dialog
+  [header]="
+    (mainPurchaseClassFormGroup.controls.id.value
+      ? 'FINANCE.EDIT_MAIN_PURCHASE_CLASS'
+      : 'FINANCE.ADD_MAIN_PURCHASE_CLASS') | translate
+  "
+  [(visible)]="mainPurchaseClassVisible"
+  [style]="{ width: '50%' }"
+  (onHide)="closeMainPurchaseClassDialog()"
+>
+  <span class="p-text-secondary block mb-5">
+    {{
+      (mainPurchaseClassFormGroup.controls.id.value
+        ? 'FINANCE.EDIT_MAIN_PURCHASE_CLASS'
+        : 'FINANCE.ADD_MAIN_PURCHASE_CLASS') | translate
+    }}
+  </span>
+
+  <form
+    [formGroup]="mainPurchaseClassFormGroup"
+    (ngSubmit)="saveMainPurchaseClass()"
+    class="flex flex-col gap-4 p-2 py-4"
+    novalidate
+  >
+    <div class="field">
+      <label for="mainEnglishName" class="block">{{
+        'FINANCE.PURCHASE_CLASS_ENGLISH_NAME' | translate
+      }}</label>
+      <textarea
+        pInputTextarea
+        id="mainEnglishName"
+        formControlName="englishName"
+        class="input w-full"
+        rows="3"
+        cols="30"
+      ></textarea>
+      <small
+        class="text-red-500 p-error block"
+        *ngIf="
+          mainPurchaseClassFormGroup.controls.englishName.invalid &&
+          mainPurchaseClassFormGroup.controls.englishName.touched
+        "
+      >
+        {{ 'FINANCE.PURCHASE_CLASS_ENGLISH_NAME_REQUIRED' | translate }}
+      </small>
+    </div>
+    <div class="field">
+      <label for="mainArabicName" class="block">{{
+        'FINANCE.PURCHASE_CLASS_ARABIC_NAME' | translate
+      }}</label>
+      <textarea
+        pInputTextarea
+        id="mainArabicName"
+        formControlName="arabicName"
+        class="input w-full"
+        rows="3"
+        cols="30"
+      ></textarea>
+      <small
+        class="text-red-500 p-error block"
+        *ngIf="
+          mainPurchaseClassFormGroup.controls.arabicName.invalid &&
+          mainPurchaseClassFormGroup.controls.arabicName.touched
+        "
+      >
+        {{ 'FINANCE.PURCHASE_CLASS_ARABIC_NAME_REQUIRED' | translate }}
+      </small>
+    </div>
+    <div class="field">
+      <label for="measurementUnitId" class="block">{{
+        'DATA.MEASUREMENT_UNIT' | translate
+      }}</label>
+      <p-dropdown
+        id="measurementUnitId"
+        formControlName="measurementUnitId"
+        [options]="measurementUnitOptions"
+        class="w-full"
+        [filter]="true"
+        styleClass="w-full"
+        appendTo="body"
+      ></p-dropdown>
+      <small
+        class="text-red-500 p-error block"
+        *ngIf="
+          mainPurchaseClassFormGroup.controls.measurementUnitId.invalid &&
+          mainPurchaseClassFormGroup.controls.measurementUnitId.touched
+        "
+      >
+        {{ 'DATA.MEASUREMENT_UNIT_REQUIRED' | translate }}
+      </small>
+    </div>
+    <div class="flex justify-content-end gap-2">
+      <p-button
+        [label]="'FINANCE.CANCEL' | translate"
+        severity="secondary"
+        (onClick)="closeMainPurchaseClassDialog(); $event.stopPropagation()"
+        styleClass="rounded-md "
+      />
+      <p-button
+        [label]="'FINANCE.SAVE' | translate"
+        (onClick)="saveMainPurchaseClass(); $event.stopPropagation()"
+        styleClass="rounded-md"
+        [disabled]="mainPurchaseClassFormGroup.invalid"
+      />
+    </div>
+  </form>
+</p-dialog>
+<!-- =========================
+     SIDE EDITOR (Right Panel using p-dialog)
+     ========================= -->
+<!-- <p-dialog
+  [(visible)]="sidePanelVisible"
+  [modal]="false"
+  [draggable]="false"
+  [resizable]="false"
+  [dismissableMask]="true"
+  appendTo="body"
+  [baseZIndex]="10000"
+  [style]="{ width: '52vw', height: '100vh', margin: '0', borderRadius: '0' }"
+  [contentStyle]="{ height: 'calc(100vh - 3.5rem)', overflow: 'auto' }"
+  position="right"
+  (onHide)="cancelSidePanel()"
+
+  [header]="
+    (selectedNodeType === 'rootPurchaseClass' ? 'FINANCE.EDIT_ROOT_PURCHASE_CLASS' :
+    selectedNodeType === 'headerPurchaseClass' ? 'FINANCE.EDIT_HEADER_PURCHASE_CLASS' :
+    selectedNodeType === 'detailPurchaseClass' ? 'FINANCE.EDIT_DETAIL_PURCHASE_CLASS' :
+    selectedNodeType === 'mainPurchaseClass' ? 'FINANCE.EDIT_MAIN_PURCHASE_CLASS' :
+    'Edit') | translate
+  "
+>
+  <form
+    *ngIf="selectedNodeType === 'rootPurchaseClass'"
+    [formGroup]="rootPurchaseClassFormGroup"
+    class="flex flex-col gap-3"
+    novalidate
+  >
+    <div class="field">
+      <label class="block">{{ 'FINANCE.PURCHASE_CLASS_ENGLISH_NAME' | translate }}</label>
+      <input pInputText type="text" formControlName="englishName" class="w-full" />
+    </div>
+
+    <div class="field">
+      <label class="block">{{ 'FINANCE.PURCHASE_CLASS_ARABIC_NAME' | translate }}</label>
+      <input pInputText type="text" formControlName="arabicName" class="w-full" />
+    </div>
+
+    <div class="flex justify-content-end gap-2">
+      <p-button
+        [label]="'FINANCE.CANCEL' | translate"
+        severity="secondary"
+        (onClick)="cancelSidePanel(); $event.stopPropagation()"
+      ></p-button>
+
+      <p-button
+        [label]="'FINANCE.SAVE' | translate"
+        (onClick)="saveFromSidePanel(); $event.stopPropagation()"
+        [disabled]="rootPurchaseClassFormGroup.invalid"
+      ></p-button>
+    </div>
+  </form>
+
+  <form
+    *ngIf="selectedNodeType === 'headerPurchaseClass'"
+    [formGroup]="headerPurchaseClassFormGroup"
+    class="flex flex-col gap-3"
+    novalidate
+  >
+    <div class="field">
+      <label class="block">{{ 'FINANCE.PURCHASE_CLASS_ENGLISH_NAME' | translate }}</label>
+      <input pInputText type="text" formControlName="englishName" class="w-full" />
+    </div>
+
+    <div class="field">
+      <label class="block">{{ 'FINANCE.PURCHASE_CLASS_ARABIC_NAME' | translate }}</label>
+      <input pInputText type="text" formControlName="arabicName" class="w-full" />
+    </div>
+
+    <div class="flex justify-content-end gap-2">
+      <p-button
+        [label]="'FINANCE.CANCEL' | translate"
+        severity="secondary"
+        (onClick)="cancelSidePanel(); $event.stopPropagation()"
+      ></p-button>
+
+      <p-button
+        [label]="'FINANCE.SAVE' | translate"
+        (onClick)="saveFromSidePanel(); $event.stopPropagation()"
+        [disabled]="headerPurchaseClassFormGroup.invalid"
+      ></p-button>
+    </div>
+  </form>
+
+  <form
+    *ngIf="selectedNodeType === 'detailPurchaseClass'"
+    [formGroup]="detailPurchaseClassFormGroup"
+    class="flex flex-col gap-3"
+    novalidate
+  >
+    <div class="field">
+      <label class="block">{{ 'FINANCE.PURCHASE_CLASS_ENGLISH_NAME' | translate }}</label>
+      <input pInputText type="text" formControlName="englishName" class="w-full" />
+    </div>
+
+    <div class="field">
+      <label class="block">{{ 'FINANCE.PURCHASE_CLASS_ARABIC_NAME' | translate }}</label>
+      <input pInputText type="text" formControlName="arabicName" class="w-full" />
+    </div>
+
+    <div class="flex justify-content-end gap-2">
+      <p-button
+        [label]="'FINANCE.CANCEL' | translate"
+        severity="secondary"
+        (onClick)="cancelSidePanel(); $event.stopPropagation()"
+      ></p-button>
+
+      <p-button
+        [label]="'FINANCE.SAVE' | translate"
+        (onClick)="saveFromSidePanel(); $event.stopPropagation()"
+        [disabled]="detailPurchaseClassFormGroup.invalid"
+      ></p-button>
+    </div>
+  </form>
+
+  <form
+    *ngIf="selectedNodeType === 'mainPurchaseClass'"
+    [formGroup]="mainPurchaseClassFormGroup"
+    class="flex flex-col gap-3"
+    novalidate
+  >
+    <div class="field">
+      <label class="block">{{ 'FINANCE.PURCHASE_CLASS_ENGLISH_NAME' | translate }}</label>
+      <input pInputText type="text" formControlName="englishName" class="w-full" />
+    </div>
+
+    <div class="field">
+      <label class="block">{{ 'FINANCE.PURCHASE_CLASS_ARABIC_NAME' | translate }}</label>
+      <input pInputText type="text" formControlName="arabicName" class="w-full" />
+    </div>
+
+    <div class="field">
+      <label class="block">{{ 'DATA.MEASUREMENT_UNIT' | translate }}</label>
+      <p-dropdown
+        formControlName="measurementUnitId"
+        [options]="measurementUnitOptions"
+        class="w-full"
+        [filter]="true"
+        appendTo="body"
+      ></p-dropdown>
+    </div>
+
+    <div class="flex justify-content-end gap-2">
+      <p-button
+        [label]="'FINANCE.CANCEL' | translate"
+        severity="secondary"
+        (onClick)="cancelSidePanel(); $event.stopPropagation()"
+      ></p-button>
+
+      <p-button
+        [label]="'FINANCE.SAVE' | translate"
+        (onClick)="saveFromSidePanel(); $event.stopPropagation()"
+        [disabled]="mainPurchaseClassFormGroup.invalid"
+      ></p-button>
+    </div>
+  </form>
+</p-dialog> -->
+
+<p-confirmDialog> </p-confirmDialog>
+<p-toast />

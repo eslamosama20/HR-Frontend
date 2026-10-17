@@ -1,0 +1,190 @@
+<div class="w-full">
+  <div class="flex justify-center items-start gap-4 flex-col w-full px-10">
+    <div class="fixed inset-0 bg-gray-500 bg-opacity-75 flex items-center justify-center z-50" *ngIf="loading">
+      <i class="pi pi-spin pi-spinner" style="font-size: 2rem"></i>
+    </div>
+
+    <p-panel class="w-full" [header]="'تقرير القيمة المضافة المستحقة'">
+      <div class="flex flex-col w-full gap-4">
+        <div class="flex justify-start items-end gap-2 w-full">
+          <div class="field" style="min-width: 280px; max-width: 350px;">
+            <label for="dateRange" class="block">الفترة الزمنية</label>
+            <p-calendar
+              id="dateRange"
+              [(ngModel)]="dateRange"
+              selectionMode="range"
+              [showButtonBar]="true"
+              variant="filled"
+              [showIcon]="true"
+              [iconDisplay]="'input'"
+              [dateFormat]="'dd/mm/yy'"
+              appendTo="body"
+              styleClass="w-full"
+            >
+              <ng-template pTemplate="inputicon">
+                <i class="pi pi-calendar"></i>
+              </ng-template>
+            </p-calendar>
+          </div>
+          <p-button styleClass="rounded-md"
+            label="بحث" (onClick)="handleSubmit()" />
+          <p-button
+            styleClass="rounded-md"
+            [disabled]="!hasData"
+            icon="pi pi-share-alt"
+            [label]="'مشاركة'"
+            (onClick)="showShareDialog()"
+            severity="info"
+          />
+          <p-button
+            styleClass="rounded-md"
+            [disabled]="!hasData"
+            icon="pi pi-print"
+            [label]="'طباعة PDF'"
+            (onClick)="printPDF()"
+            severity="warning"
+          />
+          <p-button
+            styleClass="rounded-md"
+            [disabled]="!hasData"
+            icon="pi pi-file-pdf"
+            [label]="'تنزيل PDF'"
+            (onClick)="downloadPDF()"
+            severity="danger"
+          />
+          <p-button
+            styleClass="rounded-md p-button-success"
+            [disabled]="!hasData"
+            icon="pi pi-file-excel"
+            [label]="'تصدير Excel'"
+            (onClick)="exportToExcel()"
+          />
+        </div>
+      </div>
+      <div class="flex justify-center p-5 my-4 border border-gray-300 rounded-lg text-xl w-full text-center font-bold"
+        *ngIf="!hasData">
+        No Data
+      </div>
+      <div class="flex flex-col my-4 border border-gray-300 rounded-lg" *ngIf="hasData">
+        <table class="w-full border-collapse">
+          <thead>
+            <tr>
+              <th class="text-center p-4 border border-gray-400 sales-header-bg font-semibold text-white">
+                صافي القيمة المضافة للمبيعات
+              </th>
+              <th class="text-center p-4 border border-gray-400 sales-header-bg font-semibold text-white">
+                صافي القيمة المضافة للمشتريات
+              </th>
+              <th class="text-center p-4 border border-gray-400 sales-header-bg font-semibold text-white">
+                القيمة المضافة المستحقة
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td class="text-center p-4 border border-gray-400">
+                {{netSalesVAT | number:'1.2-2'}}
+              </td>
+              <td class="text-center p-4 border border-gray-400">
+                {{netPurchasesVAT | number:'1.2-2'}}-
+              </td>
+              <td class="text-center p-4 border border-gray-400" 
+                  [style.color]="dueVAT >= 0 ? '#16a34a' : '#dc2626'"
+                  [style.font-weight]="'bold'">
+                {{dueVAT | number:'1.2-2'}}
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </p-panel>
+  </div>
+</div>
+
+<!-- Share Dialog -->
+<p-dialog 
+  [(visible)]="shareDialogVisible" 
+  [header]="'مشاركة التقرير'" 
+  [modal]="true"
+  [style]="{width: '30vw'}"
+  [draggable]="false"
+  [resizable]="false">
+  
+  <p-tabView [(activeIndex)]="shareActiveTabIndex">
+    <!-- Email Tab -->
+    <p-tabPanel [header]="'البريد الإلكتروني'">
+      <form [formGroup]="shareForm" (ngSubmit)="submitShareEmail()">
+        <div class="field mt-4">
+          <label for="email" class="block mb-2">البريد الإلكتروني</label>
+          <input 
+            pInputText 
+            id="email" 
+            formControlName="email"
+            type="email"
+            class="w-full"
+            placeholder="example@domain.com"
+            [class.ng-invalid]="shareForm.get('email')?.invalid && shareForm.get('email')?.touched"
+          />
+          <small class="p-error block mt-1" *ngIf="shareForm.get('email')?.invalid && shareForm.get('email')?.touched">
+            يرجى إدخال بريد إلكتروني صحيح
+          </small>
+        </div>
+        
+        <div class="flex justify-end gap-2 mt-4">
+          <p-button 
+            label="إلغاء" 
+            severity="secondary" 
+            (onClick)="shareDialogVisible = false"
+            [disabled]="shareBusy"
+          />
+          <p-button 
+            type="submit"
+            label="إرسال" 
+            icon="pi pi-send"
+            [loading]="shareBusy"
+            [disabled]="shareForm.get('email')?.invalid"
+          />
+        </div>
+      </form>
+    </p-tabPanel>
+
+    <!-- WhatsApp Tab -->
+    <p-tabPanel [header]="'واتساب'">
+      <form [formGroup]="shareForm" (ngSubmit)="submitShareWhatsApp()">
+        <div class="field mt-4">
+          <label for="whatsappNumber" class="block mb-2">رقم الهاتف</label>
+          <input 
+            pInputText 
+            id="whatsappNumber" 
+            formControlName="whatsappNumber"
+            type="tel"
+            class="w-full"
+            placeholder="966xxxxxxxxx"
+            [class.ng-invalid]="shareForm.get('whatsappNumber')?.invalid && shareForm.get('whatsappNumber')?.touched"
+          />
+          <small class="p-error block mt-1" *ngIf="shareForm.get('whatsappNumber')?.invalid && shareForm.get('whatsappNumber')?.touched">
+            يرجى إدخال رقم هاتف صحيح (8-15 رقم)
+          </small>
+        </div>
+        
+        <div class="flex justify-end gap-2 mt-4">
+          <p-button 
+            label="إلغاء" 
+            severity="secondary" 
+            (onClick)="shareDialogVisible = false"
+            [disabled]="shareBusy"
+          />
+          <p-button 
+            type="submit"
+            label="مشاركة" 
+            icon="pi pi-whatsapp"
+            [loading]="shareBusy"
+            [disabled]="shareForm.get('whatsappNumber')?.invalid"
+          />
+        </div>
+      </form>
+    </p-tabPanel>
+  </p-tabView>
+</p-dialog>
+
+<p-toast />

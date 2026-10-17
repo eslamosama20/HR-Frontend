@@ -1,0 +1,786 @@
+<p-table
+  #dt1
+  [value]="customerProfiles"
+  [columns]="columns"
+  [resizableColumns]="true"
+  columnResizeMode="expand"
+  dataKey="id"
+  [rows]="pageSize"
+  styleClass="p-datatable-gridlines scroller custom-paginator-table"
+  [rowsPerPageOptions]="[10, 25, 50]"
+  [loading]="loading"
+  [paginator]="true"
+  [lazy]="true"
+  (onLazyLoad)="loadCustomerProfilesLazy($event)"
+  [totalRecords]="totalRecords"
+  [paginatorLocale]="activeLanguage === 'en' ? 'en-US' : 'ar-SA'"
+  [showCurrentPageReport]="true"
+  currentPageReportTemplate="اجمالي {{ totalRecords }}"
+  paginatorTemplate="CurrentPageReport PrevPageLink PageLinks NextPageLink RowsPerPageDropdown"
+  [sortField]="'createdAt'"
+  [sortOrder]="-1"
+  [(selection)]="selectedCustomers"
+>
+  <ng-template pTemplate="caption">
+    <div class="flex rtl:flex-row-reverse justify-between gap-2">
+      <div class="flex gap-2">
+        <input
+          type="file"
+          accept=".xlsx,.xls"
+          (change)="onImportFileSelect($event)"
+          style="display: none;"
+          #fileUpload
+        />
+        <p-button
+          *ngIf="hasPermission(PERMISSIONS.CustomerProfile.Import)"
+          styleClass="rounded-md w-auto"
+          icon="pi pi-file-excel"
+          [label]="translate.instant('FINANCE.IMPORT_EXCEL')"
+          (onClick)="showImportInstructionsDialog()"
+        />
+        <p-button
+          *ngIf="hasPermission(PERMISSIONS.CustomerProfile.Export)"
+          styleClass="rounded-md w-auto text-nowrap"
+          icon="pi pi-external-link"
+          [label]="translate.instant('FINANCE.EXPORT')"
+          (onClick)="exportExcel()"
+        />
+        <p-button
+          *ngIf="selectedCustomers.length > 0 && hasPermission(PERMISSIONS.CustomerProfile.Delete)"
+          styleClass="rounded-md w-auto"
+          icon="pi pi-trash"
+          severity="danger"
+          [label]="translate.instant('COMMON.DELETE_SELECTED') + ' (' + selectedCustomers.length + ')'"
+          (onClick)="confirmBulkDeletion($event)"
+        />
+        <p-button
+          styleClass="rounded-md w-auto text-nowrap	"
+          [label]="translate.instant('FINANCE.CLEAR_FILTERS')"
+          [outlined]="true"
+          icon="pi pi-filter-slash"
+          (onClick)="clear(dt1)"
+        />
+        <p-button
+          *ngIf="hasPermission('System.DevOnly.ViewReservationCompanies')"
+          styleClass="rounded-md w-auto text-nowrap	"
+          [label]="showReservationCompanies ? 'إخفاء شركات الحجز' : 'عرض شركات الحجز'"
+          [outlined]="true"
+          icon="pi pi-building"
+          (onClick)="toggleReservationCompanies()"
+        />
+        <p-button
+          *ngIf="hasPermission(PERMISSIONS.CustomerProfile.Create)"
+          styleClass="rounded-md w-auto text-nowrap	"
+          [label]="translate.instant('FINANCE.ADD_CUSTOMER_PROFILE')"
+          [outlined]="true"
+          icon="pi pi-plus"
+          (onClick)="showAddCustomerProfileDialog()"
+        />
+      </div>
+
+      <ng-container *ngIf="customerProfiles.length === 0 && !loading">
+        <div class="flex justify-center items-center w-full">
+          <p
+            class="text-center font-semibold text-xl w-full flex justify-center"
+          >
+            {{ "FINANCE.NO_CUSTOMER_PROFILES" | translate }}
+          </p>
+        </div>
+      </ng-container>
+      <span class="p-input-icon-left ml-auto">
+        <i class="pi pi-search"></i>
+        <input
+          pInputText
+          type="text"
+          [(ngModel)]="searchValue"
+          (input)="filter(dt1, $event)"
+          [placeholder]="translate.instant('FINANCE.SEARCH')"
+        />
+      </span>
+    </div>
+  </ng-template>
+  <ng-template pTemplate="header" let-columns>
+    <tr>
+      <th style="width: 3rem">
+        <p-tableHeaderCheckbox></p-tableHeaderCheckbox>
+      </th>
+      <th style="width: 4rem">
+        <div class="flex align-items-center text-base">
+          #
+        </div>
+      </th>
+      <th
+        style="min-width: fit-content"
+        *ngFor="let column of columns"
+        pResizableColumn
+        [pSortableColumn]="column.field"
+      >
+        <div class="flex align-items-center">
+          {{ column.header }}
+          <p-sortIcon [field]="column.field" class="mx-1 "></p-sortIcon>
+          <p-columnFilter
+            *ngIf="column.filter"
+            [type]="column.filterType"
+            [field]="column.field"
+            display="menu"
+          />
+        </div>
+      </th>
+      <th style="min-width: fit-content">
+        <div class="flex align-items-center text-base">
+          {{ "FINANCE.ACTIONS" | translate }}
+        </div>
+      </th>
+    </tr>
+  </ng-template>
+  <ng-template pTemplate="body" let-Entry let-rowIndex="rowIndex">
+  <tr *ngIf="customerProfiles.length > 0 "
+  (contextmenu)="showOverlay($event, Entry)"
+  (click)="handleRowClick(Entry)"
+  class="hover:bg-gray-200 cursor-pointer transition-colors duration-200"
+  >
+      <td (click)="$event.stopPropagation()">
+        <p-tableCheckbox [value]="Entry"></p-tableCheckbox>
+      </td>
+      <td class="text-lg rtl:text-right">
+        {{ rowIndex + 1 }}
+      </td>
+      <td class="text-lg rtl:text-right">
+        {{ Entry.arabicName }}
+      </td>
+      <td class="text-lg rtl:text-right">
+        {{ Entry.englishName }}
+      </td>
+      <td class="text-lg text-center">
+        <i
+          class="pi"
+          [ngClass]="{
+            'text-green-500 pi-check-circle': Entry.mainAccountId,
+            'text-red-500 pi-times-circle': !Entry.mainAccountId
+          }"
+        ></i>
+      </td>
+      <td class="text-lg rtl:text-right">
+        {{ Entry.contactNumber }}
+      </td>
+      <td class="text-lg rtl:text-right">
+        {{ Entry.email }}
+      </td>
+      <td class="text-lg rtl:text-right">
+        {{ Entry.bankName }}
+      </td>
+      <td class="text-lg rtl:text-right">
+        {{ Entry.bankAccountNumber }}
+      </td>
+      <td class="text-lg rtl:text-right">
+        {{ Entry.iban }}
+      </td>
+      <td class="text-lg rtl:text-right">
+        {{ Entry.taxNumber }}
+      </td>
+      <td class="text-lg rtl:text-right">
+        {{ Entry.district }}
+      </td>
+      <td class="text-lg rtl:text-right">
+        {{ Entry.shortAddress }}
+      </td>
+      <td class="text-lg rtl:text-right">
+        {{ Entry.buildingNumber }}
+      </td>
+      <td class="text-lg rtl:text-right">
+        {{ Entry.postalCode }}
+      </td>
+      <td class="text-lg rtl:text-right">
+        {{ Entry.additionalContactNumber }}
+      </td>
+      <td class="text-lg rtl:text-right">
+        {{ Entry.fax }}
+      </td>
+      <td class="text-lg rtl:text-right">
+        {{ Entry.website }}
+      </td>
+      <td class="text-lg rtl:text-right">
+        {{ Entry.instructions }}
+      </td>
+      <td class="text-lg rtl:text-right">
+        {{ Entry.gaztNumber }}
+      </td>
+      <td class="text-lg rtl:text-right">
+        {{ Entry.otherId || '-' }}
+      </td>
+      <td class="text-lg rtl:text-right">
+          {{
+            Entry.createdAt ? (Entry.createdAt | customDate : "yyyy/MM/dd" : "": "ar-SA"): '-'
+          }}
+      </td>
+      <td class="text-lg rtl:text-right flex gap-2">
+        <ng-container
+
+        >
+        
+          <p-button
+            [text]="true"
+    (click)="showOverlay($event, Entry)" 
+            severity="secondary"
+            styleClass="p-button-outlined rounded-xl"
+          >
+            <ng-template pTemplate="icon">
+              <i class="pi pi-cog text-xl"></i>
+            </ng-template>
+          </p-button>
+        </ng-container>
+      </td>
+    </tr>
+  </ng-template>
+</p-table>
+<div #overlayAnchor style="position: fixed; width: 0; height: 0;"></div>
+
+<p-overlayPanel #opCustomerProfile [autoZIndex]="false" [baseZIndex]="80">
+  <div class="flex flex-column gap-3 w-auto p-1">
+    <p-button
+      *ngIf="hasPermission(PERMISSIONS.CustomerProfile.Update)"
+      icon="pi pi-pencil"
+      class="p-button-secondary"
+      [label]="translate.instant('FINANCE.EDIT')"
+      styleClass="rounded-lg p-button-secondary w-full"
+      (onClick)="showAddCustomerProfileDialog(selectedCustomerForOverlay)"
+      [disabled]="selectedCustomerForOverlay?.isReservationCompany"
+      [pTooltip]="selectedCustomerForOverlay?.isReservationCompany ? 'لا يمكن تعديل شركات الحجز من هنا' : ''"
+    ></p-button>
+
+    <p-button
+      *ngIf="!isFrontal && !selectedCustomerForOverlay?.isFrontal"
+      icon="pi pi-arrow-left"
+      class="p-button-primary"
+      label="Send To Frontal"
+      styleClass="rounded-lg p-button-primary w-full"
+      (onClick)="sendToFrontal(selectedCustomerForOverlay)"
+      [disabled]="selectedCustomerForOverlay?.isReservationCompany"
+      [pTooltip]="selectedCustomerForOverlay?.isReservationCompany ? 'لا يمكن إرسال شركات الحجز للفرونتال' : ''"
+    ></p-button>
+
+    <p-button
+      *ngIf="hasPermission(PERMISSIONS.CustomerProfile.Delete)"
+      icon="pi pi-trash"
+      class="p-button-danger"
+      [label]="translate.instant('FINANCE.DELETE')"
+      styleClass="rounded-lg p-button-danger w-full"
+      (onClick)="confirmCustomerProfileDeletion($event, selectedCustomerForOverlay)"
+      [disabled]="selectedCustomerForOverlay?.isReservationCompany"
+      [pTooltip]="selectedCustomerForOverlay?.isReservationCompany ? 'لا يمكن حذف شركات الحجز من هنا' : ''"
+    ></p-button>
+  </div>
+</p-overlayPanel>
+
+<p-dialog
+  [(visible)]="customerProfileDialogVisible"
+  [style]="{ width: '75vw', maxWidth: '1200px', maxHeight: '95vh' }"
+  [contentStyle]="{ maxHeight: 'calc(95vh - 110px)' }"
+  [breakpoints]="{ '960px': '85vw', '640px': '95vw' }"
+  [modal]="true"
+  [maximizable]="true"
+  styleClass="customer-profile-dialog"
+  (onHide)="closeCustomerProfileDialog()"
+>
+  <ng-template pTemplate="header">
+    <div class="flex items-center justify-between w-full gap-4 pe-8">
+      <span class="font-semibold text-xl text-gray-800 dark:text-gray-100 whitespace-nowrap">
+        {{ customerProfileFormGroup.controls.id.value ? translate.instant('FINANCE.EDIT_CUSTOMER_PROFILE') : translate.instant('FINANCE.ADD_CUSTOMER_PROFILE') }}
+      </span>
+
+      <!-- Centered Switch & Label in header -->
+      <div class="flex items-center justify-center gap-3 flex-grow text-center">
+        <p-inputSwitch id="isForProjectsHeaderDialog" [formControl]="$any(customerProfileFormGroup.get('isForProjects'))"></p-inputSwitch>
+        <label for="isForProjectsHeaderDialog" class="m-0 font-medium cursor-pointer text-sm">
+          {{ activeLanguage === 'ar' ? 'العميل تابع للمشاريع (يسمح بإسناد المشاريع له)' : 'Customer associated with projects' }}
+        </label>
+      </div>
+
+      <div class="hidden md:block w-8"></div>
+    </div>
+  </ng-template>
+
+  <div class="field" *ngIf="customerProfileFormGroup.controls.mainAccountId.value && customerProfileFormGroup.controls.id.value">
+    <p class="font-bold text-xl">
+      {{"FINANCE.CONNECTED_TO_ACCOUNT" | translate}}{{getMainAccountName(customerProfileFormGroup.controls.id.value)}}
+    </p>
+  </div>
+
+  <form
+    [formGroup]="customerProfileFormGroup"
+    (ngSubmit)="saveCustomerProfile()"
+    class="grid grid-cols-1 md:grid-cols-3 gap-x-4 gap-y-1.5 p-0"
+    novalidate
+  >
+    <!-- Row 1: Name Ar, Name En, Building Number -->
+    <div class="field">
+      <label for="arabicName" class="block text-sm font-semibold mb-1">
+        {{ translate.instant("FINANCE.ARABIC_NAME") }} <span class="text-red-500">*</span>
+      </label>
+      <input
+        pInputText
+        type="text"
+        id="arabicName"
+        formControlName="arabicName"
+        class="input w-full"
+      />
+      <small
+        class="text-red-500 p-error block text-xs"
+        *ngIf="
+          customerProfileFormGroup.controls.arabicName.invalid &&
+          customerProfileFormGroup.controls.arabicName.touched
+        "
+      >
+        {{ translate.instant("FINANCE.ARABIC_NAME_REQUIRED") }}
+      </small>
+    </div>
+
+    <div class="field">
+      <label for="englishName" class="block text-sm font-semibold mb-1">
+        {{ translate.instant("FINANCE.ENGLISH_NAME") }}
+      </label>
+      <input
+        pInputText
+        type="text"
+        id="englishName"
+        formControlName="englishName"
+        class="input w-full"
+      />
+    </div>
+
+    <div class="field">
+      <label for="buildingNumber" class="block text-sm font-semibold mb-1">{{ translate.instant("FINANCE.BUILDING_NUMBER") }}</label>
+      <input pInputText type="text" id="buildingNumber" formControlName="buildingNumber" class="input w-full" />
+    </div>
+
+    <!-- Row 2: Street Ar, Street En, Postal Code -->
+    <div class="field">
+      <label for="street" class="block text-sm font-semibold mb-1">{{ translate.instant("DATA.STREET") }}</label>
+      <input pInputText type="text" id="street" formControlName="street" class="input w-full" />
+    </div>
+
+    <div class="field">
+      <label for="englishStreet" class="block text-sm font-semibold mb-1">{{ translate.instant("DATA.ENGLISH_STREET") }}</label>
+      <input pInputText type="text" id="englishStreet" formControlName="englishStreet" class="input w-full" />
+    </div>
+
+    <div class="field">
+      <label for="postalCode" class="block text-sm font-semibold mb-1">{{ translate.instant("FINANCE.POSTAL_CODE") }}</label>
+      <input pInputText type="text" id="postalCode" formControlName="postalCode" class="input w-full" />
+    </div>
+
+    <!-- Row 3: District Ar, District En, Sub Number -->
+    <div class="field">
+      <label for="district" class="block text-sm font-semibold mb-1">{{ translate.instant("FINANCE.DISTRICT") }}</label>
+      <input pInputText type="text" id="district" formControlName="district" class="input w-full" />
+    </div>
+
+    <div class="field">
+      <label for="englishDistrict" class="block text-sm font-semibold mb-1">{{ translate.instant("DATA.ENGLISH_DISTRICT") }}</label>
+      <input pInputText type="text" id="englishDistrict" formControlName="englishDistrict" class="input w-full" />
+    </div>
+
+    <div class="field">
+      <label for="subNumber" class="block text-sm font-semibold mb-1">{{ translate.instant("FINANCE.SUB_NUMBER") }}</label>
+      <input pInputText type="text" id="subNumber" formControlName="subNumber" class="input w-full" />
+    </div>
+
+    <!-- Row 4: City Ar, City En, Tax Number -->
+    <div class="field">
+      <label for="city" class="block text-sm font-semibold mb-1">{{ translate.instant("DATA.CITY") }}</label>
+      <input pInputText type="text" id="city" formControlName="city" class="input w-full" />
+    </div>
+
+    <div class="field">
+      <label for="englishCity" class="block text-sm font-semibold mb-1">{{ translate.instant("DATA.ENGLISH_CITY") }}</label>
+      <input pInputText type="text" id="englishCity" formControlName="englishCity" class="input w-full" />
+    </div>
+
+    <div class="field">
+      <label for="taxNumber" class="block text-sm font-semibold mb-1">{{ translate.instant("FINANCE.TAX_NUMBER") }}</label>
+      <input pInputText type="text" id="taxNumber" formControlName="taxNumber" class="input w-full" />
+    </div>
+
+    <!-- Row 5: Country Ar, Country En, Other ID -->
+    <div class="field">
+      <label for="country" class="block text-sm font-semibold mb-1">{{ translate.instant("DATA.COUNTRY") }}</label>
+      <input pInputText type="text" id="country" formControlName="country" class="input w-full" />
+    </div>
+
+    <div class="field">
+      <label for="englishCountry" class="block text-sm font-semibold mb-1">{{ translate.instant("DATA.ENGLISH_COUNTRY") }}</label>
+      <input pInputText type="text" id="englishCountry" formControlName="englishCountry" class="input w-full" />
+    </div>
+
+    <div class="field">
+      <label for="otherId" class="block text-sm font-semibold mb-1">{{ translate.instant("FINANCE.OTHER_ID") }}</label>
+      <input pInputText type="text" id="otherId" formControlName="otherId" class="input w-full" />
+    </div>
+
+    <!-- Row 6: Contact Number, Additional Contact Number, Email -->
+    <div class="field">
+      <label for="contactNumber" class="block text-sm font-semibold mb-1">
+        {{ translate.instant("FINANCE.CONTACT_NUMBER") }}
+      </label>
+      <input
+        pInputText
+        type="text"
+        id="contactNumber"
+        formControlName="contactNumber"
+        class="input w-full"
+      />
+      <small
+        class="text-red-500 p-error block text-xs"
+        *ngIf="
+          customerProfileFormGroup.controls.contactNumber.invalid &&
+          customerProfileFormGroup.controls.contactNumber.touched
+        "
+      >
+        {{ translate.instant("FINANCE.INVALID_PHONE_NUMBER") }}
+      </small>
+    </div>
+
+    <div class="field">
+      <label for="additionalContactNumber" class="block text-sm font-semibold mb-1">{{ translate.instant("FINANCE.ADDITIONAL_CONTACT_NUMBER") }}</label>
+      <input pInputText type="text" id="additionalContactNumber" formControlName="additionalContactNumber" class="input w-full" />
+    </div>
+
+    <div class="field">
+      <label for="email" class="block text-sm font-semibold mb-1">{{ translate.instant("FINANCE.EMAIL") }}</label>
+      <input pInputText type="email" id="email" formControlName="email" class="input w-full" />
+    </div>
+
+    <!-- Row 7: Bank Name, Bank Account Number, IBAN -->
+    <div class="field">
+      <label for="bankName" class="block text-sm font-semibold mb-1">{{ translate.instant("FINANCE.BANK_NAME") }}</label>
+      <input pInputText type="text" id="bankName" formControlName="bankName" class="input w-full" />
+    </div>
+
+    <div class="field">
+      <label for="bankAccountNumber" class="block text-sm font-semibold mb-1">{{ translate.instant("FINANCE.BANK_ACCOUNT_NUMBER") }}</label>
+      <input pInputText type="text" id="bankAccountNumber" formControlName="bankAccountNumber" class="input w-full" />
+    </div>
+
+    <div class="field">
+      <label for="iban" class="block text-sm font-semibold mb-1">{{ translate.instant("FINANCE.IBAN") }}</label>
+      <input pInputText type="text" id="iban" formControlName="iban" class="input w-full" />
+    </div>
+
+    <!-- Row 8: GAZT Number, Short Address, Fax -->
+    <div class="field">
+      <label for="gaztNumber" class="block text-sm font-semibold mb-1">{{ translate.instant("FINANCE.GAZT_NUMBER") }}</label>
+      <input pInputText type="text" id="gaztNumber" formControlName="gaztNumber" class="input w-full" />
+    </div>
+
+    <div class="field">
+      <label for="shortAddress" class="block text-sm font-semibold mb-1">{{ translate.instant("FINANCE.SHORT_ADDRESS") }}</label>
+      <input pInputText type="text" id="shortAddress" formControlName="shortAddress" class="input w-full" />
+    </div>
+
+    <div class="field">
+      <label for="fax" class="block text-sm font-semibold mb-1">{{ translate.instant("FINANCE.FAX") }}</label>
+      <input pInputText type="text" id="fax" formControlName="fax" class="input w-full" />
+    </div>
+
+    <!-- Row 9: Website, Instructions -->
+    <div class="field">
+      <label for="website" class="block text-sm font-semibold mb-1">{{ translate.instant("FINANCE.WEBSITE") }}</label>
+      <input pInputText type="text" id="website" formControlName="website" class="input w-full" />
+    </div>
+
+    <div class="field">
+      <label for="instructions" class="block text-sm font-semibold mb-1">{{ translate.instant("FINANCE.INSTRUCTIONS") }}</label>
+      <input pInputText type="text" id="instructions" formControlName="instructions" class="input w-full" />
+    </div>
+
+    <div></div>
+
+    <!-- الحساب الفرعي (فلتر) بنفس حجم الفيلدات العادية -->
+    <div class="field">
+      <label for="detailAccount" class="block text-sm font-semibold mb-1">
+        {{ translate.instant("FINANCE.CHOOSE_CUSTOMER_PARENT_DETAIL_ACCOUNT") }}
+      </label>
+      <p-dropdown
+        [options]="detailAccountOptions"
+        [filter]="true"
+        [(ngModel)]="selectedDetailAccountId"
+        [ngModelOptions]="{standalone: true}"
+        id="detailAccount"
+        styleClass="w-full"
+        appendTo="body"
+        variant="filled"
+        [showClear]="true">
+      </p-dropdown>
+    </div>
+
+    <!-- الحساب الرئيسي (يظهر فور اختيار الحساب الفرعي بنفس الحجم) -->
+    <div class="field" *ngIf="selectedDetailAccountId !== null">
+      <label for="mainAccount" class="block text-sm font-semibold mb-1">
+        {{ translate.instant("FINANCE.MAIN_ACCOUNT") }}
+      </label>
+      <p-dropdown
+        [options]="mainAccountOptions"
+        [filter]="true"
+        formControlName="mainAccountId"
+        id="mainAccount"
+        styleClass="w-full"
+        appendTo="body"
+        variant="filled">
+      </p-dropdown>
+    </div>
+
+    <!-- مؤشر عدم الربط بحساب -->
+    <div class="field col-span-1 md:col-span-3" *ngIf="selectedDetailAccountId === null">
+      <small class="text-gray-500 block text-xs">
+        <i class="pi pi-info-circle"></i>
+        {{ activeLanguage === 'ar' ? 'سيتم إنشاء حساب رئيسي تلقائياً عند الحفظ' : 'A main account will be created automatically on save' }}
+      </small>
+    </div>
+
+    <!-- Departments Section -->
+    <div class="col-span-1 md:col-span-3 border p-3 rounded-lg bg-white dark:bg-zinc-900 mb-2" *ngIf="customerProfileFormGroup.get('isForProjects')?.value">
+      <h4 class="font-semibold text-sm mb-3 flex items-center gap-2 text-primary">
+        <i class="pi pi-list"></i>
+        {{ activeLanguage === 'ar' ? 'إدارات العميل' : 'Customer Departments' }}
+      </h4>
+      
+      <!-- New Department Input -->
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-3 mb-3">
+        <div>
+          <input
+            pInputText
+            type="text"
+            [placeholder]="activeLanguage === 'ar' ? 'اسم الإدارة بالعربي *' : 'Department Name (Arabic) *'"
+            [(ngModel)]="newDepartmentNameAr"
+            [ngModelOptions]="{standalone: true}"
+            class="w-full"
+          />
+        </div>
+        <div>
+          <input
+            pInputText
+            type="text"
+            [placeholder]="activeLanguage === 'ar' ? 'اسم الإدارة بالإنجليزي (اختياري)' : 'Department Name (English) (Optional)'"
+            [(ngModel)]="newDepartmentNameEn"
+            [ngModelOptions]="{standalone: true}"
+            class="w-full"
+          />
+        </div>
+        <div>
+          <p-button
+            icon="pi pi-plus"
+            [label]="activeLanguage === 'ar' ? 'إضافة إدارة' : 'Add Department'"
+            styleClass="p-button-primary rounded-md w-full"
+            (onClick)="addDepartment()"
+            [disabled]="!newDepartmentNameAr.trim()"
+          ></p-button>
+        </div>
+      </div>
+
+      <!-- Departments List -->
+      <div class="departments-list max-h-48 overflow-y-auto border rounded-lg bg-white dark:bg-zinc-800 p-2 shadow-inner">
+        <div *ngIf="departmentsList.length === 0" class="text-center text-gray-500 py-3 text-sm">
+          {{ activeLanguage === 'ar' ? 'لا يوجد إدارات مضافة بعد' : 'No departments added yet' }}
+        </div>
+        <div *ngFor="let dep of departmentsList; let i = index" class="flex justify-between items-center py-2 px-3 border-b last:border-0 hover:bg-gray-50 dark:hover:bg-zinc-700/50">
+          <div class="flex flex-col gap-0.5 items-start">
+            <span class="font-semibold text-sm text-gray-800 dark:text-gray-200">{{ dep.nameAr }}</span>
+            <span class="text-xs text-gray-500" *ngIf="dep.nameEn">{{ dep.nameEn }}</span>
+          </div>
+          <p-button
+            icon="pi pi-trash"
+            severity="danger"
+            [text]="true"
+            (onClick)="removeDepartment(i)"
+            styleClass="p-button-sm"
+          ></p-button>
+        </div>
+      </div>
+    </div>
+
+  </form>
+
+  <hr class="mt-2 mb-1" />
+
+  <p-footer>
+    <div class="flex justify-content-end gap-2">
+      <p-button
+        styleClass="rounded-md"
+        [label]="translate.instant('FINANCE.CANCEL')"
+        severity="secondary"
+        (onClick)="closeCustomerProfileDialog()"
+      />
+      <p-button
+        *ngIf="customerProfileFormGroup.get('id')?.value ? hasPermission(PERMISSIONS.CustomerProfile.Update) : hasPermission(PERMISSIONS.CustomerProfile.Create)"
+        styleClass="rounded-md"
+        [label]="translate.instant('FINANCE.SAVE')"
+        (onClick)="saveCustomerProfile()"
+        [disabled]="customerProfileFormGroup.invalid"
+      />
+    </div>
+  </p-footer>
+</p-dialog>
+
+<p-confirmDialog> </p-confirmDialog>
+<p-toast />
+
+<!-- Import Instructions Dialog -->
+<p-dialog 
+  [(visible)]="showImportInstructions" 
+  [header]="importInstructions.title"
+  [modal]="true" 
+  [style]="{width: '50vw'}"
+  [breakpoints]="{'960px': '75vw', '640px': '90vw'}"
+  [draggable]="false"
+  [resizable]="false"
+>
+  <div class="import-instructions-content" [dir]="activeLanguage === 'ar' ? 'rtl' : 'ltr'">
+    <!-- Description -->
+    <div *ngIf="importInstructions.description" class="mb-4">
+      <p class="text-gray-700">{{ importInstructions.description }}</p>
+    </div>
+    
+    <!-- Required Headers -->
+    <div class="mb-4">
+      <h4 class="font-semibold mb-2 text-lg">{{ translate.instant('COMMON.REQUIRED_HEADERS') }}:</h4>
+      <div class="bg-gray-50 p-3 rounded border border-gray-200">
+        <ul class="list-disc list-inside space-y-1">
+          <li *ngFor="let header of importInstructions.headers" 
+              class="text-sm font-mono"
+              [ngClass]="{'text-red-600 font-semibold': header.startsWith('*')}">
+            {{ header }}
+          </li>
+        </ul>
+      </div>
+    </div>
+    
+    <!-- Additional Notes -->
+    <div *ngIf="importInstructions.notes && importInstructions.notes.length > 0" class="mb-4">
+      <h4 class="font-semibold mb-2 text-lg">{{ translate.instant('COMMON.NOTES') }}:</h4>
+      <ul class="list-disc list-inside space-y-1 text-sm text-gray-600">
+        <li *ngFor="let note of importInstructions.notes">
+          {{ note }}
+        </li>
+      </ul>
+    </div>
+  </div>
+  
+  <p-footer>
+    <div class="flex gap-2 justify-end">
+      <p-button
+        [label]="translate.instant('FINANCE.DOWNLOAD_TEMPLATE')"
+        icon="pi pi-download"
+        severity="info"
+        styleClass="rounded-md"
+        (onClick)="downloadTemplate()"
+      />
+      <p-button 
+        [label]="translate.instant('FINANCE.CANCEL')" 
+        icon="pi pi-times"
+        styleClass="p-button-text rounded-md"
+        (onClick)="cancelImportInstructions()"
+      />
+      <p-button 
+        [label]="translate.instant('COMMON.PROCEED')"
+        icon="pi pi-check"
+        styleClass="rounded-md"
+        (onClick)="confirmImportInstructions()"
+      />
+    </div>
+  </p-footer>
+</p-dialog>
+
+
+
+<!-- Import Uploading Spinner Dialog -->
+<p-dialog
+  [visible]="importProgress.isImporting"
+  [closable]="false"
+  [modal]="true"
+  [draggable]="false"
+  [resizable]="false"
+  [style]="{width: '340px'}"
+  [header]="activeLanguage === 'ar' ? 'جارٍ الاستيراد...' : 'Importing...'"
+>
+  <div class="flex flex-column align-items-center gap-4 py-4">
+    <p-progressSpinner strokeWidth="4" styleClass="w-16 h-16" />
+    <p class="text-center text-sm text-gray-600 m-0">
+      {{ activeLanguage === 'ar'
+        ? 'جارٍ معالجة الملف على الخادم، يرجى الانتظار...'
+        : 'Processing file on the server, please wait...' }}
+    </p>
+  </div>
+</p-dialog>
+
+<!-- Import Failures Dialog -->
+<p-dialog
+  [(visible)]="showImportFailuresDialog"
+  [header]="translate.instant('COMMON.IMPORT_FAILURES_TITLE')"
+  [modal]="true"
+  [style]="{width: '65vw', maxHeight: '80vh'}"
+  [breakpoints]="{'960px': '80vw', '640px': '95vw'}"
+  [draggable]="false"
+  [resizable]="false"
+>
+  <div class="import-failures-wrap" [dir]="activeLanguage === 'ar' ? 'rtl' : 'ltr'">
+    <div class="import-failures-summary mb-4">
+      <div class="import-failures-summary__icon">
+        <i class="pi pi-exclamation-triangle"></i>
+      </div>
+      <div class="import-failures-summary__content">
+        <div class="import-failures-summary__title">
+          {{ 'COMMON.IMPORT_FAILURES_TITLE' | translate }}
+        </div>
+        <div class="import-failures-summary__subtitle">
+          {{ 'COMMON.IMPORT_FAILED_ROWS' | translate: { count: importFailures.length } }}
+        </div>
+      </div>
+      <span class="import-failures-summary__badge">{{ importFailures.length }}</span>
+    </div>
+
+    <p-table
+      [value]="importFailures"
+      styleClass="p-datatable-sm p-datatable-gridlines import-failures-table"
+      [scrollable]="true"
+      scrollHeight="400px"
+      [paginator]="importFailures.length > 10"
+      [rows]="10"
+    >
+      <ng-template pTemplate="header">
+        <tr>
+          <th style="width:80px">{{ 'COMMON.IMPORT_FAILURE_ROW' | translate }}</th>
+          <th>{{ 'COMMON.IMPORT_FAILURE_NAME' | translate }}</th>
+          <th>{{ 'COMMON.IMPORT_FAILURE_REASON' | translate }}</th>
+        </tr>
+      </ng-template>
+      <ng-template pTemplate="body" let-f>
+        <tr>
+          <td class="text-center font-mono text-sm">{{ f.row }}</td>
+          <td class="font-semibold">{{ f.name }}</td>
+          <td class="text-sm">
+            <div class="flex align-items-start gap-2">
+              <span class="failure-chip" [ngClass]="getImportFailureVisualState(f).chipClass">
+                <i [class]="getImportFailureVisualState(f).icon"></i>
+              </span>
+              <span
+                class="failure-reason"
+                [class.failure-reason--truncated]="isImportFailureReasonTruncated(f)"
+                [attr.title]="isImportFailureReasonTruncated(f) ? getImportFailureReason(f) : null"
+              >
+                {{ getImportFailureReasonPreview(f) }}
+              </span>
+            </div>
+          </td>
+        </tr>
+      </ng-template>
+    </p-table>
+  </div>
+  <p-footer>
+    <p-button
+      [label]="translate.instant('FINANCE.CLOSE_LABEL')"
+      icon="pi pi-times"
+      styleClass="rounded-md"
+      (onClick)="showImportFailuresDialog = false"
+    />
+  </p-footer>
+</p-dialog>

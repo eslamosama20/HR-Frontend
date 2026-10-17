@@ -1,0 +1,197 @@
+﻿<app-zid-shell activeTab="orders" titleKey="CASHIER_ZID.ORDERS_TITLE" subtitleKey="CASHIER_ZID.ORDERS_SUBTITLE">
+  <p-toast></p-toast>
+  <p-confirmDialog></p-confirmDialog>
+
+  <div zid-actions class="zid-actions">
+    <button pButton type="button" icon="pi pi-refresh" [label]="'CASHIER_ZID.REFRESH' | translate" class="p-button-outlined" [loading]="loading()" (click)="loadOrders()"></button>
+  </div>
+
+  <div zid-kpis class="zid-summary">
+    <div class="zid-metric"><span>{{ 'CASHIER_ZID.TOTAL_ORDERS' | translate }}</span><strong>{{ totalRecords() }}</strong></div>
+    <div class="zid-metric"><span>{{ 'CASHIER_ZID.SYNC_PENDING' | translate }}</span><strong>{{ countBySyncStatus(ZidSyncStatus.Pending) }}</strong></div>
+    <div class="zid-metric"><span>{{ 'CASHIER_ZID.SYNC_SYNCED' | translate }}</span><strong>{{ countBySyncStatus(ZidSyncStatus.Synced) }}</strong></div>
+    <div class="zid-metric"><span>{{ 'CASHIER_ZID.SYNC_FAILED' | translate }}</span><strong>{{ countBySyncStatus(ZidSyncStatus.Failed) }}</strong></div>
+  </div>
+
+  <div zid-filters class="zid-panel">
+    <div class="zid-panel-header">
+      <div>
+        <h2>{{ 'CASHIER_ZID.ORDER_FILTERS' | translate }}</h2>
+        <p>{{ 'CASHIER_ZID.FILTERS_DESCRIPTION' | translate }}</p>
+      </div>
+    </div>
+    <div class="zid-grid compact">
+      <div class="zid-field">
+        <label>{{ 'CASHIER_ZID.ORDER_STATUS' | translate }}</label>
+        <p-dropdown [options]="statusOptions" [(ngModel)]="filterStatus" (onChange)="onFilterChange()"></p-dropdown>
+      </div>
+      <div class="zid-field">
+        <label>{{ 'CASHIER_ZID.SYNC_STATUS' | translate }}</label>
+        <p-dropdown [options]="syncOptions" [(ngModel)]="filterSyncStatus" (onChange)="onFilterChange()"></p-dropdown>
+      </div>
+    </div>
+  </div>
+
+  <div class="zid-error" *ngIf="error() && !loading()">
+    <i class="pi pi-exclamation-triangle"></i>
+    <span>{{ error() }}</span>
+    <button pButton type="button" icon="pi pi-refresh" class="p-button-text p-button-sm" (click)="loadOrders()"></button>
+  </div>
+
+  <div class="zid-table-panel" *ngIf="loading() && !orders().length">
+    <app-zid-skeleton [rows]="6"></app-zid-skeleton>
+  </div>
+
+  <div class="zid-table-panel" *ngIf="!loading() || orders().length">
+    <div class="zid-table-toolbar">
+      <div class="zid-table-title">
+        <strong>{{ 'CASHIER_ZID.ORDERS_TITLE' | translate }}</strong>
+        <span>{{ totalRecords() }} {{ 'CASHIER_ZID.TOTAL_ORDERS' | translate }}</span>
+      </div>
+    </div>
+    <p-table
+      [value]="orders()"
+      [loading]="loading()"
+      [paginator]="true"
+      [rows]="pageSize"
+      [totalRecords]="totalRecords()"
+      [lazy]="true"
+      [lazyLoadOnInit]="false"
+      (onLazyLoad)="onPageChange($event)"
+      responsiveLayout="scroll"
+      styleClass="p-datatable-sm p-datatable-striped">
+      <ng-template pTemplate="header">
+        <tr>
+          <th>{{ 'CASHIER_ZID.REFERENCE' | translate }}</th>
+          <th>{{ 'CASHIER_ZID.CUSTOMER' | translate }}</th>
+          <th>{{ 'CASHIER_ZID.PAYMENT' | translate }}</th>
+          <th>{{ 'CASHIER_ZID.ORDER_STATUS' | translate }}</th>
+          <th>{{ 'CASHIER_ZID.SYNC_STATUS' | translate }}</th>
+          <th>{{ 'CASHIER_ZID.TOTAL' | translate }}</th>
+          <th>{{ 'CASHIER_ZID.STORE' | translate }}</th>
+          <th>{{ 'CASHIER_ZID.CREATED' | translate }}</th>
+          <th>{{ 'CASHIER_ZID.ACTIONS' | translate }}</th>
+        </tr>
+      </ng-template>
+      <ng-template pTemplate="body" let-order>
+        <tr [ngClass]="{ 'zid-row-warning': order.syncStatus === ZidSyncStatus.Failed }">
+          <td><strong>{{ order.referenceNumber }}</strong></td>
+          <td>
+            <span class="zid-cell-stack">
+              <span>{{ order.customerName }}</span>
+              <small>{{ order.customerPhone || '-' }}</small>
+            </span>
+          </td>
+          <td><p-tag [severity]="paymentSeverity(order.paymentStatus)" [value]="paymentStatusLabel(order)"></p-tag></td>
+          <td><p-tag [severity]="orderStatusSeverity(order.status)" [value]="orderStatusLabel(order.status)"></p-tag></td>
+          <td><p-tag [severity]="syncStatusSeverity(order.syncStatus)" [value]="syncStatusLabel(order.syncStatus)"></p-tag></td>
+          <td>{{ order.totalAmount | number:'1.2-2' }} {{ order.currency }}</td>
+          <td>{{ order.storeName || '-' }}</td>
+          <td>{{ order.createdAt ? (order.createdAt | customDate: 'short') : '-' }}</td>
+          <td>
+            <button pButton type="button" icon="pi pi-eye" class="p-button-sm p-button-outlined" [pTooltip]="'CASHIER_ZID.VIEW_DETAILS' | translate" (click)="viewDetails(order)"></button>
+          </td>
+        </tr>
+      </ng-template>
+      <ng-template pTemplate="emptymessage">
+        <tr>
+          <td colspan="9">
+            <app-zid-empty-state titleKey="CASHIER_ZID.EMPTY_ORDERS_TITLE" descriptionKey="CASHIER_ZID.EMPTY_ORDERS_DESC">
+              <button pButton type="button" icon="pi pi-refresh" [label]="'CASHIER_ZID.REFRESH' | translate" class="p-button-sm p-button-outlined" (click)="loadOrders()"></button>
+            </app-zid-empty-state>
+          </td>
+        </tr>
+      </ng-template>
+    </p-table>
+  </div>
+</app-zid-shell>
+
+<p-sidebar
+  [(visible)]="showDetailsDialog"
+  position="right"
+  [modal]="true"
+  [style]="{ width: 'min(920px, 96vw)' }"
+  styleClass="zid-detail-drawer">
+  <ng-template pTemplate="header">
+    <strong>{{ 'CASHIER_ZID.ORDER_DETAILS' | translate }}</strong>
+  </ng-template>
+
+  <div class="zid-empty-state" *ngIf="detailsLoading()">
+    <i class="pi pi-spin pi-spinner"></i>
+    <strong>{{ 'CASHIER_ZID.LOADING_ORDER_DETAILS' | translate }}</strong>
+  </div>
+
+  <div *ngIf="!detailsLoading() && selectedOrder() as order">
+    <div class="zid-summary">
+      <div class="zid-metric"><span>{{ 'CASHIER_ZID.REFERENCE' | translate }}</span><strong>{{ order.referenceNumber }}</strong></div>
+      <div class="zid-metric"><span>{{ 'CASHIER_ZID.TOTAL' | translate }}</span><strong>{{ order.totalAmount | number:'1.2-2' }} {{ order.currency }}</strong></div>
+      <div class="zid-metric"><span>{{ 'CASHIER_ZID.INVOICE' | translate }}</span><strong>{{ order.invoiceId || '-' }}</strong></div>
+      <div class="zid-metric"><span>{{ 'CASHIER_ZID.SYNCED_AT' | translate }}</span><strong>{{ order.syncedAt ? (order.syncedAt | customDate: 'short') : '-' }}</strong></div>
+    </div>
+
+    <div class="zid-warning" *ngIf="order.syncStatus === ZidSyncStatus.Pending && !allItemsMapped(order)">
+      <i class="pi pi-exclamation-triangle"></i>
+      <span>{{ 'CASHIER_ZID.SYNC_BLOCKED_UNMAPPED' | translate }}</span>
+    </div>
+    <div class="zid-error" *ngIf="order.syncError">
+      <i class="pi pi-times-circle"></i>
+      <span>{{ order.syncError }}</span>
+    </div>
+
+    <div class="zid-table-panel">
+      <p-table [value]="order.items" styleClass="p-datatable-sm" responsiveLayout="scroll">
+        <ng-template pTemplate="header">
+          <tr>
+            <th>{{ 'CASHIER_ZID.PRODUCT' | translate }}</th>
+            <th>{{ 'CASHIER_ZID.SKU' | translate }}</th>
+            <th>{{ 'CASHIER_ZID.QUANTITY' | translate }}</th>
+            <th>{{ 'CASHIER_ZID.TOTAL' | translate }}</th>
+            <th>{{ 'CASHIER_ZID.MAPPING' | translate }}</th>
+          </tr>
+        </ng-template>
+        <ng-template pTemplate="body" let-item>
+          <tr>
+            <td>{{ item.productName }}</td>
+            <td>{{ item.zidSku || '-' }}</td>
+            <td>{{ item.quantity }}</td>
+            <td>{{ item.totalPrice | number:'1.2-2' }}</td>
+            <td>
+              <p-tag *ngIf="item.isMapped" severity="success" [value]="item.mainPurchaseClassName || item.mainPurchaseClassId || ('CASHIER_ZID.MAPPED' | translate)"></p-tag>
+              <p-tag *ngIf="!item.isMapped" severity="danger" [value]="'CASHIER_ZID.UNMAPPED' | translate"></p-tag>
+            </td>
+          </tr>
+        </ng-template>
+      </p-table>
+    </div>
+
+    <div class="zid-panel">
+      <div class="zid-grid">
+        <div class="zid-field">
+          <label>{{ 'CASHIER_ZID.ERP_STORE' | translate }}</label>
+          <div class="zid-cell-stack">
+            <strong>{{ storeDetailsId || order.storeDetailsId || '-' }}</strong>
+            <small>{{ 'CASHIER_ZID.USING_ORDER_OR_ACTIVE_STORE' | translate }}</small>
+          </div>
+        </div>
+        <div class="zid-field">
+          <label>{{ 'CASHIER_ZID.UPDATE_ZID_STATUS' | translate }}</label>
+          <p-dropdown [options]="updateStatusOptions" [(ngModel)]="nextStatus"></p-dropdown>
+        </div>
+      </div>
+    </div>
+
+    <div class="zid-dialog-actions">
+      <button
+        pButton
+        type="button"
+        icon="pi pi-file"
+        [label]="'CASHIER_ZID.SYNC_TO_ERP_INVOICE' | translate"
+        [disabled]="order.syncStatus !== ZidSyncStatus.Pending || !allItemsMapped(order)"
+        [loading]="isBusy('sync')"
+        (click)="syncSelectedOrder()">
+      </button>
+      <button pButton type="button" icon="pi pi-send" [label]="'CASHIER_ZID.UPDATE_ZID_STATUS' | translate" class="p-button-outlined" [loading]="isBusy('status')" (click)="updateSelectedOrderStatus()"></button>
+      <button pButton type="button" [label]="'CASHIER_ZID.CLOSE' | translate" class="p-button-text" (click)="showDetailsDialog = false"></button>
+    </div>
+  </div>
+</p-sidebar>

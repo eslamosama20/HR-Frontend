@@ -1,0 +1,770 @@
+<!-- FIELD SELECTOR (Unified for Header & Footer) -->
+<div class="section mb-8">
+  <h3>Field Selector</h3>
+  <div
+    class="fields-grid grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2 mb-4"
+  >
+    <ng-container *ngFor="let field of availableFields">
+      <div class="bg-white p-3 rounded shadow">
+        <div class="flex items-center justify-between gap-2 mb-2">
+          <span class="font-semibold">{{ field.label || ''}}</span>
+        </div>
+        <div class="flex flex-col gap-2">
+          <div class="flex flex-wrap gap-1">
+            <ng-container *ngFor="let col of headerFields; let colIdx = index">
+              <ng-container *ngFor="let row of col.rows; let rowIdx = index">
+                <button
+                  (click)="addField('header', colIdx, rowIdx, field.key)"
+                  class="bg-blue-500 hover:bg-blue-700 text-white py-1 px-2 rounded "
+                >
+                  ➕ Column {{ colIdx + 1 }} Row {{ rowIdx + 1 }}
+                </button>
+              </ng-container>
+            </ng-container>
+          </div>
+          <hr class="border-t-2 border-dashed border-gray-900 my-4" />
+          <div class="flex flex-wrap gap-1">
+            <ng-container *ngFor="let col of footerFields; let colIdx = index">
+              <ng-container *ngFor="let row of col.rows; let rowIdx = index">
+                <button
+                  (click)="addField('footer', colIdx, rowIdx, field.key)"
+                  class="bg-green-500 hover:bg-green-700 text-white py-1 px-2 rounded "
+                >
+                  ➕ Column {{ colIdx + 1 }} Row {{ rowIdx + 1 }}
+                </button>
+              </ng-container>
+            </ng-container>
+          </div>
+        </div>
+        <div
+          *ngIf="
+            field.key == 'address' &&
+            field.isAddress &&
+            (isFieldInSection('header', 'address') ||
+              isFieldInSection('footer', 'address'))
+          "
+          class="address-subfields mt-2 pl-4 border-l-2 border-gray-200"
+        >
+          <div class="text-sm font-medium mb-1">Address Fields:</div>
+          <ng-container *ngFor="let subfield of field.subfields || []">
+            <div class="flex items-center">
+              <input
+                type="checkbox"
+                [checked]="
+                  headerAddressSubfields.includes(subfield.key) ||
+                  footerAddressSubfields.includes(subfield.key)
+                "
+                (change)="
+                  toggleAddressSubfield('header', subfield.key, $event);
+                  toggleAddressSubfield('footer', subfield.key, $event)
+                "
+                class="mr-1"
+              />
+              <label class="text-sm">{{ subfield.label || ''}}</label>
+            </div>
+          </ng-container>
+        </div>
+        <div
+          *ngIf="
+          field.key == 'arabicAddress' &&
+            field.isAddress &&
+            (isFieldInSection('header', 'arabicAddress') ||
+              isFieldInSection('footer', 'arabicAddress'))
+          "
+          class="address-subfields mt-2 pl-4 border-l-2 border-gray-200"
+        >
+          <div class="text-sm font-medium mb-1">Address Fields:</div>
+          <ng-container *ngFor="let subfield of field.subfields || []">
+            <div class="flex items-center">
+              <input
+                type="checkbox"
+                [checked]="
+                  headerAddressSubfields.includes(subfield.key) ||
+                  footerAddressSubfields.includes(subfield.key)
+                "
+                (change)="
+                  toggleAddressSubfield('header', subfield.key, $event);
+                  toggleAddressSubfield('footer', subfield.key, $event)
+                "
+                class="mr-1"
+              />
+              <label class="text-sm">{{ subfield.label || ''}}</label>
+            </div>
+          </ng-container>
+        </div>
+      </div>
+    </ng-container>
+  </div>
+</div>
+
+<!-- HEADER CONFIGURATION -->
+<div class="section">
+  <h3>Header Configuration</h3>
+  <div class="mb-4 flex items-center gap-2">
+    <button
+      (click)="addHeaderColumn()"
+      class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
+    >
+      Add Column
+    </button>
+    <span class="text-gray-600 text-sm">At least one column must exist</span>
+  </div>
+  <div class="columns-dnd flex  gap-2 rtl:flex-row-reverse overflow-auto">
+    <ng-container *ngFor="let col of headerFields; let colIdx = index">
+      <div
+        class="column w-full flex flex-col border-4 border-blue-400 bg-blue-50 rounded-lg p-2 mr-2"
+      >
+        <div
+          class="flex justify-between items-center mb-2 bg-blue-200 rounded px-2 py-1"
+        >
+          <h4 class="text-lg font-semibold text-blue-900">
+            Column {{ colIdx + 1 }}
+          </h4>
+          <div class="flex gap-2">
+            <button
+              (click)="addHeaderRow(colIdx)"
+              class="bg-blue-400 hover:bg-blue-600 text-white py-1 px-2 rounded"
+            >
+              + Row
+            </button>
+            <button
+              *ngIf="headerFields.length > 1"
+              (click)="removeHeaderColumn(colIdx)"
+              class="bg-red-500 hover:bg-red-700 text-white font-bold py-1 px-2 rounded"
+            >
+              Remove Column
+            </button>
+          </div>
+        </div>
+        <ng-container *ngFor="let row of col.rows; let rowIdx = index">
+          <div
+            class="flex flex-col gap-2 mb-4 border-l-4 border-dashed border-blue-300 bg-white/80 p-2 rounded relative"
+          >
+            <div
+              class="absolute -left-6 top-1/2 -translate-y-1/2 bg-blue-300 text-blue-900  font-bold px-2 py-1 rounded shadow"
+            >
+              Row {{ rowIdx + 1 }}
+            </div>
+            <div class="flex items-center gap-2 mb-2">
+              <button
+                *ngIf="col.rows.length > 1"
+                (click)="removeHeaderRow(colIdx, rowIdx)"
+                class="bg-red-400 hover:bg-red-600 text-white py-1 px-2 rounded"
+              >
+                Remove Row
+              </button>
+            </div>
+            <!-- Add Custom Text UI for this row -->
+            <div class="add-custom-text flex gap-2 mb-2">
+              <input
+                [(ngModel)]="headerNewCustomText[colIdx + '-' + rowIdx]"
+                placeholder="Add custom header text..."
+                class="border rounded py-1 px-2 flex-grow"
+              />
+              <button
+                (click)="addCustomText('header', colIdx, rowIdx)"
+                class="bg-green-500 hover:bg-green-700 text-white font-bold py-1 px-2 rounded"
+              >
+                Add
+              </button>
+            </div>
+            <div
+              class="dnd-list w-full bg-gray-100 p-2 rounded min-h-[40px] flex gap-2 overflow-auto rtl:flex-row-reverse"
+            >
+              <div
+                *ngFor="let item of row.items; let i = index"
+                class="draggable-field flex flex-wrap items-center justify-between bg-white p-2 rounded shadow mb-2 w-full"
+              >
+                <!-- Controls Row -->
+                <div class="w-full flex justify-between mb-2">
+                  <div class="flex space-x-2 gap-2">
+                    <select
+                      [(ngModel)]="item.fontSize"
+                      *ngIf="item.id !== 'logo'"
+                      class="border rounded py-1 px-2 text-sm"
+                    >
+                      <option value="inherit">Size</option>
+                      <option value="6px">6px</option>
+                      <option value="8px">8px</option>
+                      <option value="10px">10px</option>
+                      <option value="12px">12px</option>
+                      <option value="14px">14px</option>
+                      <option value="16px">16px</option>
+                      <option value="20px">20px</option>
+                    </select>
+                    <select
+                      [(ngModel)]="item.fontSize"
+                      *ngIf="item.id === 'logo'"
+                      class="border rounded py-1 px-2 text-sm"
+                    >
+                      <option value="80px">80px</option>
+                      <option value="100px">100px</option>
+                      <option value="120px">120px</option>
+                      <option value="140px">140px</option>
+                      <option value="160px">160px</option>
+                      <option value="180px">180px</option>
+                      <option value="200px">200px</option>
+                      <option value="220px">220px</option>
+                      <option value="240px">240px</option>
+                      <option value="260px">260px</option>
+                      <option value="280px">280px</option>
+                      <option value="300px">300px</option>
+                    </select>
+                    <select
+                      [(ngModel)]="item.align"
+                      class="border rounded py-1 px-2 text-sm"
+                    >
+                      <option value="left">Left</option>
+                      <option value="center">Center</option>
+                      <option value="right">Right</option>
+                    </select>
+                    <!-- Style toggles -->
+                    <label class="ml-2 flex items-center gap-2">
+                      <input
+                        type="checkbox"
+                        [(ngModel)]="item.isBold"
+                        class="mr-1"
+                      />
+                      <span class="font-bold">B</span>
+                    </label>
+                    <label class="ml-1 flex items-center ">
+                      <input
+                        type="checkbox"
+                        [(ngModel)]="item.isItalic"
+                        class="mr-1"
+                      />
+                      <span class="italic">I</span>
+                    </label>
+                    <label class="ml-1 flex items-center ">
+                      <input
+                        type="checkbox"
+                        [(ngModel)]="item.isUnderline"
+                        class="mr-1"
+                      />
+                      <span style="text-decoration: underline">U</span>
+                    </label>
+                    <label class="ml-1 flex items-center ">
+                      <input
+                        type="checkbox"
+                        [(ngModel)]="item.isStrikethrough"
+                        class="mr-1"
+                      />
+                      <span style="text-decoration: line-through">S</span>
+                    </label>
+                  </div>
+                  <p
+                    class="text-gray-800 text-lg font-semibold"
+                  >
+                    {{ getFieldByKey(item.id)?.label || ''}}
+                  </p>
+                </div>
+                <!-- Content Row -->
+                <div class="w-full flex justify-between items-center gap-2">
+                  <ng-container *ngIf="item.type === 'field'">
+                    <ng-container *ngIf="item.id === 'logo'; else notLogo">
+                      <img
+                        *ngIf="getFieldValue(item.id)"
+                        [src]="'data:image/png;base64,' + getFieldValue(item.id)"
+                        alt="Company Logo"
+                        class="w-24 h-24 object-contain"
+                      />
+                      <button
+                        (click)="removeFieldInstance('header', colIdx, rowIdx, i)"
+                        class="bg-red-500 hover:bg-red-700 text-white font-bold py-1 px-2 rounded"
+                      >
+                        ❌
+                      </button>
+                    </ng-container>
+                    <ng-template #notLogo>
+                      <input
+                        [(ngModel)]="item.label"
+                        placeholder="Field label..."
+                        class="border rounded py-1 px-2 flex-grow mr-2"
+                      />
+                      <button
+                        (click)="removeFieldInstance('header', colIdx, rowIdx, i)"
+                        class="bg-red-500 hover:bg-red-700 text-white font-bold py-1 px-2 rounded"
+                      >
+                        ❌
+                      </button>
+                    </ng-template>
+                  </ng-container>
+                  <ng-container *ngIf="item.type === 'custom'">
+                    <input
+                      [(ngModel)]="item.label"
+                      placeholder="Custom text label..."
+                      class="border rounded py-1 px-2 flex-grow mr-2"
+                    />
+                    <input
+                      [ngModel]="getCustomText('header', item.id)?.value"
+                      (ngModelChange)="editCustomText('header', item.id, $event)"
+                      class="border rounded py-1 px-2 flex-grow"
+                    />
+                    <button
+                      (click)="removeCustomTextInstance('header', colIdx, rowIdx, i)"
+                      class="bg-red-500 hover:bg-red-700 text-white font-bold py-1 px-2 rounded"
+                    >
+                      🗑️
+                    </button>
+                  </ng-container>
+                </div>
+              </div>
+            </div>
+          </div>
+        </ng-container>
+      </div>
+    </ng-container>
+  </div>
+</div>
+
+<hr />
+
+<!-- FOOTER CONFIGURATION -->
+<div class="section">
+  <h3>Footer Configuration</h3>
+  <div class="mb-4 flex items-center gap-2">
+    <button
+      (click)="addFooterColumn()"
+      class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
+    >
+      Add Column
+    </button>
+    <span class="text-gray-600 text-sm">At least one column must exist</span>
+  </div>
+  <div class="columns-dnd flex  gap-2 rtl:flex-row-reverse overflow-auto">
+    <ng-container *ngFor="let col of footerFields; let colIdx = index">
+      <div
+        class="column w-full flex flex-col border-4 border-blue-400 bg-blue-50 rounded-lg p-2 mr-2"
+      >
+        <div
+          class="flex justify-between items-center mb-2 bg-blue-200 rounded px-2 py-1"
+        >
+          <h4 class="text-lg font-semibold text-blue-900">
+            Column {{ colIdx + 1 }}
+          </h4>
+          <div class="flex gap-2">
+            <button
+              (click)="addFooterRow(colIdx)"
+              class="bg-blue-400 hover:bg-blue-600 text-white py-1 px-2 rounded"
+            >
+              + Row
+            </button>
+            <button
+              *ngIf="footerFields.length > 1"
+              (click)="removeFooterColumn(colIdx)"
+              class="bg-red-500 hover:bg-red-700 text-white font-bold py-1 px-2 rounded"
+            >
+              Remove Column
+            </button>
+          </div>
+        </div>
+        <ng-container *ngFor="let row of col.rows; let rowIdx = index">
+          <div
+            class="flex flex-col gap-2 mb-4 border-l-4 border-dashed border-blue-300 bg-white/80 p-2 rounded relative"
+          >
+            <div
+              class="absolute -left-6 top-1/2 -translate-y-1/2 bg-blue-300 text-blue-900  font-bold px-2 py-1 rounded shadow"
+            >
+              Row {{ rowIdx + 1 }}
+            </div>
+            <div class="flex items-center gap-2 mb-2">
+              <button
+                *ngIf="col.rows.length > 1"
+                (click)="removeFooterRow(colIdx, rowIdx)"
+                class="bg-red-400 hover:bg-red-600 text-white py-1 px-2 rounded"
+              >
+                Remove Row
+              </button>
+            </div>
+            <!-- Add Custom Text UI for this row -->
+            <div class="add-custom-text flex gap-2 mb-2">
+              <input
+                [(ngModel)]="footerNewCustomText[colIdx + '-' + rowIdx]"
+                placeholder="Add custom footer text..."
+                class="border rounded py-1 px-2 flex-grow"
+              />
+              <button
+                (click)="addCustomText('footer', colIdx, rowIdx)"
+                class="bg-green-500 hover:bg-green-700 text-white font-bold py-1 px-2 rounded"
+              >
+                Add
+              </button>
+            </div>
+            <div
+              class="dnd-list w-full bg-gray-100 p-2 rounded min-h-[40px] flex gap-2 overflow-auto rtl:flex-row-reverse"
+            >
+              <div
+                *ngFor="let item of row.items; let i = index"
+                class="draggable-field flex flex-wrap items-center justify-between bg-white p-2 rounded shadow mb-2 w-full"
+              >
+                <!-- Controls Row -->
+                <div class="w-full flex justify-between mb-2">
+                  <div class="flex space-x-2 gap-2">
+                    <select
+                      [(ngModel)]="item.fontSize"
+                      *ngIf="item.id !== 'logo'"
+                      class="border rounded py-1 px-2 text-sm"
+                    >
+                      <option value="inherit">Size</option>
+                      <option value="6px">6px</option>
+                      <option value="8px">8px</option>
+                      <option value="10px">10px</option>
+                      <option value="12px">12px</option>
+                      <option value="14px">14px</option>
+                      <option value="16px">16px</option>
+                      <option value="20px">20px</option>
+                    </select>
+                    <select
+                      [(ngModel)]="item.fontSize"
+                      *ngIf="item.id === 'logo'"
+                      class="border rounded py-1 px-2 text-sm"
+                    >
+                      <option value="80px">80px</option>
+                      <option value="100px">100px</option>
+                      <option value="120px">120px</option>
+                      <option value="140px">140px</option>
+                      <option value="160px">160px</option>
+                      <option value="180px">180px</option>
+                      <option value="200px">200px</option>
+                      <option value="220px">220px</option>
+                      <option value="240px">240px</option>
+                      <option value="260px">260px</option>
+                      <option value="280px">280px</option>
+                      <option value="300px">300px</option>
+                    </select>
+                    <select
+                      [(ngModel)]="item.align"
+                      class="border rounded py-1 px-2 text-sm"
+                    >
+                      <option value="left">Left</option>
+                      <option value="center">Center</option>
+                      <option value="right">Right</option>
+                    </select>
+                    <!-- Style toggles -->
+                    <label class="ml-2 flex items-center gap-2">
+                      <input
+                        type="checkbox"
+                        [(ngModel)]="item.isBold"
+                        class="mr-1"
+                      />
+                      <span class="font-bold">B</span>
+                    </label>
+                    <label class="ml-1 flex items-center ">
+                      <input
+                        type="checkbox"
+                        [(ngModel)]="item.isItalic"
+                        class="mr-1"
+                      />
+                      <span class="italic">I</span>
+                    </label>
+                    <label class="ml-1 flex items-center ">
+                      <input
+                        type="checkbox"
+                        [(ngModel)]="item.isUnderline"
+                        class="mr-1"
+                      />
+                      <span style="text-decoration: underline">U</span>
+                    </label>
+                    <label class="ml-1 flex items-center ">
+                      <input
+                        type="checkbox"
+                        [(ngModel)]="item.isStrikethrough"
+                        class="mr-1"
+                      />
+                      <span style="text-decoration: line-through">S</span>
+                    </label>
+                  </div>
+                  <p
+                    class="text-gray-800 text-lg font-semibold"
+                  >
+                    {{ getFieldByKey(item.id)?.label || ''}}
+                  </p>
+                </div>
+                <!-- Content Row -->
+                <div class="w-full flex justify-between items-center gap-2">
+                  <ng-container *ngIf="item.type === 'field'">
+                    <ng-container *ngIf="item.id === 'logo'; else footerNotLogo">
+                      <img
+                        *ngIf="getFieldValue(item.id)"
+                        [src]="'data:image/png;base64,' + getFieldValue(item.id)"
+                        alt="Company Logo"
+                        class="w-24 h-24 object-contain"
+                      />
+                      <button
+                        (click)="removeFieldInstance('footer', colIdx, rowIdx, i)"
+                        class="bg-red-500 hover:bg-red-700 text-white font-bold py-1 px-2 rounded"
+                      >
+                        ❌
+                      </button>
+                    </ng-container>
+                    <ng-template #footerNotLogo>
+                      <input
+                        [(ngModel)]="item.label"
+                        placeholder="Field label..."
+                        class="border rounded py-1 px-2 flex-grow mr-2"
+                      />
+                      <button
+                        (click)="removeFieldInstance('footer', colIdx, rowIdx, i)"
+                        class="bg-red-500 hover:bg-red-700 text-white font-bold py-1 px-2 rounded"
+                      >
+                        ❌
+                      </button>
+                    </ng-template>
+                  </ng-container>
+                  <ng-container *ngIf="item.type === 'custom'">
+                    <input
+                      [(ngModel)]="item.label"
+                      placeholder="Custom text label..."
+                      class="border rounded py-1 px-2 flex-grow mr-2"
+                    />
+                    <input
+                      [ngModel]="getCustomText('footer', item.id)?.value"
+                      (ngModelChange)="editCustomText('footer', item.id, $event)"
+                      class="border rounded py-1 px-2 flex-grow"
+                    />
+                    <button
+                      (click)="removeCustomTextInstance('footer', colIdx, rowIdx, i)"
+                      class="bg-red-500 hover:bg-red-700 text-white font-bold py-1 px-2 rounded"
+                    >
+                      🗑️
+                    </button>
+                  </ng-container>
+                </div>
+              </div>
+            </div>
+          </div>
+        </ng-container>
+      </div>
+    </ng-container>
+  </div>
+</div>
+
+<hr />
+
+<!-- PREVIEW SECTION (Header & Footer) -->
+<div class="preview-section bg-gray-100 p-6 rounded-lg mt-8">
+  <h3 class="text-xl font-bold mb-4">Live Preview</h3>
+  <div class="pdf-preview bg-white p-4 rounded-lg shadow-md">
+    <!-- Header Preview -->
+    <div class="pdf-header border-b border-blue-300 pb-4 mb-4">
+      <div class="columns-preview flex  gap-2 rtl:flex-row-reverse">
+        <ng-container *ngFor="let col of headerFields; let colIdx = index">
+          <div
+            class="column-preview w-full border-4 border-blue-400 bg-blue-50 rounded-lg px-2 flex flex-col mr-2"
+          >
+            <div
+              class="bg-blue-200 text-blue-900  font-bold px-2 py-1 rounded mb-2"
+            >
+              Column {{ colIdx + 1 }}
+            </div>
+            <ng-container *ngFor="let row of col.rows; let rowIdx = index">
+              <div
+                class="border-l-4 border-dashed border-blue-300 bg-white/80 p-2 rounded mb-2 relative flex gap-2 rtl:flex-row-reverse"
+              >
+                <div
+                  class="absolute -left-6 top-1/2 -translate-y-1/2 bg-blue-300 text-blue-900  font-bold px-2 py-1 rounded shadow"
+                >
+                  Row {{ rowIdx + 1 }}
+                </div>
+                <ng-container *ngFor="let item of row.items">
+                  <div
+                    [ngStyle]="
+                      item.id === 'logo'
+                        ? { 'text-align': item.align }
+                        : {
+                            'font-size': item.fontSize,
+                            'text-align': item.align,
+                            'font-weight': item.isBold ? 'bold' : 'normal',
+                            'font-style': item.isItalic ? 'italic' : 'normal',
+                            'text-decoration':
+                              (item.isUnderline ? 'underline ' : '') +
+                              (item.isStrikethrough ? 'line-through' : '')
+                          }
+                    "
+                    class="p-2 mb-2 border border-blue-200 rounded w-full"
+                  >
+                    <ng-container *ngIf="item.type === 'field'">
+                      <!-- Logo special case -->
+                      <ng-container *ngIf="item.id === 'logo'">
+                        <div>
+                          <img
+                            *ngIf="getFieldValue(item.id)"
+                            [src]="'data:image/png;base64,' + getFieldValue(item.id)"
+                            alt="Company Logo"
+                            [style.width]="item.fontSize"
+                            class="object-contain mx-auto"
+                          />
+                        </div>
+                      </ng-container>
+                      <!-- Address special case (columns/vertical) -->
+                      <ng-container *ngIf="item.id === 'address' && headerAddressSubfields.length">
+                        <div class="flex flex-col">
+                          <p class="font-semibold text-gray-700 m-0">
+                            {{ item.label || '' }}:
+                          </p>
+                          <div *ngFor="let sub of headerAddressSubfields" class="pl-2">
+                            <span>
+                              {{ getAddressSubfieldLabel(sub) }}: {{ getFieldValue('address', sub) }}
+                            </span>
+                          </div>
+                        </div>
+                      </ng-container>
+
+                      <ng-container *ngIf="item.id === 'arabicAddress' && headerAddressSubfields.length">
+                        <div class="flex flex-col">
+                          <p class="font-semibold text-gray-700 m-0">
+                            {{ item.label || '' }}:
+                          </p>
+                          <div *ngFor="let sub of headerAddressSubfields" class="pl-2"
+                               style="direction: rtl; text-align: right;">
+                            <span>
+                              {{ getArabicAddressSubfieldLabel(sub) }}: {{ getFieldValue('arabicAddress', sub) }}
+                            </span>
+                          </div>
+                        </div>
+                      </ng-container>
+                      <!-- All other fields -->
+                      <ng-container *ngIf="item.id !== 'logo' && item.id !== 'address' && item.id !== 'arabicAddress'">
+                        <div>
+                          <span class="font-semibold text-gray-700">
+                            {{ item.label || '' }} {{ item.label ? ':' : ''}}
+                          </span>
+                          <span class="ml-2">{{ getFieldValue(item.id) }}</span>
+                        </div>
+                      </ng-container>
+                    </ng-container>
+                    <ng-container *ngIf="item.type === 'custom'">
+                      <div>
+                        <span class="font-semibold text-gray-700">
+                          {{ item.label || ''}}
+                        </span>
+                        <span class="ml-2">{{ getCustomText('header', item.id)?.value }}</span>
+                      </div>
+                    </ng-container>
+                  </div>
+                </ng-container>
+              </div>
+            </ng-container>
+          </div>
+        </ng-container>
+      </div>
+    </div>
+    <!-- Footer Preview -->
+    <div class="pdf-footer border-t border-blue-300 pt-4">
+      <div class="columns-preview flex  gap-2 rtl:flex-row-reverse">
+        <ng-container *ngFor="let col of footerFields; let colIdx = index">
+          <div
+            class="column-preview w-full border-4 border-blue-400 bg-blue-50 rounded-lg px-2 flex flex-col mr-2"
+          >
+            <div
+              class="bg-blue-200 text-blue-900  font-bold px-2 py-1 rounded mb-2"
+            >
+              Column {{ colIdx + 1 }}
+            </div>
+            <ng-container *ngFor="let row of col.rows; let rowIdx = index">
+              <div
+                class="border-l-4 border-dashed border-blue-300 bg-white/80 p-2 rounded mb-2 relative flex gap-2 rtl:flex-row-reverse"
+              >
+                <div
+                  class="absolute -left-6 top-1/2 -translate-y-1/2 bg-blue-300 text-blue-900  font-bold px-2 py-1 rounded shadow"
+                >
+                  Row {{ rowIdx + 1 }}
+                </div>
+                <ng-container *ngFor="let item of row.items">
+                  <div
+                    [ngStyle]="
+                      item.id === 'logo'
+                        ? { 'text-align': item.align }
+                        : {
+                            'font-size': item.fontSize,
+                            'text-align': item.align,
+                            'font-weight': item.isBold ? 'bold' : 'normal',
+                            'font-style': item.isItalic ? 'italic' : 'normal',
+                            'text-decoration':
+                              (item.isUnderline ? 'underline ' : '') +
+                              (item.isStrikethrough ? 'line-through' : '')
+                          }
+                    "
+                    class="p-2 mb-2 border border-blue-200 rounded w-full"
+                  >
+                    <ng-container *ngIf="item.type === 'field'">
+                      <!-- Logo special case -->
+                      <ng-container *ngIf="item.id === 'logo'">
+                        <div>
+                          <img
+                            *ngIf="getFieldValue(item.id)"
+                            [src]="'data:image/png;base64,' + getFieldValue(item.id)"
+                            alt="Company Logo"
+                            [style.width]="item.fontSize"
+                            class="object-contain mx-auto"
+                          />
+                        </div>
+                      </ng-container>
+                      <!-- Address special case (columns/vertical) -->
+                      <ng-container *ngIf="item.id === 'address' && footerAddressSubfields.length">
+                        <div>
+                          <p class="font-semibold text-gray-700 m-0">
+                            {{ item.label || '' }}:
+                          </p>
+                          <div *ngFor="let sub of footerAddressSubfields" class="pl-2">
+                            <span>
+                              {{ getAddressSubfieldLabel(sub) }}: {{ getFieldValue('address', sub) }}
+                            </span>
+                          </div>
+                        </div>
+                      </ng-container>
+
+                      <ng-container *ngIf="item.id === 'arabicAddress' && footerAddressSubfields.length">
+                        <div class="flex flex-col">
+                          <p class="font-semibold text-gray-700 m-0">
+                            {{ item.label || '' }}:
+                          </p>
+                          <div *ngFor="let sub of footerAddressSubfields" class="pl-2"
+                               style="direction: rtl; text-align: right;">
+                            <span>
+                              {{ getArabicAddressSubfieldLabel(sub) }}: {{ getFieldValue('arabicAddress', sub) }}
+                            </span>
+                          </div>
+                        </div>
+                      </ng-container>
+                      <!-- All other fields -->
+                      <ng-container *ngIf="item.id !== 'logo' && item.id !== 'address' && item.id !== 'arabicAddress'">
+                        <div>
+                          <span class="font-semibold text-gray-700">
+                            {{ item.label || ''}} {{ item.label ? ':' : ''}}
+                          </span>
+                          <span class="ml-2">{{ getFieldValue(item.id) }}</span>
+                        </div>
+                      </ng-container>
+                    </ng-container>
+                    <ng-container *ngIf="item.type === 'custom'">
+                      <div>
+                        <span class="font-semibold text-gray-700">
+                          {{ item.label || ''}}
+                        </span>
+                        <span class="ml-2">{{ getCustomText('footer', item.id)?.value }}</span>
+                      </div>
+                    </ng-container>
+                  </div>
+                </ng-container>
+              </div>
+            </ng-container>
+          </div>
+        </ng-container>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Save Button at the end -->
+<div class="text-right mt-8">
+  <button
+    (click)="saveTemplate()"
+    class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-6 rounded-lg shadow-md"
+  >
+    Save Template
+  </button>
+</div>
+
+<p-toast></p-toast>
+<p-confirmDialog></p-confirmDialog>

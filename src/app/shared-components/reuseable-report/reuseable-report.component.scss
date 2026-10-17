@@ -1,0 +1,18 @@
+@media print {
+  .page {
+    page-break-after: always;
+    break-inside: avoid;
+    position: relative;
+  }
+
+  .page:last-child {
+    page-break-after: auto;
+  }
+
+  .page-footer {
+    position: absolute;
+    bottom: 0;
+    width: 100%;
+    text-align: center;
+  }
+}
