@@ -62,8 +62,7 @@ export class LeaveApplicationsComponent implements OnInit {
     {field: 'leaveType', header: 'LEAVE_TYPE'},
     {field: 'startDate', header: 'START_DATE'},
     {field: 'endDate', header: 'END_DATE'},
-    {field: 'totalDays', header: 'TOTAL_DAYS'},
-    {field: 'status', header: 'STATUS'}
+    {field: 'totalDays', header: 'TOTAL_DAYS'}
   ];
   leaveTypeOptions = [
     {label: 'سنوية', value: LeaveType.Annual},
@@ -148,18 +147,36 @@ export class LeaveApplicationsComponent implements OnInit {
     this.dialogVisible = true;
   }
 
+  private parseDate(d: any): Date | null {
+    if (!d) return null;
+    if (d instanceof Date) return d;
+    if (typeof d === 'string' && d.trim()) {
+      const parts = d.split('T')[0].split('-');
+      if (parts.length === 3) {
+        return new Date(Number(parts[0]), Number(parts[1]) - 1, Number(parts[2]));
+      }
+    }
+    return new Date(d);
+  }
+
   edit(item: LeaveApplicationModel): void {
     this.formGroup.patchValue({
       ...item,
-      startDate: item.startDate ? new Date(item.startDate) : null,
-      endDate: item.endDate ? new Date(item.endDate) : null
+      startDate: this.parseDate(item.startDate),
+      endDate: this.parseDate(item.endDate)
     });
     this.dialogVisible = true;
   }
 
   private formatDate(d: any): string | null {
     if (!d) return null;
-    return d instanceof Date ? d.toISOString().split('T')[0] : typeof d === 'string' && d.trim() ? d.split('T')[0] : null;
+    if (d instanceof Date) {
+      const year = d.getFullYear();
+      const month = String(d.getMonth() + 1).padStart(2, '0');
+      const day = String(d.getDate()).padStart(2, '0');
+      return `${year}-${month}-${day}`;
+    }
+    return typeof d === 'string' && d.trim() ? d.split('T')[0] : null;
   }
 
   save(): void {
@@ -170,6 +187,7 @@ export class LeaveApplicationsComponent implements OnInit {
     const v = this.formGroup.value;
     const payload = new LeaveApplicationModel({
       ...v,
+      status: LeaveStatus.Approved,
       startDate: this.formatDate(v.startDate),
       endDate: this.formatDate(v.endDate)
     });

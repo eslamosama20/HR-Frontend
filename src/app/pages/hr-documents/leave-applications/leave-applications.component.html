@@ -26,7 +26,6 @@
           <th pSortableColumn="startDate">تاريخ البداية <p-sortIcon field="startDate"></p-sortIcon></th>
           <th pSortableColumn="endDate">تاريخ النهاية <p-sortIcon field="endDate"></p-sortIcon></th>
           <th pSortableColumn="totalDays">الأيام <p-sortIcon field="totalDays"></p-sortIcon></th>
-          <th pSortableColumn="status">الحالة <p-sortIcon field="status"></p-sortIcon></th>
           <th>الإجراءات</th>
         </tr>
       </ng-template>
@@ -40,18 +39,12 @@
           <td>{{item.endDate | date:'yyyy-MM-dd'}}</td>
           <td><span class="badge badge-light-dark">{{item.totalDays || 1}}</span></td>
           <td>
-            <span class="badge" [ngClass]="{'badge-light-info': item.status===0,'badge-light-success': item.status===1,'badge-light-danger': item.status===2,'badge-light-warning': item.status===3}">
-              {{item.status===0?'معلق':item.status===1?'معتمد':item.status===2?'مرفوض':'ملغي'}}
-            </span>
-          </td>
-          <td>
-            <button *ngIf="item.status===0" pButton icon="pi pi-check" class="p-button-rounded p-button-text p-button-success me-1" pTooltip="اعتماد الإجازة وإسقاطها فوراً على الحضور" tooltipPosition="top" (click)="approve(item)"></button>
             <button pButton icon="pi pi-pencil" class="p-button-rounded p-button-text p-button-warning me-1" pTooltip="تعديل" tooltipPosition="top" (click)="edit(item)"></button>
             <button pButton icon="pi pi-trash" class="p-button-rounded p-button-text p-button-danger" pTooltip="حذف" tooltipPosition="top" (click)="delete(item)"></button>
           </td>
         </tr>
       </ng-template>
-      <ng-template pTemplate="emptymessage"><tr><td colspan="9" class="text-center">لا توجد بيانات</td></tr></ng-template>
+      <ng-template pTemplate="emptymessage"><tr><td colspan="8" class="text-center">لا توجد بيانات</td></tr></ng-template>
     </p-table>
   </div>
 </div>
@@ -74,13 +67,9 @@
         <label class="form-label">تاريخ النهاية *</label>
         <p-calendar appendTo="body" formControlName="endDate" dateFormat="yy-mm-dd" (ngModelChange)="onDateChange()" styleClass="w-100"></p-calendar>
       </div>
-      <div class="col-md-6">
+      <div class="col-12">
         <label class="form-label">إجمالي الأيام</label>
         <p-inputNumber formControlName="totalDays" styleClass="w-100"></p-inputNumber>
-      </div>
-      <div class="col-md-6">
-        <label class="form-label">الحالة</label>
-        <p-dropdown appendTo="body" formControlName="status" [options]="statusOptions" styleClass="w-100"></p-dropdown>
       </div>
       <div class="col-12">
         <label class="form-label">السبب</label>
