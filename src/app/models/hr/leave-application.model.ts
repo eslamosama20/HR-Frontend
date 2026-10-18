@@ -5,6 +5,7 @@ export class LeaveApplicationModel extends EntityBase {
   employeeId: string;
   employee?: EmployeeModel;
   employeeName?: string;
+  employeeCode?: string;
   leaveType: number;
   startDate: Date | string;
   endDate: Date | string;

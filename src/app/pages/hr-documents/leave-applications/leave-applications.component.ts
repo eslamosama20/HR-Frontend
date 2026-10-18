@@ -57,10 +57,12 @@ export class LeaveApplicationsComponent implements OnInit {
   translate: TranslateService;
   columns = [
     {field: 'referenceNumber', header: 'REFERENCE_NUMBER'},
+    {field: 'employeeCode', header: 'EMPLOYEE_CODE'},
     {field: 'employeeName', header: 'EMPLOYEE'},
     {field: 'leaveType', header: 'LEAVE_TYPE'},
     {field: 'startDate', header: 'START_DATE'},
     {field: 'endDate', header: 'END_DATE'},
+    {field: 'totalDays', header: 'TOTAL_DAYS'},
     {field: 'status', header: 'STATUS'}
   ];
   leaveTypeOptions = [
@@ -74,7 +76,7 @@ export class LeaveApplicationsComponent implements OnInit {
   ];
   statusOptions = [
     {label: 'معلق', value: LeaveStatus.Pending},
-    {label: 'موافق عليه', value: LeaveStatus.Approved},
+    {label: 'معتمد', value: LeaveStatus.Approved},
     {label: 'مرفوض', value: LeaveStatus.Rejected},
     {label: 'ملغي', value: LeaveStatus.Cancelled}
   ];
@@ -87,8 +89,8 @@ export class LeaveApplicationsComponent implements OnInit {
     });
     this.formGroup = this.fb.group({
       id: [null], referenceNumber: [''], employeeId: [null, Validators.required], leaveType: [LeaveType.Annual, Validators.required],
-      startDate: [null, Validators.required], endDate: [null, Validators.required], totalDays: [null],
-      reason: [''], notes: [''], status: [LeaveStatus.Pending]
+      startDate: [null, Validators.required], endDate: [null, Validators.required], totalDays: [1],
+      reason: [''], notes: [''], status: [LeaveStatus.Approved]
     });
     if (this.activeLanguage === 'ar') this.primengConfig.setTranslation(primengArTranslations);
   }
@@ -104,31 +106,127 @@ export class LeaveApplicationsComponent implements OnInit {
 
   loadData(): void {
     this.loading = true;
-    this.itemService.getAll().subscribe({ next: (data) => { this.items = data; this.loading = false; }, error: () => { this.messageService.add({severity: 'error', summary: 'خطأ', detail: 'فشل في تحميل البيانات'}); this.loading = false; }});
-    this.employeeService.getAll().subscribe({ next: (data) => this.employeesSignal.set(data.map((e: any) => ({label: e.name, value: e.id}))) });
+    this.itemService.getAll().subscribe({
+      next: (data) => { this.items = data; this.loading = false; },
+      error: () => { this.messageService.add({severity: 'error', summary: 'خطأ', detail: 'فشل في تحميل البيانات'}); this.loading = false; }
+    });
+    this.employeeService.getAll().subscribe({
+      next: (data) => this.employeesSignal.set(data.map((e: any) => ({
+        label: `${e.code ? '[' + e.code + '] ' : ''}${e.name}`,
+        value: e.id,
+        name: e.name,
+        code: e.code
+      })))
+    });
   }
 
-  openNew(): void { this.formGroup.reset({leaveType: LeaveType.Annual, status: LeaveStatus.Pending}); this.dialogVisible = true; }
+  getLeaveTypeName(type: number): string {
+    const opt = this.leaveTypeOptions.find(o => o.value === type);
+    return opt ? opt.label : 'إجازة';
+  }
 
-  edit(item: LeaveApplicationModel): void {
-    this.formGroup.patchValue({...item, startDate: item.startDate ? new Date(item.startDate) : null, endDate: item.endDate ? new Date(item.endDate) : null});
+  onDateChange(): void {
+    const start = this.formGroup.get('startDate')?.value;
+    const end = this.formGroup.get('endDate')?.value;
+    if (start && end) {
+      const s = new Date(start);
+      const e = new Date(end);
+      if (!isNaN(s.getTime()) && !isNaN(e.getTime()) && e >= s) {
+        const diffTime = Math.abs(e.getTime() - s.getTime());
+        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
+        this.formGroup.patchValue({ totalDays: diffDays });
+      }
+    }
+  }
+
+  openNew(): void {
+    this.formGroup.reset({
+      leaveType: LeaveType.Annual,
+      status: LeaveStatus.Approved,
+      totalDays: 1
+    });
     this.dialogVisible = true;
   }
 
-  private formatDate(d: any): string | null { if (!d) return null; return d instanceof Date ? d.toISOString().split('T')[0] : typeof d === 'string' && d.trim() ? d.split('T')[0] : null; }
+  edit(item: LeaveApplicationModel): void {
+    this.formGroup.patchValue({
+      ...item,
+      startDate: item.startDate ? new Date(item.startDate) : null,
+      endDate: item.endDate ? new Date(item.endDate) : null
+    });
+    this.dialogVisible = true;
+  }
+
+  private formatDate(d: any): string | null {
+    if (!d) return null;
+    return d instanceof Date ? d.toISOString().split('T')[0] : typeof d === 'string' && d.trim() ? d.split('T')[0] : null;
+  }
 
   save(): void {
-    if (this.formGroup.invalid) { this.messageService.add({severity: 'warn', summary: 'تنبيه', detail: 'يرجى ملء الحقول المطلوبة'}); return; }
+    if (this.formGroup.invalid) {
+      this.messageService.add({severity: 'warn', summary: 'تنبيه', detail: 'يرجى ملء الحقول المطلوبة'});
+      return;
+    }
     const v = this.formGroup.value;
-    const payload = new LeaveApplicationModel({...v, startDate: this.formatDate(v.startDate), endDate: this.formatDate(v.endDate)});
+    const payload = new LeaveApplicationModel({
+      ...v,
+      startDate: this.formatDate(v.startDate),
+      endDate: this.formatDate(v.endDate)
+    });
     const obs = v.id ? this.itemService.update(payload) : this.itemService.create(payload);
-    obs.subscribe({ next: () => { this.messageService.add({severity: 'success', summary: 'تم بنجاح', detail: 'تم الحفظ بنجاح'}); this.dialogVisible = false; this.loadData(); }, error: () => this.messageService.add({severity: 'error', summary: 'خطأ', detail: 'فشل في الحفظ'}) });
+    obs.subscribe({
+      next: () => {
+        this.messageService.add({
+          severity: 'success',
+          summary: 'تم بنجاح',
+          detail: 'تم حفظ الإجازة وتحديث سجل الحضور ورصيد الإجازات بنجاح'
+        });
+        this.dialogVisible = false;
+        this.loadData();
+      },
+      error: () => this.messageService.add({severity: 'error', summary: 'خطأ', detail: 'فشل في الحفظ'})
+    });
+  }
+
+  approve(item: LeaveApplicationModel): void {
+    this.confirmationService.confirm({
+      message: `هل أنت متأكد من اعتماد إجازة الموظف (${item.employeeName || ''})؟ سيتم تسجيل الأيام كإجازة معتمدة في الحضور وخصمها من الرصيد أو كخصم يوم بيوم في الرواتب.`,
+      header: 'تأكيد اعتماد الإجازة',
+      icon: 'pi pi-check-circle',
+      acceptLabel: 'نعم، اعتمد',
+      rejectLabel: 'إلغاء',
+      accept: () => {
+        const approverId = this.authService.currentUserValue?.id || item.employeeId;
+        this.itemService.approve(item.id!, approverId).subscribe({
+          next: () => {
+            this.messageService.add({
+              severity: 'success',
+              summary: 'تم الاعتماد بنجاح',
+              detail: 'تم اعتماد الإجازة وإسقاطها فوراً على الحضور'
+            });
+            this.loadData();
+          },
+          error: () => this.messageService.add({severity: 'error', summary: 'خطأ', detail: 'فشل في اعتماد الإجازة'})
+        });
+      }
+    });
   }
 
   delete(item: LeaveApplicationModel): void {
-    this.confirmationService.confirm({ message: 'هل أنت متأكد؟', accept: () => {
-      this.itemService.delete(item.id!).subscribe({ next: () => { this.messageService.add({severity: 'success', summary: 'تم بنجاح', detail: 'تم الحذف بنجاح'}); this.loadData(); }, error: () => this.messageService.add({severity: 'error', summary: 'خطأ', detail: 'فشل في الحذف'}) });
-    }});
+    this.confirmationService.confirm({
+      message: 'هل أنت متأكد من حذف هذه الإجازة؟',
+      acceptLabel: 'نعم، احذف',
+      rejectLabel: 'إلغاء',
+      accept: () => {
+        this.itemService.delete(item.id!).subscribe({
+          next: () => {
+            this.messageService.add({severity: 'success', summary: 'تم بنجاح', detail: 'تم الحذف بنجاح'});
+            this.loadData();
+          },
+          error: () => this.messageService.add({severity: 'error', summary: 'خطأ', detail: 'فشل في الحذف'})
+        });
+      }
+    });
   }
 
   onGlobalFilter(table: Table, event: Event): void { table.filterGlobal((event.target as HTMLInputElement).value, 'contains'); }
