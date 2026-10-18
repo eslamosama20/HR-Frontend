@@ -29,6 +29,30 @@ export class EmployeeModel extends EntityBase {
   remainingLeaveBalance: number;
   deviceId: string;
 
+  // Falcon Factory Fields
+  department?: string;
+  workshop?: string;
+  jobTitle?: string;
+  nationalId?: string;
+  address?: string;
+  governorate?: string;
+  birthDate?: string;
+  insuranceNumber?: string;
+  insuranceTitle?: string;
+
+  // Allowances & Bonuses
+  livingAllowance: number = 0;
+  mealAllowance: number = 0;
+  transportAllowance: number = 0;
+  housingAllowance: number = 0;
+  extraIncrease: number = 0;
+  supervisionBonus: number = 0;
+  masteryBonus: number = 0;
+  regularityBonus: number = 0;
+
+  totalGrossSalary?: number;
+  overtimeBaseSalary?: number;
+
   constructor(data?: Partial<EmployeeModel>) {
     super(data);
     if (data) {

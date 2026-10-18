@@ -1,0 +1,217 @@
+<p-toast></p-toast>
+
+<div class="hr-letter-page-container">
+  <!-- Top Control and Generator Panel (Hidden when printing) -->
+  <div class="card shadow-sm border-0 mb-4 p-4 no-print bg-white rounded-3">
+    <div class="d-flex align-items-center justify-content-between pb-3 mb-3 border-bottom">
+      <div>
+        <h4 class="fw-bolder text-dark mb-1">
+          <i class="pi pi-file-edit text-primary me-2"></i>خطاب مفردات مرتب وإثبات دخل (HR Letter)
+        </h4>
+        <span class="text-muted fs-7">إصدار خطابات رسمية معتمدة للموظفين موجهة للبنوك، السفارات، والجهات الحكومية</span>
+      </div>
+      <div *ngIf="isGenerated">
+        <button
+          pButton
+          type="button"
+          label="طباعة الخطاب الرسمي"
+          icon="pi pi-print"
+          class="p-button-success shadow-sm"
+          (click)="printLetter()">
+        </button>
+      </div>
+    </div>
+
+    <!-- Inputs Row -->
+    <div class="row g-3">
+      <!-- Employee Selection -->
+      <div class="col-lg-4 col-md-6">
+        <label class="form-label fw-bold text-dark fs-7 mb-2">
+          <i class="pi pi-user text-primary me-1"></i>اختر الموظف *
+        </label>
+        <p-dropdown
+          [options]="employeesList"
+          [(ngModel)]="selectedEmployeeId"
+          placeholder="ابحث بالاسم أو كود البصمة..."
+          [filter]="true"
+          filterBy="label"
+          styleClass="w-100 p-inputtext-sm modern-dropdown"
+          appendTo="body"
+          [showClear]="true"
+          (onChange)="onEmployeeSelect()">
+        </p-dropdown>
+      </div>
+
+      <!-- Addressed To -->
+      <div class="col-lg-4 col-md-6">
+        <label class="form-label fw-bold text-dark fs-7 mb-2">
+          <i class="pi pi-building text-primary me-1"></i>الجهة الموجه إليها الخطاب
+        </label>
+        <div class="d-flex gap-2">
+          <p-dropdown
+            [options]="addressedToPresets"
+            [(ngModel)]="letterForm.addressedTo"
+            placeholder="اختر صيغة التوجيه..."
+            styleClass="w-100 p-inputtext-sm"
+            appendTo="body">
+          </p-dropdown>
+        </div>
+      </div>
+
+      <!-- Letter Date -->
+      <div class="col-lg-4 col-md-6">
+        <label class="form-label fw-bold text-dark fs-7 mb-2">
+          <i class="pi pi-calendar text-primary me-1"></i>تاريخ إصدار الخطاب
+        </label>
+        <p-calendar
+          [(ngModel)]="letterForm.letterDate"
+          dateFormat="dd/mm/yy"
+          [showIcon]="true"
+          styleClass="w-100 p-inputtext-sm">
+        </p-calendar>
+      </div>
+
+      <!-- Optional Custom Fields when employee is selected -->
+      <div *ngIf="isGenerated" class="col-12 mt-3 pt-3 border-top">
+        <div class="row g-3">
+          <div class="col-md-3">
+            <label class="form-label fw-semibold text-muted fs-8">جهة مخصصة (إن لم تكن بالقائمة)</label>
+            <input type="text" pInputText [(ngModel)]="letterForm.addressedTo" class="form-control form-control-sm" />
+          </div>
+          <div class="col-md-3">
+            <label class="form-label fw-semibold text-muted fs-8">الراتب الأساسي بالشهادة (ج.م)</label>
+            <p-inputNumber [(ngModel)]="letterForm.basicSalary" mode="decimal" [minFractionDigits]="2" styleClass="w-100 p-inputtext-sm"></p-inputNumber>
+          </div>
+          <div class="col-md-3">
+            <label class="form-label fw-semibold text-muted fs-8">إجمالي الراتب الشامل (ج.م)</label>
+            <p-inputNumber [(ngModel)]="letterForm.totalGrossSalary" mode="decimal" [minFractionDigits]="2" styleClass="w-100 p-inputtext-sm"></p-inputNumber>
+          </div>
+          <div class="col-md-3">
+            <label class="form-label fw-semibold text-muted fs-8">الغرض من الخطاب</label>
+            <input type="text" pInputText [(ngModel)]="letterForm.purpose" class="form-control form-control-sm" />
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Empty state before selection -->
+  <div *ngIf="!isGenerated" class="card p-5 text-center bg-light border-dashed rounded-3 my-4 no-print">
+    <div class="my-5">
+      <i class="pi pi-envelope text-primary opacity-50" style="font-size: 4rem;"></i>
+      <h4 class="mt-3 text-dark fw-bold">اختر الموظف لإنشاء وتجهيز الـ HR Letter</h4>
+      <p class="text-muted fs-6">سيتم سحب كامل بيانات الموظف وراتبه وتجهيز الخطاب بالصيغة القانونية المعتمدة للطباعة الفورية.</p>
+    </div>
+  </div>
+
+  <!-- Official Letter Preview / Printable Area -->
+  <div *ngIf="isGenerated" class="letter-preview-wrapper d-flex justify-content-center">
+    <div #letterPrintArea id="hrLetterPrintSheet" class="official-letter-sheet card shadow border-0 p-5 bg-white">
+      
+      <!-- Company Official Header -->
+      <div class="official-header d-flex justify-content-between align-items-center pb-4 mb-4 border-bottom border-2 border-primary">
+        <div class="d-flex align-items-center gap-3">
+          <div class="company-logo-circle bg-primary text-white d-flex align-items-center justify-content-center rounded-circle shadow-sm">
+            <i class="pi pi-building fs-2"></i>
+          </div>
+          <div>
+            <h2 class="fw-bolder text-dark mb-0 letter-company-name">Smart And Pro ERP</h2>
+            <span class="text-muted fw-semibold fs-7">إدارة الموارد البشرية والشؤون الإدارية (Human Resources)</span>
+          </div>
+        </div>
+        <div class="text-end">
+          <div class="fs-8 text-muted">التاريخ: <strong class="text-dark">{{letterForm.letterDate | date:'yyyy/MM/dd'}}</strong></div>
+          <div class="fs-8 text-muted mt-1">الرقم المرجعي: <strong class="text-dark">HRL-{{letterForm.employeeId.substring(0, 6).toUpperCase()}}</strong></div>
+        </div>
+      </div>
+
+      <!-- Addressed To Box -->
+      <div class="addressed-to-section my-4">
+        <h4 class="fw-bold text-dark mb-1">{{letterForm.addressedTo}}</h4>
+        <h5 class="fw-semibold text-gray-700">تحية طيبة وبعد،،،</h5>
+      </div>
+
+      <!-- Letter Subject -->
+      <div class="letter-subject-badge text-center my-4 py-2 px-4 rounded-2 bg-light border">
+        <h4 class="fw-bolder text-primary mb-0">الموضوع: شهادة إثبات دخل وعمل (HR Letter)</h4>
+      </div>
+
+      <!-- Letter Body Text -->
+      <div class="letter-content-body fs-5 text-gray-800 lh-lg my-4 text-justify">
+        <p>
+          تشهد إدارة شركة <strong>Smart And Pro ERP</strong> بأن السيد / 
+          <strong class="text-primary fs-4 mx-1 underline-name">{{letterForm.employeeName}}</strong>،
+          يحمل بطاقة رقم قومي رقم: (<strong class="text-dark">{{letterForm.nationalId}}</strong>)،
+          يعمل طرفنا في وظيفة: <strong>{{letterForm.jobTitle}}</strong>
+          بـ <strong>{{letterForm.department}}</strong>،
+          وذلك اعتباراً من تاريخ تعيينه في <strong>{{letterForm.startDate}}</strong> وحتى تاريخ إصدار هذا الخطاب، وما زال على رأس عمله حتى الآن.
+        </p>
+
+        <p class="mt-3">
+          كما نفيد سيادتكم بأن المذكور يتقاضى راتباً شهرياً تفصيله كالتالي:
+        </p>
+
+        <!-- Salary Breakdown Mini-Table -->
+        <div class="salary-details-table-wrapper my-4">
+          <table class="table table-bordered border-secondary table-sm align-middle mb-0 text-center">
+            <thead class="table-light">
+              <tr class="fw-bold">
+                <th class="py-2">الراتب الأساسي</th>
+                <th class="py-2">البدلات والحوافز الشهرية</th>
+                <th class="py-2 bg-primary text-white">إجمالي الراتب الشامل (Gross Salary)</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr class="fs-6">
+                <td class="py-2">{{letterForm.basicSalary | number:'1.2-2'}} ج.م</td>
+                <td class="py-2">{{letterForm.allowances | number:'1.2-2'}} ج.م</td>
+                <td class="py-2 fw-bolder text-primary fs-5">{{letterForm.totalGrossSalary | number:'1.2-2'}} ج.م</td>
+              </tr>
+              <tr>
+                <td colspan="3" class="py-2 bg-light text-muted fs-7">
+                  فقط وقدره: <strong class="text-dark">{{numberToArabicWords(letterForm.totalGrossSalary)}}</strong>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <p class="mt-4">
+          وقد أُعطيت له هذه الشهادة بناءً على طلبه لتقديمها إلى (<strong>{{letterForm.addressedTo}}</strong>)
+          لغرض: <em>{{letterForm.purpose}}</em>، وذلك دون أدنى مسؤولية مالية أو قانونية على الشركة تجاه حقوق الغير.
+        </p>
+
+        <p class="mt-4 text-center fw-bold text-gray-700">
+          وتفضلوا بقبول فائق الاحترام والتقدير،،،
+        </p>
+      </div>
+
+      <!-- Official Signatures and Stamp Section -->
+      <div class="official-signatures-section row mt-5 pt-4 text-center align-items-end">
+        <div class="col-4">
+          <span class="fw-bold text-dark d-block mb-1 fs-6">إعداد الموارد البشرية</span>
+          <span class="text-muted fs-8 d-block mb-4">HR Specialist</span>
+          <div class="signature-dots text-muted">..................................</div>
+        </div>
+
+        <div class="col-4">
+          <div class="stamp-box mx-auto d-flex align-items-center justify-content-center rounded-circle border border-2 border-danger text-danger">
+            <span class="fs-8 fw-bold">خاتم الشركة المعتمد<br>(Company Seal)</span>
+          </div>
+        </div>
+
+        <div class="col-4">
+          <span class="fw-bold text-dark d-block mb-1 fs-6">مدير عام الموارد البشرية</span>
+          <span class="text-muted fs-8 d-block mb-4">HR Director</span>
+          <div class="signature-dots text-muted">..................................</div>
+        </div>
+      </div>
+
+      <!-- Footer Contact Info -->
+      <div class="official-footer mt-5 pt-3 border-top d-flex justify-content-between align-items-center text-muted fs-8">
+        <div>Smart And Pro ERP System &copy; جميع الحقوق محفوظة</div>
+        <div>هذا المستند صادر إلكترونياً ومعتمد رسمياً من الإدارة</div>
+      </div>
+    </div>
+  </div>
+</div>

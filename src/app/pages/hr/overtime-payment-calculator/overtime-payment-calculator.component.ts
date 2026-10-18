@@ -53,6 +53,39 @@ export class OvertimePaymentCalculatorComponent implements OnInit {
     this.searchValueSignal.set(value);
   }
 
+  get filteredFactory1OvertimePayments() {
+    if (!this.overtimePaymentResults?.factory1OvertimePayments) return [];
+    if (!this.searchValue?.trim()) return this.overtimePaymentResults.factory1OvertimePayments;
+    const term = this.searchValue.trim().toLowerCase();
+    return this.overtimePaymentResults.factory1OvertimePayments.filter(p =>
+      (p.employeeName && p.employeeName.toLowerCase().includes(term)) ||
+      (p.deviceId && p.deviceId.toString().toLowerCase().includes(term)) ||
+      (p.employeeTypeName && p.employeeTypeName.toLowerCase().includes(term))
+    );
+  }
+
+  get filteredFactory2OvertimePayments() {
+    if (!this.overtimePaymentResults?.factory2OvertimePayments) return [];
+    if (!this.searchValue?.trim()) return this.overtimePaymentResults.factory2OvertimePayments;
+    const term = this.searchValue.trim().toLowerCase();
+    return this.overtimePaymentResults.factory2OvertimePayments.filter(p =>
+      (p.employeeName && p.employeeName.toLowerCase().includes(term)) ||
+      (p.deviceId && p.deviceId.toString().toLowerCase().includes(term)) ||
+      (p.employeeTypeName && p.employeeTypeName.toLowerCase().includes(term))
+    );
+  }
+
+  get filteredFactory3OvertimePayments() {
+    if (!this.overtimePaymentResults?.factory3OvertimePayments) return [];
+    if (!this.searchValue?.trim()) return this.overtimePaymentResults.factory3OvertimePayments;
+    const term = this.searchValue.trim().toLowerCase();
+    return this.overtimePaymentResults.factory3OvertimePayments.filter(p =>
+      (p.employeeName && p.employeeName.toLowerCase().includes(term)) ||
+      (p.deviceId && p.deviceId.toString().toLowerCase().includes(term)) ||
+      (p.employeeTypeName && p.employeeTypeName.toLowerCase().includes(term))
+    );
+  }
+
   selectedDateSignal = signal<Date>(new Date());
 
   get selectedDate() {
@@ -118,7 +151,7 @@ export class OvertimePaymentCalculatorComponent implements OnInit {
 
   downloadAsExcel(factory: number): void {
     const headerColumns = [[
-      'م', 'الاسم', 'الوظيفة', 'المرتب الأساسي', 'سعر الساعة', 'عدد الساعات الإضافية', 'الأجر المستحق'
+      'م', 'كود', 'الاسم', 'الوظيفة', 'المرتب الأساسي', 'سعر الساعة', 'عدد الساعات الإضافية', 'الأجر المستحق'
     ]];
 
     // Create sheet from header
@@ -128,13 +161,14 @@ export class OvertimePaymentCalculatorComponent implements OnInit {
     let data: any[][] = [];
 
     const records = factory === 1
-      ? this.overtimePaymentResults.factory1OvertimePayments
+      ? this.filteredFactory1OvertimePayments
       : factory === 2
-      ? this.overtimePaymentResults.factory2OvertimePayments
-      : this.overtimePaymentResults.factory3OvertimePayments;
+      ? this.filteredFactory2OvertimePayments
+      : this.filteredFactory3OvertimePayments;
 
     data = records.map((pr, index) => ([
       index + 1,                // Serial number
+      pr.deviceId || '',
       pr.employeeName,
       pr.employeeTypeName,
       pr.monthlyRate,

@@ -108,7 +108,7 @@
       class="menu-item menu-accordion"
       data-kt-menu-trigger="click"
       routerLinkActive="here show"
-      *ngIf="userHasAnyPermission(['PaymentCalculator.Read', 'OvertimePaymentCalculator.Read', 'MonthlyLoan.Read', 'Bonus.Read', 'Penalty.Read', 'OvertimeHours.Read'])"
+      *ngIf="userHasAnyPermission(['PaymentCalculator.Read', 'OvertimePaymentCalculator.Read', 'MonthlyLoan.Read', 'Bonus.Read', 'Penalty.Read', 'OvertimeHours.Read', 'SalarySlip.Read'])"
     >
       <span class="menu-link">
         <span class="menu-icon">
@@ -167,6 +167,14 @@
             <span class="menu-title custom-link">الجزاءات والخصومات</span>
           </a>
         </div>
+        <div *ngIf="userHasPermission('SalarySlip.Read')" class="menu-item">
+          <a class="menu-link without-sub" routerLink="/salary-slips" routerLinkActive="active">
+            <span class="menu-bullet">
+              <i class="pi pi-file-edit custom-link-no-hover" style="font-size: 1.2rem; color: #708090"></i>
+            </span>
+            <span class="menu-title custom-link">بيان الرواتب</span>
+          </a>
+        </div>
       </div>
     </div>
 
@@ -175,7 +183,7 @@
       class="menu-item menu-accordion"
       data-kt-menu-trigger="click"
       routerLinkActive="here show"
-      *ngIf="userHasAnyPermission(['LeaveApplication.Read', 'ResignationRequest.Read', 'EmploymentApplication.Read', 'HrTrustReceipt.Read', 'SalarySlip.Read', 'BankDocument.Read', 'InsuranceRecord.Read', 'HRAttachment.Read'])"
+      *ngIf="userHasAnyPermission(['LeaveApplication.Read', 'ResignationRequest.Read', 'EmploymentApplication.Read', 'HrTrustReceipt.Read', 'BankDocument.Read', 'InsuranceRecord.Read', 'HRAttachment.Read'])"
     >
       <span class="menu-link">
         <span class="menu-icon">
@@ -204,12 +212,6 @@
             <span class="menu-title custom-link">طلبات الاستقالة</span>
           </a>
         </div>
-        <div class="menu-item" *ngIf="userHasPermission('SalarySlip.Read')">
-          <a class="menu-link without-sub" routerLink="/salary-slips" routerLinkActive="active">
-            <span class="menu-bullet"><span class="bullet bullet-dot"></span></span>
-            <span class="menu-title custom-link">مفردات المرتب</span>
-          </a>
-        </div>
         <div class="menu-item" *ngIf="userHasPermission('HrTrustReceipt.Read')">
           <a class="menu-link without-sub" routerLink="/hr-trust-receipts" routerLinkActive="active">
             <span class="menu-bullet"><span class="bullet bullet-dot"></span></span>
@@ -226,6 +228,12 @@
           <a class="menu-link without-sub" routerLink="/insurance-records" routerLinkActive="active">
             <span class="menu-bullet"><span class="bullet bullet-dot"></span></span>
             <span class="menu-title custom-link">سجلات التأمينات</span>
+          </a>
+        </div>
+        <div class="menu-item">
+          <a class="menu-link without-sub" routerLink="/hr-letter" routerLinkActive="active">
+            <span class="menu-bullet"><span class="bullet bullet-dot"></span></span>
+            <span class="menu-title custom-link">مفردات مرتب (HR Letter)</span>
           </a>
         </div>
         <div class="menu-item" *ngIf="userHasPermission('HRAttachment.Read')">

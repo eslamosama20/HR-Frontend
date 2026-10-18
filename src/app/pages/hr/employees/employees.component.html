@@ -62,6 +62,7 @@
   </ng-template>
   <ng-template pTemplate="header" let-columns>
     <tr>
+      <th style="width: 3.5rem; text-align: center;">م</th>
       <th
         style="min-width: fit-content"
         *ngFor="let column of columns"
@@ -86,45 +87,46 @@
       </th>
     </tr>
   </ng-template>
-  <ng-template pTemplate="body" let-Entry>
+  <ng-template pTemplate="body" let-Entry let-rowIndex="rowIndex">
     <tr *ngIf="employees.length > 0">
-      <td class="text-lg rtl:text-right font-bold text-sky-700">
+      <td class="text-center font-bold text-gray-500 w-12">{{ rowIndex + 1 }}</td>
+      <td class="text-base rtl:text-right font-bold text-sky-700">
         {{ Entry.deviceId || '-' }}
       </td>
-      <td class="text-lg rtl:text-right text-gray-500">
-        {{ Entry.referenceNumber }}
-      </td>
-      <td class="text-lg rtl:text-right">
+      <td class="text-base rtl:text-right font-semibold">
         {{ Entry.name }}
       </td>
-      <td class="text-lg rtl:text-right">
-        {{ Entry.phone }}
+      <td class="text-sm rtl:text-right">
+        <span class="px-2 py-0.5 rounded text-xs font-semibold"
+              [ngClass]="Entry.workshop === 'فاشون' ? 'bg-purple-100 text-purple-700' : Entry.workshop === 'جينز' ? 'bg-blue-100 text-blue-700' : 'bg-gray-100 text-gray-700'">
+          {{ Entry.workshop || 'مشترك' }}
+        </span>
       </td>
-      <td class="text-lg rtl:text-right">
-        {{ Entry.employmentTypeName }}
+      <td class="text-sm rtl:text-right text-gray-600">
+        {{ Entry.department || '-' }}
       </td>
-      <td class="text-lg rtl:text-right">
-        {{ Entry.shiftName }}
+      <td class="text-sm rtl:text-right text-gray-700">
+        {{ Entry.jobTitle || Entry.employmentTypeName || '-' }}
       </td>
-      <td class="text-lg rtl:text-right">
-        {{ Entry.leaveBalance | number }}
+      <td class="text-sm rtl:text-right">
+        {{ Entry.phone || '-' }}
       </td>
-      <td class="text-lg rtl:text-right">
-        {{ Entry.monthlyRate | currency : "EGP" : "symbol" : "1.0-2" : "ar-EG" }}
+      <td class="text-base rtl:text-right font-medium">
+        {{ (Entry.monthlyRate || 0) | currency : "EGP" : "symbol" : "1.0-0" : "ar-EG" }}
       </td>
-      <td class="text-lg rtl:text-right">
-        {{ Entry.supplementaryRate | currency : "EGP" : "symbol" : "1.0-2" : "ar-EG" }}
+      <td class="text-base rtl:text-right font-semibold text-emerald-600">
+        {{ (Entry.regularityBonus || 0) | currency : "EGP" : "symbol" : "1.0-0" : "ar-EG" }}
       </td>
-      <td class="text-lg rtl:text-right">
-        {{ Entry.monthlyInsurance | currency : "EGP" : "symbol" : "1.0-2" : "ar-EG" }}
+      <td class="text-base rtl:text-right font-bold text-sky-800">
+        {{ (Entry.totalGrossSalary || 0) | currency : "EGP" : "symbol" : "1.0-0" : "ar-EG" }}
       </td>
-       <td class="text-lg rtl:text-right">
-        {{ Entry.factoryType === 'Factory1' ? 'المصنع الأول' : Entry.factoryType === 'Factory2' ? 'المصنع الثاني' : Entry.factoryType === 'Factory3' ? 'المصنع الثالث' : 'غير محدد' }}
-       </td>
-      <td class="text-lg rtl:text-right">
-          {{
-            Entry.createdAt ? (Entry.createdAt | date : "yyyy/MM/dd  hh:mm a" : "": "ar-EG"): '-'
-          }}
+      <td class="text-sm rtl:text-right text-gray-500">
+        {{ (Entry.monthlyInsurance || 0) | currency : "EGP" : "symbol" : "1.0-0" : "ar-EG" }}
+      </td>
+      <td class="text-sm rtl:text-right">
+        <span class="text-xs bg-slate-100 text-slate-700 px-2 py-0.5 rounded">
+          {{ Entry.factoryType === 'Factory1' ? 'المصنع الأول' : Entry.factoryType === 'Factory2' ? 'المصنع الثاني' : Entry.factoryType === 'Factory3' ? 'المصنع الثالث' : 'غير محدد' }}
+        </span>
       </td>
       <td class="text-lg rtl:text-right flex gap-2">
         <ng-container

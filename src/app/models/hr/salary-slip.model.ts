@@ -2,7 +2,11 @@ import { EntityBase } from '../base/entity-base';
 import { EmployeeModel } from './employee.model';
 
 export class SalarySlipModel extends EntityBase {
+  referenceNumber?: string;
   employeeId: string;
+  employeeName?: string;
+  deviceId?: string;
+  jobTitle?: string;
   employee?: EmployeeModel;
   month: number;
   year: number;

@@ -182,6 +182,24 @@ export class EmployeeComponent implements OnInit {
       overtimeRateMultiplier: [1.5, Validators.required],
       absentRateMultiplier: [1.5, Validators.required],
       lateRateMultiplier: [1.5, Validators.required],
+      // Falcon Factory fields
+      department: [''],
+      workshop: ['مشترك'],
+      jobTitle: [''],
+      nationalId: [''],
+      address: [''],
+      governorate: [''],
+      birthDate: [null],
+      insuranceNumber: [''],
+      insuranceTitle: [''],
+      livingAllowance: [500],
+      mealAllowance: [500],
+      transportAllowance: [500],
+      housingAllowance: [0],
+      extraIncrease: [0],
+      supervisionBonus: [0],
+      masteryBonus: [500],
+      regularityBonus: [500],
     });
 
     this.employeeFormGroup.get('deviceId')?.valueChanges.subscribe(() => {
@@ -240,6 +258,21 @@ export class EmployeeComponent implements OnInit {
     }
   }
 
+  getNextEmployeeCode(): string {
+    if (!this.allEmployees || this.allEmployees.length === 0) {
+      return '1';
+    }
+    let maxCode = 0;
+    for (const emp of this.allEmployees) {
+      const codeStr = emp.deviceId !== null && emp.deviceId !== undefined ? emp.deviceId.toString().trim() : '';
+      const num = parseInt(codeStr, 10);
+      if (!isNaN(num) && num > maxCode) {
+        maxCode = num;
+      }
+    }
+    return maxCode > 0 ? (maxCode + 1).toString() : '1';
+  }
+
   loadData(): void {
     this.loading = true;
     const employeeId = this.route.snapshot.paramMap.get('id');
@@ -264,7 +297,15 @@ export class EmployeeComponent implements OnInit {
         if (this.isEditMode) {
           this.loadMode();
         } else {
+          const nextCode = this.getNextEmployeeCode();
+          this.employeeFormGroup.patchValue({ deviceId: nextCode });
           this.checkDuplicateCode();
+          if (!this.employeeFormGroup.get('shiftId')?.value && this.shiftsOptions.length > 0) {
+            this.employeeFormGroup.patchValue({ shiftId: this.shiftsOptions[0].value });
+          }
+          if (!this.employeeFormGroup.get('employmentTypeId')?.value && this.employmentTypesOptions.length > 0) {
+            this.employeeFormGroup.patchValue({ employmentTypeId: this.employmentTypesOptions[0].value });
+          }
         }
         this.loading = false;
       },
@@ -322,12 +363,22 @@ export class EmployeeComponent implements OnInit {
           }
         } catch { }
 
+        let formattedBirthDate = null;
+        try {
+          if (employee.birthDate) {
+            formattedBirthDate = typeof employee.birthDate === 'string'
+              ? unFormatDateOnly(new Date(employee.birthDate))
+              : unFormatDateOnly(employee.birthDate);
+          }
+        } catch { }
+
         const patchData: any = {
           ...employee,
           employmentTypeId: employee.employmentTypeId,
           shiftId: employee.shiftId,
           startDate: formattedStartDate,
-          endDate: formattedEndDate
+          endDate: formattedEndDate,
+          birthDate: formattedBirthDate
         };
         this.employeeFormGroup.patchValue(patchData);
         this.loading = false;
@@ -348,6 +399,33 @@ export class EmployeeComponent implements OnInit {
     return this.userPermissions?.some(x => x.name === permission)
   }
   isSubmitted: boolean = false;
+
+  get totalGrossSalary(): number {
+    if (!this.employeeFormGroup) return 0;
+    const v = this.employeeFormGroup.value;
+    return (Number(v.monthlyRate) || 0) +
+           (Number(v.livingAllowance) || 0) +
+           (Number(v.mealAllowance) || 0) +
+           (Number(v.transportAllowance) || 0) +
+           (Number(v.housingAllowance) || 0) +
+           (Number(v.extraIncrease) || 0) +
+           (Number(v.supervisionBonus) || 0) +
+           (Number(v.masteryBonus) || 0) +
+           (Number(v.regularityBonus) || 0);
+  }
+
+  get overtimeBaseSalary(): number {
+    if (!this.employeeFormGroup) return 0;
+    const v = this.employeeFormGroup.value;
+    return (Number(v.monthlyRate) || 0) +
+           (Number(v.livingAllowance) || 0) +
+           (Number(v.mealAllowance) || 0) +
+           (Number(v.transportAllowance) || 0);
+  }
+
+  get overtimeHourlyRate(): number {
+    return Math.round((this.overtimeBaseSalary / 240) * 100) / 100;
+  }
 
   saveEmployee() {
     this.isSubmitted = true;
@@ -379,6 +457,30 @@ export class EmployeeComponent implements OnInit {
       ? rawShiftId.value
       : rawShiftId;
 
+    const assignFalconFields = (emp: EmployeeModel) => {
+      emp.department = employeeValues.department;
+      emp.workshop = employeeValues.workshop;
+      emp.jobTitle = employeeValues.jobTitle;
+      emp.nationalId = employeeValues.nationalId;
+      emp.address = employeeValues.address;
+      emp.governorate = employeeValues.governorate;
+      emp.birthDate = employeeValues.birthDate ?
+        typeof employeeValues.birthDate === 'string'
+          ? formatDateOnly(parseDateOnly(employeeValues.birthDate))
+          : formatDateOnly(employeeValues.birthDate)
+        : null;
+      emp.insuranceNumber = employeeValues.insuranceNumber;
+      emp.insuranceTitle = employeeValues.insuranceTitle;
+      emp.livingAllowance = Number(employeeValues.livingAllowance) || 0;
+      emp.mealAllowance = Number(employeeValues.mealAllowance) || 0;
+      emp.transportAllowance = Number(employeeValues.transportAllowance) || 0;
+      emp.housingAllowance = Number(employeeValues.housingAllowance) || 0;
+      emp.extraIncrease = Number(employeeValues.extraIncrease) || 0;
+      emp.supervisionBonus = Number(employeeValues.supervisionBonus) || 0;
+      emp.masteryBonus = Number(employeeValues.masteryBonus) || 0;
+      emp.regularityBonus = Number(employeeValues.regularityBonus) || 0;
+    };
+
     if (employeeValues.id) {
       const employee = new EmployeeModel();
       employee.id = employeeValues.id;
@@ -404,6 +506,8 @@ export class EmployeeComponent implements OnInit {
       employee.overtimeRateMultiplier = employeeValues.overtimeRateMultiplier ?? 1.5;
       employee.absentRateMultiplier = employeeValues.absentRateMultiplier ?? 1.5;
       employee.lateRateMultiplier = employeeValues.lateRateMultiplier ?? 1.5;
+      assignFalconFields(employee);
+
       this.employeeService.update(employee).subscribe({
         next: res => {
           this.messageService.add({ severity: 'success', summary: this.translate.instant('FINANCE.SUCCESS'), detail: "تم التعديل بنجاح" });
@@ -441,6 +545,8 @@ export class EmployeeComponent implements OnInit {
       employee.overtimeRateMultiplier = employeeValues.overtimeRateMultiplier ?? 1.5;
       employee.absentRateMultiplier = employeeValues.absentRateMultiplier ?? 1.5;
       employee.lateRateMultiplier = employeeValues.lateRateMultiplier ?? 1.5;
+      assignFalconFields(employee);
+
       this.employeeService.create(employee).subscribe({
         next: res => {
           console.log('Employee Saved', res);

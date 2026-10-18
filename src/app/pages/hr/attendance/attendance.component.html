@@ -63,6 +63,7 @@
   </ng-template>
   <ng-template pTemplate="header" let-columns>
     <tr>
+      <th style="width: 3.5rem; text-align: center;">م</th>
       <th
         style="min-width: fit-content"
         *ngFor="let column of columns"
@@ -87,8 +88,9 @@
       </th>
     </tr>
   </ng-template>
-  <ng-template pTemplate="body" let-Entry>
+  <ng-template pTemplate="body" let-Entry let-rowIndex="rowIndex">
     <tr *ngIf="attendances.length > 0">
+      <td class="text-center font-bold text-gray-500 w-12">{{ rowIndex + 1 }}</td>
       <td class="text-lg rtl:text-right font-bold text-sky-700">
         {{ Entry.employeeDeviceId || '-' }}
       </td>

@@ -1,0 +1,86 @@
+:host {
+  display: block;
+}
+
+.hr-letter-page-container {
+  padding-bottom: 3rem;
+}
+
+.border-dashed {
+  border: 2px dashed #cbd5e1 !important;
+}
+
+.letter-preview-wrapper {
+  width: 100%;
+}
+
+.official-letter-sheet {
+  width: 100%;
+  max-width: 850px;
+  min-height: 1050px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08) !important;
+  border-radius: 8px;
+  background-color: #ffffff;
+  position: relative;
+}
+
+.company-logo-circle {
+  width: 55px;
+  height: 55px;
+  min-width: 55px;
+}
+
+.letter-company-name {
+  letter-spacing: -0.5px;
+}
+
+.underline-name {
+  text-decoration: underline;
+  text-underline-offset: 4px;
+}
+
+.stamp-box {
+  width: 110px;
+  height: 110px;
+  border-style: dashed !important;
+  transform: rotate(-8deg);
+  opacity: 0.85;
+}
+
+.signature-dots {
+  letter-spacing: 2px;
+}
+
+/* Print Specific Rules */
+@media print {
+  body {
+    background: #ffffff !important;
+  }
+
+  .no-print,
+  .app-sidebar,
+  .app-header,
+  .app-footer,
+  aside,
+  header,
+  nav {
+    display: none !important;
+  }
+
+  .official-letter-sheet {
+    box-shadow: none !important;
+    border: none !important;
+    padding: 20px !important;
+    margin: 0 !important;
+    max-width: 100% !important;
+    width: 100% !important;
+    page-break-after: avoid;
+    page-break-inside: avoid;
+  }
+
+  .company-logo-circle,
+  .bg-primary {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+}

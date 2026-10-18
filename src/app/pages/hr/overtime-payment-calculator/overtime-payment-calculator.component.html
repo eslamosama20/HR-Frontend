@@ -1,7 +1,7 @@
 <div class="flex flex-col gap-2">
   <p-card header="حساب الأجر الإضافي" class="w-full" styleClass="w-full">
-    <div class="flex flex-col gap-8 w-full">
-      <div class="flex gap-4 items-end">
+    <div class="flex flex-col md:flex-row justify-between items-center gap-4 w-full">
+      <div class="flex items-center gap-3 w-full md:w-auto">
         <p-calendar
           [(ngModel)]="selectedDate"
           (onSelect)="checkIfMonthFinished()"
@@ -14,27 +14,64 @@
           appendTo="body"
           [maxDate]="maxSelectableDate"
         />
-        <p-button label="تحديث" styleClass="rounded-md" (onClick)="loadData()" />
-        <p *ngIf="monthNote" class="font-bold text-rose-700 text-2xl text-center underline w-full">
-          {{ monthNote }}
-        </p>
+        <p-button
+          label="تحديث"
+          icon="pi pi-refresh"
+          styleClass="rounded-md"
+          [loading]="loading"
+          (onClick)="loadData()"
+        />
       </div>
+
+      <!-- خانة البحث بالاسم أو الكود -->
+      <div class="flex items-center gap-2 w-full md:w-96">
+        <span class="p-input-icon-right w-full">
+          <i class="pi pi-search text-gray-400"></i>
+          <input
+            pInputText
+            type="text"
+            [(ngModel)]="searchValue"
+            placeholder="بحث بالاسم أو الكود أو الوظيفة..."
+            class="w-full p-inputtext-sm rounded-md"
+          />
+        </span>
+        <button
+          *ngIf="searchValue"
+          pButton
+          icon="pi pi-times"
+          class="p-button-text p-button-secondary p-button-sm"
+          (click)="searchValue = ''"
+          title="مسح البحث">
+        </button>
+      </div>
+
+      <p *ngIf="monthNote" class="text-center font-bold text-lg md:text-xl text-rose-700 underline">
+        {{ monthNote }}
+      </p>
     </div>
   </p-card>
 
+  <!-- مصنع 1 -->
   <p-card header="مصنع 1 - الأجر الإضافي" class="w-full" styleClass="w-full">
     <div class="flex flex-col gap-4">
-      <p-button
-        *ngIf="overtimePaymentResults.factory1OvertimePayments.length > 0 && !loading"
-        styleClass="rounded-md"
-        label="تحميل"
-        (onClick)="downloadAsExcel(1)"
-      />
+      <div class="flex justify-between items-center">
+        <p-button
+          *ngIf="overtimePaymentResults && overtimePaymentResults.factory1OvertimePayments.length > 0 && !loading"
+          styleClass="rounded-md"
+          label="تحميل إكسل"
+          icon="pi pi-file-excel"
+          (onClick)="downloadAsExcel(1)"
+        />
+        <span class="text-sm font-semibold text-gray-600" *ngIf="overtimePaymentResults && overtimePaymentResults.factory1OvertimePayments.length > 0">
+          عدد الموظفين: {{filteredFactory1OvertimePayments.length}} <span *ngIf="searchValue">من {{overtimePaymentResults.factory1OvertimePayments.length}}</span>
+        </span>
+      </div>
 
       <table class="w-full border border-gray-900 border-collapse text-center">
         <thead>
         <tr>
           <th class="border border-gray-900 w-8">م</th>
+          <th class="border border-gray-900 w-16">كود</th>
           <th class="border border-gray-900">الاسم</th>
           <th class="border border-gray-900">الوظيفة</th>
           <th class="border border-gray-900">المرتب الشهري</th>
@@ -44,33 +81,47 @@
         </tr>
         </thead>
         <tbody>
-        <tr *ngFor="let result of overtimePaymentResults.factory1OvertimePayments; let i = index">
+        <tr *ngFor="let result of filteredFactory1OvertimePayments; let i = index">
           <td class="border border-gray-900">{{ i + 1 }}</td>
-          <td class="border border-gray-900">{{ result.employeeName }}</td>
+          <td class="border border-gray-900 font-semibold text-sky-800">{{ result.deviceId || '-' }}</td>
+          <td class="border border-gray-900 text-right px-2">{{ result.employeeName }}</td>
           <td class="border border-gray-900">{{ result.employeeTypeName }}</td>
           <td class="border border-gray-900">{{ result.monthlyRate | number: '1.0-2' }}</td>
           <td class="border border-gray-900">{{ result.hourlyRate | number: '1.0-2' }}</td>
-          <td class="border border-gray-900">{{ result.overtimeHours }}</td>
-          <td class="border border-gray-900">{{ result.overtimePayment | number: '1.0-2' }}</td>
+          <td class="border border-gray-900 font-bold">{{ result.overtimeHours }}</td>
+          <td class="border border-gray-900 font-bold text-emerald-800">{{ result.overtimePayment | number: '1.0-2' }}</td>
+        </tr>
+        <tr *ngIf="filteredFactory1OvertimePayments.length === 0">
+          <td colspan="8" class="text-center py-6 text-gray-500 font-semibold bg-gray-50">
+            لا توجد نتائج مطابقة للبحث في مصنع 1
+          </td>
         </tr>
         </tbody>
       </table>
     </div>
   </p-card>
 
+  <!-- مصنع 2 -->
   <p-card header="مصنع 2 - الأجر الإضافي" class="w-full" styleClass="w-full">
     <div class="flex flex-col gap-4">
-      <p-button
-        *ngIf="overtimePaymentResults.factory2OvertimePayments.length > 0 && !loading"
-        styleClass="rounded-md"
-        label="تحميل"
-        (onClick)="downloadAsExcel(2)"
-      />
+      <div class="flex justify-between items-center">
+        <p-button
+          *ngIf="overtimePaymentResults && overtimePaymentResults.factory2OvertimePayments.length > 0 && !loading"
+          styleClass="rounded-md"
+          label="تحميل إكسل"
+          icon="pi pi-file-excel"
+          (onClick)="downloadAsExcel(2)"
+        />
+        <span class="text-sm font-semibold text-gray-600" *ngIf="overtimePaymentResults && overtimePaymentResults.factory2OvertimePayments.length > 0">
+          عدد الموظفين: {{filteredFactory2OvertimePayments.length}} <span *ngIf="searchValue">من {{overtimePaymentResults.factory2OvertimePayments.length}}</span>
+        </span>
+      </div>
 
       <table class="w-full border border-gray-900 border-collapse text-center">
         <thead>
         <tr>
           <th class="border border-gray-900 w-8">م</th>
+          <th class="border border-gray-900 w-16">كود</th>
           <th class="border border-gray-900">الاسم</th>
           <th class="border border-gray-900">الوظيفة</th>
           <th class="border border-gray-900">المرتب الشهري</th>
@@ -80,33 +131,47 @@
         </tr>
         </thead>
         <tbody>
-        <tr *ngFor="let result of overtimePaymentResults.factory2OvertimePayments; let i = index">
+        <tr *ngFor="let result of filteredFactory2OvertimePayments; let i = index">
           <td class="border border-gray-900">{{ i + 1 }}</td>
-          <td class="border border-gray-900">{{ result.employeeName }}</td>
+          <td class="border border-gray-900 font-semibold text-sky-800">{{ result.deviceId || '-' }}</td>
+          <td class="border border-gray-900 text-right px-2">{{ result.employeeName }}</td>
           <td class="border border-gray-900">{{ result.employeeTypeName }}</td>
           <td class="border border-gray-900">{{ result.monthlyRate | number: '1.0-2' }}</td>
           <td class="border border-gray-900">{{ result.hourlyRate | number: '1.0-2' }}</td>
-          <td class="border border-gray-900">{{ result.overtimeHours }}</td>
-          <td class="border border-gray-900">{{ result.overtimePayment | number: '1.0-2' }}</td>
+          <td class="border border-gray-900 font-bold">{{ result.overtimeHours }}</td>
+          <td class="border border-gray-900 font-bold text-emerald-800">{{ result.overtimePayment | number: '1.0-2' }}</td>
+        </tr>
+        <tr *ngIf="filteredFactory2OvertimePayments.length === 0">
+          <td colspan="8" class="text-center py-6 text-gray-500 font-semibold bg-gray-50">
+            لا توجد نتائج مطابقة للبحث في مصنع 2
+          </td>
         </tr>
         </tbody>
       </table>
     </div>
   </p-card>
 
+  <!-- مصنع 3 -->
   <p-card header="مصنع 3 - الأجر الإضافي" class="w-full" styleClass="w-full">
     <div class="flex flex-col gap-4">
-      <p-button
-        *ngIf="overtimePaymentResults.factory3OvertimePayments.length > 0 && !loading"
-        styleClass="rounded-md"
-        label="تحميل"
-        (onClick)="downloadAsExcel(3)"
-      />
+      <div class="flex justify-between items-center">
+        <p-button
+          *ngIf="overtimePaymentResults && overtimePaymentResults.factory3OvertimePayments.length > 0 && !loading"
+          styleClass="rounded-md"
+          label="تحميل إكسل"
+          icon="pi pi-file-excel"
+          (onClick)="downloadAsExcel(3)"
+        />
+        <span class="text-sm font-semibold text-gray-600" *ngIf="overtimePaymentResults && overtimePaymentResults.factory3OvertimePayments.length > 0">
+          عدد الموظفين: {{filteredFactory3OvertimePayments.length}} <span *ngIf="searchValue">من {{overtimePaymentResults.factory3OvertimePayments.length}}</span>
+        </span>
+      </div>
 
       <table class="w-full border border-gray-900 border-collapse text-center">
         <thead>
         <tr>
           <th class="border border-gray-900 w-8">م</th>
+          <th class="border border-gray-900 w-16">كود</th>
           <th class="border border-gray-900">الاسم</th>
           <th class="border border-gray-900">الوظيفة</th>
           <th class="border border-gray-900">المرتب الشهري</th>
@@ -116,14 +181,20 @@
         </tr>
         </thead>
         <tbody>
-        <tr *ngFor="let result of overtimePaymentResults.factory3OvertimePayments; let i = index">
+        <tr *ngFor="let result of filteredFactory3OvertimePayments; let i = index">
           <td class="border border-gray-900">{{ i + 1 }}</td>
-          <td class="border border-gray-900">{{ result.employeeName }}</td>
+          <td class="border border-gray-900 font-semibold text-sky-800">{{ result.deviceId || '-' }}</td>
+          <td class="border border-gray-900 text-right px-2">{{ result.employeeName }}</td>
           <td class="border border-gray-900">{{ result.employeeTypeName }}</td>
           <td class="border border-gray-900">{{ result.monthlyRate | number: '1.0-2' }}</td>
           <td class="border border-gray-900">{{ result.hourlyRate | number: '1.0-2' }}</td>
-          <td class="border border-gray-900">{{ result.overtimeHours }}</td>
-          <td class="border border-gray-900">{{ result.overtimePayment | number: '1.0-2' }}</td>
+          <td class="border border-gray-900 font-bold">{{ result.overtimeHours }}</td>
+          <td class="border border-gray-900 font-bold text-emerald-800">{{ result.overtimePayment | number: '1.0-2' }}</td>
+        </tr>
+        <tr *ngIf="filteredFactory3OvertimePayments.length === 0">
+          <td colspan="8" class="text-center py-6 text-gray-500 font-semibold bg-gray-50">
+            لا توجد نتائج مطابقة للبحث في مصنع 3
+          </td>
         </tr>
         </tbody>
       </table>
@@ -131,6 +202,4 @@
   </p-card>
 
   <p-toast></p-toast>
-
-
 </div>

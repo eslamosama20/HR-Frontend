@@ -35,7 +35,7 @@ export class AttendanceComponent implements OnInit{
     {label: 'حاضر', value: 'Present'},
     {label: 'تأخير بدون إذن', value: 'LateEntry'},
     {label: 'تأخير بإذن', value: 'LateWithPermission'},
-    {label: 'خروج متأخر', value: 'EarlyExit'},
+    {label: 'خروج مبكر', value: 'EarlyExit'},
     {label: 'غائب', value: 'Absent'},
     {label: 'عطلة', value: 'Holiday'},
     {label: 'اجازة بإذن', value: 'OnLeaveWithPermission'},
@@ -169,7 +169,7 @@ export class AttendanceComponent implements OnInit{
               x.attendanceFlag === "Present" ? "حاضر"
                 : x.attendanceFlag === "LateEntry" ? "تأخير بدون إذن"
                   : x.attendanceFlag === "LateWithPermission" ? "تأخير بإذن"
-                  : x.attendanceFlag === "EarlyExit" ? "خروج متأخر"
+                  : x.attendanceFlag === "EarlyExit" ? "خروج مبكر"
                     : x.attendanceFlag === "Absent" ? "غائب"
                       : x.attendanceFlag === "Holiday" ? "عطلة"
                         : x.attendanceFlag === "OnLeaveWithPermission" ? "اجازة بإذن"
@@ -206,6 +206,7 @@ export class AttendanceComponent implements OnInit{
         return "text-yellow-700 bg-yellow-300 rounded px-2 py-1";
       case "تأخير بإذن":
         return "text-blue-700 bg-blue-200 rounded px-2 py-1";
+      case "خروج مبكر":
       case "خروج متأخر":
         return "text-gray-700 bg-gray-300 rounded px-2 py-1";
       case "غائب":

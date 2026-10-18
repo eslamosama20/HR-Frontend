@@ -1,1 +1,90 @@
-:host { display: block; }
+:host {
+  display: block;
+}
+
+.salary-slip-container {
+  padding-bottom: 2rem;
+}
+
+.company-logo-badge {
+  width: 50px;
+  height: 50px;
+  min-width: 50px;
+}
+
+.section-box {
+  background-color: #fafbfc;
+  transition: all 0.2s ease;
+  border-color: #e9ecef !important;
+
+  &:hover {
+    background-color: #ffffff;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
+  }
+}
+
+.employee-info-bar {
+  border: 1px solid #edf2f7;
+}
+
+.overtime-highlight-box {
+  background-color: #fff9eb !important;
+  border: 1px dashed #f59e0b !important;
+}
+
+.final-net-card {
+  background: linear-gradient(135deg, #1e3a8a 0%, #2563eb 60%, #3b82f6 100%);
+
+  .final-amount {
+    font-size: 2rem;
+    letter-spacing: -0.5px;
+  }
+}
+
+.border-dashed {
+  border: 2px dashed #cbd5e1 !important;
+}
+
+.signature-line {
+  color: #94a3b8;
+  letter-spacing: 2px;
+}
+
+/* Print styling */
+@media print {
+  body {
+    background: #ffffff !important;
+  }
+
+  .no-print,
+  .app-sidebar,
+  .app-header,
+  .app-footer,
+  aside,
+  header,
+  nav {
+    display: none !important;
+  }
+
+  .payslip-sheet {
+    box-shadow: none !important;
+    border: 1px solid #ccc !important;
+    padding: 15px !important;
+    margin: 0 !important;
+    width: 100% !important;
+    page-break-after: avoid;
+    page-break-inside: avoid;
+  }
+
+  .final-net-card {
+    background: #1e3a8a !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+    color: white !important;
+  }
+
+  .overtime-highlight-box {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+}

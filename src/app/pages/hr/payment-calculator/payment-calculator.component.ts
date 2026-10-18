@@ -47,6 +47,45 @@ export class PaymentCalculatorComponent implements OnInit {
     this.searchValueSignal.set(value);
   }
 
+  get filteredFactory1Payments() {
+    if (!this.paymentResults?.factory1Payments) return [];
+    if (!this.searchValue?.trim()) return this.paymentResults.factory1Payments;
+    const term = this.searchValue.trim().toLowerCase();
+    return this.paymentResults.factory1Payments.filter(p =>
+      (p.employeeName && p.employeeName.toLowerCase().includes(term)) ||
+      (p.deviceId && p.deviceId.toString().toLowerCase().includes(term)) ||
+      (p.workshop && p.workshop.toLowerCase().includes(term)) ||
+      (p.department && p.department.toLowerCase().includes(term)) ||
+      (p.jobTitle && p.jobTitle.toLowerCase().includes(term))
+    );
+  }
+
+  get filteredFactory2Payments() {
+    if (!this.paymentResults?.factory2Payments) return [];
+    if (!this.searchValue?.trim()) return this.paymentResults.factory2Payments;
+    const term = this.searchValue.trim().toLowerCase();
+    return this.paymentResults.factory2Payments.filter(p =>
+      (p.employeeName && p.employeeName.toLowerCase().includes(term)) ||
+      (p.deviceId && p.deviceId.toString().toLowerCase().includes(term)) ||
+      (p.workshop && p.workshop.toLowerCase().includes(term)) ||
+      (p.department && p.department.toLowerCase().includes(term)) ||
+      (p.jobTitle && p.jobTitle.toLowerCase().includes(term))
+    );
+  }
+
+  get filteredFactory3Payments() {
+    if (!this.paymentResults?.factory3Payments) return [];
+    if (!this.searchValue?.trim()) return this.paymentResults.factory3Payments;
+    const term = this.searchValue.trim().toLowerCase();
+    return this.paymentResults.factory3Payments.filter(p =>
+      (p.employeeName && p.employeeName.toLowerCase().includes(term)) ||
+      (p.deviceId && p.deviceId.toString().toLowerCase().includes(term)) ||
+      (p.workshop && p.workshop.toLowerCase().includes(term)) ||
+      (p.department && p.department.toLowerCase().includes(term)) ||
+      (p.jobTitle && p.jobTitle.toLowerCase().includes(term))
+    );
+  }
+
   selectedDateSignal = signal<Date>(new Date());
   get selectedDate() {
     return this.selectedDateSignal();
@@ -105,69 +144,108 @@ export class PaymentCalculatorComponent implements OnInit {
   }
 
   downloadAsExcel(factory: number): void {
-    // 1) Build header rows as before
+    // 1) Build header rows
     const headerRows = [
-      [ 'م','الاسم','الوظيفة','المرتب الأساسي','التكميلي','المكافآت','الأجر المستحق',
-        'تفاصيل المستقطع','','','','','','','','',
-        'اجمالي المستقطع','صافي المرتب'
+      [
+        'م', 'كود', 'الاسم', 'الصالة', 'القسم', 'الوظيفة',
+        'تفاصيل الاستحقاقات (الأجر الشامل)', '', '', '', '', '', '', '', '', '', '',
+        'تفاصيل المستقطع', '', '', '', '', '', '', '',
+        'اجمالي المستقطع', 'صافي المرتب'
       ],
-      [ '','','','','','','',
-        'غياب','','',
-        'التأخيرات','','',
-        'السٌلف','التأمينات','الجزاء','',''
+      [
+        '', '', '', '', '', '',
+        'الأساسي', 'غلاء معيشة', 'بدل وجبة', 'بدل انتقال', 'بدل سكن', 'حافز إجادة', 'حافز انتظام', 'حافز إشراف', 'زيادة إضافية', 'مكافآت', 'إجمالي الأجر',
+        'غياب', '', '',
+        'خصم انتظام', 'تأخيرات', 'السُلف', 'التأمينات', 'الجزاءات',
+        '', ''
       ],
-      [ '','','','','','','',
-        'عدد الأيام','أجر اليوم','الإجمالي',
-        'عدد ساعات التأخير','أجر الساعة','الإجمالي',
-        '','','','',''
+      [
+        '', '', '', '', '', '',
+        '', '', '', '', '', '', '', '', '', '', '',
+        'عدد الأيام', 'أجر اليوم', 'الإجمالي',
+        '', '', '', '', '',
+        '', ''
       ]
     ];
 
     // 2) Create sheet from headerRows
     const ws: XLSX.WorkSheet = XLSX.utils.aoa_to_sheet(headerRows);
 
-    // 3) Apply merges exactly as before
+    // 3) Apply merges
     ws['!merges'] = [
-      { s:{r:0,c:0},e:{r:2,c:0} }, { s:{r:0,c:1},e:{r:2,c:1} },
-      { s:{r:0,c:2},e:{r:2,c:2} }, { s:{r:0,c:3},e:{r:2,c:3} },
-      { s:{r:0,c:4},e:{r:2,c:4} }, { s:{r:0,c:5},e:{r:2,c:5} },
-      { s:{r:0,c:6},e:{r:2,c:6} },
-      { s:{r:0,c:7},e:{r:0,c:15} },
-      { s:{r:1,c:7},e:{r:1,c:9} }, { s:{r:1,c:10},e:{r:1,c:12} },
-      { s:{r:1,c:13},e:{r:2,c:13} }, { s:{r:1,c:14},e:{r:2,c:14} },
-      { s:{r:1,c:15},e:{r:2,c:15} },
-      { s:{r:0,c:16},e:{r:2,c:16} }, { s:{r:0,c:17},e:{r:2,c:17} },
+      // Info columns: r:0..2
+      { s: { r: 0, c: 0 }, e: { r: 2, c: 0 } },
+      { s: { r: 0, c: 1 }, e: { r: 2, c: 1 } },
+      { s: { r: 0, c: 2 }, e: { r: 2, c: 2 } },
+      { s: { r: 0, c: 3 }, e: { r: 2, c: 3 } },
+      { s: { r: 0, c: 4 }, e: { r: 2, c: 4 } },
+      { s: { r: 0, c: 5 }, e: { r: 2, c: 5 } },
+      // Estihqaqat header: col 6..16
+      { s: { r: 0, c: 6 }, e: { r: 0, c: 16 } },
+      { s: { r: 1, c: 6 }, e: { r: 2, c: 6 } },
+      { s: { r: 1, c: 7 }, e: { r: 2, c: 7 } },
+      { s: { r: 1, c: 8 }, e: { r: 2, c: 8 } },
+      { s: { r: 1, c: 9 }, e: { r: 2, c: 9 } },
+      { s: { r: 1, c: 10 }, e: { r: 2, c: 10 } },
+      { s: { r: 1, c: 11 }, e: { r: 2, c: 11 } },
+      { s: { r: 1, c: 12 }, e: { r: 2, c: 12 } },
+      { s: { r: 1, c: 13 }, e: { r: 2, c: 13 } },
+      { s: { r: 1, c: 14 }, e: { r: 2, c: 14 } },
+      { s: { r: 1, c: 15 }, e: { r: 2, c: 15 } },
+      { s: { r: 1, c: 16 }, e: { r: 2, c: 16 } },
+      // Mostaqta'at header: col 17..24
+      { s: { r: 0, c: 17 }, e: { r: 0, c: 24 } },
+      // Absence: col 17..19
+      { s: { r: 1, c: 17 }, e: { r: 1, c: 19 } },
+      // Deductions: col 20..24
+      { s: { r: 1, c: 20 }, e: { r: 2, c: 20 } },
+      { s: { r: 1, c: 21 }, e: { r: 2, c: 21 } },
+      { s: { r: 1, c: 22 }, e: { r: 2, c: 22 } },
+      { s: { r: 1, c: 23 }, e: { r: 2, c: 23 } },
+      { s: { r: 1, c: 24 }, e: { r: 2, c: 24 } },
+      // Totals: col 25, 26
+      { s: { r: 0, c: 25 }, e: { r: 2, c: 25 } },
+      { s: { r: 0, c: 26 }, e: { r: 2, c: 26 } },
     ];
 
     // 4) Append data rows under the header (row index 3)
-    let data = []
+    const mapRow = (pr: any, index: number) => [
+      index + 1,
+      pr.deviceId || '',
+      pr.employeeName,
+      pr.workshop || '',
+      pr.department || '',
+      pr.jobTitle || pr.employeeTypeName || '',
+      pr.monthlyRate || 0,
+      pr.livingAllowance || 0,
+      pr.mealAllowance || 0,
+      pr.transportAllowance || 0,
+      pr.housingAllowance || 0,
+      pr.masteryBonus || 0,
+      pr.regularityBonus || 0,
+      pr.supervisionBonus || 0,
+      pr.extraIncrease || 0,
+      pr.totalBonuses || 0,
+      pr.totalSalary || 0,
+      pr.absentDaysCount || 0,
+      pr.dailyRate || 0,
+      pr.totalAbsentPenalty || 0,
+      pr.regularityDeduction || 0,
+      pr.totalLateEntryPenalty || 0,
+      pr.totalLoans || 0,
+      pr.insurance || 0,
+      pr.totalPenalties || 0,
+      pr.totalSubtractedAmount || 0,
+      pr.netPay || 0
+    ];
+
+    let data: any[] = [];
     if (factory === 1) {
-      data = this.paymentResults.factory1Payments.map((pr,index) => ([
-        index, pr.employeeName, pr.employeeTypeName,
-        pr.monthlyRate, pr.supplementaryRate, pr.totalBonuses, pr.totalSalary,
-        pr.absentDaysCount, pr.dailyRate, pr.totalAbsentPenalty,
-        pr.totalLateHours, pr.hourlyRate, pr.totalLateEntryPenalty,
-        pr.totalLoans, pr.insurance, pr.totalPenalties,
-        pr.totalSubtractedAmount, pr.netPay
-      ]));
+      data = this.filteredFactory1Payments.map(mapRow);
     } else if (factory === 2) {
-      data = this.paymentResults.factory2Payments.map((pr,index) => ([
-        index, pr.employeeName, pr.employeeTypeName,
-        pr.monthlyRate, pr.supplementaryRate, pr.totalBonuses, pr.totalSalary,
-        pr.absentDaysCount, pr.dailyRate, pr.totalAbsentPenalty,
-        pr.totalLateHours, pr.hourlyRate, pr.totalLateEntryPenalty,
-        pr.totalLoans, pr.insurance, pr.totalPenalties,
-        pr.totalSubtractedAmount, pr.netPay
-      ]));
+      data = this.filteredFactory2Payments.map(mapRow);
     } else {
-      data = this.paymentResults.factory3Payments.map((pr,index) => ([
-        index, pr.employeeName, pr.employeeTypeName,
-        pr.monthlyRate, pr.supplementaryRate, pr.totalBonuses, pr.totalSalary,
-        pr.absentDaysCount, pr.dailyRate, pr.totalAbsentPenalty,
-        pr.totalLateHours, pr.hourlyRate, pr.totalLateEntryPenalty,
-        pr.totalLoans, pr.insurance, pr.totalPenalties,
-        pr.totalSubtractedAmount, pr.netPay
-      ]));
+      data = this.filteredFactory3Payments.map(mapRow);
     }
     XLSX.utils.sheet_add_aoa(ws, data, { origin: 3 });
 

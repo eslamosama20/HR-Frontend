@@ -61,6 +61,7 @@
   </ng-template>
   <ng-template pTemplate="header" let-columns>
     <tr>
+      <th style="width: 3.5rem; text-align: center;">م</th>
       <th
         style="min-width: fit-content"
         *ngFor="let column of columns"
@@ -85,8 +86,9 @@
       </th>
     </tr>
   </ng-template>
-  <ng-template pTemplate="body" let-Entry>
+  <ng-template pTemplate="body" let-Entry let-rowIndex="rowIndex">
     <tr *ngIf="penalties.length > 0">
+      <td class="text-center font-bold text-gray-500 w-12">{{ rowIndex + 1 }}</td>
       <td class="text-lg rtl:text-right font-bold text-sky-700">
         {{ Entry.employeeDeviceId || '-' }}
       </td>
@@ -189,6 +191,37 @@
         "
       >
         الموظف مطلوب
+      </small>
+    </div>
+
+    <!-- Falcon Factory Bylaw Violation Quick Selector -->
+    <div class="p-3 bg-amber-50 border border-amber-200 rounded-lg flex flex-col gap-2 w-full">
+      <div class="flex items-center justify-between">
+        <label class="block font-bold text-amber-900 text-sm">
+          <i class="pi pi-bolt text-amber-600 mr-1"></i>
+          لائحة الجزاءات المعتمدة لمصنع الصقر (احتساب تلقائي)
+        </label>
+        <button
+          type="button"
+          (click)="toggleDoublePenalty()"
+          [ngClass]="isDoubledPenalty ? 'bg-red-600 text-white' : 'bg-gray-200 text-gray-700'"
+          class="text-xs px-2.5 py-1 rounded-md font-semibold transition shadow-sm hover:opacity-90"
+          title="مضاعفة قيمة الجزاء في حالة رفض العامل التوقيع (وفقاً للائحة)"
+        >
+          <i class="pi pi-times-circle"></i>
+          {{ isDoubledPenalty ? 'الجزاء مضاعف (×2)' : 'مضاعفة الجزاء (لرفض التوقيع)' }}
+        </button>
+      </div>
+      <p-dropdown
+        [options]="falconBylawViolations"
+        optionLabel="label"
+        placeholder="اختر نوع المخالفة من اللائحة..."
+        (onChange)="onViolationSelected($event.value)"
+        styleClass="w-full flex rtl:flex-row-reverse"
+        appendTo="body"
+      ></p-dropdown>
+      <small class="text-gray-500 text-xs">
+        سيتم حساب قيمة الخصم تلقائياً من الراتب الأساسي التأميني للموظف (الأجر الأساسي ÷ 30 × أيام الجزاء).
       </small>
     </div>
     <div class="field w-full flex justify-between gap-2">

@@ -3,6 +3,7 @@ import {EntityBase} from '../base/entity-base';
 export class FactoryOvertimePaymentResultModel {
 
   employeeId: number;
+  deviceId?: string;
   employeeName: string;
   employeeTypeName: string;
   monthlyRate: number;

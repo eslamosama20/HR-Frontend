@@ -166,9 +166,30 @@ export class OvertimeHoursComponent implements OnInit{
           detail: this.translate.instant('FINANCE.METALS_LOADING_ERROR')
         })
       }
-    })
+    });
   }
 
+  syncFromFingerprint() {
+    this.loading = true;
+    this.overtimeHoursService.syncFromFingerprint().subscribe({
+      next: (res: any) => {
+        this.messageService.add({
+          severity: 'success',
+          summary: 'نجاح',
+          detail: res?.message || 'تم سحب وتحديث الإضافي من البصمة بنجاح'
+        });
+        this.loadData();
+      },
+      error: (err: any) => {
+        this.messageService.add({
+          severity: 'error',
+          summary: 'خطأ',
+          detail: 'فشل سحب الإضافي من البصمة'
+        });
+        this.loading = false;
+      }
+    });
+  }
 
   showAddOvertimeHoursDialog(overtimeHours: OvertimeHoursModel = null) {
     this.overtimeHoursFormGroup.reset();

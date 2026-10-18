@@ -1058,6 +1058,10 @@ Routing = [
     loadComponent: () => import('./hr-documents/salary-slips/salary-slips.component').then(m => m.SalarySlipsComponent)
   },
   {
+    path: 'hr-letter',
+    loadComponent: () => import('./hr-documents/hr-letter/hr-letter.component').then(m => m.HrLetterComponent)
+  },
+  {
     path: 'leave-applications',
     loadComponent: () => import('./hr-documents/leave-applications/leave-applications.component').then(m => m.LeaveApplicationsComponent)
   },

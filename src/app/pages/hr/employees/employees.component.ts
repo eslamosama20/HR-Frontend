@@ -85,17 +85,16 @@ export class EmployeesComponent implements OnInit{
 
     this.columns = [
       {field: 'deviceId', header: "كود الموظف", filter: true , filterType: 'text'},
-      {field: 'referenceNumber', header: "الرقم المرجعي", filter: true , filterType: 'text'},
       {field: 'name', header: this.translate.instant('FINANCE.NAME'), filter: true , filterType: 'text'},
+      {field: 'workshop', header: "الصالة", filter: true , filterType: 'text'},
+      {field: 'department', header: "القسم", filter: true , filterType: 'text'},
+      {field: 'jobTitle', header: "طبيعة العمل", filter: true , filterType: 'text'},
       {field: 'phone', header: "رقم الهاتف", filter: true , filterType: 'text'},
-      {field: 'employmentTypeName', header: "الوظيفة", filter: true , filterType: 'text'},
-      {field: 'shiftName', header: "الدوام", filter: true , filterType: 'text'},
-      {field: 'leaveBalance', header: "عدد الاجازات", filter: true , filterType: 'numeric'},
-      {field: 'monthlyRate', header: "المرتب الشهري", filter: true , filterType: 'numeric'},
-      {field: 'supplementaryRate', header: "المرتب التكميلي", filter: true , filterType: 'numeric'},
+      {field: 'monthlyRate', header: "الأساسي", filter: true , filterType: 'numeric'},
+      {field: 'regularityBonus', header: "حافز انتظام", filter: true , filterType: 'numeric'},
+      {field: 'totalGrossSalary', header: "إجمالي الراتب", filter: true , filterType: 'numeric'},
       {field: 'monthlyInsurance', header: "التأمينات", filter: true , filterType: 'numeric'},
       {field: 'factoryType', header: "المصنع", filter: true , filterType: 'text'},
-      {field: 'createdAt', header: this.translate.instant('FINANCE.CREATED_AT'), filter: true , filterType: 'date'}
     ];
   }
 
@@ -110,9 +109,18 @@ export class EmployeesComponent implements OnInit{
         this.employees = employees.map(x => (
           {
             ...x,
-            createdAt: new Date(x.createdAt),
-            employmentTypeName: x.employmentType.code,
-            shiftName: x.shift.name
+            createdAt: x.createdAt ? new Date(x.createdAt) : null,
+            employmentTypeName: x.employmentType?.code || x.jobTitle || '-',
+            shiftName: x.shift?.name || '-',
+            totalGrossSalary: (Number(x.monthlyRate) || 0) +
+                              (Number(x.livingAllowance) || 0) +
+                              (Number(x.mealAllowance) || 0) +
+                              (Number(x.transportAllowance) || 0) +
+                              (Number(x.housingAllowance) || 0) +
+                              (Number(x.extraIncrease) || 0) +
+                              (Number(x.supervisionBonus) || 0) +
+                              (Number(x.masteryBonus) || 0) +
+                              (Number(x.regularityBonus) || 0)
           }
         ))
         this.loading = false;

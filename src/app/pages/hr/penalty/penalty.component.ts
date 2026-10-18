@@ -133,6 +133,54 @@ export class PenaltyComponent implements OnInit{
     ];
   }
 
+  falconBylawViolations = [
+    { label: 'خطأ غير مقصود (ربع يوم)', name: 'خطاء غير مقصود', days: 0.25 },
+    { label: 'التأخير في الحمام (ربع يوم)', name: 'التاخير فى الحمام', days: 0.25 },
+    { label: 'استخدام الموبايل أثناء العمل (ربع يوم)', name: 'استخدام الموبيل اثناء العمل', days: 0.25 },
+    { label: 'جزاء السلوك - يؤثر على حافز الانتظام (ربع يوم)', name: 'جزاء السلوك', days: 0.25 },
+    { label: 'جودة سيئة (ربع يوم)', name: 'جودة سيئة', days: 0.25 },
+    { label: 'عدم التركيز في العمل (نصف يوم)', name: 'عدم التركيز فى العمل', days: 0.5 },
+    { label: 'التحدث بأسلوب غير لائق (نصف يوم)', name: 'التحدث باسلوب غير لائق', days: 0.5 },
+    { label: 'ترك مكان العمل بدون إذن (نصف يوم)', name: 'ترك مكان العمل بدون اذن', days: 0.5 },
+    { label: 'عدم اتباع تعليمات العمل (يوم كامل)', name: 'عدم اتباع التعليمات الخاصة بالعمل', days: 1.0 },
+    { label: 'الإهمال في العمل (3 أيام)', name: 'الاهمال فى العمل', days: 3.0 },
+    { label: 'التخريب وعدم الحفاظ على المنشأة (3 أيام)', name: 'التخريب وعدم الحفاظ على المنشأة', days: 3.0 },
+    { label: 'الإضراب أو التحريض عليه (3 أيام + إنذار)', name: 'الاضراب او التحريض عليه', days: 3.0 },
+    { label: 'التعدي على الرؤساء قولاً أو فعلاً (3 أيام + إنذار)', name: 'التعدى على الرؤساء بالقول او الفعل', days: 3.0 },
+    { label: 'مخالفة مخصصة (إدخال يدوي)', name: '', days: 0 }
+  ];
+
+  selectedViolation: any = null;
+  isDoubledPenalty: boolean = false;
+
+  onViolationSelected(violation: any) {
+    if (!violation) return;
+    this.selectedViolation = violation;
+    const empId = this.penaltyFormGroup.controls.employeeId.value;
+    const selectedEmp = (this.employees || []).find(e => e.id === empId);
+    const basicRate = selectedEmp?.monthlyRate || 0;
+    const dailyRate = basicRate > 0 ? basicRate / 30 : 0;
+    
+    if (violation.days > 0) {
+      let amount = Math.round(dailyRate * violation.days * 100) / 100;
+      if (this.isDoubledPenalty) amount *= 2;
+      this.penaltyFormGroup.controls.amount.setValue(amount);
+      this.penaltyFormGroup.controls.reason.setValue(violation.name + (this.isDoubledPenalty ? ' (مضاعف لرفض التوقيع)' : ''));
+    } else if (violation.name) {
+      this.penaltyFormGroup.controls.reason.setValue(violation.name);
+    }
+  }
+
+  toggleDoublePenalty() {
+    this.isDoubledPenalty = !this.isDoubledPenalty;
+    if (this.selectedViolation) {
+      this.onViolationSelected(this.selectedViolation);
+    } else {
+      const currentAmount = Number(this.penaltyFormGroup.controls.amount.value) || 0;
+      this.penaltyFormGroup.controls.amount.setValue(this.isDoubledPenalty ? currentAmount * 2 : currentAmount / 2);
+    }
+  }
+
   ngOnInit(): void {
     this.loadData();
   }

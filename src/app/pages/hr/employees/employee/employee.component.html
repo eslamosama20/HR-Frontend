@@ -189,6 +189,13 @@
               [class.ng-dirty]="isDuplicateCode"
             />
             <small
+              class="text-sky-600 block text-xs mt-1"
+              *ngIf="!isEditMode && !isDuplicateCode"
+            >
+              <i class="pi pi-bolt mx-1"></i>
+              تم توليد الكود التالي تلقائياً ويمكنك تعديله يدوياً
+            </small>
+            <small
               class="text-red-500 p-error block mt-1 text-sm font-semibold"
               *ngIf="isDuplicateCode"
             >
@@ -225,20 +232,13 @@
             />
           </div>
           <div class="field w-full">
-            <label for="supplementaryRate" class="block font-medium mb-1 text-sm">
-              المرتب التكميلي
+            <label class="block font-bold mb-1 text-sm text-emerald-700" title="محسوب تلقائياً = المرتب الأساسي + مجموع البدلات والحوافز">
+              إجمالي الراتب الشامل ⭐
             </label>
-            <p-inputNumber
-              minFractionDigits="0"
-              maxFractionDigits="2"
-              min="0"
-              id="supplementaryRate"
-              formControlName="supplementaryRate"
-              styleClass="w-full"
-              class="w-full"
-              inputStyleClass="w-full"
-              [inputStyle]="{ width: '100%' }"
-            />
+            <div class="p-inputtext p-component w-full font-bold text-emerald-800 bg-emerald-50 border border-emerald-300 flex items-center justify-between rounded" style="height: 42px; padding: 0 10px;">
+              <span>{{ totalGrossSalary | number:'1.2-2' }}</span>
+              <span class="text-xs text-emerald-600 font-normal">ج.م</span>
+            </div>
           </div>
           <div class="field w-full">
             <label for="monthlyInsurance" class="block font-medium mb-1 text-sm">
@@ -335,34 +335,296 @@
           </div>
         </div>
       </div>
-      <div class="field w-full">
-        <label for="factoryType" class="block">
-          المصنع
-        </label>
-        <p-dropdown
-          id="factoryType"
-          formControlName="factoryType"
-          [options]="[{label: 'المصنع الأول', value: 'Factory1'}, {label: 'المصنع الثاني', value: 'Factory2'}, {label: 'المصنع الثالث', value: 'Factory3'}]"
-          optionLabel="label"
-          optionValue="value"
-          [placeholder]="translate.instant('FINANCE.SELECT')"
-          [showClear]="true"
-          [filter]="true"
-          styleClass="w-full flex rtl:flex-row-reverse"
-          class="w-full"
-          appendTo="body"
-        >
-        </p-dropdown>
-        <small
-          class="text-red-500 p-error block"
-          *ngIf="
-            employeeFormGroup.get('factoryType').invalid &&
-            (employeeFormGroup.get('factoryType').touched || isSubmitted)
-          "
-        >
-          المصنع مطلوب
-        </small>
-      </div>
+        <!-- Factory Location & Section -->
+        <div class="p-3 bg-slate-50 border border-slate-200 rounded-lg flex flex-col gap-3 w-full">
+          <div class="flex items-center gap-2 border-b pb-2 text-sky-800 font-bold">
+            <i class="pi pi-building text-lg"></i>
+            <span>بيانات موقع العمل والقسم (مصنع الصقر)</span>
+          </div>
+          <div class="grid grid-cols-1 md:grid-cols-4 gap-3 w-full">
+            <div class="field w-full">
+              <label for="factoryType" class="block font-medium mb-1 text-sm">
+                المصنع
+              </label>
+              <p-dropdown
+                id="factoryType"
+                formControlName="factoryType"
+                [options]="[{label: 'المصنع الأول', value: 'Factory1'}, {label: 'المصنع الثاني', value: 'Factory2'}, {label: 'المصنع الثالث', value: 'Factory3'}]"
+                optionLabel="label"
+                optionValue="value"
+                [placeholder]="translate.instant('FINANCE.SELECT')"
+                styleClass="w-full flex rtl:flex-row-reverse"
+                class="w-full"
+                appendTo="body"
+              ></p-dropdown>
+            </div>
+            <div class="field w-full">
+              <label for="workshop" class="block font-medium mb-1 text-sm">
+                الصالة
+              </label>
+              <p-dropdown
+                id="workshop"
+                formControlName="workshop"
+                [options]="[{label: 'مشترك', value: 'مشترك'}, {label: 'فاشون', value: 'فاشون'}, {label: 'جينز', value: 'جينز'}]"
+                optionLabel="label"
+                optionValue="value"
+                placeholder="اختر الصالة"
+                styleClass="w-full flex rtl:flex-row-reverse"
+                class="w-full"
+                appendTo="body"
+              ></p-dropdown>
+            </div>
+            <div class="field w-full">
+              <label for="department" class="block font-medium mb-1 text-sm">
+                القسم الداخلي
+              </label>
+              <input
+                pInputText
+                type="text"
+                id="department"
+                formControlName="department"
+                class="w-full"
+                placeholder="مثال: المخازن، خط 1، تعبئة، قص..."
+              />
+            </div>
+            <div class="field w-full">
+              <label for="jobTitle" class="block font-medium mb-1 text-sm">
+                طبيعة العمل / المسمى
+              </label>
+              <input
+                pInputText
+                type="text"
+                id="jobTitle"
+                formControlName="jobTitle"
+                class="w-full"
+                placeholder="مثال: عامل سنجر، أوفر، جوكر، مساعد..."
+              />
+            </div>
+          </div>
+        </div>
+
+        <!-- Personal & Identity Data -->
+        <div class="p-3 bg-slate-50 border border-slate-200 rounded-lg flex flex-col gap-3 w-full">
+          <div class="flex items-center gap-2 border-b pb-2 text-sky-800 font-bold">
+            <i class="pi pi-id-card text-lg"></i>
+            <span>البيانات الشخصية والرقم القومي والتأمينات</span>
+          </div>
+          <div class="grid grid-cols-1 md:grid-cols-4 gap-3 w-full">
+            <div class="field w-full">
+              <label for="nationalId" class="block font-medium mb-1 text-sm">
+                الرقم القومي (14 رقم)
+              </label>
+              <input
+                pInputText
+                type="text"
+                id="nationalId"
+                formControlName="nationalId"
+                class="w-full"
+                placeholder="الرقم القومي"
+              />
+            </div>
+            <div class="field w-full">
+              <label for="birthDate" class="block font-medium mb-1 text-sm">
+                تاريخ الميلاد
+              </label>
+              <p-calendar
+                id="birthDate"
+                formControlName="birthDate"
+                [showButtonBar]="true"
+                variant="filled"
+                [showIcon]="true"
+                [iconDisplay]="'input'"
+                [dateFormat]="'d/m/yy'"
+                appendTo="body"
+                styleClass="w-full"
+              ></p-calendar>
+            </div>
+            <div class="field w-full">
+              <label for="governorate" class="block font-medium mb-1 text-sm">
+                المحافظة
+              </label>
+              <input
+                pInputText
+                type="text"
+                id="governorate"
+                formControlName="governorate"
+                class="w-full"
+                placeholder="مثال: بورسعيد، دمياط، الدقهلية..."
+              />
+            </div>
+            <div class="field w-full">
+              <label for="address" class="block font-medium mb-1 text-sm">
+                العنوان التفصيلي
+              </label>
+              <input
+                pInputText
+                type="text"
+                id="address"
+                formControlName="address"
+                class="w-full"
+                placeholder="العنوان السكني"
+              />
+            </div>
+            <div class="field w-full">
+              <label for="insuranceNumber" class="block font-medium mb-1 text-sm">
+                الرقم التأميني
+              </label>
+              <input
+                pInputText
+                type="text"
+                id="insuranceNumber"
+                formControlName="insuranceNumber"
+                class="w-full"
+                placeholder="الرقم التأميني"
+              />
+            </div>
+            <div class="field w-full">
+              <label for="insuranceTitle" class="block font-medium mb-1 text-sm">
+                المسمى التأميني
+              </label>
+              <input
+                pInputText
+                type="text"
+                id="insuranceTitle"
+                formControlName="insuranceTitle"
+                class="w-full"
+                placeholder="المسمى في التأمينات"
+              />
+            </div>
+          </div>
+        </div>
+
+        <!-- Detailed Salary, Allowances & Bonuses -->
+        <div class="p-3 bg-emerald-50 border border-emerald-200 rounded-lg flex flex-col gap-3 w-full">
+          <div class="flex items-center justify-between border-b pb-2 text-emerald-900 font-bold">
+            <div class="flex items-center gap-2">
+              <i class="pi pi-money-bill text-lg"></i>
+              <span>هيكل الأجور والبدلات وحافز الانتظام (مصنع الصقر)</span>
+            </div>
+            <div class="flex gap-4 text-sm font-semibold">
+              <span class="bg-emerald-700 text-white px-3 py-1 rounded-full shadow">
+                إجمالي الراتب الشامل: {{ totalGrossSalary | number:'1.2-2' }} ج
+              </span>
+              <span class="bg-blue-700 text-white px-3 py-1 rounded-full shadow" title="وعاء الإضافي = أساسي + غلاء معيشة + وجبة + انتقال">
+                وعاء الإضافي: {{ overtimeBaseSalary | number:'1.2-2' }} ج (ساعة: {{ overtimeHourlyRate | number:'1.2-2' }} ج)
+              </span>
+            </div>
+          </div>
+          <div class="grid grid-cols-2 md:grid-cols-4 xl:grid-cols-8 gap-3 w-full">
+            <div class="field w-full">
+              <label for="livingAllowance" class="block font-medium mb-1 text-xs">
+                بدل غلاء معيشة
+              </label>
+              <p-inputNumber
+                id="livingAllowance"
+                formControlName="livingAllowance"
+                [min]="0"
+                styleClass="w-full"
+                class="w-full"
+                inputStyleClass="w-full"
+                [inputStyle]="{ width: '100%' }"
+              />
+            </div>
+            <div class="field w-full">
+              <label for="mealAllowance" class="block font-medium mb-1 text-xs">
+                بدل وجبة
+              </label>
+              <p-inputNumber
+                id="mealAllowance"
+                formControlName="mealAllowance"
+                [min]="0"
+                styleClass="w-full"
+                class="w-full"
+                inputStyleClass="w-full"
+                [inputStyle]="{ width: '100%' }"
+              />
+            </div>
+            <div class="field w-full">
+              <label for="transportAllowance" class="block font-medium mb-1 text-xs">
+                بدل انتقال
+              </label>
+              <p-inputNumber
+                id="transportAllowance"
+                formControlName="transportAllowance"
+                [min]="0"
+                styleClass="w-full"
+                class="w-full"
+                inputStyleClass="w-full"
+                [inputStyle]="{ width: '100%' }"
+              />
+            </div>
+            <div class="field w-full">
+              <label for="housingAllowance" class="block font-medium mb-1 text-xs">
+                بدل سكن
+              </label>
+              <p-inputNumber
+                id="housingAllowance"
+                formControlName="housingAllowance"
+                [min]="0"
+                styleClass="w-full"
+                class="w-full"
+                inputStyleClass="w-full"
+                [inputStyle]="{ width: '100%' }"
+              />
+            </div>
+            <div class="field w-full">
+              <label for="extraIncrease" class="block font-medium mb-1 text-xs">
+                زيادة استثنائية
+              </label>
+              <p-inputNumber
+                id="extraIncrease"
+                formControlName="extraIncrease"
+                [min]="0"
+                styleClass="w-full"
+                class="w-full"
+                inputStyleClass="w-full"
+                [inputStyle]="{ width: '100%' }"
+              />
+            </div>
+            <div class="field w-full">
+              <label for="supervisionBonus" class="block font-medium mb-1 text-xs">
+                حافز إشراف
+              </label>
+              <p-inputNumber
+                id="supervisionBonus"
+                formControlName="supervisionBonus"
+                [min]="0"
+                styleClass="w-full"
+                class="w-full"
+                inputStyleClass="w-full"
+                [inputStyle]="{ width: '100%' }"
+              />
+            </div>
+            <div class="field w-full">
+              <label for="masteryBonus" class="block font-medium mb-1 text-xs">
+                حافز إجادة
+              </label>
+              <p-inputNumber
+                id="masteryBonus"
+                formControlName="masteryBonus"
+                [min]="0"
+                styleClass="w-full"
+                class="w-full"
+                inputStyleClass="w-full"
+                [inputStyle]="{ width: '100%' }"
+              />
+            </div>
+            <div class="field w-full">
+              <label for="regularityBonus" class="block font-bold text-sky-700 mb-1 text-xs" title="حافز الانتظام الشهري (يطبق عليه لائحة خصومات الغياب والسلوك)">
+                حافز انتظام ⭐
+              </label>
+              <p-inputNumber
+                id="regularityBonus"
+                formControlName="regularityBonus"
+                [min]="0"
+                styleClass="w-full"
+                class="w-full"
+                inputStyleClass="w-full"
+                [inputStyle]="{ width: '100%' }"
+              />
+            </div>
+          </div>
+        </div>
     </form>
     <div class="flex justify-content-end gap-2 no-print">
       <p-button
@@ -417,7 +679,7 @@
           </div>
           <div class="legend-item">
             <span class="legend-color" style="background: #03A9F4;"></span>
-            خروج متأخر
+            خروج مبكر
           </div>
           <div class="legend-item">
             <span class="legend-color" style="background: #F44336;"></span>
